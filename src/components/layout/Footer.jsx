@@ -14,7 +14,7 @@ export default function Footer() {
 
         <div className="flex items-center space-x-4 text-[11px] font-medium">
           <span className="flex items-center text-slate-600">
-            <Lock className="w-3.5 h-3.5 mr-1 text-emerald-600" /> Supabase RLS Protected
+            <Lock className="w-3.5 h-3.5 mr-1 text-emerald-600" /> PostgreSQL RLS Protected
           </span>
           <span className="flex items-center text-slate-600">
             <FileCode className="w-3.5 h-3.5 mr-1 text-sky-600" /> Bitemporal Obligation Kernel (P1–P6)
