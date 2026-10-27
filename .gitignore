@@ -3,14 +3,15 @@
 .env.*
 *.env
 
-# Dependencies
-node_modules
-.pnpm-store
-
-# Production build outputs
+# Build & cache artifacts
+.vite
 dist
 dist-ssr
 *.local
+
+# Dependencies
+node_modules
+.pnpm-store
 
 # Logs
 npm-debug.log*
