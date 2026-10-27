@@ -109,8 +109,8 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-sky-50/60 via-blue-50/40 to-sky-100/50 p-6 sm:p-10 border border-sky-100 shadow-xl shadow-sky-100/50">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
 
-          {/* Left Hero Text Column (7 Cols) */}
-          <div className="lg:col-span-7 space-y-6 text-left">
+          {/* Left Hero Text Column (6 Cols) */}
+          <div className="lg:col-span-6 space-y-6 text-left">
             <h1 className="text-3xl sm:text-5xl font-black text-slate-900 leading-tight tracking-tight">
               Teknologi AI untuk Perawatan Lansia yang Lebih <span className="text-sky-600">Terhubung dan Terpercaya</span>
             </h1>
@@ -173,18 +173,18 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
             </div>
           </div>
 
-          {/* Right Hero Column: Orangtua.jpeg Elongated Portrait Photo (5 Cols) */}
-          <div className="lg:col-span-5 relative flex justify-center">
-            <div className="relative rounded-3xl overflow-hidden border-4 border-white shadow-2xl shadow-sky-900/10 bg-white max-w-md w-full">
+          {/* Right Hero Column: Orangtua.jpeg WIDER Photo Container (6 Cols) */}
+          <div className="lg:col-span-6 relative flex justify-center w-full">
+            <div className="relative rounded-3xl overflow-hidden border-4 border-white shadow-2xl shadow-sky-900/10 bg-white max-w-xl w-full">
               <img
                 src="/Orangtua.jpeg"
                 onError={(e) => { e.target.src = '/elderly-care.svg'; }}
                 alt="Perawatan Lansia SambungJaga AI"
-                className="w-full h-[450px] sm:h-[500px] lg:h-[520px] object-cover rounded-2xl shadow-inner aspect-[3/4]"
+                className="w-full h-[420px] sm:h-[480px] lg:h-[500px] object-cover rounded-2xl shadow-inner"
               />
 
               {/* Floating Overlay Badge 1: Top Right AI Chat Bubble */}
-              <div className="absolute top-5 right-5 bg-white/95 backdrop-blur-md p-3.5 rounded-2xl shadow-xl border border-slate-200/80 max-w-[220px] text-left">
+              <div className="absolute top-5 right-5 bg-white/95 backdrop-blur-md p-3.5 rounded-2xl shadow-xl border border-slate-200/80 max-w-[240px] text-left">
                 <div className="flex items-center space-x-1.5 text-xs font-bold text-sky-600 mb-1">
                   <Bot className="w-4 h-4" />
                   <span>AI Agent</span>
