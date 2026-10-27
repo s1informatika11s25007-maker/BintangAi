@@ -7,12 +7,8 @@ import {
   Shield,
   Cpu,
   Users,
-  CheckCircle2,
   FileCheck,
-  Activity,
-  Layers,
   BarChart3,
-  Search,
   MessageSquare,
   Sparkles,
   Zap,
@@ -110,7 +106,7 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
   return (
     <div className="space-y-16 py-4 w-full">
       {/* HERO SECTION MATCHING REFERENCE IMAGE */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-sky-50/60 via-blue-50/40 to-sky-100/50 p-6 sm:p-12 border border-sky-100 shadow-xl shadow-sky-100/50">
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-sky-50/60 via-blue-50/40 to-sky-100/50 p-6 sm:p-10 border border-sky-100 shadow-xl shadow-sky-100/50">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
 
           {/* Left Hero Text Column (7 Cols) */}
@@ -177,17 +173,18 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
             </div>
           </div>
 
-          {/* Right Hero Column: Elderly Care Image + Overlay Floating AI Chat Bubbles (5 Cols) */}
-          <div className="lg:col-span-5 relative">
-            <div className="relative rounded-3xl overflow-hidden border-4 border-white shadow-2xl shadow-sky-900/10 bg-white">
+          {/* Right Hero Column: Orangtua.jpeg Photo + Overlay Floating AI Chat Bubbles (5 Cols) */}
+          <div className="lg:col-span-5 relative flex justify-center">
+            <div className="relative rounded-3xl overflow-hidden border-4 border-white shadow-2xl shadow-sky-900/10 bg-white max-w-md w-full">
               <img
-                src="/elderly-care.svg"
+                src="/Orangtua.jpeg"
+                onError={(e) => { e.target.src = '/elderly-care.svg'; }}
                 alt="Perawatan Lansia SambungJaga AI"
-                className="w-full h-80 sm:h-96 object-cover rounded-2xl"
+                className="w-full h-80 sm:h-96 max-h-[380px] object-cover rounded-2xl shadow-inner"
               />
 
               {/* Floating Overlay Badge 1: Top Right AI Chat Bubble */}
-              <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-slate-200/80 max-w-[220px] text-left animate-float">
+              <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-slate-200/80 max-w-[210px] text-left">
                 <div className="flex items-center space-x-1.5 text-xs font-bold text-sky-600 mb-1">
                   <Bot className="w-4 h-4" />
                   <span>AI Agent</span>
@@ -209,8 +206,8 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
               </div>
 
               {/* Floating Overlay Badge 3: Bottom Right 3D Bot Mascot */}
-              <div className="absolute bottom-4 right-4 bg-gradient-to-br from-sky-500 to-blue-600 text-white p-3 rounded-2xl shadow-xl flex items-center space-x-2 animate-bounce">
-                <Bot className="w-6 h-6 text-sky-200" />
+              <div className="absolute bottom-4 right-4 bg-gradient-to-br from-sky-500 to-blue-600 text-white p-2.5 rounded-2xl shadow-xl flex items-center space-x-2">
+                <Bot className="w-5 h-5 text-sky-200" />
                 <span className="text-xs font-bold">Superagent AI</span>
               </div>
             </div>
