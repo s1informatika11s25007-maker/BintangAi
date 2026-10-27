@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   INITIAL_RESIDENTS,
   INITIAL_STAFF,
@@ -12,10 +12,15 @@ import { appendAuditEntry } from '../services/auditTrailService';
 import { verifyEvidenceSubmission, generateRandomSpotChallenge } from '../services/evidenceVerifier';
 import { evaluateAuthorityEnvelope } from '../services/authorityEnvelope';
 import { detectFactContradiction } from '../services/epistemicLedger';
+import { validatePromptInjection } from '../utils/validators';
 import { OBLIGATION_STATUS, AUTHORITY_ENVELOPE } from '../types/architecture';
 
+/**
+ * Custom React Hook for SambungJaga AI Core State & Action Dispatchers
+ * @returns {Object} State and handler methods
+ */
 export function useSambungJaga() {
-  const [activeRole, setActiveRole] = useState('supervisor'); // caregiver, supervisor, family, admin_hr, orchestrator
+  const [activeRole, setActiveRole] = useState('supervisor');
   const [residents, setResidents] = useState(INITIAL_RESIDENTS);
   const [staff, setStaff] = useState(INITIAL_STAFF);
   const [obligations, setObligations] = useState(INITIAL_OBLIGATIONS);
@@ -28,22 +33,26 @@ export function useSambungJaga() {
   const [offlineQueue, setOfflineQueue] = useState([]);
   const [selectedTrace, setSelectedTrace] = useState(null);
 
-  // Helper to log audit
+  // Helper to append audit log entries
   const logAudit = (gatewayTag, actionName, actorName, payload) => {
     setAuditTrail(prev => appendAuditEntry(prev, gatewayTag, actionName, actorName, payload));
   };
 
-  // 1. Submit Voice / Text Capture (Caregiver Capture Agent)
+  // 1. Submit Voice / Text Capture (Care Capture Agent)
   const captureCareReport = ({ text, sourceType, residentId, actorName }) => {
     const resident = residents.find(r => r.id === residentId) || residents[0];
 
-    // Prompt injection check simulation
-    if (text.toLowerCase().includes('ignore previous instructions') || text.toLowerCase().includes('bypass rls')) {
+    // Security Prompt Injection Validation
+    const injectionCheck = validatePromptInjection(text);
+    if (injectionCheck.isInjection) {
       logAudit('[A] Prompt Injection Filter Gateway', 'REJECT_INJECTION_ATTEMPT', actorName, { text_blocked: text });
-      return { success: false, error: 'Peringatan Keamanan: Terdeteksi percobaan Prompt Injection. Laporan ditolak.' };
+      return {
+        success: false,
+        error: `Peringatan Keamanan: Terdeteksi percobaan Prompt Injection (${injectionCheck.matchedRule}). Laporan ditolak.`
+      };
     }
 
-    // Extract fact
+    // Create Epistemic Fact
     const newFact = {
       id: `fact-${Date.now()}`,
       resident_id: resident.id,
@@ -57,7 +66,7 @@ export function useSambungJaga() {
       provenance_chain: [`Capture via ${sourceType}`, `Device Hash: P5-CHAIN-OK`]
     };
 
-    // Check contradiction (P3)
+    // Check Contradiction (P3 Epistemic Fact Ledger)
     const contradictionCheck = detectFactContradiction(epistemicFacts, newFact);
     if (contradictionCheck.hasContradiction) {
       newFact.status = 'contradicted';
@@ -66,7 +75,7 @@ export function useSambungJaga() {
     setEpistemicFacts(prev => [newFact, ...prev]);
     logAudit('[A] Perception & Epistemic Gateway', 'ADD_EPISTEMIC_FACT', actorName, { fact_id: newFact.id, status: newFact.status });
 
-    // Handle offline buffering
+    // Handle P5 Offline Hash Chain Ledger
     if (isOffline) {
       const offlineEntry = {
         id: `off-${Date.now()}`,
@@ -76,7 +85,11 @@ export function useSambungJaga() {
         timestamp: new Date().toISOString()
       };
       setOfflineQueue(prev => [...prev, offlineEntry]);
-      return { success: true, offline: true, message: 'Laporan disimpan di P5 Tamper-Evident Offline Ledger.' };
+      return {
+        success: true,
+        offline: true,
+        message: 'Laporan disimpan di P5 Tamper-Evident Offline Ledger.'
+      };
     }
 
     return {
@@ -89,16 +102,18 @@ export function useSambungJaga() {
   // 2. Submit Evidence Verification (P2) & Close Obligation
   const submitEvidenceAndClose = ({ obligationId, evidenceGrade, payload, actorName }) => {
     const ob = obligations.find(o => o.id === obligationId);
-    if (!ob) return { success: false, error: 'Kewajiban tidak ditemukan.' };
+    if (!ob) {
+      return { success: false, error: 'Kewajiban tidak ditemukan.' };
+    }
 
-    // Verify Grade (P2)
+    // Verify Grade (P2 Evidence-Grade Verifier)
     const verification = verifyEvidenceSubmission(ob.required_evidence_grade, evidenceGrade, payload);
     if (!verification.success) {
       logAudit('[A] Evidence-Grade Verifier', 'REJECT_EVIDENCE', actorName, { obligation_id: obligationId, reason: verification.reason });
       return { success: false, error: verification.reason };
     }
 
-    // Check Authority Envelope (P6) if clinical action
+    // Check Authority Envelope (P6 Gate)
     const authorityLevel = ob.priority === 'critical' ? AUTHORITY_ENVELOPE.A3 : AUTHORITY_ENVELOPE.A1;
     const authCheck = evaluateAuthorityEnvelope(ob.title, authorityLevel, false);
 
@@ -111,7 +126,7 @@ export function useSambungJaga() {
       };
     }
 
-    // Update obligation state
+    // Update Obligation State
     setObligations(prev => prev.map(o => o.id === obligationId ? { ...o, status: OBLIGATION_STATUS.VERIFIED_CLOSED } : o));
 
     logAudit('[A] Evidence-Grade Verifier', 'VERIFIED_CLOSURE', actorName, {
@@ -136,7 +151,7 @@ export function useSambungJaga() {
   // 3. Approve A3 Authority Action (Human Review)
   const approveAuthorityAction = ({ obligationId, supervisorName }) => {
     setObligations(prev => prev.map(o => o.id === obligationId ? { ...o, status: OBLIGATION_STATUS.VERIFIED_CLOSED } : o));
-    logAudit('[A] P6 Authority Envelope Gate', 'HUMAN_APPROVAL_GRANTED', supervisorName, { obligation_id: obligationId });
+    logAudit('[A] P6 Authority Envelope Gate', 'HUMAN_APPROVAL_GRANTED', supervisorName || 'Supervisor', { obligation_id: obligationId });
     return { success: true, message: 'Persetujuan Manusia (Human Review) diberikan. Status kewajiban ditutup.' };
   };
 
@@ -179,7 +194,7 @@ export function useSambungJaga() {
     return { success: true, message: 'Kontrak Serah Terima Dua Sisi (Two-Sided Handover Contract) berhasil dikonfirmasi!' };
   };
 
-  // Sync offline queue
+  // Sync Offline P5 Ledger Queue
   const syncOfflineLedger = () => {
     if (offlineQueue.length === 0) return;
     logAudit('[A] P5 Offline Hash-Chain Gateway', 'SYNC_OFFLINE_LEDGER', 'PWA Client', { items_synced: offlineQueue.length });

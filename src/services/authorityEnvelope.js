@@ -1,9 +1,20 @@
 /**
- * Authority Envelope (P6) & Action Contract Builder Engine
+ * SambungJaga AI — Authority Envelope Gate (P6 Innovation)
+ *
+ * @module services/authorityEnvelope
+ * @description Evaluates execution authority bounds (A0 Read, A1 Reversible, A2 Alert, A3 Clinical/Irreversible).
  */
 
 import { AUTHORITY_ENVELOPE } from '../types/architecture';
 
+/**
+ * Evaluates whether an action is permitted within Authority Envelope limits or requires human review.
+ *
+ * @param {string} actionType - Description or type of action.
+ * @param {string} requiredLevel - Envelope level (A0, A1, A2, A3).
+ * @param {boolean} isHumanApproved - Whether human approval has been granted.
+ * @returns {{ allowed: boolean, envelope: string, requiresHumanApproval: boolean, message: string }}
+ */
 export function evaluateAuthorityEnvelope(actionType, requiredLevel, isHumanApproved) {
   if (requiredLevel === AUTHORITY_ENVELOPE.A3 && !isHumanApproved) {
     return {
@@ -16,8 +27,8 @@ export function evaluateAuthorityEnvelope(actionType, requiredLevel, isHumanAppr
 
   return {
     allowed: true,
-    envelope: requiredLevel,
+    envelope: requiredLevel || AUTHORITY_ENVELOPE.A1,
     requiresHumanApproval: false,
-    message: `Aksi '${actionType}' diizinkan dalam Authority Envelope Level ${requiredLevel}.`
+    message: `Aksi '${actionType}' diizinkan dalam Authority Envelope Level ${requiredLevel || 'A1'}.`
   };
 }

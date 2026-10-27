@@ -1,44 +1,47 @@
 /**
- * Evidence-Grade Verifier (P2) & Spot Challenge Engine
+ * SambungJaga AI — Evidence-Grade Verifier (P2 Innovation) & Spot Challenge Engine
+ *
+ * @module services/evidenceVerifier
+ * @description Validates E0–E3 evidence submissions and triggers random spot challenge audits.
  */
 
 import { EVIDENCE_GRADE } from '../types/architecture';
+import { validateEvidencePayload } from '../utils/validators';
 
+/**
+ * Verifies submitted caregiver evidence against required obligation evidence grade.
+ *
+ * @param {string} requiredGrade - Required evidence grade (E0, E1, E2, E3).
+ * @param {string} submittedGrade - Submitted evidence grade.
+ * @param {Object} payload - Evidence payload (photo_hash, qr_code, second_person_name, etc.).
+ * @returns {{ success: boolean, reason?: string, message?: string }} Verification result.
+ */
 export function verifyEvidenceSubmission(requiredGrade, submittedGrade, payload) {
-  const gradesRank = { [EVIDENCE_GRADE.E0]: 0, [EVIDENCE_GRADE.E1]: 1, [EVIDENCE_GRADE.E2]: 2, [EVIDENCE_GRADE.E3]: 3 };
+  const validation = validateEvidencePayload(requiredGrade, submittedGrade, payload);
 
-  const reqRank = gradesRank[requiredGrade] ?? 1;
-  const subRank = gradesRank[submittedGrade] ?? 0;
-
-  if (subRank < reqRank) {
+  if (!validation.valid) {
     return {
       success: false,
-      reason: `Tingkat bukti (${submittedGrade}) tidak mencukupi untuk kewajiban ini yang membutuhkan (${requiredGrade}). Penutupan ditolak oleh Evidence-Grade Verifier.`
-    };
-  }
-
-  if (submittedGrade === EVIDENCE_GRADE.E1 && !payload?.photo_hash && !payload?.qr_code) {
-    return {
-      success: false,
-      reason: 'Bukti E1 wajib melampirkan foto tanpa wajah atau QR Hash lokasi/peralatan.'
-    };
-  }
-
-  if (submittedGrade === EVIDENCE_GRADE.E2 && !payload?.second_person_name) {
-    return {
-      success: false,
-      reason: 'Bukti E2 wajib verifikasi orang kedua (Dual Signoff).'
+      reason: validation.errorReason
     };
   }
 
   return {
     success: true,
-    message: `Bukti ${submittedGrade} terverifikasi sah.`
+    message: `Bukti ${submittedGrade} terverifikasi sah oleh Evidence-Grade Verifier (P2).`
   };
 }
 
+/**
+ * Triggers a random spot challenge audit for verified closures.
+ *
+ * @param {Object} evidenceSubmission - Verified evidence submission object.
+ * @returns {Object|null} Spot challenge object or null if not triggered.
+ */
 export function generateRandomSpotChallenge(evidenceSubmission) {
-  // 30% random chance or if E0 claim is submitted for higher priority
+  if (!evidenceSubmission) return null;
+
+  // 35% probability for random audit sampling
   const shouldChallenge = Math.random() < 0.35;
   if (!shouldChallenge) return null;
 
