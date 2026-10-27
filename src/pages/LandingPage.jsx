@@ -109,13 +109,13 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-sky-50/60 via-blue-50/40 to-sky-100/50 p-6 sm:p-10 border border-sky-100 shadow-xl shadow-sky-100/50">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
 
-          {/* Left Hero Text Column (6 Cols) */}
-          <div className="lg:col-span-6 space-y-6 text-left">
+          {/* Left Hero Text Column (5 Cols) */}
+          <div className="lg:col-span-5 space-y-6 text-left">
             <h1 className="text-3xl sm:text-5xl font-black text-slate-900 leading-tight tracking-tight">
               Teknologi AI untuk Perawatan Lansia yang Lebih <span className="text-sky-600">Terhubung dan Terpercaya</span>
             </h1>
 
-            <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal max-w-xl">
+            <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
               SambungJaga membantu fasilitas perawatan lansia mengelola kewajiban, memverifikasi tugas, dan memastikan setiap tindakan tercatat dengan aman, transparan, dan dapat diaudit.
             </p>
 
@@ -142,8 +142,8 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
               <div className="flex items-center space-x-2 bg-white/80 p-2.5 rounded-xl border border-sky-100 shadow-2xs">
                 <Bot className="w-4 h-4 text-emerald-600 shrink-0" />
                 <div>
-                  <div className="font-bold text-slate-900 text-[11px]">AI Agent Orchestration</div>
-                  <div className="text-[10px] text-slate-500">Dioptimalkan AI Kernel</div>
+                  <div className="font-bold text-slate-900 text-[11px]">AI Orchestration</div>
+                  <div className="text-[10px] text-slate-500">AI Kernel</div>
                 </div>
               </div>
 
@@ -151,7 +151,7 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
                 <ShieldCheck className="w-4 h-4 text-sky-600 shrink-0" />
                 <div>
                   <div className="font-bold text-slate-900 text-[11px]">Keamanan Data</div>
-                  <div className="text-[10px] text-slate-500">Enkripsi & UU PDP</div>
+                  <div className="text-[10px] text-slate-500">UU PDP</div>
                 </div>
               </div>
 
@@ -159,7 +159,7 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
                 <Users className="w-4 h-4 text-purple-600 shrink-0" />
                 <div>
                   <div className="font-bold text-slate-900 text-[11px]">Multi-Peran</div>
-                  <div className="text-[10px] text-slate-500">Pengasuh, Supervisor, Keluarga</div>
+                  <div className="text-[10px] text-slate-500">Pengasuh & Wali</div>
                 </div>
               </div>
 
@@ -167,24 +167,24 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
                 <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
                 <div>
                   <div className="font-bold text-slate-900 text-[11px]">Terpercaya</div>
-                  <div className="text-[10px] text-slate-500">Untuk Masa Depan</div>
+                  <div className="text-[10px] text-slate-500">Superagent</div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Right Hero Column: Orangtua.jpeg WIDER Photo Container (6 Cols) */}
-          <div className="lg:col-span-6 relative flex justify-center w-full">
-            <div className="relative rounded-3xl overflow-hidden border-4 border-white shadow-2xl shadow-sky-900/10 bg-white max-w-xl w-full">
+          {/* Right Hero Column: Orangtua.jpeg ULTRA-WIDE Photo Container (7 Cols) */}
+          <div className="lg:col-span-7 relative flex justify-center w-full">
+            <div className="relative rounded-3xl overflow-hidden border-4 border-white shadow-2xl shadow-sky-900/10 bg-white w-full">
               <img
                 src="/Orangtua.jpeg"
                 onError={(e) => { e.target.src = '/elderly-care.svg'; }}
                 alt="Perawatan Lansia SambungJaga AI"
-                className="w-full h-[420px] sm:h-[480px] lg:h-[500px] object-cover rounded-2xl shadow-inner"
+                className="w-full h-[450px] sm:h-[500px] lg:h-[560px] object-cover rounded-2xl shadow-inner"
               />
 
               {/* Floating Overlay Badge 1: Top Right AI Chat Bubble */}
-              <div className="absolute top-5 right-5 bg-white/95 backdrop-blur-md p-3.5 rounded-2xl shadow-xl border border-slate-200/80 max-w-[240px] text-left">
+              <div className="absolute top-5 right-5 bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-slate-200/80 max-w-[260px] text-left">
                 <div className="flex items-center space-x-1.5 text-xs font-bold text-sky-600 mb-1">
                   <Bot className="w-4 h-4" />
                   <span>AI Agent</span>
@@ -195,7 +195,7 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
               </div>
 
               {/* Floating Overlay Badge 2: Middle Right Patient Condition */}
-              <div className="absolute top-1/2 right-5 transform -translate-y-1/2 bg-white/95 backdrop-blur-md px-3.5 py-2.5 rounded-2xl shadow-lg border border-slate-200/80 flex items-center space-x-2.5">
+              <div className="absolute top-1/2 right-5 transform -translate-y-1/2 bg-white/95 backdrop-blur-md px-4 py-3 rounded-2xl shadow-lg border border-slate-200/80 flex items-center space-x-3">
                 <div className="p-2 rounded-full bg-rose-100 text-rose-600">
                   <Heart className="w-4 h-4 fill-rose-600" />
                 </div>
@@ -206,7 +206,7 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
               </div>
 
               {/* Floating Overlay Badge 3: Bottom Right 3D Bot Mascot */}
-              <div className="absolute bottom-5 right-5 bg-gradient-to-br from-sky-500 to-blue-600 text-white p-3 rounded-2xl shadow-xl flex items-center space-x-2">
+              <div className="absolute bottom-5 right-5 bg-gradient-to-br from-sky-500 to-blue-600 text-white p-3.5 rounded-2xl shadow-xl flex items-center space-x-2">
                 <Bot className="w-5 h-5 text-sky-200" />
                 <span className="text-xs font-bold">Superagent AI</span>
               </div>
