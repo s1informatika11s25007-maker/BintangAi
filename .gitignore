@@ -7,6 +7,9 @@ modellist.md
 .env.*
 *.env
 
+# Supabase CLI temp files
+supabase/.temp/
+
 # Build & cache artifacts
 .vite
 dist
