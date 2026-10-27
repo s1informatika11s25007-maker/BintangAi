@@ -1,5 +1,6 @@
-# Architecture JSON specs
+# Architecture & Model specs
 SambungJaga_AI_Final_Architecture.json
+modellist.md
 
 # Secrets & Environment variables
 .env
