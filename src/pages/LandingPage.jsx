@@ -173,31 +173,31 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
             </div>
           </div>
 
-          {/* Right Hero Column: Orangtua.jpeg Photo + Overlay Floating AI Chat Bubbles (5 Cols) */}
+          {/* Right Hero Column: Orangtua.jpeg Elongated Portrait Photo (5 Cols) */}
           <div className="lg:col-span-5 relative flex justify-center">
             <div className="relative rounded-3xl overflow-hidden border-4 border-white shadow-2xl shadow-sky-900/10 bg-white max-w-md w-full">
               <img
                 src="/Orangtua.jpeg"
                 onError={(e) => { e.target.src = '/elderly-care.svg'; }}
                 alt="Perawatan Lansia SambungJaga AI"
-                className="w-full h-80 sm:h-96 max-h-[380px] object-cover rounded-2xl shadow-inner"
+                className="w-full h-[450px] sm:h-[500px] lg:h-[520px] object-cover rounded-2xl shadow-inner aspect-[3/4]"
               />
 
               {/* Floating Overlay Badge 1: Top Right AI Chat Bubble */}
-              <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-slate-200/80 max-w-[210px] text-left">
+              <div className="absolute top-5 right-5 bg-white/95 backdrop-blur-md p-3.5 rounded-2xl shadow-xl border border-slate-200/80 max-w-[220px] text-left">
                 <div className="flex items-center space-x-1.5 text-xs font-bold text-sky-600 mb-1">
                   <Bot className="w-4 h-4" />
                   <span>AI Agent</span>
                 </div>
-                <p className="text-[11px] text-slate-700 font-medium leading-tight">
+                <p className="text-[11px] text-slate-700 font-semibold leading-tight">
                   Tugas harian telah diselesaikan dan bukti telah diverifikasi.
                 </p>
               </div>
 
               {/* Floating Overlay Badge 2: Middle Right Patient Condition */}
-              <div className="absolute top-1/2 right-4 transform -translate-y-1/2 bg-white/95 backdrop-blur-md px-3 py-2 rounded-2xl shadow-lg border border-slate-200/80 flex items-center space-x-2">
-                <div className="p-1.5 rounded-full bg-rose-100 text-rose-600">
-                  <Heart className="w-3.5 h-3.5 fill-rose-600" />
+              <div className="absolute top-1/2 right-5 transform -translate-y-1/2 bg-white/95 backdrop-blur-md px-3.5 py-2.5 rounded-2xl shadow-lg border border-slate-200/80 flex items-center space-x-2.5">
+                <div className="p-2 rounded-full bg-rose-100 text-rose-600">
+                  <Heart className="w-4 h-4 fill-rose-600" />
                 </div>
                 <div>
                   <span className="text-[10px] text-slate-500 font-bold block">Kondisi Lansia</span>
@@ -206,7 +206,7 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
               </div>
 
               {/* Floating Overlay Badge 3: Bottom Right 3D Bot Mascot */}
-              <div className="absolute bottom-4 right-4 bg-gradient-to-br from-sky-500 to-blue-600 text-white p-2.5 rounded-2xl shadow-xl flex items-center space-x-2">
+              <div className="absolute bottom-5 right-5 bg-gradient-to-br from-sky-500 to-blue-600 text-white p-3 rounded-2xl shadow-xl flex items-center space-x-2">
                 <Bot className="w-5 h-5 text-sky-200" />
                 <span className="text-xs font-bold">Superagent AI</span>
               </div>
