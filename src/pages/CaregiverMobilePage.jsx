@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Smartphone, Mic, Plus, ShieldCheck, WifiOff, Clock } from 'lucide-react';
+import { Smartphone, Mic, Plus, WifiOff, Clock } from 'lucide-react';
 import ObligationGraphCard from '../components/dashboard/ObligationGraphCard';
 import CaregiverCaptureModal from '../components/pwa/CaregiverCaptureModal';
 import EvidenceUploadModal from '../components/pwa/EvidenceUploadModal';
@@ -20,13 +20,13 @@ export default function CaregiverMobilePage({
   const caregiverObs = obligations.filter(o => o.assigned_caregiver_id === 'staff-01' || o.assigned_caregiver_id === 'staff-02');
 
   return (
-    <div className="max-w-md mx-auto space-y-4 pb-12 pt-2 px-2 sm:px-0">
+    <div className="w-full space-y-6">
       {/* Mobile PWA Card Container Simulated Phone View */}
-      <div className="bg-white border border-slate-200/90 rounded-3xl p-5 shadow-2xl shadow-slate-200/60 space-y-4">
+      <div className="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-2xl shadow-slate-200/60 space-y-5 w-full">
 
         {/* Header PWA */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-          <div className="flex items-center space-x-2.5">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100 flex-wrap gap-2">
+          <div className="flex items-center space-x-3">
             <div className="p-2.5 bg-sky-50 text-sky-600 rounded-2xl border border-sky-200">
               <Smartphone className="w-5 h-5" />
             </div>
@@ -43,7 +43,7 @@ export default function CaregiverMobilePage({
 
         {/* P5 Offline Ledger Status Notice */}
         {isOffline && (
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 text-xs text-amber-900 flex items-start space-x-2">
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3.5 text-xs text-amber-900 flex items-start space-x-2.5">
             <WifiOff className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
             <div>
               <p className="font-bold">Mode Offline-First Aktif (P5 Ledger)</p>
@@ -53,18 +53,18 @@ export default function CaregiverMobilePage({
         )}
 
         {/* Quick Action Buttons */}
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
             onClick={() => setIsCaptureOpen(true)}
-            className="bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white p-3 rounded-2xl font-bold text-xs flex items-center justify-center space-x-2 shadow-lg shadow-sky-500/20 transition"
+            className="bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white p-3.5 rounded-2xl font-bold text-xs flex items-center justify-center space-x-2 shadow-lg shadow-sky-500/20 transition"
           >
             <Mic className="w-4 h-4 animate-bounce text-sky-100" />
-            <span>Rekam Suara / Teks</span>
+            <span>Rekam Suara / Teks Laporan</span>
           </button>
 
           <button
             onClick={() => setIsCaptureOpen(true)}
-            className="bg-slate-100 hover:bg-slate-200 text-slate-800 p-3 rounded-2xl font-semibold text-xs flex items-center justify-center space-x-1.5 border border-slate-200 transition"
+            className="bg-slate-100 hover:bg-slate-200 text-slate-800 p-3.5 rounded-2xl font-semibold text-xs flex items-center justify-center space-x-1.5 border border-slate-200 transition"
           >
             <Plus className="w-4 h-4 text-emerald-600" />
             <span>Klarifikasi Minimal</span>
@@ -72,7 +72,7 @@ export default function CaregiverMobilePage({
         </div>
 
         {/* My Active Obligations Section */}
-        <div className="space-y-3">
+        <div className="space-y-3 pt-2">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center">
               <Clock className="w-3.5 h-3.5 mr-1.5 text-sky-600" />
@@ -81,7 +81,7 @@ export default function CaregiverMobilePage({
             <span className="text-[10px] text-slate-500 font-mono">Bitemporal Ledger</span>
           </div>
 
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {caregiverObs.map(ob => (
               <ObligationGraphCard
                 key={ob.id}

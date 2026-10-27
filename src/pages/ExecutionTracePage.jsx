@@ -6,7 +6,7 @@ export default function ExecutionTracePage({ obligations, onOpenTraceModal }) {
   const [selectedOb, setSelectedOb] = useState(obligations[0] || null);
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="w-full space-y-6">
       <div>
         <h2 className="text-base font-bold text-slate-900 flex items-center space-x-2">
           <GitPullRequest className="w-5 h-5 text-sky-600" />
@@ -17,7 +17,7 @@ export default function ExecutionTracePage({ obligations, onOpenTraceModal }) {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
         {obligations.map(ob => (
           <div
             key={ob.id}
@@ -36,7 +36,7 @@ export default function ExecutionTracePage({ obligations, onOpenTraceModal }) {
       </div>
 
       {selectedOb && (
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xl shadow-slate-200/50 space-y-4">
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xl shadow-slate-200/50 space-y-4 w-full">
           <h3 className="text-sm font-bold text-slate-900 flex items-center justify-between">
             <span>Detail Trace Misi: {selectedOb.title}</span>
             <span className="text-xs font-mono font-bold text-amber-700">Rule: {selectedOb.rule_version_id}</span>

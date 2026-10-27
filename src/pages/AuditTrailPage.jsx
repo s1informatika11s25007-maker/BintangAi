@@ -26,7 +26,7 @@ export default function AuditTrailPage({ auditTrail }) {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="w-full space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-base font-bold text-slate-900 flex items-center space-x-2">
@@ -48,7 +48,7 @@ export default function AuditTrailPage({ auditTrail }) {
       </div>
 
       {/* Integrity Banner */}
-      <div className={`p-4 rounded-2xl border flex items-center justify-between text-xs shadow-sm ${
+      <div className={`p-4 rounded-2xl border flex items-center justify-between text-xs shadow-sm w-full ${
         integrity.valid
           ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
           : 'bg-rose-50 border-rose-300 text-rose-900'
@@ -73,8 +73,8 @@ export default function AuditTrailPage({ auditTrail }) {
       )}
 
       {/* Audit Log Table */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xl shadow-slate-200/50">
-        <div className="overflow-x-auto">
+      <div className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xl shadow-slate-200/50 w-full">
+        <div className="overflow-x-auto w-full">
           <table className="w-full text-left text-xs text-slate-800">
             <thead className="bg-slate-100 text-slate-600 uppercase text-[10px] font-mono font-bold border-b border-slate-200">
               <tr>
@@ -97,7 +97,7 @@ export default function AuditTrailPage({ auditTrail }) {
                   </td>
                   <td className="px-4 py-3 font-bold text-slate-900">{entry.action_name}</td>
                   <td className="px-4 py-3 text-slate-600">{entry.actor_name}</td>
-                  <td className="px-4 py-3 font-mono text-[10px] text-slate-500 truncate max-w-[120px]">
+                  <td className="px-4 py-3 font-mono text-[10px] text-slate-500 truncate max-w-[200px]">
                     {entry.entry_hash}
                   </td>
                   <td className="px-4 py-3 text-slate-600 whitespace-nowrap">

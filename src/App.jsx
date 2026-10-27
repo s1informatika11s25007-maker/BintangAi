@@ -66,18 +66,18 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50/30 to-slate-100 text-slate-800 font-sans selection:bg-sky-500 selection:text-white">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50/30 to-slate-100 text-slate-800 font-sans selection:bg-sky-500 selection:text-white w-full">
       {/* 1. PRE-LOGIN STATE */}
       {!isLoggedIn ? (
         <>
           {authState === 'landing' && (
-            <div className="min-h-screen flex flex-col justify-between">
+            <div className="min-h-screen flex flex-col justify-between w-full">
               <PublicHeader
                 onGoToLanding={() => setAuthState('landing')}
                 onGoToLogin={() => setAuthState('login')}
                 onGoToRegister={() => setAuthState('register')}
               />
-              <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
+              <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-6">
                 <LandingPage
                   onGoToLogin={() => setAuthState('login')}
                   onGoToRegister={() => setAuthState('register')}
@@ -105,8 +105,8 @@ export default function App() {
           )}
         </>
       ) : (
-        /* 2. POST-LOGIN STATE (Sidebar Layout Workspace) */
-        <div className="flex flex-col md:flex-row min-h-screen">
+        /* 2. POST-LOGIN STATE (Full Width Sidebar Workspace) */
+        <div className="flex flex-col md:flex-row min-h-screen w-full">
           {/* Left Sidebar Navigation */}
           <Sidebar
             activeTab={activeTab}
@@ -120,9 +120,9 @@ export default function App() {
             onLogout={handleLogout}
           />
 
-          {/* Right Main Content Workspace */}
-          <div className="flex-1 flex flex-col justify-between min-w-0">
-            <main className="p-4 sm:p-6 space-y-6 max-w-7xl w-full mx-auto">
+          {/* Right Main Content Workspace (Full-Width Edge-to-Edge) */}
+          <div className="flex-1 flex flex-col justify-between min-w-0 w-full">
+            <main className="p-4 sm:p-6 lg:p-8 space-y-6 w-full min-w-0">
               {/* Role-Specific Custom Workspace Header Banner */}
               <RoleWorkspaceHeader
                 activeRole={activeRole}

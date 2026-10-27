@@ -46,7 +46,7 @@ export default function SimulatorLabPage({ staff, obligations }) {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="w-full space-y-6">
       <div>
         <h2 className="text-base font-bold text-slate-900 flex items-center space-x-2">
           <Cpu className="w-5 h-5 text-sky-600" />
@@ -58,7 +58,7 @@ export default function SimulatorLabPage({ staff, obligations }) {
       </div>
 
       {/* Grid of 3 Simulator Modules */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
         {/* Module 1: P4 Failure-Set Search Simulator */}
         <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xl shadow-slate-200/50 space-y-4">
           <div className="flex items-center justify-between">
@@ -119,7 +119,7 @@ export default function SimulatorLabPage({ staff, obligations }) {
       </div>
 
       {/* Module 3: Adversarial Lab & Prompt Injection Tester */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xl shadow-slate-200/50 space-y-4">
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xl shadow-slate-200/50 space-y-4 w-full">
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-bold text-slate-900 flex items-center">
             <Terminal className="w-4 h-4 mr-1.5 text-rose-600" />
