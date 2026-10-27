@@ -8,8 +8,7 @@ import {
   ArrowRight,
   CheckCircle2,
   ArrowLeft,
-  Sparkles,
-  Lock
+  Sparkles
 } from 'lucide-react';
 
 export default function RegisterPage({ onRegisterSuccess, onGoToLogin, onGoToLanding }) {
@@ -29,12 +28,9 @@ export default function RegisterPage({ onRegisterSuccess, onGoToLogin, onGoToLan
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-slate-100 font-sans">
-      {/* LEFT COLUMN: Far Left Branding & Registration Perks */}
-      <div className="w-full lg:w-7/12 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white p-8 lg:p-14 flex flex-col justify-between relative overflow-hidden">
-        {/* Ambient Lights */}
-        <div className="absolute top-0 right-0 -mt-16 -mr-16 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="absolute bottom-0 left-0 -mb-16 -ml-16 w-96 h-96 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-gradient-to-br from-slate-50 via-sky-50/30 to-slate-100 font-sans text-slate-900">
+      {/* LEFT COLUMN: Landing Page Light Theme Matching Banner */}
+      <div className="w-full lg:w-7/12 bg-gradient-to-br from-sky-50/80 via-indigo-50/50 to-sky-100/60 border-r border-sky-200/90 text-slate-900 p-8 lg:p-14 flex flex-col justify-between relative overflow-hidden shadow-sm">
 
         {/* Brand Header */}
         <div className="relative z-10 flex items-center justify-between">
@@ -42,66 +38,68 @@ export default function RegisterPage({ onRegisterSuccess, onGoToLogin, onGoToLan
             onClick={onGoToLanding}
             className="flex items-center space-x-3 cursor-pointer group"
           >
-            <div className="p-2.5 bg-gradient-to-br from-sky-500 to-blue-600 rounded-2xl shadow-lg shadow-sky-500/20 group-hover:scale-105 transition">
-              <Shield className="w-7 h-7 text-white" />
+            <div className="p-2.5 bg-gradient-to-br from-sky-500 to-blue-600 rounded-2xl shadow-lg shadow-sky-500/20 group-hover:scale-105 transition text-white">
+              <Shield className="w-7 h-7" />
             </div>
             <div>
-              <h1 className="text-xl font-black tracking-tight text-white">SambungJaga AI</h1>
-              <p className="text-xs text-purple-200 font-medium">Care Superagent Architecture</p>
+              <h1 className="text-xl font-black tracking-tight text-slate-900">SambungJaga AI</h1>
+              <p className="text-xs text-indigo-700 font-bold">Care Superagent Architecture</p>
             </div>
           </div>
 
           <button
             onClick={onGoToLanding}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700 transition"
+            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 hover:bg-slate-50 border border-slate-300 shadow-2xs transition"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
+            <ArrowLeft className="w-3.5 h-3.5 text-sky-600" />
             <span>Kembali ke Landing</span>
           </button>
         </div>
 
         {/* Value Content */}
         <div className="relative z-10 my-10 space-y-6">
-          <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-400/30 text-xs font-bold">
-            <Sparkles className="w-4 h-4 text-purple-300 animate-pulse" />
+          <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-300 text-xs font-bold">
+            <Sparkles className="w-4 h-4 text-indigo-600 animate-pulse" />
             <span>Registrasi Staf & Wali Pasien</span>
           </div>
 
-          <h2 className="text-3xl lg:text-4xl font-black text-white leading-tight">
+          <h2 className="text-3xl lg:text-4xl font-black text-slate-900 leading-tight">
             Bergabung dalam Jaringan <br />
-            <span className="bg-gradient-to-r from-purple-300 via-pink-300 to-sky-300 bg-clip-text text-transparent">
+            <span className="text-sky-600">
               Perawatan Lansia Terverifikasi
             </span>
           </h2>
 
           <div className="space-y-3 pt-2">
-            <div className="flex items-start space-x-3 bg-slate-800/50 p-3.5 rounded-2xl border border-slate-700/80">
-              <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+            <div className="flex items-start space-x-3 bg-white/90 p-3.5 rounded-2xl border border-sky-200/80 shadow-xs">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-xs font-bold text-white">Otorisasi Berbasis Peran (RBAC)</h4>
-                <p className="text-[11px] text-slate-300">Hak akses terintegrasi sesuai skema Supabase PostgreSQL RLS.</p>
+                <h4 className="text-xs font-bold text-slate-900">Otorisasi Berbasis Peran (RBAC)</h4>
+                <p className="text-[11px] text-slate-600 font-medium">Hak akses terintegrasi sesuai skema PostgreSQL RLS.</p>
               </div>
             </div>
 
-            <div className="flex items-start space-x-3 bg-slate-800/50 p-3.5 rounded-2xl border border-slate-700/80">
-              <CheckCircle2 className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
+            <div className="flex items-start space-x-3 bg-white/90 p-3.5 rounded-2xl border border-sky-200/80 shadow-xs">
+              <CheckCircle2 className="w-5 h-5 text-sky-600 shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-xs font-bold text-white">Verifikasi Mobile PWA Offline Ledger</h4>
-                <p className="text-[11px] text-slate-300">Atestasi perangkat anti-backdate untuk pengasuh di lapangan.</p>
+                <h4 className="text-xs font-bold text-slate-900">Verifikasi Mobile PWA Offline Ledger</h4>
+                <p className="text-[11px] text-slate-600 font-medium">Atestasi perangkat anti-backdate untuk pengasuh di lapangan.</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="relative z-10 pt-6 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+        <div className="relative z-10 pt-6 border-t border-sky-200/80 flex items-center justify-between text-xs text-slate-600 font-medium">
           <span>SambungJaga AI © 2026</span>
-          <span className="font-mono text-[11px]">Kepatuhan UU PDP Active</span>
+          <span className="font-mono text-[11px] bg-white px-2 py-1 rounded border border-slate-300 font-bold">
+            Kepatuhan UU PDP Active
+          </span>
         </div>
       </div>
 
-      {/* RIGHT COLUMN: Far Right Registration Form */}
-      <div className="w-full lg:w-5/12 bg-white p-8 lg:p-14 flex flex-col justify-center space-y-6 shadow-2xl">
+      {/* RIGHT COLUMN: Registration Form */}
+      <div className="w-full lg:w-5/12 bg-white p-8 lg:p-14 flex flex-col justify-center space-y-6 shadow-xl">
         <div className="space-y-2">
           <h2 className="text-2xl font-black text-slate-900 tracking-tight">Pendaftaran Akun Baru</h2>
           <p className="text-xs text-slate-500 font-medium">
@@ -190,7 +188,7 @@ export default function RegisterPage({ onRegisterSuccess, onGoToLogin, onGoToLan
 
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-700 hover:to-blue-800 text-white font-bold text-sm py-3.5 rounded-xl shadow-xl shadow-sky-600/20 transition flex items-center justify-center space-x-2"
+              className="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold text-sm py-3.5 rounded-xl shadow-lg shadow-sky-600/20 transition flex items-center justify-center space-x-2"
             >
               <span>Daftarkan Akun Baru</span>
               <ArrowRight className="w-4 h-4" />
