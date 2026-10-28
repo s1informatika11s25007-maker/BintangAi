@@ -7,13 +7,16 @@ import {
   UserCheck,
   CheckCircle2,
   ArrowLeft,
-  ShieldCheck
+  ShieldCheck,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLanding }) {
   const [selectedRole, setSelectedRole] = useState('supervisor');
   const [email, setEmail] = useState('supervisor.ratna@sambungjaga.id');
   const [password, setPassword] = useState('••••••••••••');
+  const [showPassword, setShowPassword] = useState(false);
 
   const demoAccounts = {
     supervisor: 'supervisor.ratna@sambungjaga.id',
@@ -101,7 +104,7 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
         </div>
       </div>
 
-      {/* RIGHT COLUMN: Ultra-Clean Form with Dropdown Demo Select & Entrance Animation */}
+      {/* RIGHT COLUMN: Ultra-Clean Form with Show/Hide Password Feature & Entrance Animation */}
       <div className="w-full lg:w-7/12 bg-white p-8 sm:p-12 lg:p-16 flex flex-col justify-center space-y-6 shadow-xl animate-fade-in">
 
         {/* Header - Full Width */}
@@ -147,13 +150,27 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
             <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center">
               <Lock className="w-4 h-4 mr-1.5 text-sky-600" /> Kata Sandi
             </label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3.5 text-xs sm:text-sm text-slate-900 font-semibold outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition shadow-2xs"
-            />
+            <div className="relative w-full">
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3.5 pr-11 text-xs sm:text-sm text-slate-900 font-semibold outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition shadow-2xs"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-sky-600 transition duration-200 transform active:scale-90 focus:outline-none"
+                title={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+              >
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4 transition-transform duration-200" />
+                ) : (
+                  <Eye className="w-4 h-4 transition-transform duration-200" />
+                )}
+              </button>
+            </div>
           </div>
 
           <button
