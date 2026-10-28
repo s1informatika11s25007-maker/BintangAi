@@ -8,7 +8,7 @@ import {
   ArrowRight,
   CheckCircle2,
   ArrowLeft,
-  Sparkles
+  ShieldCheck
 } from 'lucide-react';
 
 export default function RegisterPage({ onRegisterSuccess, onGoToLogin, onGoToLanding }) {
@@ -61,7 +61,7 @@ export default function RegisterPage({ onRegisterSuccess, onGoToLogin, onGoToLan
         {/* Value Content */}
         <div className="relative z-10 my-10 space-y-6">
           <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-300 text-xs font-bold">
-            <Sparkles className="w-4 h-4 text-indigo-600 animate-pulse" />
+            <ShieldCheck className="w-4 h-4 text-indigo-600" />
             <span>Registrasi Staf & Wali Pasien</span>
           </div>
 

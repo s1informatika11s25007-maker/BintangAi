@@ -5,10 +5,10 @@ import {
   Mail,
   ArrowRight,
   UserCheck,
-  Sparkles,
   CheckCircle2,
   Activity,
-  ArrowLeft
+  ArrowLeft,
+  ShieldCheck
 } from 'lucide-react';
 import { ACTORS, CORE_INNOVATIONS } from '../types/architecture';
 
@@ -61,7 +61,7 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
         {/* Hero Value Showcase */}
         <div className="relative z-10 my-10 space-y-6">
           <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-sky-100 text-sky-800 border border-sky-300 text-xs font-bold">
-            <Sparkles className="w-4 h-4 text-sky-600 animate-pulse" />
+            <ShieldCheck className="w-4 h-4 text-sky-600" />
             <span>Obligation Kernel Versi Final 2026</span>
           </div>
 
@@ -113,7 +113,7 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
         {/* Quick Demo Login Preset Buttons */}
         <div className="space-y-2 bg-slate-50 p-4 rounded-2xl border border-slate-200">
           <span className="text-xs font-bold text-slate-700 flex items-center">
-            <Sparkles className="w-4 h-4 mr-1.5 text-sky-600" /> Demo Instant Login (Sekali Klik):
+            <CheckCircle2 className="w-4 h-4 mr-1.5 text-sky-600" /> Demo Instant Login (Sekali Klik):
           </span>
           <div className="grid grid-cols-2 gap-2">
             <button
