@@ -57,16 +57,20 @@ export function useSambungJaga() {
   };
 
   const logoutUserAccount = () => {
+    setIsLoading(true); // Trigger loading screen for cache clearing
     localStorage.removeItem('currentUser');
     localStorage.removeItem('activeRole');
     localStorage.setItem('isLoggedIn', 'false');
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 500); // 500ms delay to simulate cache clearing before navigating away
   };
 
   // Initial State Setup with Supabase only
   useEffect(() => {
     // Data loading from Supabase (Blocking for initial load)
     async function loadSupabaseData() {
-      setIsLoading(true);
+      // Menghapus trigger loading saat memuat data agar terasa cepat dan realtime
       try {
         const { data: resData, error: e1 } = await supabase.from('residents').select('*');
         if (!e1 && resData?.length > 0) setResidents(resData);

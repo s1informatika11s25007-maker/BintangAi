@@ -25,13 +25,11 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('••••••••••••');
   const [showPassword, setShowPassword] = useState(false);
-  const [isFetchingAccounts, setIsFetchingAccounts] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
     async function loadAccounts() {
-      setIsFetchingAccounts(true);
       try {
         const accounts = await fetchDemoAccountsPerRole();
         if (isMounted) {
@@ -45,7 +43,7 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
           }
         }
       } finally {
-        if (isMounted) setIsFetchingAccounts(false);
+        // no-op
       }
     }
     loadAccounts();
@@ -150,16 +148,10 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
           </p>
         </div>
 
-        {isFetchingAccounts ? (
-          <div className="flex flex-col items-center justify-center py-12 space-y-4">
-            <Loader2 className="w-10 h-10 text-sky-500 animate-spin" />
-            <p className="text-xs text-slate-500 font-bold animate-pulse">Memuat Data Staf dari Database...</p>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-5 pt-2 text-left w-full">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center">
-                <UserCheck className="w-4 h-4 mr-1.5 text-sky-600" /> Pilih Akun & Peran Pengguna
+        <form onSubmit={handleSubmit} className="space-y-5 pt-2 text-left w-full">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center">
+              <UserCheck className="w-4 h-4 mr-1.5 text-sky-600" /> Pilih Akun & Peran Pengguna
             </label>
             <select
               value={selectedAccountKey}
@@ -235,7 +227,6 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
               )}
             </button>
           </form>
-        )}
 
         <div className="pt-3 text-center text-xs text-slate-600 border-t border-slate-100 w-full">
           Belum punya akun?{' '}
