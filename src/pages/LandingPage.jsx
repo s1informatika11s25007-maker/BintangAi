@@ -104,7 +104,7 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
 
   return (
     <div className="space-y-16 py-4 w-full">
-      {/* HERO SECTION MATCHING REFERENCE IMAGE WITH HEADLINE TEXT GRADIENT */}
+      {/* HERO SECTION MATCHING REFERENCE IMAGE WITH ELEGANT HEADLINE GRADIENT */}
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-sky-50/60 via-blue-50/40 to-sky-100/50 p-6 sm:p-10 border border-sky-100 shadow-xl shadow-sky-100/50">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
 
@@ -175,14 +175,14 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
             </div>
           </div>
 
-          {/* Right Hero Column: Orangtua.jpeg Photo + Left AI Speech Bubble & Right 3D Robot Mascot with "Kondisi Lansia: Stabil" Speech Bubble */}
+          {/* Right Hero Column: Orangtua.jpeg Photo (Seamless & Frameless) + Speech Bubbles & 3D Robot Mascot */}
           <div className="lg:col-span-7 relative flex justify-center w-full">
-            <div className="relative rounded-3xl overflow-hidden border-4 border-white shadow-2xl shadow-sky-900/10 bg-white w-full">
+            <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-sky-900/15 w-full">
               <img
                 src="/Orangtua.jpeg"
                 onError={(e) => { e.target.src = '/elderly-care.svg'; }}
                 alt="Perawatan Lansia SambungJaga AI"
-                className="w-full h-[450px] sm:h-[500px] lg:h-[560px] object-cover rounded-2xl shadow-inner"
+                className="w-full h-[450px] sm:h-[500px] lg:h-[560px] object-cover rounded-3xl transform hover:scale-[1.01] transition duration-500"
               />
 
               {/* OVERLAY BADGE LEFT: AI Agent Chat Bubble pointing to elderly woman on left */}
