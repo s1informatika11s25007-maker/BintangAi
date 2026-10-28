@@ -99,7 +99,7 @@ export default function Sidebar({
           <div className="p-1.5 bg-sky-600 rounded-lg text-white">
             <Heart className="w-4 h-4 fill-white" />
           </div>
-          <span className="text-base font-black text-white">Sambung<span className="text-sky-400">.Jaga</span></span>
+          <span className="text-base font-black text-white">Sambung<span className="text-sky-400">Jaga</span></span>
         </div>
 
         <button
@@ -130,7 +130,7 @@ export default function Sidebar({
               <Heart className="w-5 h-5 fill-white" />
             </div>
             <span className="text-lg font-black text-white tracking-tight">
-              Sambung<span className="text-sky-400">.Jaga</span>
+              Sambung<span className="text-sky-400">Jaga</span>
             </span>
           </div>
 

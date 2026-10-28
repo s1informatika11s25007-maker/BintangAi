@@ -42,7 +42,7 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
             </div>
             <div>
               <h1 className="text-xl font-black tracking-tight text-slate-900">
-                Sambung<span className="text-sky-600">.Jaga</span>
+                Sambung<span className="text-sky-600">Jaga</span>
               </h1>
               <p className="text-xs text-sky-700 font-bold">Care Superagent Architecture</p>
             </div>
