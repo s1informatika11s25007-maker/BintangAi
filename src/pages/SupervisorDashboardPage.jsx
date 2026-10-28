@@ -129,7 +129,7 @@ export default function SupervisorDashboardPage({
         {/* Right Column (5 Cols): AI Assistant & Kondisi Penghuni Cards */}
         <div className="lg:col-span-5 space-y-6">
 
-          {/* AI Asisten Card matching reference image with 3D Robot Mascot PNG */}
+          {/* AI Asisten Card matching reference image with Larger Static 3D Robot Mascot PNG */}
           <div className="bg-gradient-to-br from-sky-50 via-blue-50/50 to-white rounded-3xl p-6 border border-sky-200/90 shadow-xl shadow-sky-100/50 space-y-4">
             <div className="flex items-center justify-between border-b border-sky-200/80 pb-3">
               <div className="flex items-center space-x-2">
@@ -143,7 +143,7 @@ export default function SupervisorDashboardPage({
               <img
                 src="/Friendly Futuristic Robot Mascot.png"
                 alt="Friendly Futuristic Robot Mascot"
-                className="w-14 h-14 object-contain drop-shadow-md shrink-0 animate-bounce"
+                className="w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-lg shrink-0"
               />
               <p className="text-xs text-slate-700 font-semibold leading-relaxed">
                 Ada <span className="font-bold text-sky-700">2 kewajiban</span> yang mendekati deadline. Klik untuk observasi & verifikasi.
