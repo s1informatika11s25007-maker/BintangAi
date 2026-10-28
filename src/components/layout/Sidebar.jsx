@@ -38,37 +38,27 @@ export default function Sidebar({
     switch (role) {
       case 'caregiver':
         return [
-          { id: 'supervisor_dashboard', label: 'Beranda Care', desc: 'Ringkasan Tugas & Pasien', icon: Home },
-          { id: 'caregiver_pwa', label: 'Tugas Harian', desc: 'Daftar Tugas Pengasuh', icon: CheckSquare, badgeCount: 5 },
-          { id: 'execution_trace', label: 'Observasi Suara', desc: 'STT & Laporan Klinis', icon: Mic },
-          { id: 'handover_contract', label: 'Kewajiban', desc: 'Graf Bitemporal P1', icon: ShieldCheck },
-          { id: 'audit_trail', label: 'Notifikasi', desc: 'Aktivitas & Alert', icon: Bell, badgeCount: 3 },
-          { id: 'rule_library', label: 'Profil Pengasuh', desc: 'Kompetensi & Perizinan', icon: User }
+          { id: 'caregiver_pwa', label: 'Tugas Harian', desc: 'Aksi & Voice STT Capture', icon: CheckSquare, badgeCount: 5 },
+          { id: 'handover_contract', label: 'Serah Terima Shift', desc: 'Kontrak Handover Dua Sisi', icon: FileSignature }
         ];
       case 'supervisor':
         return [
           { id: 'supervisor_dashboard', label: 'Beranda Triage', desc: 'Pengawasan Klinis & A3', icon: Home },
           { id: 'handover_contract', label: 'Serah Terima Shift', desc: 'Kontrak Shift Dua Sisi', icon: FileSignature },
-          { id: 'execution_trace', label: 'Execution Trace', desc: 'Inspeksi Alur AI', icon: GitPullRequest },
-          { id: 'simulator_lab', label: 'Simulator Lab P4', desc: 'Simulasi Failure-Set', icon: Cpu },
-          { id: 'audit_trail', label: 'Notifikasi & Audit', desc: 'Log Aset SHA-256', icon: Bell, badgeCount: 3 },
-          { id: 'rule_library', label: 'Aturan Panti', desc: 'Peraturan & Protokol', icon: BookOpen }
+          { id: 'execution_trace', label: 'Execution Trace', desc: 'Inspeksi Alur Keputusan AI', icon: GitPullRequest },
+          { id: 'rule_library', label: 'Aturan Panti', desc: 'Protokol & Library Aturan', icon: BookOpen },
+          { id: 'audit_trail', label: 'Audit Trail', desc: 'Log Aset SHA-256', icon: ShieldCheck }
         ];
       case 'family':
         return [
-          { id: 'family_portal', label: 'Beranda Wali', desc: 'Kondisi Orang Tua', icon: Home },
-          { id: 'supervisor_dashboard', label: 'Ringkasan Perawatan', desc: 'Laporan Tugas Harian', icon: CheckSquare },
-          { id: 'execution_trace', label: 'Kondisi Kesehatan', desc: 'Catatan Medis Pasien', icon: Heart },
-          { id: 'audit_trail', label: 'Notifikasi Wali', desc: 'Pemberitahuan Keluarga', icon: Bell, badgeCount: 1 },
-          { id: 'rule_library', label: 'Izin PDP Consent', desc: 'Privasi Disclosured', icon: User }
+          { id: 'family_portal', label: 'Beranda Wali', desc: 'Pemantauan Kondisi Pasien', icon: Home }
         ];
-      default: // admin_hr
+      case 'admin_hr':
+      default:
         return [
-          { id: 'supervisor_dashboard', label: 'Beranda Admin', desc: 'Metrik Panti & Staf', icon: Home },
-          { id: 'simulator_lab', label: 'Simulator P4 & HR', desc: 'Cakupan Kompetensi', icon: Cpu },
-          { id: 'rule_library', label: 'Aturan Panti', desc: 'Modifikasi Kebijakan', icon: BookOpen },
-          { id: 'audit_trail', label: 'Notifikasi & Audit', desc: 'Aktivitas Sistem', icon: Bell, badgeCount: 2 },
-          { id: 'family_portal', label: 'Profil Admin', desc: 'Pengaturan Sistem', icon: User }
+          { id: 'simulator_lab', label: 'Simulator Lab P4', desc: 'Analisis Kegagalan & HR', icon: Cpu },
+          { id: 'rule_library', label: 'Aturan Panti', desc: 'Manajemen Kebijakan', icon: BookOpen },
+          { id: 'audit_trail', label: 'Audit Trail', desc: 'Log Aktivitas Sistem', icon: ShieldCheck }
         ];
     }
   };
