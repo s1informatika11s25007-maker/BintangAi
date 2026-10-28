@@ -73,16 +73,6 @@ export default function Sidebar({
 
   const navItems = getNavItemsByRole(activeRole);
 
-  // Dynamic Profile Info per Logged-In Role
-  const roleProfiles = {
-    supervisor: { name: 'Ns. Ratna Sari, M.Kep', roleTitle: 'Supervisor Klinis', avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=120&q=80', status: 'On Duty' },
-    caregiver: { name: 'Suster Dewi Pertiwi, Amd.Kep', roleTitle: 'Pengasuh / Perawat', avatar: 'https://images.unsplash.com/photo-1594824813566-88855ce7890f?auto=format&fit=crop&w=120&q=80', status: 'Shift Pagi' },
-    family: { name: 'Rina Wijaya', roleTitle: 'Wali Ibu Hj. Aminah', avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=120&q=80', status: 'Wali Aktif' },
-    admin_hr: { name: 'Budi Santoso', roleTitle: 'Admin Panti / HR', avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=120&q=80', status: 'Admin' }
-  };
-
-  const currentProfile = roleProfiles[activeRole] || roleProfiles.supervisor;
-
   const handleNavClick = (id) => {
     setActiveTab(id);
     setMobileOpen(false);
@@ -124,10 +114,10 @@ export default function Sidebar({
       }`}>
 
         {/* Top Scrollable Section */}
-        <div className="p-5 space-y-5 overflow-y-auto scrollbar-none flex-1">
+        <div className="p-6 space-y-6 overflow-y-auto scrollbar-none flex-1 flex flex-col justify-start">
 
           {/* Brand Header */}
-          <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
+          <div className="flex items-center justify-between border-b border-slate-800/80 pb-4 shrink-0">
             <div className="flex items-center space-x-2.5">
               <div className="p-2 bg-sky-600 rounded-xl text-white shadow-md shadow-sky-600/30 shrink-0">
                 <Heart className="w-5 h-5 fill-white" />
@@ -148,27 +138,9 @@ export default function Sidebar({
             </button>
           </div>
 
-          {/* Dynamic Active User Profile Card */}
-          <div className="bg-slate-800/60 p-3.5 rounded-2xl border border-slate-700/60 flex items-center space-x-3 shadow-inner">
-            <img
-              src={currentProfile.avatar}
-              alt={currentProfile.name}
-              className="w-10 h-10 rounded-full object-cover border-2 border-sky-500 shadow-md shrink-0"
-            />
-            <div className="min-w-0 flex-1 text-left">
-              <h4 className="text-xs font-bold text-white truncate">{currentProfile.name}</h4>
-              <div className="flex items-center justify-between text-[10px] text-slate-400 mt-0.5">
-                <span className="truncate">{currentProfile.roleTitle}</span>
-                <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30 text-[9px] shrink-0">
-                  {currentProfile.status}
-                </span>
-              </div>
-            </div>
-          </div>
-
           {/* Navigation Menu */}
-          <nav className="space-y-1.5 pt-1">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 block text-left">
+          <nav className="space-y-2 pt-2 flex-1">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 block text-left mb-2">
               Menu Utama
             </span>
             {navItems.map((item) => {
@@ -178,13 +150,13 @@ export default function Sidebar({
                 <button
                   key={item.id}
                   onClick={() => handleNavClick(item.id)}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition duration-200 ${
+                  className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-xs font-bold transition duration-200 ${
                     isActive
                       ? 'bg-sky-600 text-white shadow-lg shadow-sky-600/30 font-black'
                       : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
                   }`}
                 >
-                  <div className="flex items-center space-x-2.5 min-w-0">
+                  <div className="flex items-center space-x-3 min-w-0">
                     <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`} />
                     <span className="truncate">{item.label}</span>
                   </div>
