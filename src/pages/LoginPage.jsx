@@ -6,11 +6,10 @@ import {
   ArrowRight,
   UserCheck,
   CheckCircle2,
-  Activity,
   ArrowLeft,
   ShieldCheck
 } from 'lucide-react';
-import { ACTORS, CORE_INNOVATIONS } from '../types/architecture';
+import { ACTORS } from '../types/architecture';
 
 export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLanding }) {
   const [selectedRole, setSelectedRole] = useState('supervisor');
@@ -29,8 +28,20 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
 
   return (
     <div className="min-h-screen w-full flex flex-col lg:flex-row bg-gradient-to-br from-slate-50 via-sky-50/30 to-slate-100 font-sans text-slate-900 overflow-x-hidden">
-      {/* LEFT COLUMN: Landing Page Light Theme Banner with Tua.webp Photo */}
-      <div className="w-full lg:w-7/12 bg-gradient-to-br from-sky-50/80 via-blue-50/50 to-sky-100/60 border-r border-sky-200/90 text-slate-900 p-8 lg:p-12 flex flex-col justify-between relative overflow-hidden shadow-sm">
+
+      {/* LEFT COLUMN: Full-Height Tua.webp Background Banner with Clean Core Overlay Text */}
+      <div className="w-full lg:w-7/12 min-h-[500px] lg:min-h-screen relative flex flex-col justify-between p-8 lg:p-14 overflow-hidden text-white shadow-2xl">
+
+        {/* Full-Height Background Image (/Tua.webp) */}
+        <img
+          src="/Tua.webp"
+          onError={(e) => { e.target.src = '/Orangtua.jpeg'; }}
+          alt="Perawatan Lansia SambungJaga"
+          className="absolute inset-0 w-full h-full object-cover object-center z-0"
+        />
+
+        {/* Dark Gradient Overlay for High Legibility & Professional Elegance */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/60 to-slate-900/70 backdrop-blur-[2px] z-0"></div>
 
         {/* Brand Header */}
         <div className="relative z-10 flex items-center justify-between">
@@ -38,74 +49,51 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
             onClick={onGoToLanding}
             className="flex items-center space-x-2.5 cursor-pointer group"
           >
-            <div className="p-2 bg-sky-600 rounded-xl text-white shadow-md shadow-sky-600/20 group-hover:scale-105 transition flex items-center justify-center shrink-0">
+            <div className="p-2 bg-sky-600 rounded-xl text-white shadow-lg shadow-sky-600/30 group-hover:scale-105 transition flex items-center justify-center shrink-0">
               <Heart className="w-5 h-5 fill-white" />
             </div>
             <div>
-              <h1 className="text-xl font-black tracking-tight text-slate-900">
-                Sambung<span className="text-sky-600">Jaga</span>
+              <h1 className="text-xl font-black tracking-tight text-white">
+                Sambung<span className="text-sky-400">Jaga</span>
               </h1>
-              <p className="text-xs text-sky-700 font-bold">Care Superagent Architecture</p>
+              <p className="text-xs text-sky-200 font-bold">Care Superagent Architecture</p>
             </div>
           </div>
 
           <button
             onClick={onGoToLanding}
-            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 hover:bg-slate-50 border border-slate-300 shadow-2xs transition"
+            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-white/15 hover:bg-white/25 text-white border border-white/20 backdrop-blur-md transition shadow-md"
           >
-            <ArrowLeft className="w-3.5 h-3.5 text-sky-600" />
+            <ArrowLeft className="w-3.5 h-3.5 text-sky-300" />
             <span>Kembali ke Landing</span>
           </button>
         </div>
 
-        {/* Hero Value Showcase & Tua.webp Photo */}
-        <div className="relative z-10 my-6 space-y-4">
-          <h2 className="text-2xl lg:text-3xl font-black text-slate-900 leading-tight">
+        {/* Hero Core Value Showcase (Streamlined & Uncluttered) */}
+        <div className="relative z-10 my-auto py-12 space-y-4 max-w-xl text-left">
+          <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400/30 text-xs font-bold backdrop-blur-md">
+            <ShieldCheck className="w-4 h-4 text-sky-400" />
+            <span>Sistem Perawatan Lansia Terintegrasi</span>
+          </div>
+
+          <h2 className="text-3xl sm:text-4xl font-black text-white leading-tight">
             Evidence-Verified Care Continuity <br />
-            <span className="text-sky-600">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-blue-300 to-indigo-300">
               Platform Perawatan Lansia Terverifikasi
             </span>
           </h2>
 
-          {/* Elderly Care WebP Photo Card (/Tua.webp) */}
-          <div className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white my-4 group">
-            <img
-              src="/Tua.webp"
-              onError={(e) => { e.target.src = '/Orangtua.jpeg'; }}
-              alt="Perawatan Lansia SambungJaga"
-              className="w-full h-56 sm:h-64 lg:h-72 object-cover rounded-2xl transform group-hover:scale-105 transition duration-500"
-            />
-            {/* Overlay Badge */}
-            <div className="absolute bottom-3 left-3 bg-slate-900/85 backdrop-blur-md px-3.5 py-2 rounded-xl text-white text-xs font-bold flex items-center space-x-2 border border-slate-700/80 shadow-lg">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Sistem Perawatan Lansia Terintegrasi</span>
-            </div>
-          </div>
-
-          <p className="text-xs sm:text-sm text-slate-600 max-w-xl leading-relaxed font-normal">
+          <p className="text-sm text-slate-200 leading-relaxed font-normal opacity-90">
             Meningkatkan keselamatan lansia melalui Graf Kewajiban Perawatan bitemporal, verifikasi bukti E0–E3, dan penegakan wewenang P6 Authority Envelope.
           </p>
-
-          {/* Highlights */}
-          <div className="grid grid-cols-2 gap-3 pt-2">
-            {CORE_INNOVATIONS.slice(0, 2).map((inn) => (
-              <div key={inn.code} className="p-3 rounded-2xl bg-white/90 border border-sky-200/80 shadow-xs space-y-1">
-                <div className="flex items-center space-x-2 font-mono text-xs font-bold text-sky-700">
-                  <Activity className="w-3.5 h-3.5 text-amber-600" />
-                  <span>{inn.code}: {inn.title}</span>
-                </div>
-                <p className="text-[11px] text-slate-600 line-clamp-2">{inn.desc}</p>
-              </div>
-            ))}
-          </div>
         </div>
 
         {/* Trust Footer */}
-        <div className="relative z-10 pt-4 border-t border-sky-200/80 flex items-center justify-between text-xs text-slate-600 font-medium">
-          <span className="flex items-center text-emerald-800 font-bold">
-            <CheckCircle2 className="w-4 h-4 mr-1.5 text-emerald-600" /> PostgreSQL RLS Protected
+        <div className="relative z-10 pt-6 border-t border-white/15 flex items-center justify-between text-xs text-slate-300 font-medium">
+          <span className="flex items-center text-emerald-400 font-bold">
+            <CheckCircle2 className="w-4 h-4 mr-1.5 text-emerald-400" /> PostgreSQL RLS Protected
           </span>
-          <span className="font-mono text-[11px] bg-white px-2 py-1 rounded border border-slate-300 font-bold">
+          <span className="font-mono text-[11px] bg-slate-900/80 px-2.5 py-1 rounded-lg border border-slate-700/80 text-sky-300 font-bold backdrop-blur-md">
             100% SHA-256 Audit Trail
           </span>
         </div>
