@@ -104,8 +104,8 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
 
   return (
     <div className="space-y-16 py-4 w-full">
-      {/* HERO SECTION MATCHING REFERENCE IMAGE WITH ELEGANT HEADLINE GRADIENT */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-sky-50/60 via-blue-50/40 to-sky-100/50 p-6 sm:p-10 border border-sky-100 shadow-xl shadow-sky-100/50">
+      {/* OPEN FRAMELESS HERO SECTION BLENDING DIRECTLY INTO PAGE BACKGROUND */}
+      <section className="relative py-2 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
 
           {/* Left Hero Text Column (5 Cols) */}
@@ -140,8 +140,8 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
             </div>
 
             {/* 4 Feature Pills Bar */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 border-t border-sky-200/60 text-xs">
-              <div className="flex items-center space-x-2 bg-white/80 p-2.5 rounded-xl border border-sky-100 shadow-2xs">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 border-t border-slate-200/80 text-xs">
+              <div className="flex items-center space-x-2 bg-white/90 p-2.5 rounded-xl border border-slate-200 shadow-xs">
                 <Bot className="w-4 h-4 text-emerald-600 shrink-0" />
                 <div>
                   <div className="font-bold text-slate-900 text-[11px]">AI Orchestration</div>
@@ -149,7 +149,7 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2 bg-white/80 p-2.5 rounded-xl border border-sky-100 shadow-2xs">
+              <div className="flex items-center space-x-2 bg-white/90 p-2.5 rounded-xl border border-slate-200 shadow-xs">
                 <ShieldCheck className="w-4 h-4 text-sky-600 shrink-0" />
                 <div>
                   <div className="font-bold text-slate-900 text-[11px]">Keamanan Data</div>
@@ -157,7 +157,7 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2 bg-white/80 p-2.5 rounded-xl border border-sky-100 shadow-2xs">
+              <div className="flex items-center space-x-2 bg-white/90 p-2.5 rounded-xl border border-slate-200 shadow-xs">
                 <Users className="w-4 h-4 text-purple-600 shrink-0" />
                 <div>
                   <div className="font-bold text-slate-900 text-[11px]">Multi-Peran</div>
@@ -165,7 +165,7 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2 bg-white/80 p-2.5 rounded-xl border border-sky-100 shadow-2xs">
+              <div className="flex items-center space-x-2 bg-white/90 p-2.5 rounded-xl border border-slate-200 shadow-xs">
                 <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0" />
                 <div>
                   <div className="font-bold text-slate-900 text-[11px]">Terpercaya</div>
@@ -175,9 +175,9 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
             </div>
           </div>
 
-          {/* Right Hero Column: Orangtua.jpeg Photo (Seamless & Frameless) + Speech Bubbles & 3D Robot Mascot */}
+          {/* Right Hero Column: Orangtua.jpeg Photo + Left AI Speech Bubble & Right 3D Robot Mascot with "Kondisi Lansia: Stabil" Speech Bubble */}
           <div className="lg:col-span-7 relative flex justify-center w-full">
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-sky-900/15 w-full">
+            <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-slate-300/60 w-full">
               <img
                 src="/Orangtua.jpeg"
                 onError={(e) => { e.target.src = '/elderly-care.svg'; }}
