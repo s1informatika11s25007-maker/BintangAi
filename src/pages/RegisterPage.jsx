@@ -30,8 +30,8 @@ export default function RegisterPage({ onRegisterSuccess, onGoToLogin, onGoToLan
   return (
     <div className="min-h-screen w-full flex flex-col lg:flex-row bg-gradient-to-br from-slate-50 via-sky-50/30 to-slate-100 font-sans text-slate-900 overflow-x-hidden">
 
-      {/* LEFT COLUMN: Landing Page Light Theme Banner */}
-      <div className="w-full lg:w-5/12 bg-gradient-to-br from-sky-50/80 via-indigo-50/50 to-sky-100/60 border-r border-sky-200/90 text-slate-900 p-8 lg:p-12 flex flex-col justify-between relative overflow-hidden shadow-sm shrink-0">
+      {/* LEFT COLUMN: Landing Page Light Theme Banner with Entrance Animation */}
+      <div className="w-full lg:w-5/12 bg-gradient-to-br from-sky-50/80 via-indigo-50/50 to-sky-100/60 border-r border-sky-200/90 text-slate-900 p-8 lg:p-12 flex flex-col justify-between relative overflow-hidden shadow-sm shrink-0 animate-fade-in">
 
         {/* Brand Header */}
         <div className="relative z-10 flex items-center justify-between">
@@ -98,17 +98,17 @@ export default function RegisterPage({ onRegisterSuccess, onGoToLogin, onGoToLan
         </div>
       </div>
 
-      {/* RIGHT COLUMN: Streamlined Registration Form */}
-      <div className="w-full lg:w-7/12 bg-white p-8 lg:p-16 flex flex-col justify-center space-y-6 shadow-xl">
+      {/* RIGHT COLUMN: Streamlined Registration Form with Entrance Animation */}
+      <div className="w-full lg:w-7/12 bg-white p-8 lg:p-16 flex flex-col justify-center space-y-6 shadow-xl animate-fade-in">
 
-        <div className="space-y-1.5 max-w-md mx-auto w-full text-left">
+        <div className="space-y-1.5 w-full text-left">
           <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Pendaftaran Akun</h2>
           <p className="text-xs sm:text-sm text-slate-500 font-medium">
             Buat akun staf medis atau keluarga pasien
           </p>
         </div>
 
-        <div className="max-w-md mx-auto w-full space-y-4">
+        <div className="w-full space-y-4">
           {submitted ? (
             <div className="p-6 bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-2xl text-center space-y-3 shadow-md">
               <CheckCircle2 className="w-12 h-12 text-emerald-600 mx-auto animate-bounce" />
@@ -116,7 +116,7 @@ export default function RegisterPage({ onRegisterSuccess, onGoToLogin, onGoToLan
               <p className="text-xs opacity-90">Memproses verifikasi akun baru Anda...</p>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-3.5 text-left">
+            <form onSubmit={handleSubmit} className="space-y-4 text-left w-full">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center">
                   <User className="w-3.5 h-3.5 mr-1 text-sky-600" /> Nama Lengkap
@@ -127,17 +127,17 @@ export default function RegisterPage({ onRegisterSuccess, onGoToLogin, onGoToLan
                   placeholder="Suster Dewi Pertiwi, Amd.Kep"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 font-semibold outline-none focus:ring-2 focus:ring-sky-500 transition"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-xs sm:text-sm text-slate-900 font-semibold outline-none focus:ring-2 focus:ring-sky-500 transition shadow-2xs"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Peran Utama</label>
                   <select
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-900 font-bold outline-none focus:ring-2 focus:ring-sky-500 transition"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-3 text-xs sm:text-sm text-slate-900 font-bold outline-none focus:ring-2 focus:ring-sky-500 transition shadow-2xs"
                   >
                     <option value="caregiver">Pengasuh / Perawat</option>
                     <option value="supervisor">Supervisor Klinis</option>
@@ -155,7 +155,7 @@ export default function RegisterPage({ onRegisterSuccess, onGoToLogin, onGoToLan
                     required
                     value={facilityCode}
                     onChange={(e) => setFacilityCode(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 font-semibold outline-none focus:ring-2 focus:ring-sky-500 transition"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-xs sm:text-sm text-slate-900 font-semibold outline-none focus:ring-2 focus:ring-sky-500 transition shadow-2xs"
                   />
                 </div>
               </div>
@@ -170,7 +170,7 @@ export default function RegisterPage({ onRegisterSuccess, onGoToLogin, onGoToLan
                   placeholder="dewi@panti.id"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 font-semibold outline-none focus:ring-2 focus:ring-sky-500 transition"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-xs sm:text-sm text-slate-900 font-semibold outline-none focus:ring-2 focus:ring-sky-500 transition shadow-2xs"
                 />
               </div>
 
@@ -184,13 +184,13 @@ export default function RegisterPage({ onRegisterSuccess, onGoToLogin, onGoToLan
                   placeholder="+62 812 3456 7890"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 font-semibold outline-none focus:ring-2 focus:ring-sky-500 transition"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-xs sm:text-sm text-slate-900 font-semibold outline-none focus:ring-2 focus:ring-sky-500 transition shadow-2xs"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold text-sm py-3.5 rounded-xl shadow-lg shadow-sky-600/20 transition flex items-center justify-center space-x-2 mt-2"
+                className="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold text-sm sm:text-base py-4 rounded-xl shadow-lg shadow-sky-600/25 hover:shadow-sky-600/40 transition duration-300 flex items-center justify-center space-x-2 mt-2"
               >
                 <span>Daftar</span>
                 <ArrowRight className="w-4 h-4" />
@@ -199,7 +199,7 @@ export default function RegisterPage({ onRegisterSuccess, onGoToLogin, onGoToLan
           )}
 
           {/* Footer Link */}
-          <div className="pt-3 text-center text-xs text-slate-600 border-t border-slate-100">
+          <div className="pt-3 text-center text-xs text-slate-600 border-t border-slate-100 w-full">
             Sudah punya akun?{' '}
             <button
               onClick={onGoToLogin}
