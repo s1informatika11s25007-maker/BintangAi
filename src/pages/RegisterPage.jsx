@@ -71,15 +71,15 @@ export default function RegisterPage({ onRegisterSuccess, onGoToLogin, onGoToLan
               <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
               <div>
                 <h4 className="text-xs font-bold text-slate-900">Otorisasi Berbasis Peran (RBAC)</h4>
-                <p className="text-[11px] text-slate-600 font-medium">Hak akses terintegrasi sesuai skema PostgreSQL RLS.</p>
+                <p className="text-[11px] text-slate-600 font-medium">Hak akses terintegrasi dan terproteksi aman.</p>
               </div>
             </div>
 
             <div className="flex items-start space-x-3 bg-white/90 p-3.5 rounded-2xl border border-sky-200/80 shadow-xs">
               <CheckCircle2 className="w-5 h-5 text-sky-600 shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-xs font-bold text-slate-900">Verifikasi Mobile PWA Offline Ledger</h4>
-                <p className="text-[11px] text-slate-600 font-medium">Atestasi perangkat anti-backdate untuk pengasuh di lapangan.</p>
+                <h4 className="text-xs font-bold text-slate-900">Verifikasi Perangkat Pengasuh</h4>
+                <p className="text-[11px] text-slate-600 font-medium">Sistem verifikasi otomatis untuk pengasuh di lapangan.</p>
               </div>
             </div>
           </div>
@@ -88,8 +88,8 @@ export default function RegisterPage({ onRegisterSuccess, onGoToLogin, onGoToLan
         {/* Footer */}
         <div className="relative z-10 pt-6 border-t border-sky-200/80 flex items-center justify-between text-xs text-slate-600 font-medium">
           <span>SambungJaga AI © 2026</span>
-          <span className="font-mono text-[11px] bg-white px-2 py-1 rounded border border-slate-300 font-bold">
-            Kepatuhan UU PDP Active
+          <span className="font-mono text-[11px] bg-white px-2 py-1 rounded border border-slate-300 font-bold text-emerald-700">
+            Sistem Terproteksi Aktif
           </span>
         </div>
       </div>

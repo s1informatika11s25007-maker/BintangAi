@@ -84,17 +84,17 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
           </h2>
 
           <p className="text-sm text-slate-200 leading-relaxed font-normal opacity-90">
-            Meningkatkan keselamatan lansia melalui Graf Kewajiban Perawatan bitemporal, verifikasi bukti E0–E3, dan penegakan wewenang P6 Authority Envelope.
+            Meningkatkan keselamatan dan kenyamanan lansia dengan verifikasi tugas perawatan yang akurat, transparan, dan terpercaya.
           </p>
         </div>
 
         {/* Trust Footer */}
         <div className="relative z-10 pt-6 border-t border-white/15 flex items-center justify-between text-xs text-slate-300 font-medium">
           <span className="flex items-center text-emerald-400 font-bold">
-            <CheckCircle2 className="w-4 h-4 mr-1.5 text-emerald-400" /> PostgreSQL RLS Protected
+            <CheckCircle2 className="w-4 h-4 mr-1.5 text-emerald-400" /> Akses Terproteksi Aman
           </span>
           <span className="font-mono text-[11px] bg-slate-900/80 px-2.5 py-1 rounded-lg border border-slate-700/80 text-sky-300 font-bold backdrop-blur-md">
-            100% SHA-256 Audit Trail
+            Sistem Terverifikasi
           </span>
         </div>
       </div>

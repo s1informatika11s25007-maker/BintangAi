@@ -40,10 +40,10 @@ export default function Footer({ onGoToLanding }) {
           <ul className="space-y-1.5 text-slate-400">
             <li className="flex items-center space-x-1">
               <Shield className="w-3.5 h-3.5 text-emerald-400 mr-1" />
-              <span>Kepatuhan UU PDP (No. 27/2022)</span>
+              <span>Jaminan Privasi & Keamanan Data</span>
             </li>
-            <li>Audit Trail SHA-256 Protected</li>
-            <li>PostgreSQL Row-Level Security (RLS)</li>
+            <li>Pencatatan Riwayat Terverifikasi</li>
+            <li>Sistem Akses Terproteksi</li>
           </ul>
         </div>
 
