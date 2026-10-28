@@ -16,7 +16,9 @@ import {
   BookOpen,
   Wifi,
   WifiOff,
-  RefreshCw
+  RefreshCw,
+  Activity,
+  CheckCircle2
 } from 'lucide-react';
 
 export default function Sidebar({
@@ -73,6 +75,36 @@ export default function Sidebar({
 
   const navItems = getNavItemsByRole(activeRole);
 
+  // Dynamic profile card data per role
+  const roleProfiles = {
+    supervisor: {
+      name: 'Ns. Ratna Sari, M.Kep',
+      roleTitle: 'Supervisor Klinis',
+      statusTag: 'On Duty',
+      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=120&q=80'
+    },
+    caregiver: {
+      name: 'Suster Dewi Pertiwi',
+      roleTitle: 'Pengasuh / Perawat',
+      statusTag: 'On Shift',
+      avatar: 'https://images.unsplash.com/photo-1594824813566-88855ce7890f?auto=format&fit=crop&w=120&q=80'
+    },
+    family: {
+      name: 'Rina Wijaya',
+      roleTitle: 'Wali Pasien',
+      statusTag: 'Aktif',
+      avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=120&q=80'
+    },
+    admin_hr: {
+      name: 'Budi Santoso',
+      roleTitle: 'Admin Panti / HR',
+      statusTag: 'System Admin',
+      avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=120&q=80'
+    }
+  };
+
+  const currentProfile = roleProfiles[activeRole] || roleProfiles.supervisor;
+
   const handleNavClick = (id) => {
     setActiveTab(id);
     setMobileOpen(false);
@@ -109,13 +141,13 @@ export default function Sidebar({
         ></div>
       )}
 
-      {/* 3. Main Responsive Sidebar (Desktop Sticky / Mobile Sliding Drawer) */}
-      <aside className={`fixed md:sticky top-0 left-0 z-50 h-screen w-64 bg-[#0c1a30] text-slate-300 flex flex-col justify-between transition-transform duration-300 ease-in-out shadow-2xl shrink-0 ${
+      {/* 3. Main Responsive Sidebar Container (Full-Height bg-[#0c1a30]) */}
+      <aside className={`fixed md:sticky top-0 left-0 z-50 min-h-screen h-full w-64 bg-[#0c1a30] text-slate-300 flex flex-col justify-between transition-transform duration-300 ease-in-out shadow-2xl shrink-0 ${
         mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
       }`}>
 
         {/* Top Scrollable Content */}
-        <div className="p-6 space-y-6 overflow-y-auto scrollbar-none flex-1">
+        <div className="p-5 space-y-5 overflow-y-auto scrollbar-none flex-1">
 
           {/* Logo Brand Header */}
           <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
@@ -135,6 +167,26 @@ export default function Sidebar({
             >
               <X className="w-4 h-4" />
             </button>
+          </div>
+
+          {/* DYNAMIC USER ACTIVE CARD (Dinamis Sesuai Akun Login) */}
+          <div className="bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800/90 shadow-md flex items-center space-x-3 transition hover:border-sky-500/40">
+            <div className="relative shrink-0">
+              <img
+                src={currentProfile.avatar}
+                alt={currentProfile.name}
+                className="w-10 h-10 rounded-full object-cover border-2 border-sky-500/80 shadow-xs"
+              />
+              <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-[#0c1a30]"></span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <h4 className="text-xs font-bold text-white truncate leading-tight">{currentProfile.name}</h4>
+              <div className="flex items-center space-x-1.5 mt-0.5">
+                <span className="text-[10px] text-sky-400 font-bold bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20 truncate">
+                  {currentProfile.roleTitle}
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* Navigation Links */}

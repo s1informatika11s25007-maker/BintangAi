@@ -106,8 +106,8 @@ export default function App() {
           )}
         </>
       ) : (
-        /* 2. POST-LOGIN STATE (Full Width Sidebar Workspace) */
-        <div className="flex flex-col md:flex-row min-h-screen w-full overflow-x-hidden">
+        /* 2. POST-LOGIN STATE (Seamless Full-Height Dark Navy Sidebar) */
+        <div className="flex flex-col md:flex-row min-h-screen w-full overflow-x-hidden bg-[#0c1a30]">
           {/* Left Sidebar Navigation */}
           <Sidebar
             activeTab={activeTab}
@@ -122,7 +122,7 @@ export default function App() {
           />
 
           {/* Right Main Content Workspace (Full-Width Edge-to-Edge) */}
-          <div className="flex-1 flex flex-col justify-between min-w-0 w-full overflow-x-hidden">
+          <div className="flex-1 flex flex-col justify-between min-w-0 w-full overflow-x-hidden bg-gradient-to-br from-slate-50 via-sky-50/30 to-slate-100">
 
             {/* Top Workspace Bar: Search, Realtime Clock, Notifications, Profile */}
             <Header
@@ -137,6 +137,7 @@ export default function App() {
                 obligations={obligations}
                 epistemicFacts={epistemicFacts}
                 staff={staff}
+                residents={residents}
               />
 
               {/* Active Tab Module */}
