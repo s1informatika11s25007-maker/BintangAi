@@ -264,10 +264,24 @@ npm run dev
 ```
 Aplikasi dapat diakses di browser melalui `http://localhost:3000`.
 
-### Langkah 4: Build Produksi
+### Langkah 4: Build Produksi & Deploy Vercel
+
 ```bash
 npm run build
 ```
+
+---
+
+## 🚀 Deployment 1-Klik ke Vercel (Terpusat `.env`)
+
+Konfigurasi `vercel.json` telah terpasang untuk routing SPA Vite otomatis.
+
+### Langkah Deploy ke Vercel:
+1. Hubungkan repositori GitHub `s1informatika11s25007-maker/SambungJaga` ke Vercel Dashboard ([vercel.com/new](https://vercel.com/new)).
+2. Masukkan **Environment Variables** di Vercel Dashboard:
+   * **`VITE_SUPABASE_URL`**: `https://qepfuqlnkofzfhfzahpr.supabase.co`
+   * **`VITE_SUPABASE_ANON_KEY`**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
+3. Klik **Deploy** &rarr; Vercel akan secara otomatis membangun aplikasi dalam beberapa detik!
 
 ---
 
