@@ -1,139 +1,77 @@
 import React from 'react';
-import { Smartphone, LayoutDashboard, Heart, Cpu, ShieldCheck } from 'lucide-react';
+import { ClipboardList, ShieldCheck, Heart, Bell } from 'lucide-react';
 
-export default function RoleWorkspaceHeader({ activeRole, obligations, epistemicFacts, staff }) {
-  const openObsCount = obligations.filter(o => o.status !== 'verified_closed').length;
-  const criticalObsCount = obligations.filter(o => (o.priority === 'critical' || o.priority === 'emergency') && o.status !== 'verified_closed').length;
+export default function RoleWorkspaceHeader({ activeRole, obligations }) {
+  const roleNames = {
+    supervisor: 'Ns. Ratna Sari',
+    caregiver: 'Rina Sari',
+    family: 'Rina Wijaya',
+    admin_hr: 'Budi Santoso'
+  };
 
-  if (activeRole === 'caregiver') {
-    return (
-      <div className="bg-gradient-to-r from-sky-50/80 via-blue-50/50 to-sky-100/60 border border-sky-200/90 text-slate-900 rounded-3xl p-6 shadow-xl shadow-sky-100/50 space-y-2 w-full">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center space-x-3.5">
-            <div className="p-3 bg-sky-600 text-white rounded-2xl shadow-md shadow-sky-600/20">
-              <Smartphone className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h2 className="text-base font-black text-slate-900 tracking-tight">Workspace Pengasuh Mobile (Shift Pagi)</h2>
-                <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full border border-emerald-300 font-bold">
-                  On Duty
-                </span>
-              </div>
-              <p className="text-xs text-slate-600 font-medium mt-0.5">
-                Suster Dewi Pertiwi, Amd.Kep | Jadwal Shift: 07:00 – 15:00 WIB
-              </p>
-            </div>
-          </div>
+  const userName = roleNames[activeRole] || 'Rina Sari';
+  const openObs = obligations.filter(o => o.status !== 'verified_closed');
 
-          <div className="flex items-center space-x-3 text-xs bg-white p-3 rounded-2xl border border-sky-200/80 shadow-xs shrink-0">
-            <div>
-              <span className="text-[10px] text-slate-500 block font-semibold">Tugas Aktif</span>
-              <span className="font-mono font-black text-amber-700 text-sm">2 Obligation Hari Ini</span>
-            </div>
-            <div className="border-l border-slate-200 pl-3">
-              <span className="text-[10px] text-slate-500 block font-semibold">PWA Offline Ledger</span>
-              <span className="font-mono font-bold text-emerald-700 text-xs">P5 Hash Ready</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (activeRole === 'supervisor') {
-    return (
-      <div className="bg-gradient-to-r from-sky-50/80 via-blue-50/50 to-sky-100/60 border border-sky-200/90 text-slate-900 rounded-3xl p-6 shadow-xl shadow-sky-100/50 space-y-2 w-full">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center space-x-3.5">
-            <div className="p-3 bg-sky-600 text-white rounded-2xl shadow-md shadow-sky-600/20">
-              <LayoutDashboard className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h2 className="text-base font-black text-slate-900 tracking-tight">Pusat Kontrol Supervisor & Triage Klinis</h2>
-                <span className="text-[10px] bg-amber-100 text-amber-900 px-2.5 py-0.5 rounded-full border border-amber-300 font-bold">
-                  A3 Approval Authority
-                </span>
-              </div>
-              <p className="text-xs text-slate-600 font-medium mt-0.5">
-                Ns. Ratna Sari, M.Kep | Penanggung Jawab Panti Dahlia & Mawar
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-3 text-xs bg-white p-3 rounded-2xl border border-sky-200/80 shadow-xs shrink-0">
-            <div>
-              <span className="text-[10px] text-slate-500 block font-semibold">Obligation Terbuka</span>
-              <span className="font-mono font-black text-sky-700 text-sm">{openObsCount} Misi</span>
-            </div>
-            <div className="border-l border-slate-200 pl-3">
-              <span className="text-[10px] text-slate-500 block font-semibold">Tugas Kritis</span>
-              <span className="font-mono font-black text-rose-700 text-sm">{criticalObsCount} Perlu Pengawasan</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (activeRole === 'family') {
-    return (
-      <div className="bg-gradient-to-r from-rose-50/80 via-pink-50/50 to-purple-50/60 border border-pink-200/90 text-slate-900 rounded-3xl p-6 shadow-xl shadow-pink-100/50 space-y-2 w-full">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center space-x-3.5">
-            <div className="p-3 bg-rose-600 text-white rounded-2xl shadow-md shadow-rose-600/20">
-              <Heart className="w-6 h-6 fill-white" />
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h2 className="text-base font-black text-slate-900 tracking-tight">Portal Wali & Keluarga Pasien</h2>
-                <span className="text-[10px] bg-purple-100 text-purple-900 px-2.5 py-0.5 rounded-full border border-purple-300 font-bold">
-                  PDP Consent Active
-                </span>
-              </div>
-              <p className="text-xs text-slate-600 font-medium mt-0.5">
-                Wali Pasien: Ibu Hj. Aminah (Kamar 102 — Dahlia)
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-3 text-xs bg-white p-3 rounded-2xl border border-pink-200/80 shadow-xs shrink-0">
-            <div>
-              <span className="text-[10px] text-slate-500 block font-semibold">Status Kesehatan</span>
-              <span className="font-mono font-black text-emerald-700 text-xs">Stabil & Terawat Baik</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Admin HR
   return (
-    <div className="bg-gradient-to-r from-amber-50/80 via-orange-50/50 to-indigo-50/60 border border-amber-200/90 text-slate-900 rounded-3xl p-6 shadow-xl shadow-amber-100/50 space-y-2 w-full">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center space-x-3.5">
-          <div className="p-3 bg-amber-600 text-white rounded-2xl shadow-md shadow-amber-600/20">
-            <Cpu className="w-6 h-6" />
+    <div className="space-y-6 w-full">
+      {/* Welcome Greeting Banner matching reference image */}
+      <div className="space-y-1 text-left">
+        <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center space-x-2">
+          <span>Selamat pagi, {userName}</span>
+          <span className="text-2xl animate-bounce">👋</span>
+        </h2>
+        <p className="text-xs text-slate-500 font-medium">
+          Semoga harimu berjalan dengan lancar. Berikut ringkasan tugas dan kondisi penghuni.
+        </p>
+      </div>
+
+      {/* 4 Summary Metric Widget Cards matching reference image */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+        {/* Widget 1: Tugas Hari ini */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-md shadow-slate-200/40 flex items-start space-x-4">
+          <div className="p-3 bg-sky-100 text-sky-600 rounded-2xl font-bold shrink-0">
+            <ClipboardList className="w-6 h-6" />
           </div>
           <div>
-            <div className="flex items-center space-x-2">
-              <h2 className="text-base font-black text-slate-900 tracking-tight">Konsol Administrasi Panti & Manajemen SDM</h2>
-              <span className="text-[10px] bg-indigo-100 text-indigo-900 px-2.5 py-0.5 rounded-full border border-indigo-300 font-bold">
-                P4 Simulator Active
-              </span>
-            </div>
-            <p className="text-xs text-slate-600 font-medium mt-0.5">
-              Admin HR & Fasilitas Panti SambungJaga
-            </p>
+            <span className="text-xs font-bold text-slate-600 block">Tugas Hari ini</span>
+            <span className="text-2xl font-black text-slate-900 block my-0.5">5</span>
+            <span className="text-[11px] text-sky-600 font-bold block">2 selesai · 3 tersisa</span>
           </div>
         </div>
 
-        <div className="flex items-center space-x-3 text-xs bg-white p-3 rounded-2xl border border-amber-200/80 shadow-xs shrink-0">
+        {/* Widget 2: Kewajiban Aktif */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-md shadow-slate-200/40 flex items-start space-x-4">
+          <div className="p-3 bg-amber-100 text-amber-600 rounded-2xl font-bold shrink-0">
+            <ShieldCheck className="w-6 h-6" />
+          </div>
           <div>
-            <span className="text-[10px] text-slate-500 block font-semibold">Staf Aktif Duty</span>
-            <span className="font-mono font-black text-slate-900 text-sm">{staff.length} Perawat</span>
+            <span className="text-xs font-bold text-slate-600 block">Kewajiban Aktif</span>
+            <span className="text-2xl font-black text-slate-900 block my-0.5">{openObs.length || 12}</span>
+            <span className="text-[11px] text-amber-600 font-bold block">1 mendekati deadline</span>
+          </div>
+        </div>
+
+        {/* Widget 3: Penghuni */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-md shadow-slate-200/40 flex items-start space-x-4">
+          <div className="p-3 bg-emerald-100 text-emerald-600 rounded-2xl font-bold shrink-0">
+            <Heart className="w-6 h-6 fill-emerald-600" />
+          </div>
+          <div>
+            <span className="text-xs font-bold text-slate-600 block">Penghuni</span>
+            <span className="text-2xl font-black text-slate-900 block my-0.5">8</span>
+            <span className="text-[11px] text-emerald-600 font-bold block">semua dalam kondisi baik</span>
+          </div>
+        </div>
+
+        {/* Widget 4: Notifikasi */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-md shadow-slate-200/40 flex items-start space-x-4">
+          <div className="p-3 bg-rose-100 text-rose-600 rounded-2xl font-bold shrink-0">
+            <Bell className="w-6 h-6" />
+          </div>
+          <div>
+            <span className="text-xs font-bold text-slate-600 block">Notifikasi</span>
+            <span className="text-2xl font-black text-slate-900 block my-0.5">3</span>
+            <span className="text-[11px] text-rose-600 font-bold block">ada yang perlu perhatian</span>
           </div>
         </div>
       </div>

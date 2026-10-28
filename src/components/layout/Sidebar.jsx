@@ -1,22 +1,24 @@
 import React, { useState } from 'react';
 import {
-  Shield,
-  Smartphone,
-  LayoutDashboard,
+  Heart,
+  Home,
+  CheckSquare,
+  Mic,
+  ShieldCheck,
+  Bell,
+  User,
+  LogOut,
+  Menu,
+  X,
   FileSignature,
   GitPullRequest,
   Users,
   Cpu,
   BookOpen,
-  ShieldAlert,
   Wifi,
   WifiOff,
   RefreshCw,
-  User,
-  LogOut,
-  Menu,
-  X,
-  CheckCircle2
+  Search
 } from 'lucide-react';
 import { ACTORS } from '../../types/architecture';
 
@@ -32,34 +34,54 @@ export default function Sidebar({
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const navGroups = [
-    {
-      groupTitle: 'MODUL UTAMA',
-      items: [
-        { id: 'caregiver_pwa', label: 'Pengasuh PWA Mobile', icon: Smartphone, badge: 'P5' },
-        { id: 'supervisor_dashboard', label: 'Dashboard Supervisor', icon: LayoutDashboard, badge: 'P1-P3' },
-        { id: 'handover_contract', label: 'Serah Terima Shift', icon: FileSignature, badge: 'Dual' },
-      ]
-    },
-    {
-      groupTitle: 'SISTEM & AUDIT',
-      items: [
-        { id: 'execution_trace', label: 'Execution Trace Viewer', icon: GitPullRequest, badge: 'Trace' },
-        { id: 'family_portal', label: 'Family Portal', icon: Users, badge: 'PDP' },
-        { id: 'simulator_lab', label: 'Simulator P4 & Lab', icon: Cpu, badge: 'P4' },
-        { id: 'rule_library', label: 'Rule Library', icon: BookOpen, badge: 'v2.1' },
-        { id: 'audit_trail', label: 'Audit Trail [A]', icon: ShieldAlert, badge: 'SHA256' },
-      ]
+  // Role-specific navigation items matching reference image layout
+  const getNavItemsByRole = (role) => {
+    switch (role) {
+      case 'caregiver':
+        return [
+          { id: 'supervisor_dashboard', label: 'Beranda', icon: Home },
+          { id: 'caregiver_pwa', label: 'Tugas Harian', icon: CheckSquare, badge: '5' },
+          { id: 'execution_trace', label: 'Observasi Suara', icon: Mic },
+          { id: 'handover_contract', label: 'Kewajiban', icon: ShieldCheck },
+          { id: 'audit_trail', label: 'Notifikasi', icon: Bell, badgeCount: 3 },
+          { id: 'rule_library', label: 'Profil', icon: User }
+        ];
+      case 'supervisor':
+        return [
+          { id: 'supervisor_dashboard', label: 'Beranda Triage', icon: Home },
+          { id: 'handover_contract', label: 'Serah Terima Shift', icon: FileSignature },
+          { id: 'execution_trace', label: 'Execution Trace', icon: GitPullRequest },
+          { id: 'simulator_lab', label: 'Simulator Lab P4', icon: Cpu },
+          { id: 'audit_trail', label: 'Audit Trail [A]', icon: Bell, badgeCount: 3 },
+          { id: 'rule_library', label: 'Profil Supervisor', icon: User }
+        ];
+      case 'family':
+        return [
+          { id: 'family_portal', label: 'Beranda Wali', icon: Home },
+          { id: 'supervisor_dashboard', label: 'Ringkasan Perawatan', icon: CheckSquare },
+          { id: 'execution_trace', label: 'Kondisi Orang Tua', icon: Heart },
+          { id: 'audit_trail', label: 'Notifikasi', icon: Bell, badgeCount: 1 },
+          { id: 'rule_library', label: 'Profil Wali', icon: User }
+        ];
+      default: // admin_hr / orchestrator
+        return [
+          { id: 'supervisor_dashboard', label: 'Beranda Admin', icon: Home },
+          { id: 'simulator_lab', label: 'Simulator P4 & HR', icon: Cpu },
+          { id: 'rule_library', label: 'Aturan Panti', icon: BookOpen },
+          { id: 'audit_trail', label: 'Audit Log [A]', icon: Bell, badgeCount: 2 },
+          { id: 'family_portal', label: 'Profil Admin', icon: User }
+        ];
     }
-  ];
+  };
 
-  // Specific profile metadata per logged-in role
+  const navItems = getNavItemsByRole(activeRole);
+
+  // Profile info per role matching reference
   const roleProfiles = {
-    supervisor: { name: 'Ns. Ratna Sari, M.Kep', title: 'Supervisor Klinis', badge: 'A3 Authority', color: 'bg-amber-100 text-amber-900 border-amber-300' },
-    caregiver: { name: 'Suster Dewi Pertiwi', title: 'Pengasuh / Perawat', badge: 'Shift Pagi', color: 'bg-emerald-100 text-emerald-900 border-emerald-300' },
-    family: { name: 'Wali Ibu Hj. Aminah', title: 'Keluarga Pasien', badge: 'Consent PDP', color: 'bg-purple-100 text-purple-900 border-purple-300' },
-    admin_hr: { name: 'Admin Panti & HR', title: 'Pengelola SDM', badge: 'P4 Simulator', color: 'bg-indigo-100 text-indigo-900 border-indigo-300' },
-    orchestrator: { name: 'Care Superagent AI', title: 'Orchestrator Kernel', badge: 'System Master', color: 'bg-sky-100 text-sky-900 border-sky-300' }
+    supervisor: { name: 'Ns. Ratna Sari, M.Kep', roleTitle: 'Supervisor Panti', avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=120&q=80' },
+    caregiver: { name: 'Rina Sari, Amd.Kep', roleTitle: 'Pengasuh / Perawat', avatar: 'https://images.unsplash.com/photo-1594824813566-88855ce7890f?auto=format&fit=crop&w=120&q=80' },
+    family: { name: 'Rina Wijaya', roleTitle: 'Wali Ibu Hj. Aminah', avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=120&q=80' },
+    admin_hr: { name: 'Budi Santoso', roleTitle: 'Admin Panti / HR', avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=120&q=80' }
   };
 
   const currentProfile = roleProfiles[activeRole] || roleProfiles.supervisor;
@@ -71,148 +93,119 @@ export default function Sidebar({
 
   return (
     <>
-      {/* Mobile Top Bar with Hamburger Menu */}
-      <div className="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-40 shadow-xs">
-        <div className="flex items-center space-x-2.5">
-          <div className="p-2 bg-sky-600 rounded-xl text-white shadow-sm">
-            <Shield className="w-5 h-5" />
+      {/* Mobile Bar */}
+      <div className="md:hidden bg-[#0c1a30] text-white px-4 py-3 flex items-center justify-between sticky top-0 z-40 border-b border-slate-800">
+        <div className="flex items-center space-x-2">
+          <div className="p-1.5 bg-sky-600 rounded-lg text-white">
+            <Heart className="w-4 h-4 fill-white" />
           </div>
-          <div>
-            <h1 className="text-sm font-black text-slate-900">SambungJaga AI</h1>
-            <p className="text-[10px] text-slate-500 font-medium">{currentProfile.name}</p>
-          </div>
+          <span className="text-base font-black text-white">Sambung<span className="text-sky-400">.Jaga</span></span>
         </div>
 
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300"
+          className="p-2 rounded-xl bg-slate-800 text-white"
         >
           {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </div>
 
-      {/* Backdrop for Mobile */}
+      {/* Sidebar Overlay */}
       {mobileOpen && (
         <div
           onClick={() => setMobileOpen(false)}
-          className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-xs md:hidden"
+          className="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-xs md:hidden"
         ></div>
       )}
 
-      {/* Sidebar Container */}
-      <aside className={`fixed md:sticky top-0 left-0 z-50 h-screen w-64 bg-white border-r border-slate-200/90 flex flex-col justify-between transition-transform duration-200 shadow-xl md:shadow-none shrink-0 ${
+      {/* Main Left Sidebar matching reference image (#0c1a30 dark navy) */}
+      <aside className={`fixed md:sticky top-0 left-0 z-50 h-screen w-64 bg-[#0c1a30] text-slate-300 flex flex-col justify-between transition-transform duration-200 shadow-2xl shrink-0 ${
         mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
       }`}>
-        {/* Top Header Logo */}
-        <div className="p-5 border-b border-slate-100">
-          <div className="flex items-center space-x-3">
-            <div className="p-2.5 bg-gradient-to-br from-sky-500 to-blue-600 rounded-xl shadow-md shadow-sky-500/20 text-white">
-              <Shield className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-base font-black text-slate-900 tracking-tight">SambungJaga AI</h1>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 font-bold border border-sky-200">
-                Superagent Kernel
-              </span>
-            </div>
-          </div>
-        </div>
 
-        {/* STATIC USER PROFILE CARD (No Dropdown - Matched to Logged-in User) */}
-        <div className="px-4 py-3 mx-4 my-3 bg-slate-50 rounded-2xl border border-slate-200/90 space-y-1.5 shadow-2xs">
+        <div className="p-6 space-y-6">
+          {/* Logo Brand matching reference */}
           <div className="flex items-center space-x-2.5">
-            <div className="p-2 rounded-xl bg-sky-600 text-white font-bold shrink-0 shadow-xs">
-              <User className="w-4 h-4" />
+            <div className="p-2 bg-sky-600 rounded-xl text-white shadow-md shadow-sky-600/30">
+              <Heart className="w-5 h-5 fill-white" />
             </div>
+            <span className="text-lg font-black text-white tracking-tight">
+              Sambung<span className="text-sky-400">.Jaga</span>
+            </span>
+          </div>
+
+          {/* User Profile Info Card matching reference */}
+          <div className="flex items-center space-x-3 pt-2 pb-4 border-b border-slate-800/80">
+            <img
+              src={currentProfile.avatar}
+              alt={currentProfile.name}
+              className="w-11 h-11 rounded-full object-cover border-2 border-sky-500/80 shadow-md"
+            />
             <div className="min-w-0 flex-1">
-              <h4 className="text-xs font-bold text-slate-900 truncate">{currentProfile.name}</h4>
-              <p className="text-[10px] text-slate-500 font-semibold truncate">{currentProfile.title}</p>
+              <h4 className="text-xs font-bold text-white truncate">{currentProfile.name}</h4>
+              <p className="text-[11px] text-slate-400 font-medium truncate">{currentProfile.roleTitle}</p>
             </div>
           </div>
 
-          <div className="pt-1 flex items-center justify-between text-[10px]">
-            <span className={`px-2 py-0.5 rounded-full font-bold border ${currentProfile.color}`}>
-              {currentProfile.badge}
-            </span>
-            <span className="text-emerald-700 font-bold flex items-center">
-              <CheckCircle2 className="w-3 h-3 mr-0.5" /> Terautentikasi
-            </span>
-          </div>
+          {/* Navigation Links matching reference */}
+          <nav className="space-y-1.5 pt-2">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleNavClick(item.id)}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-bold transition ${
+                    isActive
+                      ? 'bg-sky-600 text-white shadow-lg shadow-sky-600/30 font-black'
+                      : 'text-slate-300 hover:bg-slate-800/60 hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                    <span>{item.label}</span>
+                  </div>
+
+                  {item.badgeCount && (
+                    <span className="bg-rose-600 text-white text-[10px] font-mono px-2 py-0.5 rounded-full font-bold">
+                      {item.badgeCount}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
         </div>
 
-        {/* Navigation Menu List */}
-        <div className="flex-1 overflow-y-auto px-4 py-2 space-y-5 scrollbar-none">
-          {navGroups.map((group, idx) => (
-            <div key={idx} className="space-y-1.5">
-              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2">
-                {group.groupTitle}
-              </div>
-
-              <div className="space-y-1">
-                {group.items.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = activeTab === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => handleNavClick(item.id)}
-                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition ${
-                        isActive
-                          ? 'bg-sky-600 text-white shadow-md shadow-sky-600/20'
-                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                      }`}
-                    >
-                      <div className="flex items-center space-x-2.5">
-                        <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-500'}`} />
-                        <span>{item.label}</span>
-                      </div>
-
-                      {item.badge && (
-                        <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${
-                          isActive ? 'bg-sky-700/60 text-sky-100' : 'bg-slate-200 text-slate-700'
-                        }`}>
-                          {item.badge}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Footer Actions: P5 Offline Toggle & Logout */}
-        <div className="p-4 border-t border-slate-100 space-y-2 bg-slate-50/50">
-          {/* Offline/Online PWA Toggle */}
+        {/* Footer Actions */}
+        <div className="p-4 border-t border-slate-800/80 space-y-2 bg-[#091426]">
+          {/* P5 Offline Toggle */}
           <button
             onClick={() => {
-              if (isOffline && offlineQueue.length > 0) {
-                syncOfflineLedger();
-              } else {
-                setIsOffline(!isOffline);
-              }
+              if (isOffline && offlineQueue.length > 0) syncOfflineLedger();
+              else setIsOffline(!isOffline);
             }}
             className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition border ${
               isOffline
-                ? 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200'
-                : 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
+                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
             }`}
           >
             <div className="flex items-center space-x-2">
-              {isOffline ? <WifiOff className="w-3.5 h-3.5 text-amber-600 animate-pulse" /> : <Wifi className="w-3.5 h-3.5 text-emerald-600" />}
+              {isOffline ? <WifiOff className="w-3.5 h-3.5 text-amber-400 animate-pulse" /> : <Wifi className="w-3.5 h-3.5 text-emerald-400" />}
               <span>{isOffline ? `P5 Offline (${offlineQueue.length})` : 'Cloud Sync Online'}</span>
             </div>
-            {isOffline && offlineQueue.length > 0 && <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-600" />}
+            {isOffline && offlineQueue.length > 0 && <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-400" />}
           </button>
 
           {/* Logout Button */}
           <button
             onClick={onLogout}
-            className="w-full flex items-center justify-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition"
+            className="w-full flex items-center justify-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/30 transition"
           >
-            <LogOut className="w-3.5 h-3.5 text-rose-600" />
-            <span>Keluar dari Sesi</span>
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Keluar Sesi</span>
           </button>
         </div>
       </aside>

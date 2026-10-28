@@ -1,16 +1,22 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Plus, Activity, ShieldAlert } from 'lucide-react';
+import {
+  Clock,
+  CheckCircle2,
+  Bot,
+  Heart,
+  Plus,
+  ArrowRight,
+  ShieldCheck,
+  AlertCircle
+} from 'lucide-react';
 import ObligationGraphCard from '../components/dashboard/ObligationGraphCard';
-import EpistemicLedgerBadge from '../components/dashboard/EpistemicLedgerBadge';
 import CareDebtAlert from '../components/dashboard/CareDebtAlert';
 import EvidenceUploadModal from '../components/pwa/EvidenceUploadModal';
 import Modal from '../components/common/Modal';
 
 export default function SupervisorDashboardPage({
   obligations,
-  epistemicFacts,
   residents,
-  spotChallenges,
   onSubmitEvidence,
   onApproveAction,
   onCreateObligation,
@@ -23,6 +29,15 @@ export default function SupervisorDashboardPage({
   const [newResidentId, setNewResidentId] = useState(residents[0]?.id || '');
   const [newPriority, setNewPriority] = useState('critical');
   const [newEvidenceGrade, setNewEvidenceGrade] = useState('E1');
+
+  // Reference image priority tasks
+  const priorityTasks = [
+    { id: 'task-1', title: 'Pemberian obat pagi - Bapak Wijaya', time: '08:00', status: 'Sedang berlangsung', statusColor: 'bg-emerald-100 text-emerald-800 border-emerald-300' },
+    { id: 'task-2', title: 'Cek tekanan darah - Ibu Sari', time: '09:00', status: 'Menunggu', statusColor: 'bg-amber-100 text-amber-800 border-amber-300' },
+    { id: 'task-3', title: 'Pembersihan kamar - Ibu Rini', time: '10:00', status: 'Belum mulai', statusColor: 'bg-rose-100 text-rose-800 border-rose-300' },
+    { id: 'task-4', title: 'Observasi pola makan - Bapak Santoso', time: '11:00', status: 'Belum mulai', statusColor: 'bg-rose-100 text-rose-800 border-rose-300' },
+    { id: 'task-5', title: 'Update catatan harian - Semua penghuni', time: '16:00', status: 'Belum mulai', statusColor: 'bg-rose-100 text-rose-800 border-rose-300' },
+  ];
 
   const handleCreateSubmit = (e) => {
     e.preventDefault();
@@ -46,113 +61,128 @@ export default function SupervisorDashboardPage({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full">
       {/* Care Debt & Cascade Detector Bar */}
       <CareDebtAlert obligations={obligations} />
 
-      {/* Top Controls & Metrics */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-base font-bold text-slate-900 flex items-center space-x-2">
-            <LayoutDashboard className="w-5 h-5 text-sky-600" />
-            <span>Care Obligation Graph & Bitemporal Ledger (P1)</span>
-          </h2>
-          <p className="text-xs text-slate-600">
-            Penjejakan real-time kewajiban perawatan terverifikasi evidence-grade
-          </p>
-        </div>
+      {/* Main Grid matching reference image: 7 Cols Left (Tugas Prioritas), 5 Cols Right (AI Assistant & Kondisi Penghuni) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
 
-        <button
-          onClick={() => setIsCreateOpen(true)}
-          className="bg-sky-600 hover:bg-sky-700 text-white text-xs px-4 py-2.5 rounded-xl font-bold transition flex items-center space-x-1.5 shadow-md shadow-sky-600/20"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Tambah Kewajiban Baru</span>
-        </button>
-      </div>
-
-      {/* Main Grid: Obligation Graph + Epistemic Fact Ledger */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column (2 Cols): Obligation Graph */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-              Daftar Kewajiban Aktif ({obligations.length})
-            </h3>
-            <span className="text-[10px] text-slate-500 font-mono font-medium">Realtime Supabase Channel</span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {obligations.map(ob => (
-              <ObligationGraphCard
-                key={ob.id}
-                obligation={ob}
-                currentUserRole="supervisor"
-                onOpenEvidenceModal={(o) => setSelectedObligationForEvidence(o)}
-                onOpenTraceModal={onOpenTraceModal}
-                onApproveAction={onApproveAction}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Right Column (1 Col): P3 Epistemic Facts & Spot Challenge Engine */}
-        <div className="space-y-6">
-          {/* P3 Epistemic Fact Ledger Widget */}
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xl shadow-slate-200/50 space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-              <h3 className="text-xs font-bold text-slate-900 flex items-center">
-                <Activity className="w-4 h-4 mr-1.5 text-emerald-600" />
-                P3 · Epistemic Fact Ledger
-              </h3>
-              <span className="text-[10px] text-emerald-700 font-bold font-mono">5 Status Data</span>
+        {/* Left Column (7 Cols): Tugas Prioritas List */}
+        <div className="lg:col-span-7 space-y-4">
+          <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-xl shadow-slate-200/50 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-sm font-black text-slate-900 tracking-tight">Tugas Prioritas</h3>
+              <button
+                onClick={() => setIsCreateOpen(true)}
+                className="bg-sky-600 hover:bg-sky-700 text-white text-xs px-3 py-1.5 rounded-xl font-bold transition flex items-center space-x-1 shadow-sm"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Tambah Tugas</span>
+              </button>
             </div>
 
-            <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
-              {epistemicFacts.map(fact => (
-                <div key={fact.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-800">{fact.resident_name}</span>
-                    <EpistemicLedgerBadge status={fact.status} confidence={fact.confidence_score} />
+            {/* List Items matching reference image */}
+            <div className="space-y-3">
+              {priorityTasks.map((t) => (
+                <div key={t.id} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between hover:bg-slate-100/60 transition">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 rounded-xl bg-white border border-slate-200 text-sky-600 shadow-2xs">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-900">{t.title}</h4>
+                    </div>
                   </div>
-                  <p className="text-[11px] font-mono font-semibold text-sky-700">
-                    {fact.fact_key}: {JSON.stringify(fact.fact_value)}
-                  </p>
-                  <div className="text-[10px] text-slate-500 flex items-center justify-between pt-1">
-                    <span>Sumber: {fact.source_type}</span>
-                    <span>{new Date(fact.observed_at).toLocaleTimeString('id-ID')}</span>
+
+                  <div className="flex items-center space-x-4 text-xs font-mono">
+                    <span className="text-slate-500 font-semibold">{t.time}</span>
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${t.statusColor}`}>
+                      {t.status}
+                    </span>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Spot Challenge Engine Widget */}
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xl shadow-slate-200/50 space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-              <h3 className="text-xs font-bold text-slate-900 flex items-center">
-                <ShieldAlert className="w-4 h-4 mr-1.5 text-amber-600" />
-                P2 · Spot Challenge Engine
-              </h3>
-              <span className="text-[10px] text-amber-700 font-bold font-mono">Audit Acak</span>
+          {/* Care Obligation Graph Cards */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+              Care Obligation Graph ({obligations.length})
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {obligations.map(ob => (
+                <ObligationGraphCard
+                  key={ob.id}
+                  obligation={ob}
+                  currentUserRole="supervisor"
+                  onOpenEvidenceModal={(o) => setSelectedObligationForEvidence(o)}
+                  onOpenTraceModal={onOpenTraceModal}
+                  onApproveAction={onApproveAction}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column (5 Cols): AI Assistant & Kondisi Penghuni Cards */}
+        <div className="lg:col-span-5 space-y-6">
+
+          {/* AI Asisten Card matching reference image */}
+          <div className="bg-gradient-to-br from-sky-50 via-blue-50/50 to-white rounded-3xl p-6 border border-sky-200/90 shadow-xl shadow-sky-100/50 space-y-4">
+            <div className="flex items-center justify-between border-b border-sky-200/80 pb-3">
+              <div className="flex items-center space-x-2">
+                <Bot className="w-5 h-5 text-sky-600" />
+                <h3 className="text-sm font-black text-slate-900">AI Asisten</h3>
+              </div>
+              <span className="text-xs text-sky-600 font-bold hover:underline cursor-pointer">Lihat Semua</span>
             </div>
 
-            {spotChallenges.length === 0 ? (
-              <p className="text-xs text-slate-500 py-2">Belum ada sampel audit spot challenge aktif.</p>
-            ) : (
-              <div className="space-y-2">
-                {spotChallenges.map(sc => (
-                  <div key={sc.id} className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-amber-900">Spot Challenge Audit</span>
-                      <span className="text-[10px] font-mono bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded font-bold">PENDING</span>
-                    </div>
-                    <p className="text-[11px] text-slate-700">{sc.challenge_reason}</p>
-                  </div>
-                ))}
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-sky-600 text-white rounded-2xl shadow-md shadow-sky-600/30 shrink-0">
+                <Bot className="w-8 h-8 text-sky-200" />
               </div>
-            )}
+              <p className="text-xs text-slate-700 font-medium leading-relaxed">
+                Ada <span className="font-bold text-sky-700">2 kewajiban</span> yang mendekati deadline. Klik untuk observasi & verifikasi.
+              </p>
+            </div>
           </div>
+
+          {/* Kondisi Penghuni Card matching reference image */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-xl shadow-slate-200/50 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-sm font-black text-slate-900">Kondisi Penghuni</h3>
+              <span className="text-xs text-sky-600 font-bold hover:underline cursor-pointer">Lihat Semua</span>
+            </div>
+
+            <div className="space-y-2.5 text-xs font-semibold text-slate-700">
+              <div className="flex items-center justify-between p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-emerald-900">
+                <div className="flex items-center space-x-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                  <span>Normal</span>
+                </div>
+                <span className="font-black font-mono">8 Orang</span>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-amber-50 rounded-2xl border border-amber-200 text-amber-900">
+                <div className="flex items-center space-x-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                  <span>Perlu Perhatian</span>
+                </div>
+                <span className="font-black font-mono">0 Orang</span>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-rose-50 rounded-2xl border border-rose-200 text-rose-900">
+                <div className="flex items-center space-x-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                  <span>Darurat</span>
+                </div>
+                <span className="font-black font-mono">0 Orang</span>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 
