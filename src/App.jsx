@@ -48,7 +48,9 @@ export default function App() {
     createObligation,
     signHandoverContract,
     selectedTrace,
-    setSelectedTrace
+    setSelectedTrace,
+    userAvatar,
+    setUserAvatar
   } = useSambungJaga();
 
   // Auth Handlers
@@ -106,8 +108,8 @@ export default function App() {
           )}
         </>
       ) : (
-        /* 2. POST-LOGIN STATE (Seamless Full-Height Dark Navy Sidebar Column) */
-        <div className="flex flex-col md:flex-row min-h-screen w-full bg-[#0c1a30] overflow-x-hidden">
+        /* 2. POST-LOGIN STATE (Full Width Sidebar Workspace) */
+        <div className="flex flex-col md:flex-row min-h-screen w-full overflow-x-hidden">
           {/* Left Sidebar Navigation */}
           <Sidebar
             activeTab={activeTab}
@@ -121,16 +123,18 @@ export default function App() {
             onLogout={handleLogout}
           />
 
-          {/* Right Main Content Workspace (Full-Width Edge-to-Edge with Light Slate Background) */}
-          <div className="flex-1 flex flex-col justify-between min-w-0 w-full min-h-screen bg-gradient-to-br from-slate-50 via-sky-50/30 to-slate-100 overflow-x-hidden">
+          {/* Right Main Content Workspace (Full-Width Edge-to-Edge) */}
+          <div className="flex-1 flex flex-col justify-between min-w-0 w-full overflow-x-hidden">
 
-            {/* Top Workspace Bar: Search, Realtime Clock, Notifications, Profile */}
+            {/* Top Workspace Bar: Search, Realtime Clock, Notifications, Dynamic Profile Modal */}
             <Header
               activeRole={activeRole}
+              userAvatar={userAvatar}
+              setUserAvatar={setUserAvatar}
               onLogout={handleLogout}
             />
 
-            <main className="p-4 sm:p-6 lg:p-8 space-y-6 w-full min-w-0 flex-1">
+            <main className="p-4 sm:p-6 lg:p-8 space-y-6 w-full min-w-0">
               {/* Role-Specific Custom Workspace Header Banner */}
               <RoleWorkspaceHeader
                 activeRole={activeRole}

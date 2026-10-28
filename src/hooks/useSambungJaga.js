@@ -25,6 +25,7 @@ export function useSambungJaga() {
   const [offlineQueue, setOfflineQueue] = useState([]);
   const [selectedTrace, setSelectedTrace] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [userAvatar, setUserAvatar] = useState('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=120&q=80');
 
   // Fetch initial data directly from Supabase Database tables
   useEffect(() => {
@@ -36,7 +37,6 @@ export function useSambungJaga() {
         if (resData && resData.length > 0) {
           setResidents(resData);
         } else {
-          // Live fallback query if empty
           setResidents([
             { id: 'res-101', full_name: 'Ibu Hj. Aminah (78 th)', room_number: 'Kamar 102 — Dahlia', medical_condition_summary: 'Diabetes Melitus Tipe 2, Hipertensi', consent_family_level: 'filtered_summary' },
             { id: 'res-102', full_name: 'Bapak Drs. Bambang (82 th)', room_number: 'Kamar 105 — Dahlia', medical_condition_summary: 'Demensia Ringan, Pasca-Stroke Ringan', consent_family_level: 'full' }
@@ -428,6 +428,8 @@ export function useSambungJaga() {
     signHandoverContract,
     selectedTrace,
     setSelectedTrace,
-    isLoading
+    isLoading,
+    userAvatar,
+    setUserAvatar
   };
 }
