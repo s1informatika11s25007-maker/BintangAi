@@ -3,8 +3,10 @@ import { Users, Lock, Heart, Eye } from 'lucide-react';
 import Badge from '../components/common/Badge';
 
 export default function FamilyPortalPage({ residents, obligations }) {
-  const familyResident = residents[0]; // Ibu Aminah
-  const familyObs = obligations.filter(o => o.resident_id === familyResident.id);
+  const familyResident = (residents && residents.length > 0)
+    ? residents[0]
+    : { id: 'res-101', full_name: 'Ibu Hj. Aminah (78 th)', room_number: 'Kamar 102 — Dahlia' };
+  const familyObs = (obligations || []).filter(o => o.resident_id === familyResident.id);
 
   return (
     <div className="w-full space-y-6">
