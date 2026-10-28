@@ -7,8 +7,7 @@ import {
   Building,
   ArrowRight,
   CheckCircle2,
-  ArrowLeft,
-  ShieldCheck
+  ArrowLeft
 } from 'lucide-react';
 
 export default function RegisterPage({ onRegisterSuccess, onGoToLogin, onGoToLanding }) {
@@ -60,11 +59,6 @@ export default function RegisterPage({ onRegisterSuccess, onGoToLogin, onGoToLan
 
         {/* Value Content */}
         <div className="relative z-10 my-10 space-y-6">
-          <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-300 text-xs font-bold">
-            <ShieldCheck className="w-4 h-4 text-indigo-600" />
-            <span>Registrasi Staf & Wali Pasien</span>
-          </div>
-
           <h2 className="text-3xl lg:text-4xl font-black text-slate-900 leading-tight">
             Bergabung dalam Jaringan <br />
             <span className="text-sky-600">

@@ -7,8 +7,7 @@ import {
   UserCheck,
   CheckCircle2,
   Activity,
-  ArrowLeft,
-  ShieldCheck
+  ArrowLeft
 } from 'lucide-react';
 import { ACTORS, CORE_INNOVATIONS } from '../types/architecture';
 
@@ -60,11 +59,6 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
 
         {/* Hero Value Showcase */}
         <div className="relative z-10 my-10 space-y-6">
-          <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-sky-100 text-sky-800 border border-sky-300 text-xs font-bold">
-            <ShieldCheck className="w-4 h-4 text-sky-600" />
-            <span>Obligation Kernel Versi Final 2026</span>
-          </div>
-
           <h2 className="text-3xl lg:text-4xl font-black text-slate-900 leading-tight">
             Evidence-Verified Care Continuity <br />
             <span className="text-sky-600">

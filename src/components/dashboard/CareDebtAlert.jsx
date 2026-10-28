@@ -23,7 +23,7 @@ export default function CareDebtAlert({ obligations }) {
         </div>
         <div>
           <h3 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
-            <span>Cascade & Care Debt Detector (P1 Kernel)</span>
+            <span>Cascade & Care Debt Detector (P1 Bitemporal)</span>
             <span className={`text-xs px-2 py-0.5 rounded font-mono font-bold ${
               careDebt.healthScore > 80 ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-rose-100 text-rose-800 border border-rose-300'
             }`}>

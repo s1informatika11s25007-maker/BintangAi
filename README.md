@@ -1,8 +1,8 @@
-# SambungJaga AI — Care Superagent Architecture (Obligation Kernel, versi final)
+# SambungJaga AI — Care Superagent Architecture (versi final)
 
 > **Evidence-Verified Care Continuity**: dari laporan pengasuh menjadi kewajiban yang terlacak, ditindaklanjuti, dan diverifikasi.
 
-[![Architecture Version](https://img.shields.io/badge/Architecture-Obligation%20Kernel%20v2.0-0284c7?style=for-the-badge)](./SambungJaga_AI_Final_Architecture.json)
+[![Architecture Version](https://img.shields.io/badge/Architecture-SambungJaga%20AI-0284c7?style=for-the-badge)](./SambungJaga_AI_Final_Architecture.json)
 [![Code Quality](https://img.shields.io/badge/Code%20Quality-Clean%20Architecture%20%26%20JSDoc-10b981?style=for-the-badge)](#-kualitas-kode--arsitektur-clean-code)
 [![Database](https://img.shields.io/badge/Database-Supabase%20PostgreSQL-3ecf8e?style=for-the-badge)](./supabase/migrations/20261027000000_initial_schema.sql)
 [![Frontend](https://img.shields.io/badge/Frontend-React.jsx%20%2B%20TailwindCSS-61dafb?style=for-the-badge)](./src)
