@@ -166,6 +166,7 @@ export default function App() {
                   onApproveAction={approveAuthorityAction}
                   onCreateObligation={createObligation}
                   onOpenTraceModal={(ob) => setSelectedTrace(ob)}
+                  setActiveTab={setActiveTab}
                 />
               )}
 

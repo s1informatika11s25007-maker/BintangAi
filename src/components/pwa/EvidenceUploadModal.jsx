@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Camera, QrCode, UserCheck, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Camera, QrCode, UserCheck, ShieldCheck, AlertCircle, X } from 'lucide-react';
 import { EVIDENCE_GRADE, EVIDENCE_GRADE_LABELS } from '../../types/architecture';
 
 export default function EvidenceUploadModal({ isOpen, onClose, obligation, onSubmitEvidence }) {
@@ -10,7 +10,7 @@ export default function EvidenceUploadModal({ isOpen, onClose, obligation, onSub
 
   if (!isOpen || !obligation) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setFeedback(null);
 
@@ -21,7 +21,7 @@ export default function EvidenceUploadModal({ isOpen, onClose, obligation, onSub
       timestamp: new Date().toISOString()
     };
 
-    const res = onSubmitEvidence({
+    const res = await onSubmitEvidence({
       obligationId: obligation.id,
       evidenceGrade: selectedGrade,
       payload,
@@ -40,16 +40,31 @@ export default function EvidenceUploadModal({ isOpen, onClose, obligation, onSub
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-      <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4 text-slate-900">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4 text-slate-900"
+      >
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center space-x-2">
             <ShieldCheck className="w-5 h-5 text-emerald-600" />
             <h3 className="font-bold text-slate-900 text-sm">P2 Evidence-Grade Verifier</h3>
           </div>
-          <span className="text-[10px] px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-mono font-bold border border-amber-300">
-            Wajib Min: {obligation.required_evidence_grade}
-          </span>
+          <div className="flex items-center space-x-2">
+            <span className="text-[10px] px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-mono font-bold border border-amber-300">
+              Wajib Min: {obligation.required_evidence_grade}
+            </span>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition focus:outline-none"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">

@@ -67,7 +67,7 @@ export default function HandoverContractCard({ contract, onSignContract, current
       {!isConfirmed && (
         <div className="pt-2 flex justify-end">
           <button
-            onClick={() => onSignContract(contract.id, 'incoming', 'Perawat Budi Santoso')}
+            onClick={() => onSignContract({ contractId: contract.id, signerRole: 'incoming', signerName: 'Perawat Budi Santoso' })}
             className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-4 py-2.5 rounded-xl font-bold shadow-md shadow-emerald-600/20 flex items-center space-x-1.5 transition"
           >
             <UserCheck className="w-4 h-4" />

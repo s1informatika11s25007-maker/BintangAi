@@ -1,11 +1,17 @@
-import React, { useState } from 'react';
-import { Mic, Send, AlertTriangle, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Mic, Send, AlertTriangle, CheckCircle, X } from 'lucide-react';
 
 export default function CaregiverCaptureModal({ isOpen, onClose, residents, onCaptureSubmit }) {
-  const [residentId, setResidentId] = useState(residents[0]?.id || '');
+  const [residentId, setResidentId] = useState(residents?.[0]?.id || 'res-101');
   const [inputText, setInputText] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [feedback, setFeedback] = useState(null);
+
+  useEffect(() => {
+    if (residents?.length > 0) {
+      setResidentId(residents[0].id);
+    }
+  }, [residents]);
 
   if (!isOpen) return null;
 
@@ -18,43 +24,56 @@ export default function CaregiverCaptureModal({ isOpen, onClose, residents, onCa
     }, 1500);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!inputText.trim()) return;
 
-    const res = onCaptureSubmit({
-      text: inputText,
-      sourceType: isListening ? 'voice_stt' : 'text_input',
-      residentId,
-      actorName: 'Suster Dewi Pertiwi'
-    });
-
-    if (!res.success) {
-      setFeedback({ type: 'error', text: res.error });
-    } else {
-      setFeedback({
-        type: 'success',
-        text: res.offline ? res.message : 'Laporan diproses oleh Care Capture Agent -> Epistemic Fact Ledger (P3).'
+    try {
+      const res = await onCaptureSubmit({
+        text: inputText,
+        sourceType: isListening ? 'voice_stt' : 'text_input',
+        residentId: residentId || 'res-101',
+        actorName: 'Suster Dewi Pertiwi'
       });
-      setInputText('');
-      setTimeout(() => {
-        setFeedback(null);
-        onClose();
-      }, 1800);
+
+      if (!res?.success) {
+        setFeedback({ type: 'error', text: res?.error || 'Gagal memproses laporan.' });
+      } else {
+        setFeedback({
+          type: 'success',
+          text: res?.offline ? res?.message : 'Laporan berhasil diproses oleh Care Capture Agent'
+        });
+        setInputText('');
+      }
+    } catch (err) {
+      setFeedback({ type: 'error', text: `Gagal memproses laporan: ${err.message}` });
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-      <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4 text-slate-900">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in"
+    >
+      <div
+        className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4 text-slate-900"
+      >
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center space-x-2">
             <Mic className="w-5 h-5 text-sky-600" />
             <h3 className="font-bold text-slate-900 text-sm">Care Capture Agent</h3>
           </div>
-          <span className="text-[10px] px-2 py-0.5 rounded bg-purple-100 text-purple-800 border border-purple-300 font-mono font-bold">
-            Bahasa Indonesia / Code-Switching
-          </span>
+          <div className="flex items-center space-x-2">
+            <span className="text-[10px] px-2 py-0.5 rounded bg-purple-100 text-purple-800 border border-purple-300 font-mono font-bold">
+              Bahasa Indonesia / Code-Switching
+            </span>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition focus:outline-none"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -134,6 +153,7 @@ export default function CaregiverCaptureModal({ isOpen, onClose, residents, onCa
               Batal
             </button>
             <button
+              id="btn-submit-care-report"
               type="submit"
               className="w-1/2 bg-sky-600 hover:bg-sky-700 text-white text-xs py-2.5 rounded-xl font-bold transition flex items-center justify-center space-x-1 shadow-md shadow-sky-600/20"
             >

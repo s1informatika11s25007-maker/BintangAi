@@ -194,14 +194,14 @@ export function useSambungJaga() {
   }, []);
 
   // Helper to append audit log entries
-  const logAudit = async (gatewayTag, actionName, actorName, payload) => {
+  const logAudit = (gatewayTag, actionName, actorName, payload) => {
     const updatedTrail = appendAuditEntry(auditTrail, gatewayTag, actionName, actorName, payload);
     setAuditTrail(updatedTrail);
 
-    // Sync to Supabase audit_trail table
+    // Sync to Supabase audit_trail table (non-blocking)
     const latestEntry = updatedTrail[updatedTrail.length - 1];
     if (latestEntry) {
-      await supabase.from('audit_trail').insert([{
+      supabase.from('audit_trail').insert([{
         actor_id: latestEntry.actor_id || '00000000-0000-0000-0000-000000000000',
         gateway_tag: gatewayTag,
         action_name: actionName,
@@ -214,7 +214,9 @@ export function useSambungJaga() {
 
   // 1. Submit Voice / Text Capture (Care Capture Agent)
   const captureCareReport = async ({ text, sourceType, residentId, actorName }) => {
-    const resident = residents.find(r => r.id === residentId) || residents[0];
+    const resident = (residents && residents.length > 0)
+      ? (residents.find(r => r.id === residentId) || residents[0])
+      : { id: 'res-101', full_name: 'Ibu Hj. Aminah (78 th)' };
 
     // Security Prompt Injection Validation
     const injectionCheck = validatePromptInjection(text);
@@ -249,8 +251,8 @@ export function useSambungJaga() {
     setEpistemicFacts(prev => [newFact, ...prev]);
     logAudit('[A] Perception & Epistemic Gateway', 'ADD_EPISTEMIC_FACT', actorName, { fact_id: newFact.id, status: newFact.status });
 
-    // Sync to Supabase epistemic_facts table
-    await supabase.from('epistemic_facts').insert([{
+    // Sync to Supabase epistemic_facts table (non-blocking)
+    supabase.from('epistemic_facts').insert([{
       resident_id: resident.id,
       fact_key: 'caregiver_voice_report',
       fact_value: { text_raw: text },
@@ -320,7 +322,7 @@ export function useSambungJaga() {
     });
 
     // Sync to Supabase bitemporal_obligations table
-    await supabase.from('bitemporal_obligations').update({ status: OBLIGATION_STATUS.VERIFIED_CLOSED }).eq('id', obligationId).catch(() => {});
+    supabase.from('bitemporal_obligations').update({ status: OBLIGATION_STATUS.VERIFIED_CLOSED }).eq('id', obligationId).catch(() => {});
 
     // Random Spot Challenge Check
     const spotChallenge = generateRandomSpotChallenge({ id: `ev-${Date.now()}`, obligationId });
@@ -336,10 +338,12 @@ export function useSambungJaga() {
   };
 
   // 3. Approve A3 Authority Action (Human Review)
-  const approveAuthorityAction = async ({ obligationId, supervisorName }) => {
-    setObligations(prev => prev.map(o => o.id === obligationId ? { ...o, status: OBLIGATION_STATUS.VERIFIED_CLOSED } : o));
-    logAudit('[A] P6 Authority Envelope Gate', 'HUMAN_APPROVAL_GRANTED', supervisorName || 'Supervisor', { obligation_id: obligationId });
-    await supabase.from('bitemporal_obligations').update({ status: OBLIGATION_STATUS.VERIFIED_CLOSED }).eq('id', obligationId).catch(() => {});
+  const approveAuthorityAction = async (payload) => {
+    const targetId = typeof payload === 'string' ? payload : payload?.obligationId;
+    const name = typeof payload === 'string' ? 'Ns. Ratna Sari (Supervisor)' : (payload?.supervisorName || 'Supervisor');
+    setObligations(prev => prev.map(o => o.id === targetId ? { ...o, status: OBLIGATION_STATUS.VERIFIED_CLOSED } : o));
+    logAudit('[A] P6 Authority Envelope Gate', 'HUMAN_APPROVAL_GRANTED', name, { obligation_id: targetId });
+    supabase.from('bitemporal_obligations').update({ status: OBLIGATION_STATUS.VERIFIED_CLOSED }).eq('id', targetId).catch(() => {});
     return { success: true, message: 'Persetujuan Manusia (Human Review) diberikan. Status kewajiban ditutup.' };
   };
 

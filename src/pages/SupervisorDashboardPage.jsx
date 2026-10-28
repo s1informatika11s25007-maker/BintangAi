@@ -20,7 +20,8 @@ export default function SupervisorDashboardPage({
   onSubmitEvidence,
   onApproveAction,
   onCreateObligation,
-  onOpenTraceModal
+  onOpenTraceModal,
+  setActiveTab
 }) {
   const [selectedObligationForEvidence, setSelectedObligationForEvidence] = useState(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -136,7 +137,13 @@ export default function SupervisorDashboardPage({
                 <Bot className="w-5 h-5 text-sky-600" />
                 <h3 className="text-sm font-black text-slate-900">AI Asisten</h3>
               </div>
-              <span className="text-xs text-sky-600 font-bold hover:underline cursor-pointer">Lihat Semua</span>
+              <button
+                type="button"
+                onClick={() => setActiveTab && setActiveTab('execution_trace')}
+                className="text-xs text-sky-600 font-bold hover:underline cursor-pointer"
+              >
+                Lihat Semua
+              </button>
             </div>
 
             <div className="flex items-center space-x-4">
@@ -155,7 +162,13 @@ export default function SupervisorDashboardPage({
           <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-xl shadow-slate-200/50 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-sm font-black text-slate-900">Kondisi Penghuni</h3>
-              <span className="text-xs text-sky-600 font-bold hover:underline cursor-pointer">Lihat Semua</span>
+              <button
+                type="button"
+                onClick={() => setActiveTab && setActiveTab('family_portal')}
+                className="text-xs text-sky-600 font-bold hover:underline cursor-pointer"
+              >
+                Lihat Semua
+              </button>
             </div>
 
             <div className="space-y-2.5 text-xs font-semibold text-slate-700">
