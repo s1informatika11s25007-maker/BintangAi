@@ -7,7 +7,8 @@ import {
   UserCheck,
   CheckCircle2,
   ArrowLeft,
-  ShieldCheck
+  ShieldCheck,
+  Sparkles
 } from 'lucide-react';
 import { ACTORS } from '../types/architecture';
 
@@ -29,8 +30,8 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
   return (
     <div className="min-h-screen w-full flex flex-col lg:flex-row bg-gradient-to-br from-slate-50 via-sky-50/30 to-slate-100 font-sans text-slate-900 overflow-x-hidden">
 
-      {/* LEFT COLUMN (Narrower Width - 5 Cols): Tua.webp Full-Height Background Banner */}
-      <div className="w-full lg:w-5/12 min-h-[420px] lg:min-h-screen relative flex flex-col justify-between p-8 lg:p-12 overflow-hidden text-white shadow-2xl shrink-0">
+      {/* LEFT COLUMN: Tua.webp Full-Height Background Banner */}
+      <div className="w-full lg:w-5/12 min-h-[380px] lg:min-h-screen relative flex flex-col justify-between p-8 lg:p-12 overflow-hidden text-white shadow-2xl shrink-0">
 
         {/* Full-Height Background Image (/Tua.webp) */}
         <img
@@ -56,13 +57,13 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
               <h1 className="text-xl font-black tracking-tight text-white">
                 Sambung<span className="text-sky-400">Jaga</span>
               </h1>
-              <p className="text-xs text-sky-200 font-bold">Care Superagent Architecture</p>
+              <p className="text-xs text-sky-200 font-bold">Care Superagent</p>
             </div>
           </div>
 
           <button
             onClick={onGoToLanding}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white/15 hover:bg-white/25 text-white border border-white/20 backdrop-blur-md transition shadow-md"
+            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-white/15 hover:bg-white/25 text-white border border-white/20 backdrop-blur-md transition shadow-md"
           >
             <ArrowLeft className="w-3.5 h-3.5 text-sky-300" />
             <span>Kembali</span>
@@ -71,77 +72,72 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
 
         {/* Hero Message */}
         <div className="relative z-10 my-auto py-8 space-y-3 text-left">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400/30 text-xs font-bold backdrop-blur-md">
+          <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400/30 text-xs font-bold backdrop-blur-md">
             <ShieldCheck className="w-3.5 h-3.5 text-sky-400" />
-            <span>Sistem Perawatan Lansia Terintegrasi</span>
+            <span>Perawatan Lansia Terintegrasi</span>
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight">
-            Evidence-Verified Care Continuity <br />
+            Evidence-Verified Care <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-blue-300 to-indigo-300">
-              Platform Perawatan Lansia Terverifikasi
+              Platform Perawatan Terverifikasi
             </span>
           </h2>
-
-          <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-normal opacity-90">
-            Meningkatkan keselamatan lansia melalui verifikasi tugas perawatan yang akurat, transparan, dan terpercaya.
-          </p>
         </div>
 
         {/* Trust Footer */}
         <div className="relative z-10 pt-4 border-t border-white/15 flex items-center justify-between text-xs text-slate-300 font-medium">
           <span className="flex items-center text-emerald-400 font-bold">
-            <CheckCircle2 className="w-4 h-4 mr-1.5 text-emerald-400" /> Akses Terproteksi Aman
-          </span>
-          <span className="font-mono text-[11px] bg-slate-900/80 px-2.5 py-1 rounded-lg border border-slate-700/80 text-sky-300 font-bold backdrop-blur-md">
-            Sistem Terverifikasi
+            <CheckCircle2 className="w-4 h-4 mr-1.5 text-emerald-400" /> Akses Terproteksi
           </span>
         </div>
       </div>
 
-      {/* RIGHT COLUMN (Wider Spacious Area - 7 Cols): Elegant & Professional Form */}
+      {/* RIGHT COLUMN: Streamlined, Ultra-Clean & Professional Form */}
       <div className="w-full lg:w-7/12 bg-white p-8 lg:p-16 flex flex-col justify-center space-y-6 shadow-xl">
-        <div className="space-y-2 max-w-xl mx-auto w-full text-left">
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Masuk ke Akun Anda</h2>
+
+        <div className="space-y-1.5 max-w-md mx-auto w-full text-left">
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Selamat Datang Kembali</h2>
           <p className="text-xs sm:text-sm text-slate-500 font-medium">
-            Pilih peran pengguna atau gunakan login otomatis demo untuk pengujian.
+            Masuk ke akun SambungJaga Anda
           </p>
         </div>
 
-        <div className="max-w-xl mx-auto w-full space-y-6">
-          {/* Quick Demo Login Preset Buttons */}
-          <div className="space-y-2.5 bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs">
-            <span className="text-xs font-bold text-slate-700 flex items-center">
-              <CheckCircle2 className="w-4 h-4 mr-1.5 text-sky-600" /> Demo Instant Login (Sekali Klik):
+        <div className="max-w-md mx-auto w-full space-y-5">
+
+          {/* Quick Demo Login Presets */}
+          <div className="space-y-2 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200">
+            <span className="text-[11px] font-bold text-slate-600 flex items-center uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5 mr-1 text-sky-600" /> Demo Instant Login:
             </span>
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => handleQuickDemoLogin('supervisor')}
-                className="text-xs bg-sky-600 hover:bg-sky-700 text-white font-bold py-2.5 px-3.5 rounded-xl shadow-xs transition text-left truncate"
+                className="text-xs bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-3 rounded-xl transition text-center truncate"
               >
-                Ns. Ratna (Supervisor)
+                Supervisor
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickDemoLogin('caregiver')}
-                className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-3.5 rounded-xl shadow-xs transition text-left truncate"
+                className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 rounded-xl transition text-center truncate"
               >
-                Suster Dewi (Pengasuh)
+                Pengasuh
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickDemoLogin('family')}
-                className="text-xs bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 px-3.5 rounded-xl shadow-xs transition text-left truncate"
+                className="text-xs bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-xl transition text-center truncate"
               >
-                Keluarga Ibu Aminah
+                Keluarga
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickDemoLogin('admin_hr')}
-                className="text-xs bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 px-3.5 rounded-xl shadow-xs transition text-left truncate"
+                className="text-xs bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-3 rounded-xl transition text-center truncate"
               >
-                Admin HR / Panti
+                Admin HR
               </button>
             </div>
           </div>
@@ -149,43 +145,43 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
           {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-4 pt-1 text-left">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center">
-                <UserCheck className="w-3.5 h-3.5 mr-1.5 text-sky-600" /> Peran / Akses Pengguna
+              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center">
+                <UserCheck className="w-3.5 h-3.5 mr-1 text-sky-600" /> Peran Pengguna
               </label>
               <select
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-3 text-xs text-slate-900 font-bold outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-3 text-xs text-slate-900 font-bold outline-none focus:ring-2 focus:ring-sky-500 transition"
               >
                 {ACTORS.map(actor => (
-                  <option key={actor.id} value={actor.id}>{actor.title} — {actor.subtitle}</option>
+                  <option key={actor.id} value={actor.id}>{actor.title}</option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center">
-                <Mail className="w-3.5 h-3.5 mr-1.5 text-sky-600" /> Email / NIP Staf
+              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center">
+                <Mail className="w-3.5 h-3.5 mr-1 text-sky-600" /> Email Staf
               </label>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-xs text-slate-900 font-semibold outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-3 text-xs text-slate-900 font-semibold outline-none focus:ring-2 focus:ring-sky-500 transition"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center">
-                <Lock className="w-3.5 h-3.5 mr-1.5 text-sky-600" /> Kata Sandi
+              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center">
+                <Lock className="w-3.5 h-3.5 mr-1 text-sky-600" /> Kata Sandi
               </label>
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-xs text-slate-900 font-semibold outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-3 text-xs text-slate-900 font-semibold outline-none focus:ring-2 focus:ring-sky-500 transition"
               />
             </div>
 
@@ -199,8 +195,8 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
           </form>
 
           {/* Footer Link */}
-          <div className="pt-4 text-center text-xs text-slate-600 border-t border-slate-100">
-            Belum memiliki akun staf atau keluarga?{' '}
+          <div className="pt-3 text-center text-xs text-slate-600 border-t border-slate-100">
+            Belum punya akun?{' '}
             <button
               onClick={onGoToRegister}
               className="font-bold text-sky-600 hover:underline ml-1"
