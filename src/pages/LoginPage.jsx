@@ -7,7 +7,8 @@ import {
   UserCheck,
   CheckCircle2,
   Activity,
-  ArrowLeft
+  ArrowLeft,
+  ShieldCheck
 } from 'lucide-react';
 import { ACTORS, CORE_INNOVATIONS } from '../types/architecture';
 
@@ -28,8 +29,8 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
 
   return (
     <div className="min-h-screen w-full flex flex-col lg:flex-row bg-gradient-to-br from-slate-50 via-sky-50/30 to-slate-100 font-sans text-slate-900 overflow-x-hidden">
-      {/* LEFT COLUMN: Landing Page Light Theme Matching Banner */}
-      <div className="w-full lg:w-7/12 bg-gradient-to-br from-sky-50/80 via-blue-50/50 to-sky-100/60 border-r border-sky-200/90 text-slate-900 p-8 lg:p-14 flex flex-col justify-between relative overflow-hidden shadow-sm">
+      {/* LEFT COLUMN: Landing Page Light Theme Banner with Orangtua.jpeg Photo */}
+      <div className="w-full lg:w-7/12 bg-gradient-to-br from-sky-50/80 via-blue-50/50 to-sky-100/60 border-r border-sky-200/90 text-slate-900 p-8 lg:p-12 flex flex-col justify-between relative overflow-hidden shadow-sm">
 
         {/* Brand Header */}
         <div className="relative z-10 flex items-center justify-between">
@@ -57,23 +58,38 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
           </button>
         </div>
 
-        {/* Hero Value Showcase */}
-        <div className="relative z-10 my-10 space-y-6">
-          <h2 className="text-3xl lg:text-4xl font-black text-slate-900 leading-tight">
+        {/* Hero Value Showcase & Orangtua.jpeg Photo */}
+        <div className="relative z-10 my-6 space-y-4">
+          <h2 className="text-2xl lg:text-3xl font-black text-slate-900 leading-tight">
             Evidence-Verified Care Continuity <br />
             <span className="text-sky-600">
               Platform Perawatan Lansia Terverifikasi
             </span>
           </h2>
 
-          <p className="text-sm text-slate-600 max-w-xl leading-relaxed font-normal">
+          {/* Elderly Care Photo Card (/Orangtua.jpeg) */}
+          <div className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white my-4 group">
+            <img
+              src="/Orangtua.jpeg"
+              onError={(e) => { e.target.src = '/elderly-care.svg'; }}
+              alt="Perawatan Lansia SambungJaga"
+              className="w-full h-56 sm:h-64 lg:h-72 object-cover rounded-2xl transform group-hover:scale-105 transition duration-500"
+            />
+            {/* Overlay Badge */}
+            <div className="absolute bottom-3 left-3 bg-slate-900/85 backdrop-blur-md px-3.5 py-2 rounded-xl text-white text-xs font-bold flex items-center space-x-2 border border-slate-700/80 shadow-lg">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span>Sistem Perawatan Lansia Terintegrasi</span>
+            </div>
+          </div>
+
+          <p className="text-xs sm:text-sm text-slate-600 max-w-xl leading-relaxed font-normal">
             Meningkatkan keselamatan lansia melalui Graf Kewajiban Perawatan bitemporal, verifikasi bukti E0–E3, dan penegakan wewenang P6 Authority Envelope.
           </p>
 
           {/* Highlights */}
-          <div className="grid grid-cols-2 gap-3 pt-4">
-            {CORE_INNOVATIONS.slice(0, 4).map((inn) => (
-              <div key={inn.code} className="p-3.5 rounded-2xl bg-white/90 border border-sky-200/80 shadow-xs space-y-1">
+          <div className="grid grid-cols-2 gap-3 pt-2">
+            {CORE_INNOVATIONS.slice(0, 2).map((inn) => (
+              <div key={inn.code} className="p-3 rounded-2xl bg-white/90 border border-sky-200/80 shadow-xs space-y-1">
                 <div className="flex items-center space-x-2 font-mono text-xs font-bold text-sky-700">
                   <Activity className="w-3.5 h-3.5 text-amber-600" />
                   <span>{inn.code}: {inn.title}</span>
@@ -85,7 +101,7 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
         </div>
 
         {/* Trust Footer */}
-        <div className="relative z-10 pt-6 border-t border-sky-200/80 flex items-center justify-between text-xs text-slate-600 font-medium">
+        <div className="relative z-10 pt-4 border-t border-sky-200/80 flex items-center justify-between text-xs text-slate-600 font-medium">
           <span className="flex items-center text-emerald-800 font-bold">
             <CheckCircle2 className="w-4 h-4 mr-1.5 text-emerald-600" /> PostgreSQL RLS Protected
           </span>
