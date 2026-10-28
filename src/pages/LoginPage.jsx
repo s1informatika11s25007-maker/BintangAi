@@ -29,7 +29,7 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
 
   return (
     <div className="min-h-screen w-full flex flex-col lg:flex-row bg-gradient-to-br from-slate-50 via-sky-50/30 to-slate-100 font-sans text-slate-900 overflow-x-hidden">
-      {/* LEFT COLUMN: Landing Page Light Theme Banner with Orangtua.jpeg Photo */}
+      {/* LEFT COLUMN: Landing Page Light Theme Banner with Tua.webp Photo */}
       <div className="w-full lg:w-7/12 bg-gradient-to-br from-sky-50/80 via-blue-50/50 to-sky-100/60 border-r border-sky-200/90 text-slate-900 p-8 lg:p-12 flex flex-col justify-between relative overflow-hidden shadow-sm">
 
         {/* Brand Header */}
@@ -58,7 +58,7 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
           </button>
         </div>
 
-        {/* Hero Value Showcase & Orangtua.jpeg Photo */}
+        {/* Hero Value Showcase & Tua.webp Photo */}
         <div className="relative z-10 my-6 space-y-4">
           <h2 className="text-2xl lg:text-3xl font-black text-slate-900 leading-tight">
             Evidence-Verified Care Continuity <br />
@@ -67,11 +67,11 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
             </span>
           </h2>
 
-          {/* Elderly Care Photo Card (/Orangtua.jpeg) */}
+          {/* Elderly Care WebP Photo Card (/Tua.webp) */}
           <div className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white my-4 group">
             <img
-              src="/Orangtua.jpeg"
-              onError={(e) => { e.target.src = '/elderly-care.svg'; }}
+              src="/Tua.webp"
+              onError={(e) => { e.target.src = '/Orangtua.jpeg'; }}
               alt="Perawatan Lansia SambungJaga"
               className="w-full h-56 sm:h-64 lg:h-72 object-cover rounded-2xl transform group-hover:scale-105 transition duration-500"
             />
