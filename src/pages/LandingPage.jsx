@@ -172,7 +172,7 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
             </div>
           </div>
 
-          {/* Right Hero Column: Orangtua.jpeg Photo + Left AI Speech Bubble & Right 3D Robot Mascot with "Kondisi Lansia: Stabil" Speech Bubble */}
+          {/* Right Hero Column: Orangtua.jpeg Photo + Speech Bubble Above-Left of Robot Mascot */}
           <div className="lg:col-span-7 relative flex justify-center w-full">
             <div className="relative rounded-3xl overflow-hidden border-4 border-white shadow-2xl shadow-sky-900/10 bg-white w-full">
               <img
@@ -193,20 +193,20 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
                 </p>
               </div>
 
-              {/* OVERLAY GROUP RIGHT: Speech Bubble "Kondisi Lansia: Stabil" directly on top of 3D Robot Mascot */}
-              <div className="absolute -bottom-2 -right-2 sm:bottom-1 sm:right-1 z-20 flex flex-col items-end pointer-events-none">
+              {/* OVERLAY GROUP RIGHT: Speech Bubble "Kondisi Lansia: Stabil" positioned TOP-LEFT above 3D Robot Mascot */}
+              <div className="absolute bottom-1 right-1 sm:bottom-3 sm:right-3 z-20 flex flex-col items-end pointer-events-none">
 
-                {/* Robot Speech Bubble */}
-                <div className="bg-white/95 backdrop-blur-md px-3.5 py-2.5 rounded-2xl shadow-xl border border-slate-200/90 flex items-center space-x-2.5 mb-1 animate-float relative shadow-sky-900/10">
+                {/* Speech Bubble Above-Left of Robot */}
+                <div className="bg-white/95 backdrop-blur-md px-3.5 py-2.5 rounded-2xl shadow-xl border border-slate-200/90 flex items-center space-x-2.5 mb-1 animate-float relative shadow-sky-900/10 mr-12 sm:mr-16">
                   <div className="p-1.5 rounded-full bg-rose-100 text-rose-600 shrink-0">
                     <Heart className="w-3.5 h-3.5 fill-rose-600" />
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-500 font-bold block leading-none">Kondisi Lansia</span>
-                    <span className="text-xs font-black text-emerald-600">Stabil ✨</span>
+                    <span className="text-xs font-black text-emerald-600">Stabil</span>
                   </div>
-                  {/* Arrow pointer down to robot */}
-                  <div className="absolute -bottom-1.5 right-8 w-3 h-3 bg-white border-b border-r border-slate-200/90 transform rotate-45"></div>
+                  {/* Speech Bubble Arrow pointing down-right to Robot Mascot */}
+                  <div className="absolute -bottom-1.5 right-4 w-3 h-3 bg-white border-b border-r border-slate-200/90 transform rotate-45"></div>
                 </div>
 
                 {/* 3D Robot Mascot Image */}
