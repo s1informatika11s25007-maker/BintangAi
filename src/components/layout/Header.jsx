@@ -1,12 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Bell, Settings, User, Camera, Upload, LogOut, CheckCircle2, Shield } from 'lucide-react';
+import { Search, Bell, Settings, User, Camera, Upload, LogOut, CheckCircle2, Shield, Trash2, X, AlertTriangle, Info } from 'lucide-react';
 import { formatDateID, formatTimeID } from '../../utils/formatters';
 import Modal from '../common/Modal';
 
-export default function Header({ activeRole, userAvatar, setUserAvatar, onLogout }) {
+export default function Header({
+  activeRole,
+  currentUser,
+  notifications = [],
+  onDeleteNotification,
+  onClearRoleNotifications,
+  userAvatar,
+  setUserAvatar,
+  onLogout
+}) {
   const [now, setNow] = useState(new Date());
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [showOnceToast, setShowOnceToast] = useState(true);
   const [customAvatarUrl, setCustomAvatarUrl] = useState('');
 
   useEffect(() => {
@@ -21,7 +31,13 @@ export default function Header({ activeRole, userAvatar, setUserAvatar, onLogout
     admin_hr: { name: 'Budi Santoso', roleTitle: 'Admin Panti / HR', email: 'admin.hr@sambungjaga.id', defaultAvatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=120&q=80' }
   };
 
-  const currentProfile = roleProfiles[activeRole] || roleProfiles.supervisor;
+  const currentProfile = {
+    name: currentUser?.name || roleProfiles[activeRole]?.name || 'Pengguna SambungJaga',
+    roleTitle: currentUser?.roleTitle || roleProfiles[activeRole]?.roleTitle || activeRole,
+    email: currentUser?.email || roleProfiles[activeRole]?.email || 'user@sambungjaga.id',
+    defaultAvatar: currentUser?.avatar || roleProfiles[activeRole]?.defaultAvatar
+  };
+
   const displayAvatar = userAvatar || currentProfile.defaultAvatar;
 
   // Handle local file upload (converts file to Data URL)
@@ -57,9 +73,54 @@ export default function Header({ activeRole, userAvatar, setUserAvatar, onLogout
     'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80'
   ];
 
+  // Role-targeted notifications
+  const roleNotifs = notifications.filter(n => n.recipient_role === activeRole);
+  const latestNotif = roleNotifs[0];
+
+  // Auto-hide popup banner after 7 seconds
+  useEffect(() => {
+    setShowOnceToast(true);
+    const timer = setTimeout(() => {
+      setShowOnceToast(false);
+    }, 7000);
+    return () => clearTimeout(timer);
+  }, [activeRole]);
+
   return (
     <>
-      <header className="bg-white/95 border-b border-slate-200/90 px-6 py-3.5 sticky top-0 z-40 backdrop-blur-md shadow-xs w-full overflow-x-hidden">
+      {/* Floating Toast Notification Banner - Positioned cleanly in bottom-right corner with high z-index (z-[100]) */}
+      {showOnceToast && latestNotif && (
+        <div className="fixed bottom-6 right-6 z-[100] max-w-sm w-[calc(100vw-2rem)] sm:w-96 bg-slate-900 text-white p-4 rounded-2xl shadow-2xl border border-sky-500/50 backdrop-blur-md animate-fade-in flex items-start justify-between gap-3">
+          <div className="flex items-start space-x-3 min-w-0 flex-1">
+            <div className="p-2.5 bg-sky-600/40 text-sky-300 rounded-xl mt-0.5 shrink-0 border border-sky-500/30">
+              <Bell className="w-4 h-4 animate-bounce text-sky-300" />
+            </div>
+            <div className="text-xs text-left min-w-0 flex-1">
+              <div className="font-extrabold text-sky-300 flex items-center justify-between gap-2">
+                <span className="truncate">{latestNotif.title}</span>
+                <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-sky-800/80 font-mono text-sky-200 font-bold shrink-0">
+                  {latestNotif.recipient_role}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-200 mt-1 leading-snug font-medium line-clamp-3">
+                {latestNotif.message}
+              </p>
+              <span className="text-[9px] text-slate-400 mt-1.5 block font-semibold">
+                Dari: {latestNotif.sender_name}
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowOnceToast(false)}
+            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition shrink-0"
+            title="Tutup Pengingat"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      <header className="bg-white/95 border-b border-slate-200/90 px-6 py-3.5 sticky top-0 z-40 backdrop-blur-md shadow-xs w-full overflow-visible">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
           {/* Left Search Bar */}
           <div className="relative w-full sm:w-96">
@@ -79,43 +140,89 @@ export default function Header({ activeRole, userAvatar, setUserAvatar, onLogout
               <div className="text-xs font-mono font-black text-slate-900">{formatTimeID(now)}</div>
             </div>
 
-            {/* Bell Notification */}
+            {/* Bell Notification Dropdown */}
             <div className="relative">
               <button
                 onClick={() => setIsNotificationOpen(!isNotificationOpen)}
                 className="relative p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition focus:outline-none"
-                title="Notifikasi Sistem"
+                title="Notifikasi Peran Sistem"
               >
                 <Bell className="w-4 h-4" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-600 animate-pulse"></span>
+                {roleNotifs.length > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 flex items-center justify-center rounded-full bg-rose-600 text-[10px] font-black text-white animate-pulse">
+                    {roleNotifs.length}
+                  </span>
+                )}
               </button>
 
               {isNotificationOpen && (
-                <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 p-4 text-left animate-fade-in space-y-3">
+                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border border-slate-200 rounded-2xl shadow-2xl z-[90] p-4 text-left animate-fade-in space-y-3">
                   <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                     <h4 className="text-xs font-bold text-slate-900 flex items-center">
-                      <Bell className="w-3.5 h-3.5 mr-1.5 text-sky-600" /> Notifikasi Aktivitas (3)
+                      <Bell className="w-3.5 h-3.5 mr-1.5 text-sky-600" /> Notifikasi ({roleNotifs.length})
+                      <span className="ml-2 text-[10px] px-2 py-0.5 bg-sky-100 text-sky-800 rounded-full font-bold uppercase">{activeRole}</span>
                     </h4>
-                    <button
-                      onClick={() => setIsNotificationOpen(false)}
-                      className="text-[10px] text-slate-400 hover:text-slate-600 font-bold"
-                    >
-                      Tutup
-                    </button>
+                    <div className="flex items-center space-x-2">
+                      {roleNotifs.length > 0 && (
+                        <button
+                          onClick={() => onClearRoleNotifications && onClearRoleNotifications(activeRole)}
+                          className="text-[10px] text-rose-600 hover:text-rose-800 font-bold flex items-center gap-0.5"
+                          title="Hapus semua notifikasi peran ini"
+                        >
+                          <Trash2 className="w-3 h-3" /> Hapus Semua
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setIsNotificationOpen(false)}
+                        className="text-[10px] text-slate-400 hover:text-slate-600 font-bold ml-1"
+                      >
+                        Tutup
+                      </button>
+                    </div>
                   </div>
-                  <div className="space-y-2 text-xs">
-                    <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900">
-                      <div className="font-bold text-[11px]">Tugas Kritis Mendekati Deadline</div>
-                      <p className="text-[10px] opacity-90 mt-0.5">Injeksi Novorapid 6 IU Ibu Aminah perlu verifikasi bukti E1.</p>
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-sky-50 border border-sky-200 text-sky-900">
-                      <div className="font-bold text-[11px]">Serah Terima Shift Pagi</div>
-                      <p className="text-[10px] opacity-90 mt-0.5">Kontrak serah terima siap dikonfirmasi oleh penerima shift.</p>
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900">
-                      <div className="font-bold text-[11px]">Epistemic Fact Disinkronkan</div>
-                      <p className="text-[10px] opacity-90 mt-0.5">Data GDS Ibu Aminah (145 mg/dL) tercatat di ledger P3.</p>
-                    </div>
+
+                  <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1 text-xs">
+                    {roleNotifs.length === 0 ? (
+                      <div className="text-center py-6 text-slate-400 font-medium text-xs">
+                        Tidak ada notifikasi baru untuk peran {activeRole}.
+                      </div>
+                    ) : (
+                      roleNotifs.map((n) => (
+                        <div
+                          key={n.id}
+                          className={`p-3.5 rounded-xl border transition duration-200 shadow-2xs ${
+                            n.type === 'urgent' ? 'bg-rose-50 border-rose-200 text-rose-950' :
+                            n.type === 'warning' ? 'bg-amber-50 border-amber-200 text-amber-950' :
+                            n.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-950' :
+                            'bg-sky-50 border-sky-200 text-sky-950'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2.5">
+                            <div className="font-extrabold text-xs text-slate-900 leading-tight flex-1 min-w-0 pr-1">
+                              {n.title}
+                            </div>
+                            <button
+                              onClick={() => onDeleteNotification && onDeleteNotification(n.id)}
+                              className="text-slate-400 hover:text-rose-600 p-1 hover:bg-slate-200/60 rounded-lg transition shrink-0"
+                              title="Hapus Notifikasi"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+
+                          <p className="text-[11px] text-slate-700 mt-1 leading-relaxed font-medium">
+                            {n.message}
+                          </p>
+
+                          <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-200/60 text-[10px] text-slate-500 font-semibold">
+                            <span>Dari: <strong className="text-slate-700">{n.sender_name || 'Sistem'}</strong></span>
+                            <span className="font-mono text-slate-500">
+                              {new Date(n.created_at || Date.now()).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               )}

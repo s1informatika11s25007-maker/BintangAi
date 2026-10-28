@@ -6,17 +6,25 @@ import { evaluateAuthorityEnvelope } from '../services/authorityEnvelope';
 import { detectFactContradiction } from '../services/epistemicLedger';
 import { validatePromptInjection } from '../utils/validators';
 import { OBLIGATION_STATUS, AUTHORITY_ENVELOPE } from '../types/architecture';
+import { runCareSuperagent } from '../services/aiSuperagent';
 
 /**
  * Custom React Hook for SambungJaga AI Core State & Supabase Database Integrations
  * @returns {Object} State and handler methods connected to Supabase PostgreSQL Database
  */
 export function useSambungJaga() {
-  const [activeRole, setActiveRole] = useState('supervisor');
+  const [activeRole, setActiveRole] = useState(() => {
+    return localStorage.getItem('activeRole') || 'supervisor';
+  });
+  const [currentUser, setCurrentUser] = useState(() => {
+    const saved = localStorage.getItem('currentUser');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [residents, setResidents] = useState([]);
   const [staff, setStaff] = useState([]);
   const [obligations, setObligations] = useState([]);
   const [epistemicFacts, setEpistemicFacts] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const [auditTrail, setAuditTrail] = useState([]);
   const [handoverContracts, setHandoverContracts] = useState([]);
   const [rules, setRules] = useState([]);
@@ -25,166 +33,69 @@ export function useSambungJaga() {
   const [offlineQueue, setOfflineQueue] = useState([]);
   const [selectedTrace, setSelectedTrace] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [userAvatar, setUserAvatar] = useState('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=120&q=80');
+  const [userAvatar, setUserAvatar] = useState(() => {
+    const saved = localStorage.getItem('currentUser');
+    return saved ? JSON.parse(saved).avatar : '';
+  });
 
-  // Fetch initial data directly from Supabase Database tables
   useEffect(() => {
+    localStorage.setItem('activeRole', activeRole);
+  }, [activeRole]);
+
+  // Login as a specific account object
+  const loginUserAccount = (accountObj) => {
+    if (accountObj) {
+      setCurrentUser(accountObj);
+      setActiveRole(accountObj.role);
+      localStorage.setItem('currentUser', JSON.stringify(accountObj));
+      localStorage.setItem('activeRole', accountObj.role);
+      localStorage.setItem('isLoggedIn', 'true');
+      if (accountObj.avatar) {
+        setUserAvatar(accountObj.avatar);
+      }
+    }
+  };
+
+  const logoutUserAccount = () => {
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('activeRole');
+    localStorage.setItem('isLoggedIn', 'false');
+  };
+
+  // Initial State Setup with Supabase only
+  useEffect(() => {
+    // Data loading from Supabase (Blocking for initial load)
     async function loadSupabaseData() {
       setIsLoading(true);
       try {
-        // 1. Fetch Residents from Supabase
-        const { data: resData } = await supabase.from('residents').select('*');
-        if (resData && resData.length > 0) {
-          setResidents(resData);
-        } else {
-          setResidents([
-            { id: 'res-101', full_name: 'Ibu Hj. Aminah (78 th)', room_number: 'Kamar 102 — Dahlia', medical_condition_summary: 'Diabetes Melitus Tipe 2, Hipertensi', consent_family_level: 'filtered_summary' },
-            { id: 'res-102', full_name: 'Bapak Drs. Bambang (82 th)', room_number: 'Kamar 105 — Dahlia', medical_condition_summary: 'Demensia Ringan, Pasca-Stroke Ringan', consent_family_level: 'full' }
-          ]);
-        }
+        const { data: resData, error: e1 } = await supabase.from('residents').select('*');
+        if (!e1 && resData?.length > 0) setResidents(resData);
 
-        // 2. Fetch Staff Profiles from Supabase
-        const { data: staffData } = await supabase.from('staff_profiles').select('*');
-        if (staffData && staffData.length > 0) {
-          setStaff(staffData);
-        } else {
-          setStaff([
-            { id: 'staff-01', full_name: 'Suster Dewi Pertiwi, Amd.Kep', role: 'caregiver', shift_status: 'on_duty', competencies: ['insulin_injection', 'vital_signs'] },
-            { id: 'staff-02', full_name: 'Perawat Budi Santoso, S.Kep', role: 'caregiver', shift_status: 'on_duty', competencies: ['dementia_care', 'stroke_rehab'] },
-            { id: 'staff-03', full_name: 'Ns. Ratna Sari, M.Kep', role: 'supervisor', shift_status: 'on_duty', competencies: ['clinical_supervision', 'triage'] }
-          ]);
-        }
+        const { data: staffData, error: e2 } = await supabase.from('staff_profiles').select('*');
+        if (!e2 && staffData?.length > 0) setStaff(staffData);
 
-        // 3. Fetch Bitemporal Obligations from Supabase
-        const { data: obData } = await supabase.from('bitemporal_obligations').select('*');
-        if (obData && obData.length > 0) {
+        const { data: obData, error: e3 } = await supabase.from('bitemporal_obligations').select('*');
+        if (!e3 && obData?.length > 0) {
           setObligations(obData.map(o => ({
             ...o,
-            resident_name: o.resident_name || 'Ibu Hj. Aminah (78 th)',
-            assigned_caregiver_name: o.assigned_caregiver_name || 'Suster Dewi Pertiwi'
+            resident_name: o.resident_name || 'Penghuni',
+            assigned_caregiver_name: o.assigned_caregiver_name || 'Caregiver'
           })));
-        } else {
-          setObligations([
-            {
-              id: 'ob-901',
-              mission_id: 'msn-2026-1027-01',
-              resident_id: 'res-101',
-              resident_name: 'Ibu Hj. Aminah (78 th)',
-              title: 'Injeksi Insulin Novorapid 6 IU Sebelum Makan Siang',
-              description: 'Pastikan cek gula darah sewaktu (GDS) terlebih dahulu.',
-              assigned_caregiver_id: 'staff-01',
-              assigned_caregiver_name: 'Suster Dewi Pertiwi',
-              priority: 'critical',
-              status: 'open',
-              valid_from: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-              valid_until: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-              sys_created_at: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
-              rule_version_id: 'v2.1.0-clinical',
-              required_evidence_grade: 'E1',
-              required_competencies: ['insulin_injection']
-            },
-            {
-              id: 'ob-902',
-              mission_id: 'msn-2026-1027-02',
-              resident_id: 'res-102',
-              resident_name: 'Bapak Drs. Bambang (82 th)',
-              title: 'Pendampingan Latihan Jalan & Guardrail Lock',
-              description: 'Risiko jatuh tinggi. Pengunci guardrail tempat tidur wajib dipasang.',
-              assigned_caregiver_id: 'staff-02',
-              assigned_caregiver_name: 'Perawat Budi Santoso',
-              priority: 'important',
-              status: 'in_progress',
-              valid_from: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-              valid_until: new Date(Date.now() + 120 * 60 * 1000).toISOString(),
-              sys_created_at: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
-              rule_version_id: 'v1.4.0-safety',
-              required_evidence_grade: 'E1',
-              required_competencies: ['stroke_rehab']
-            }
-          ]);
         }
 
-        // 4. Fetch Epistemic Facts
-        const { data: factData } = await supabase.from('epistemic_facts').select('*');
-        if (factData && factData.length > 0) {
-          setEpistemicFacts(factData);
-        } else {
-          setEpistemicFacts([
-            { id: 'fact-01', resident_id: 'res-101', resident_name: 'Ibu Hj. Aminah', fact_key: 'gds_level', fact_value: { gds_mgdl: 145, time: '11:30 WIB' }, status: 'observed', confidence_score: 0.98, source_type: 'sensor_iot', observed_at: new Date().toISOString() },
-            { id: 'fact-02', resident_id: 'res-102', resident_name: 'Bapak Drs. Bambang', fact_key: 'nausea_complaint', fact_value: { complaint: 'Mual ringan setelah minum obat' }, status: 'reported', confidence_score: 0.85, source_type: 'voice_stt', observed_at: new Date().toISOString() }
-          ]);
-        }
+        const { data: factData, error: e4 } = await supabase.from('epistemic_facts').select('*');
+        if (!e4 && factData?.length > 0) setEpistemicFacts(factData);
 
-        // 5. Fetch Handover Contracts
-        const { data: hoData } = await supabase.from('handover_contracts').select('*');
-        if (hoData && hoData.length > 0) {
-          setHandoverContracts(hoData);
-        } else {
-          setHandoverContracts([
-            {
-              id: 'ho-501',
-              outgoing_staff_name: 'Suster Dewi Pertiwi (Shift Pagi)',
-              incoming_staff_name: 'Perawat Budi Santoso (Shift Siang)',
-              shift_name: 'Serah Terima Shift Pagi ke Siang (14:00 WIB)',
-              open_obligations_summary: [
-                { id: 'ob-901', title: 'Injeksi Insulin Novorapid Ibu Aminah' },
-                { id: 'ob-902', title: 'Pendampingan Latihan Jalan Pak Bambang' }
-              ],
-              outgoing_signed_at: new Date().toISOString(),
-              incoming_signed_at: null,
-              contract_status: 'pending_receiver',
-              hash_signature: 'handover-sha256-8a9b7c6d5e4f3a2b1c0d'
-            }
-          ]);
-        }
+        const { data: hoData, error: e5 } = await supabase.from('handover_contracts').select('*');
+        if (!e5 && hoData?.length > 0) setHandoverContracts(hoData);
 
-        // 6. Fetch Audit Trail
-        const { data: auditData } = await supabase.from('audit_trail').select('*').order('sequence_id', { ascending: true });
-        if (auditData && auditData.length > 0) {
-          setAuditTrail(auditData);
-        } else {
-          setAuditTrail([
-            {
-              id: 'aud-001',
-              sequence_id: 1001,
-              actor_id: 'staff-01',
-              actor_name: 'Suster Dewi Pertiwi',
-              gateway_tag: '[A] Identity & RBAC Gateway',
-              action_name: 'CAREGIVER_SHIFT_LOGIN',
-              payload: { shift: 'Pagi', device_attestation: 'Android-PWA-SHA256-OK' },
-              prev_entry_hash: 'GENESIS_HASH_SAMBUNGJAGA_00000000000000000000000000000000',
-              entry_hash: '8f4c2e1b3a5d7f9e8d6c4b2a0f1e3d5c7b9a8f6e4d2c0b8a6f4e2d0c8b6a4f2e',
-              created_at: new Date().toISOString()
-            }
-          ]);
-        }
+        const { data: auditData, error: e6 } = await supabase.from('audit_trail').select('*').order('sequence_id', { ascending: true });
+        if (!e6 && auditData?.length > 0) setAuditTrail(auditData);
 
-        // 7. Rules Library Initializer
-        setRules([
-          {
-            id: 'rule-101',
-            code: 'RUL-INSULIN-01',
-            title: 'Protokol Injeksi Insulin Sebelum Makan',
-            version: 'v2.1.0-clinical',
-            effective_from: '2026-01-01',
-            status: 'approved',
-            expression: 'IF GDS >= 90 AND meal_prepared == TRUE THEN ALLOW insulin_injection(6_IU) ELSE HALT AND ESCALATE',
-            approved_by: 'Dr. Hendra, Sp.PD (Kepala Medik)'
-          },
-          {
-            id: 'rule-102',
-            code: 'RUL-FALL-SAFETY-02',
-            title: 'Standard Guardrail Lock untuk Pasien Risiko Tinggi',
-            version: 'v1.4.0-safety',
-            effective_from: '2026-03-15',
-            status: 'approved',
-            expression: 'IF morse_fall_scale > 45 THEN OBLIGE guardrail_locked == TRUE AT ALL TIMES',
-            approved_by: 'Ns. Ratna Sari, M.Kep'
-          }
-        ]);
-
+        const { data: notifData, error: e7 } = await supabase.from('notifications').select('*').order('created_at', { ascending: false });
+        if (!e7 && notifData?.length > 0) setNotifications(notifData);
       } catch (err) {
-        console.error('Supabase fetch error:', err);
+        console.error('Failed to load data from Supabase', err);
       } finally {
         setIsLoading(false);
       }
@@ -192,6 +103,48 @@ export function useSambungJaga() {
 
     loadSupabaseData();
   }, []);
+
+  // Notification Handlers (Database Synchronized)
+  const addNotification = async ({ recipientRole, senderName, title, message, type = 'info' }) => {
+    const newNotif = {
+      id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      recipient_role: recipientRole,
+      sender_name: senderName || 'Sistem SambungJaga',
+      title,
+      message,
+      type,
+      is_read: false,
+      is_shown: false,
+      created_at: new Date().toISOString()
+    };
+    setNotifications(prev => [newNotif, ...prev]);
+
+    // Insert into Supabase notifications table
+    supabase.from('notifications').insert([{
+      recipient_role: recipientRole,
+      sender_name: senderName || 'Sistem SambungJaga',
+      title,
+      message,
+      type,
+      is_read: false,
+      is_shown: false
+    }]).catch(() => {});
+  };
+
+  const deleteNotification = async (notificationId) => {
+    setNotifications(prev => prev.filter(n => n.id !== notificationId));
+    supabase.from('notifications').delete().eq('id', notificationId).catch(() => {});
+  };
+
+  const clearRoleNotifications = async (role) => {
+    setNotifications(prev => prev.filter(n => n.recipient_role !== role));
+    supabase.from('notifications').delete().eq('recipient_role', role).catch(() => {});
+  };
+
+  const markRoleNotificationsAsShown = async (role) => {
+    setNotifications(prev => prev.map(n => n.recipient_role === role ? { ...n, is_shown: true, is_read: true } : n));
+    supabase.from('notifications').update({ is_shown: true, is_read: true }).eq('recipient_role', role).catch(() => {});
+  };
 
   // Helper to append audit log entries
   const logAudit = (gatewayTag, actionName, actorName, payload) => {
@@ -218,14 +171,26 @@ export function useSambungJaga() {
       ? (residents.find(r => r.id === residentId) || residents[0])
       : { id: 'res-101', full_name: 'Ibu Hj. Aminah (78 th)' };
 
-    // Security Prompt Injection Validation
-    const injectionCheck = validatePromptInjection(text);
+    // Security Prompt Injection Validation (Menggunakan AI Model Llama Guard 2)
+    const injectionCheck = await validatePromptInjection(text);
     if (injectionCheck.isInjection) {
       logAudit('[A] Prompt Injection Filter Gateway', 'REJECT_INJECTION_ATTEMPT', actorName, { text_blocked: text });
       return {
         success: false,
         error: `Peringatan Keamanan: Terdeteksi percobaan Prompt Injection (${injectionCheck.matchedRule}). Laporan ditolak.`
       };
+    }
+
+    // Call the Groq AI Superagent using qwen/qwen3.8-27b
+    const aiContext = {
+      resident,
+      activeObligations: obligations.filter(o => o.resident_id === resident.id && o.status !== OBLIGATION_STATUS.VERIFIED_CLOSED)
+    };
+
+    const aiResponse = await runCareSuperagent(text, aiContext);
+
+    if (aiResponse) {
+      logAudit('[A] Care Superagent Orchestrator', 'AI_ANALYSIS_COMPLETED', 'SambungJaga AI', { input: text, response: aiResponse });
     }
 
     // Create Epistemic Fact
@@ -250,6 +215,22 @@ export function useSambungJaga() {
 
     setEpistemicFacts(prev => [newFact, ...prev]);
     logAudit('[A] Perception & Epistemic Gateway', 'ADD_EPISTEMIC_FACT', actorName, { fact_id: newFact.id, status: newFact.status });
+
+    // Send notifications to affected roles
+    addNotification({
+      recipientRole: 'supervisor',
+      senderName: actorName || 'Caregiver',
+      title: 'Laporan Observasi Baru',
+      message: `Laporan baru dicatat untuk ${resident.full_name}: "${text.length > 50 ? text.substring(0, 50) + '...' : text}"`,
+      type: 'info'
+    });
+    addNotification({
+      recipientRole: 'family',
+      senderName: 'SambungJaga Care Agent',
+      title: `Catatan Perawatan ${resident.full_name}`,
+      message: `Laporan observasi harian baru dicatat oleh caregiver.`,
+      type: 'info'
+    });
 
     // Sync to Supabase epistemic_facts table (non-blocking)
     supabase.from('epistemic_facts').insert([{
@@ -305,6 +286,13 @@ export function useSambungJaga() {
 
     if (!authCheck.allowed) {
       logAudit('[A] P6 Authority Envelope Gate', 'BLOCKED_HUMAN_APPROVAL_REQUIRED', actorName, { obligation_id: obligationId });
+      addNotification({
+        recipientRole: 'supervisor',
+        senderName: actorName || 'Caregiver',
+        title: 'Permintaan Persetujuan Human Review (A3)',
+        message: `Kewajiban kritis "${ob.title}" memerlukan persetujuan manual supervisor.`,
+        type: 'urgent'
+      });
       return {
         success: false,
         requiresHumanApproval: true,
@@ -319,6 +307,22 @@ export function useSambungJaga() {
       obligation_id: obligationId,
       evidence_grade: evidenceGrade,
       payload
+    });
+
+    // Notify Supervisor & Family
+    addNotification({
+      recipientRole: 'supervisor',
+      senderName: actorName || 'Caregiver',
+      title: 'Penutupan Tugas Terverifikasi (P2)',
+      message: `Tugas "${ob.title}" telah diselesaikan dengan Bukti Grade ${evidenceGrade}.`,
+      type: 'success'
+    });
+    addNotification({
+      recipientRole: 'family',
+      senderName: 'SambungJaga Care Agent',
+      title: 'Pembaruan Tugas Perawatan',
+      message: `Tugas "${ob.title}" telah diselesaikan oleh tim perawat.`,
+      type: 'success'
     });
 
     // Sync to Supabase bitemporal_obligations table
@@ -343,6 +347,15 @@ export function useSambungJaga() {
     const name = typeof payload === 'string' ? 'Ns. Ratna Sari (Supervisor)' : (payload?.supervisorName || 'Supervisor');
     setObligations(prev => prev.map(o => o.id === targetId ? { ...o, status: OBLIGATION_STATUS.VERIFIED_CLOSED } : o));
     logAudit('[A] P6 Authority Envelope Gate', 'HUMAN_APPROVAL_GRANTED', name, { obligation_id: targetId });
+
+    addNotification({
+      recipientRole: 'caregiver',
+      senderName: name,
+      title: 'Persetujuan Human Review Disetujui',
+      message: 'Supervisor telah menyetujui tindakan klinis A3.',
+      type: 'success'
+    });
+
     supabase.from('bitemporal_obligations').update({ status: OBLIGATION_STATUS.VERIFIED_CLOSED }).eq('id', targetId).catch(() => {});
     return { success: true, message: 'Persetujuan Manusia (Human Review) diberikan. Status kewajiban ditutup.' };
   };
@@ -364,6 +377,14 @@ export function useSambungJaga() {
 
     setObligations(prev => [ob, ...prev]);
     logAudit('[A] Action Contract Builder', 'CREATE_OBLIGATION', actorName, { obligation_id: ob.id, title: ob.title });
+
+    addNotification({
+      recipientRole: 'caregiver',
+      senderName: actorName || 'Supervisor',
+      title: 'Tugas Kewajiban Baru Ditugaskan',
+      message: `Tugas baru ditambahkan: "${ob.title}". Priority: ${ob.priority}.`,
+      type: 'urgent'
+    });
 
     // Insert to Supabase bitemporal_obligations table
     await supabase.from('bitemporal_obligations').insert([{
@@ -398,6 +419,15 @@ export function useSambungJaga() {
       return c;
     }));
     logAudit('[A] Handover Contract Agent', 'HANDOVER_CONFIRMED', signerName, { contract_id: contractId, signerRole });
+
+    addNotification({
+      recipientRole: 'supervisor',
+      senderName: signerName,
+      title: 'Kontrak Serah Terima Dikonfirmasi',
+      message: `Serah terima shift telah dikonfirmasi oleh penerima shift.`,
+      type: 'success'
+    });
+
     await supabase.from('handover_contracts').update({ contract_status: 'confirmed', incoming_signed_at: new Date().toISOString() }).eq('id', contractId).catch(() => {});
     return { success: true, message: 'Kontrak Serah Terima Dua Sisi (Two-Sided Handover Contract) berhasil dikonfirmasi!' };
   };
@@ -413,10 +443,19 @@ export function useSambungJaga() {
   return {
     activeRole,
     setActiveRole,
+    currentUser,
+    setCurrentUser,
+    loginUserAccount,
+    logoutUserAccount,
     residents,
     staff,
     obligations,
     epistemicFacts,
+    notifications,
+    addNotification,
+    deleteNotification,
+    clearRoleNotifications,
+    markRoleNotificationsAsShown,
     auditTrail,
     handoverContracts,
     rules,

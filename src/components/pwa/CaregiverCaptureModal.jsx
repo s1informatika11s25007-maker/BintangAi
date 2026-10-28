@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Mic, Send, AlertTriangle, CheckCircle, X } from 'lucide-react';
+import { Mic, Send, AlertTriangle, CheckCircle, X, MicOff } from 'lucide-react';
 
 export default function CaregiverCaptureModal({ isOpen, onClose, residents, onCaptureSubmit }) {
   const [residentId, setResidentId] = useState(residents?.[0]?.id || 'res-101');
   const [inputText, setInputText] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [feedback, setFeedback] = useState(null);
+  const [recognition, setRecognition] = useState(null);
 
   useEffect(() => {
     if (residents?.length > 0) {
@@ -13,15 +14,52 @@ export default function CaregiverCaptureModal({ isOpen, onClose, residents, onCa
     }
   }, [residents]);
 
+  // Setup Web Speech API for Real Voice STT
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const rec = new SpeechRecognition();
+      rec.lang = 'id-ID'; // Bahasa Indonesia
+      rec.continuous = false;
+      rec.interimResults = false;
+
+      rec.onstart = () => {
+        setIsListening(true);
+        setFeedback(null);
+      };
+
+      rec.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        setInputText(prev => (prev ? prev + ' ' + transcript : transcript));
+      };
+
+      rec.onerror = (event) => {
+        console.error('Speech recognition error', event.error);
+        setIsListening(false);
+        setFeedback({ type: 'error', text: `Gagal merekam suara: ${event.error}` });
+      };
+
+      rec.onend = () => {
+        setIsListening(false);
+      };
+
+      setRecognition(rec);
+    }
+  }, []);
+
   if (!isOpen) return null;
 
-  const handleSpeechSim = () => {
-    setIsListening(true);
-    setFeedback(null);
-    setTimeout(() => {
-      setInputText('Ibu Aminah tensinya 130/80, sudah minum obat jam 11 siang, tp ngeluh pusing sedikit.');
-      setIsListening(false);
-    }, 1500);
+  const handleSpeechToggle = () => {
+    if (!recognition) {
+      alert('Browser Anda tidak mendukung Web Speech API. Harap gunakan Chrome, Edge, atau Safari versi terbaru.');
+      return;
+    }
+
+    if (isListening) {
+      recognition.stop();
+    } else {
+      recognition.start();
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -95,12 +133,24 @@ export default function CaregiverCaptureModal({ isOpen, onClose, residents, onCa
               <label className="block text-xs font-semibold text-slate-600">Input Catatan / Suara Pengasuh</label>
               <button
                 type="button"
-                onClick={handleSpeechSim}
-                disabled={isListening}
-                className="flex items-center space-x-1 text-xs text-sky-600 font-bold hover:text-sky-700"
+                onClick={handleSpeechToggle}
+                className={`flex items-center space-x-1 text-xs font-bold px-2 py-1 rounded-md transition ${
+                  isListening
+                    ? 'bg-rose-100 text-rose-600 hover:bg-rose-200'
+                    : 'bg-sky-100 text-sky-600 hover:bg-sky-200'
+                }`}
               >
-                <Mic className={`w-3.5 h-3.5 ${isListening ? 'animate-bounce text-rose-600' : ''}`} />
-                <span>{isListening ? 'Mendengarkan...' : 'Simulasi Voice STT'}</span>
+                {isListening ? (
+                  <>
+                    <MicOff className="w-3.5 h-3.5 animate-pulse" />
+                    <span>Hentikan Rekaman...</span>
+                  </>
+                ) : (
+                  <>
+                    <Mic className="w-3.5 h-3.5" />
+                    <span>Mulai Bicara (STT)</span>
+                  </>
+                )}
               </button>
             </div>
             <textarea

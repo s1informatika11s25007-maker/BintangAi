@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { Heart, Loader2 } from 'lucide-react';
 import { useSambungJaga } from './hooks/useSambungJaga';
 import PublicHeader from './components/layout/PublicHeader';
 import Header from './components/layout/Header';
@@ -23,17 +25,26 @@ import AuditTrailPage from './pages/AuditTrailPage';
 import ExecutionTraceModal from './components/trace/ExecutionTraceModal';
 
 export default function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [authState, setAuthState] = useState('landing'); // 'landing' | 'login' | 'register'
-  const [activeTab, setActiveTab] = useState('supervisor_dashboard');
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return localStorage.getItem('isLoggedIn') === 'true';
+  });
+
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const {
     activeRole,
     setActiveRole,
+    currentUser,
+    loginUserAccount,
+    logoutUserAccount,
     residents,
     staff,
     obligations,
     epistemicFacts,
+    notifications,
+    deleteNotification,
+    clearRoleNotifications,
     auditTrail,
     handoverContracts,
     rules,
@@ -49,170 +60,217 @@ export default function App() {
     signHandoverContract,
     selectedTrace,
     setSelectedTrace,
+    isLoading,
     userAvatar,
     setUserAvatar
   } = useSambungJaga();
 
+  // Global Loading State component for elegant data fetch
+  const GlobalLoader = () => (
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center space-y-4">
+      <div className="relative flex items-center justify-center">
+        <Loader2 className="w-16 h-16 text-sky-200 animate-spin" />
+        <Heart className="w-6 h-6 text-sky-600 absolute animate-pulse" />
+      </div>
+      <div className="text-center space-y-1">
+        <h2 className="text-sky-800 font-black text-lg">SambungJaga</h2>
+        <p className="text-slate-500 font-semibold text-xs animate-pulse">Memuat Data Sistem Terverifikasi...</p>
+      </div>
+    </div>
+  );
+
   // Auth Handlers
-  const handleLoginSuccess = (roleId) => {
-    setActiveRole(roleId || 'supervisor');
+  const handleLoginSuccess = (roleId, accountObj) => {
+    if (accountObj) {
+      loginUserAccount(accountObj);
+    } else {
+      setActiveRole(roleId || 'supervisor');
+    }
     setIsLoggedIn(true);
-    if (roleId === 'caregiver') setActiveTab('caregiver_pwa');
-    else if (roleId === 'family') setActiveTab('family_portal');
-    else if (roleId === 'admin_hr') setActiveTab('simulator_lab');
-    else setActiveTab('supervisor_dashboard');
+    if (roleId === 'caregiver') navigate('/app/caregiver_pwa');
+    else if (roleId === 'family') navigate('/app/family_portal');
+    else if (roleId === 'admin_hr') navigate('/app/simulator_lab');
+    else navigate('/app/supervisor_dashboard');
   };
 
   const handleLogout = () => {
+    logoutUserAccount();
     setIsLoggedIn(false);
-    setAuthState('landing');
+    navigate('/');
+  };
+
+  const handleRoleChange = (newRole) => {
+    setActiveRole(newRole);
+    if (newRole === 'caregiver') navigate('/app/caregiver_pwa');
+    else if (newRole === 'family') navigate('/app/family_portal');
+    else if (newRole === 'admin_hr') navigate('/app/simulator_lab');
+    else navigate('/app/supervisor_dashboard');
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50/30 to-slate-100 text-slate-800 font-sans selection:bg-sky-500 selection:text-white w-full overflow-x-hidden">
-      {/* 1. PRE-LOGIN STATE */}
-      {!isLoggedIn ? (
-        <>
-          {authState === 'landing' && (
-            <div className="min-h-screen flex flex-col justify-between w-full">
-              <PublicHeader
-                onGoToLanding={() => setAuthState('landing')}
-                onGoToLogin={() => setAuthState('login')}
-                onGoToRegister={() => setAuthState('register')}
-              />
-              <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-6">
-                <LandingPage
-                  onGoToLogin={() => setAuthState('login')}
-                  onGoToRegister={() => setAuthState('register')}
-                  onDirectDemoLogin={(roleId) => handleLoginSuccess(roleId)}
+      <Routes>
+        {!isLoggedIn ? (
+          <>
+            <Route
+              path="/"
+              element={
+                <div className="min-h-screen flex flex-col justify-between w-full">
+                  <PublicHeader
+                    onGoToLanding={() => navigate('/')}
+                    onGoToLogin={() => navigate('/login')}
+                    onGoToRegister={() => navigate('/register')}
+                  />
+                  <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-6">
+                    <LandingPage
+                      onGoToLogin={() => navigate('/login')}
+                      onGoToRegister={() => navigate('/register')}
+                      onDirectDemoLogin={handleLoginSuccess}
+                    />
+                  </main>
+                  <Footer onGoToLanding={() => navigate('/')} />
+                </div>
+              }
+            />
+            <Route
+              path="/login"
+              element={
+                <LoginPage
+                  onLoginSuccess={handleLoginSuccess}
+                  onGoToRegister={() => navigate('/register')}
+                  onGoToLanding={() => navigate('/')}
                 />
-              </main>
-              <Footer onGoToLanding={() => setAuthState('landing')} />
-            </div>
-          )}
-
-          {authState === 'login' && (
-            <LoginPage
-              onLoginSuccess={(roleId) => handleLoginSuccess(roleId)}
-              onGoToRegister={() => setAuthState('register')}
-              onGoToLanding={() => setAuthState('landing')}
+              }
             />
-          )}
-
-          {authState === 'register' && (
-            <RegisterPage
-              onRegisterSuccess={(roleId) => handleLoginSuccess(roleId)}
-              onGoToLogin={() => setAuthState('login')}
-              onGoToLanding={() => setAuthState('landing')}
+            <Route
+              path="/register"
+              element={
+                <RegisterPage
+                  onRegisterSuccess={handleLoginSuccess}
+                  onGoToLogin={() => navigate('/login')}
+                  onGoToLanding={() => navigate('/')}
+                />
+              }
             />
-          )}
-        </>
-      ) : (
-        /* 2. POST-LOGIN STATE (Exact Original Structure) */
-        <div className="flex flex-col md:flex-row min-h-screen w-full overflow-x-hidden">
-          {/* Left Sidebar Navigation */}
-          <Sidebar
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            activeRole={activeRole}
-            setActiveRole={setActiveRole}
-            isOffline={isOffline}
-            setIsOffline={setIsOffline}
-            offlineQueue={offlineQueue}
-            syncOfflineLedger={syncOfflineLedger}
-            onLogout={handleLogout}
-          />
-
-          {/* Right Main Content Workspace (Full-Width Edge-to-Edge) */}
-          <div className="flex-1 flex flex-col justify-between min-w-0 w-full overflow-x-hidden">
-
-            {/* Top Workspace Bar: Search, Realtime Clock, Notifications, Dynamic Profile Modal */}
-            <Header
-              activeRole={activeRole}
-              userAvatar={userAvatar}
-              setUserAvatar={setUserAvatar}
-              onLogout={handleLogout}
-            />
-
-            <main className="p-4 sm:p-6 lg:p-8 space-y-6 w-full min-w-0">
-              {/* Role-Specific Custom Workspace Header Banner */}
-              <RoleWorkspaceHeader
-                activeRole={activeRole}
-                obligations={obligations}
-                epistemicFacts={epistemicFacts}
-                staff={staff}
-              />
-
-              {/* Active Tab Module */}
-              {activeTab === 'caregiver_pwa' && (
-                <CaregiverMobilePage
-                  residents={residents}
-                  obligations={obligations}
-                  onCaptureSubmit={captureCareReport}
-                  onSubmitEvidence={submitEvidenceAndClose}
-                  onOpenTraceModal={(ob) => setSelectedTrace(ob)}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </>
+        ) : isLoading ? (
+          // Elegant loading animation when logged in but data is fetching
+          <Route path="*" element={<GlobalLoader />} />
+        ) : (
+          <Route
+            path="/app/*"
+            element={
+              <div className="flex flex-col md:flex-row min-h-screen w-full overflow-x-hidden">
+                <Sidebar
+                  activeTab={location.pathname.replace('/app/', '') || 'supervisor_dashboard'}
+                  setActiveTab={(tab) => navigate(`/app/${tab}`)}
+                  activeRole={activeRole}
+                  setActiveRole={handleRoleChange}
                   isOffline={isOffline}
+                  setIsOffline={setIsOffline}
                   offlineQueue={offlineQueue}
+                  syncOfflineLedger={syncOfflineLedger}
+                  onLogout={handleLogout}
                 />
-              )}
-
-              {activeTab === 'supervisor_dashboard' && (
-                <SupervisorDashboardPage
-                  obligations={obligations}
-                  epistemicFacts={epistemicFacts}
-                  residents={residents}
-                  spotChallenges={spotChallenges}
-                  onSubmitEvidence={submitEvidenceAndClose}
-                  onApproveAction={approveAuthorityAction}
-                  onCreateObligation={createObligation}
-                  onOpenTraceModal={(ob) => setSelectedTrace(ob)}
-                  setActiveTab={setActiveTab}
-                />
-              )}
-
-              {activeTab === 'handover_contract' && (
-                <HandoverPage
-                  handoverContracts={handoverContracts}
-                  onSignContract={signHandoverContract}
-                  currentUserRole={activeRole}
-                />
-              )}
-
-              {activeTab === 'execution_trace' && (
-                <ExecutionTracePage
-                  obligations={obligations}
-                  onOpenTraceModal={(ob) => setSelectedTrace(ob)}
-                />
-              )}
-
-              {activeTab === 'family_portal' && (
-                <FamilyPortalPage
-                  residents={residents}
-                  obligations={obligations}
-                  epistemicFacts={epistemicFacts}
-                />
-              )}
-
-              {activeTab === 'simulator_lab' && (
-                <SimulatorLabPage
-                  staff={staff}
-                  obligations={obligations}
-                />
-              )}
-
-              {activeTab === 'rule_library' && (
-                <RuleLibraryPage rules={rules} />
-              )}
-
-              {activeTab === 'audit_trail' && (
-                <AuditTrailPage auditTrail={auditTrail} />
-              )}
-            </main>
-
-            <Footer onGoToLanding={handleLogout} />
-          </div>
-        </div>
-      )}
+                <div className="flex-1 flex flex-col justify-between min-w-0 w-full overflow-x-hidden">
+                  <Header
+                    activeRole={activeRole}
+                    currentUser={currentUser}
+                    notifications={notifications}
+                    onDeleteNotification={deleteNotification}
+                    onClearRoleNotifications={clearRoleNotifications}
+                    userAvatar={userAvatar}
+                    setUserAvatar={setUserAvatar}
+                    onLogout={handleLogout}
+                  />
+                  <main className="p-4 sm:p-6 lg:p-8 space-y-6 w-full min-w-0">
+                    <RoleWorkspaceHeader
+                      activeRole={activeRole}
+                      obligations={obligations}
+                      epistemicFacts={epistemicFacts}
+                      staff={staff}
+                    />
+                    <Routes>
+                      <Route
+                        path="caregiver_pwa"
+                        element={
+                          <CaregiverMobilePage
+                            residents={residents}
+                            obligations={obligations}
+                            onCaptureSubmit={captureCareReport}
+                            onSubmitEvidence={submitEvidenceAndClose}
+                            onOpenTraceModal={setSelectedTrace}
+                            isOffline={isOffline}
+                            offlineQueue={offlineQueue}
+                          />
+                        }
+                      />
+                      <Route
+                        path="supervisor_dashboard"
+                        element={
+                          <SupervisorDashboardPage
+                            obligations={obligations}
+                            epistemicFacts={epistemicFacts}
+                            residents={residents}
+                            spotChallenges={spotChallenges}
+                            onSubmitEvidence={submitEvidenceAndClose}
+                            onApproveAction={approveAuthorityAction}
+                            onCreateObligation={createObligation}
+                            onOpenTraceModal={setSelectedTrace}
+                            setActiveTab={(tab) => navigate(`/app/${tab}`)}
+                          />
+                        }
+                      />
+                      <Route
+                        path="handover_contract"
+                        element={
+                          <HandoverPage
+                            handoverContracts={handoverContracts}
+                            onSignContract={signHandoverContract}
+                            currentUserRole={activeRole}
+                          />
+                        }
+                      />
+                      <Route
+                        path="execution_trace"
+                        element={
+                          <ExecutionTracePage
+                            obligations={obligations}
+                            onOpenTraceModal={setSelectedTrace}
+                          />
+                        }
+                      />
+                      <Route
+                        path="family_portal"
+                        element={
+                          <FamilyPortalPage
+                            residents={residents}
+                            obligations={obligations}
+                            epistemicFacts={epistemicFacts}
+                          />
+                        }
+                      />
+                      <Route
+                        path="simulator_lab"
+                        element={<SimulatorLabPage staff={staff} obligations={obligations} />}
+                      />
+                      <Route path="rule_library" element={<RuleLibraryPage rules={rules} />} />
+                      <Route path="audit_trail" element={<AuditTrailPage auditTrail={auditTrail} />} />
+                      <Route path="*" element={<Navigate to="supervisor_dashboard" replace />} />
+                    </Routes>
+                  </main>
+                  <Footer onGoToLanding={handleLogout} />
+                </div>
+              </div>
+            }
+          />
+        )}
+        <Route
+          path="*"
+          element={<Navigate to={isLoggedIn ? '/app/supervisor_dashboard' : '/'} replace />}
+        />
+      </Routes>
 
       {/* Trace Modal Global */}
       {selectedTrace && (

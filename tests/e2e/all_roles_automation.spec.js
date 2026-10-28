@@ -7,12 +7,21 @@ test.describe('SambungJaga AI — Full Automated E2E Test Suite for All Account 
     await page.waitForLoadState('domcontentloaded');
   });
 
-  test('1. Pre-Login, Landing Page, and Registration Flow', async ({ page }) => {
+  test('1. Pre-Login, Landing Page, Architecture Modal, and Registration Flow', async ({ page }) => {
     // Brand title verification
     await expect(page.getByText('SambungJaga').first()).toBeVisible();
 
     // Verify main landing features
     await expect(page.getByRole('heading', { name: /Teknologi AI untuk Perawatan Lansia/i })).toBeVisible();
+
+    // Test Pelajari Lebih Lanjut Architecture Modal Card
+    await page.getByRole('button', { name: 'Pelajari Lebih Lanjut' }).click();
+    await expect(page.getByText('Spesifikasi Diagram Alur 100%')).toBeVisible();
+    await expect(page.getByText('1 · AKSES DAN INGESTI')).toBeVisible();
+    await expect(page.getByText('P1 · Bitemporal Obligation Ledger').first()).toBeVisible();
+
+    await page.getByRole('button', { name: 'Tutup Diagram Alur' }).click();
+    await expect(page.getByText('Spesifikasi Diagram Alur 100%')).not.toBeVisible();
 
     // Test Navigation to Login
     await page.getByRole('button', { name: 'Mulai Sekarang' }).first().click();
@@ -35,8 +44,9 @@ test.describe('SambungJaga AI — Full Automated E2E Test Suite for All Account 
   });
 
   test('2. Role 1 Automation — Supervisor Klinis (Ns. Ratna Sari)', async ({ page }) => {
-    // Login as Supervisor via Demo
-    await page.getByRole('button', { name: 'Pelajari Lebih Lanjut' }).click();
+    // Login as Supervisor
+    await page.getByRole('button', { name: 'Mulai Sekarang' }).first().click();
+    await page.getByRole('button', { name: 'Masuk' }).click();
 
     // Verify Workspace Header Banner
     await expect(page.getByText(/Selamat pagi/i)).toBeVisible();
@@ -108,7 +118,8 @@ test.describe('SambungJaga AI — Full Automated E2E Test Suite for All Account 
 
   test('4. Two-Sided Handover Contract Automation', async ({ page }) => {
     // Login as Supervisor
-    await page.getByRole('button', { name: 'Pelajari Lebih Lanjut' }).click();
+    await page.getByRole('button', { name: 'Mulai Sekarang' }).first().click();
+    await page.getByRole('button', { name: 'Masuk' }).click();
 
     // Navigate to Shift Handover Contract Tab
     await page.getByRole('button', { name: 'Serah Terima Shift' }).click();
@@ -123,7 +134,8 @@ test.describe('SambungJaga AI — Full Automated E2E Test Suite for All Account 
   });
 
   test('5. Explainable Execution Trace Viewer Automation', async ({ page }) => {
-    await page.getByRole('button', { name: 'Pelajari Lebih Lanjut' }).click();
+    await page.getByRole('button', { name: 'Mulai Sekarang' }).first().click();
+    await page.getByRole('button', { name: 'Masuk' }).click();
     await page.getByRole('button', { name: 'Execution Trace' }).click();
 
     await expect(page.getByText('Explainable Execution Trace Viewer').first()).toBeVisible();
@@ -175,7 +187,8 @@ test.describe('SambungJaga AI — Full Automated E2E Test Suite for All Account 
   });
 
   test('8. Rule Library and Append-Only Audit Trail Automation', async ({ page }) => {
-    await page.getByRole('button', { name: 'Pelajari Lebih Lanjut' }).click();
+    await page.getByRole('button', { name: 'Mulai Sekarang' }).first().click();
+    await page.getByRole('button', { name: 'Masuk' }).click();
 
     // Test Rule Library
     await page.getByRole('button', { name: 'Aturan Panti' }).click();
@@ -195,7 +208,8 @@ test.describe('SambungJaga AI — Full Automated E2E Test Suite for All Account 
   });
 
   test('9. Header Profile and Notification Bell Automation', async ({ page }) => {
-    await page.getByRole('button', { name: 'Pelajari Lebih Lanjut' }).click();
+    await page.getByRole('button', { name: 'Mulai Sekarang' }).first().click();
+    await page.getByRole('button', { name: 'Masuk' }).click();
 
     // Test Notification Bell
     await page.getByTitle('Notifikasi Sistem').click();

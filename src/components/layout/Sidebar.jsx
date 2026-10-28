@@ -150,33 +150,6 @@ export default function Sidebar({
                 </button>
               </div>
 
-              {/* Dynamic Active Mode Badge & Role Switcher */}
-              <div className="bg-slate-800/80 p-3 rounded-2xl border border-slate-700/80 space-y-1.5 shadow-inner text-left">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-sky-400 uppercase tracking-wider flex items-center">
-                    <Activity className="w-3 h-3 mr-1 text-emerald-400 animate-pulse" /> Peran Workspace
-                  </span>
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                </div>
-                <select
-                  value={activeRole}
-                  onChange={(e) => {
-                    const newRole = e.target.value;
-                    setActiveRole(newRole);
-                    if (newRole === 'caregiver') setActiveTab('caregiver_pwa');
-                    else if (newRole === 'family') setActiveTab('family_portal');
-                    else if (newRole === 'admin_hr') setActiveTab('simulator_lab');
-                    else setActiveTab('supervisor_dashboard');
-                  }}
-                  className="w-full bg-slate-900 text-white font-bold text-xs rounded-xl px-2.5 py-2 border border-slate-700 outline-none focus:ring-2 focus:ring-sky-500 cursor-pointer shadow-xs"
-                >
-                  <option value="supervisor">Mode Supervisor Klinis</option>
-                  <option value="caregiver">Mode Perawat / Pengasuh</option>
-                  <option value="family">Mode Portal Keluarga</option>
-                  <option value="admin_hr">Mode Admin Panti & HR</option>
-                </select>
-              </div>
-
               {/* Navigation Menu Links */}
               <nav className="space-y-1.5 pt-1 text-left">
                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 block mb-1">

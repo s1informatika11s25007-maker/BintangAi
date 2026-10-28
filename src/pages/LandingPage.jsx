@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ShieldCheck,
   Bot,
@@ -13,8 +13,10 @@ import {
   Zap,
   Quote
 } from 'lucide-react';
+import ArchitectureModal from '../components/common/ArchitectureModal';
 
 export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoLogin }) {
+  const [isArchitectureModalOpen, setIsArchitectureModalOpen] = useState(false);
   const mainFeatures = [
     {
       icon: ShieldCheck,
@@ -132,7 +134,7 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
               </button>
 
               <button
-                onClick={() => onDirectDemoLogin('supervisor')}
+                onClick={() => setIsArchitectureModalOpen(true)}
                 className="bg-white hover:bg-slate-50 text-slate-700 font-semibold text-sm px-6 py-3.5 rounded-xl border border-slate-300 shadow-xs transition text-center"
               >
                 Pelajari Lebih Lanjut
@@ -176,19 +178,24 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
           </div>
 
           {/* Right Hero Column: Orangtua.jpeg Photo + Left AI Speech Bubble & Right 3D Robot Mascot with "Kondisi Lansia: Stabil" Speech Bubble */}
-          <div className="lg:col-span-7 relative flex justify-center w-full">
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-slate-300/60 w-full">
-              <img
-                src="/Orangtua.jpeg"
-                onError={(e) => { e.target.src = '/elderly-care.svg'; }}
-                alt="Perawatan Lansia SambungJaga AI"
-                className="w-full h-[450px] sm:h-[500px] lg:h-[560px] object-cover rounded-3xl transform hover:scale-[1.01] transition duration-500"
-              />
+        <div className="lg:col-span-7 relative flex justify-center w-full">
+          {/* Subtle masking container to make the image blend seamlessly */}
+          <div className="relative overflow-visible w-full mask-image-gradient">
+            <img
+              src="/Orangtua.jpeg"
+              onError={(e) => { e.target.src = '/elderly-care.svg'; }}
+              alt="Perawatan Lansia SambungJaga AI"
+              className="w-full h-[450px] sm:h-[500px] lg:h-[560px] object-cover transform hover:scale-[1.01] transition-transform duration-500 rounded-3xl"
+              style={{
+                maskImage: 'radial-gradient(ellipse at center, black 65%, transparent 100%)',
+                WebkitMaskImage: 'radial-gradient(ellipse at center, black 65%, transparent 100%)'
+              }}
+            />
 
               {/* OVERLAY BADGE LEFT: AI Agent Chat Bubble pointing to elderly woman on left */}
               <div className="absolute top-5 left-4 sm:left-6 bg-white/95 backdrop-blur-md p-3.5 sm:p-4 rounded-2xl shadow-xl border border-slate-200/80 max-w-[230px] sm:max-w-[260px] text-left animate-float">
                 <div className="flex items-center space-x-1.5 text-xs font-bold text-sky-600 mb-1">
-                  <Bot className="w-4 h-4 text-sky-600" />
+                  <Heart className="w-4 h-4 text-sky-600 fill-sky-600" />
                   <span>AI Agent</span>
                 </div>
                 <p className="text-[11px] text-slate-700 font-semibold leading-tight">
@@ -197,10 +204,10 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
               </div>
 
               {/* OVERLAY GROUP RIGHT: Speech Bubble "Kondisi Lansia: Stabil" positioned TOP-LEFT above 3D Robot Mascot */}
-              <div className="absolute bottom-1 right-1 sm:bottom-3 sm:right-3 z-20 flex flex-col items-end pointer-events-none">
+              <div className="absolute -bottom-2 right-0 sm:-bottom-4 sm:-right-4 lg:-bottom-6 lg:-right-6 z-20 flex flex-col items-center pointer-events-none">
 
                 {/* Speech Bubble Above-Left of Robot */}
-                <div className="bg-white/95 backdrop-blur-md px-3.5 py-2.5 rounded-2xl shadow-xl border border-slate-200/90 flex items-center space-x-2.5 mb-1 animate-float relative shadow-sky-900/10 mr-12 sm:mr-16">
+                <div className="bg-white/95 backdrop-blur-md px-3.5 py-2.5 rounded-2xl shadow-xl border border-slate-200/90 flex items-center space-x-2.5 -mb-6 sm:-mb-8 lg:-mb-10 animate-float relative shadow-sky-900/10 z-10">
                   <div className="p-1.5 rounded-full bg-rose-100 text-rose-600 shrink-0">
                     <Heart className="w-3.5 h-3.5 fill-rose-600" />
                   </div>
@@ -208,15 +215,15 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
                     <span className="text-[10px] text-slate-500 font-bold block leading-none">Kondisi Lansia</span>
                     <span className="text-xs font-black text-emerald-600">Stabil</span>
                   </div>
-                  {/* Speech Bubble Arrow pointing down-right to Robot Mascot */}
-                  <div className="absolute -bottom-1.5 right-4 w-3 h-3 bg-white border-b border-r border-slate-200/90 transform rotate-45"></div>
+                  {/* Speech Bubble Arrow pointing down to Robot Mascot */}
+                  <div className="absolute -bottom-1.5 right-1/2 translate-x-1/2 w-3 h-3 bg-white border-b border-r border-slate-200/90 transform rotate-45"></div>
                 </div>
 
                 {/* 3D Robot Mascot Image */}
                 <img
                   src="/Friendly Futuristic Robot Mascot.png"
                   alt="Friendly Futuristic Robot Mascot"
-                  className="w-36 h-36 sm:w-44 sm:h-44 lg:w-52 lg:h-52 object-contain filter drop-shadow-[0_15px_20px_rgba(0,0,0,0.25)]"
+                  className="w-44 h-44 sm:w-56 sm:h-56 lg:w-[280px] lg:h-[280px] object-contain filter drop-shadow-[0_15px_20px_rgba(0,0,0,0.25)]"
                 />
               </div>
 
@@ -310,6 +317,12 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
           ))}
         </div>
       </section>
+
+      {/* Architecture Specification Modal Card */}
+      <ArchitectureModal
+        isOpen={isArchitectureModalOpen}
+        onClose={() => setIsArchitectureModalOpen(false)}
+      />
     </div>
   );
 }
