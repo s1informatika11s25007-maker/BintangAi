@@ -104,14 +104,17 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
 
   return (
     <div className="space-y-16 py-4 w-full">
-      {/* HERO SECTION MATCHING REFERENCE IMAGE */}
+      {/* HERO SECTION MATCHING REFERENCE IMAGE WITH HEADLINE TEXT GRADIENT */}
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-sky-50/60 via-blue-50/40 to-sky-100/50 p-6 sm:p-10 border border-sky-100 shadow-xl shadow-sky-100/50">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
 
           {/* Left Hero Text Column (5 Cols) */}
           <div className="lg:col-span-5 space-y-6 text-left">
             <h1 className="text-3xl sm:text-5xl font-black text-slate-900 leading-tight tracking-tight">
-              Teknologi AI untuk Perawatan Lansia yang Lebih <span className="text-sky-600">Terhubung dan Terpercaya</span>
+              Teknologi AI untuk Perawatan Lansia yang Lebih{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-600 via-blue-600 to-indigo-600">
+                Terhubung dan Terpercaya
+              </span>
             </h1>
 
             <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
@@ -172,7 +175,7 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
             </div>
           </div>
 
-          {/* Right Hero Column: Orangtua.jpeg Photo + Speech Bubble Above-Left of Robot Mascot */}
+          {/* Right Hero Column: Orangtua.jpeg Photo + Left AI Speech Bubble & Right 3D Robot Mascot with "Kondisi Lansia: Stabil" Speech Bubble */}
           <div className="lg:col-span-7 relative flex justify-center w-full">
             <div className="relative rounded-3xl overflow-hidden border-4 border-white shadow-2xl shadow-sky-900/10 bg-white w-full">
               <img
