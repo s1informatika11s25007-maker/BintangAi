@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useSambungJaga } from './hooks/useSambungJaga';
 import PublicHeader from './components/layout/PublicHeader';
+import Header from './components/layout/Header';
 import Sidebar from './components/layout/Sidebar';
 import RoleWorkspaceHeader from './components/layout/RoleWorkspaceHeader';
 import Footer from './components/layout/Footer';
@@ -66,7 +67,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50/30 to-slate-100 text-slate-800 font-sans selection:bg-sky-500 selection:text-white w-full">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50/30 to-slate-100 text-slate-800 font-sans selection:bg-sky-500 selection:text-white w-full overflow-x-hidden">
       {/* 1. PRE-LOGIN STATE */}
       {!isLoggedIn ? (
         <>
@@ -84,7 +85,7 @@ export default function App() {
                   onDirectDemoLogin={(roleId) => handleLoginSuccess(roleId)}
                 />
               </main>
-              <Footer />
+              <Footer onGoToLanding={() => setAuthState('landing')} />
             </div>
           )}
 
@@ -106,7 +107,7 @@ export default function App() {
         </>
       ) : (
         /* 2. POST-LOGIN STATE (Full Width Sidebar Workspace) */
-        <div className="flex flex-col md:flex-row min-h-screen w-full">
+        <div className="flex flex-col md:flex-row min-h-screen w-full overflow-x-hidden">
           {/* Left Sidebar Navigation */}
           <Sidebar
             activeTab={activeTab}
@@ -121,7 +122,14 @@ export default function App() {
           />
 
           {/* Right Main Content Workspace (Full-Width Edge-to-Edge) */}
-          <div className="flex-1 flex flex-col justify-between min-w-0 w-full">
+          <div className="flex-1 flex flex-col justify-between min-w-0 w-full overflow-x-hidden">
+
+            {/* Top Workspace Bar: Search, Realtime Clock, Notifications, Profile */}
+            <Header
+              activeRole={activeRole}
+              onLogout={handleLogout}
+            />
+
             <main className="p-4 sm:p-6 lg:p-8 space-y-6 w-full min-w-0">
               {/* Role-Specific Custom Workspace Header Banner */}
               <RoleWorkspaceHeader
@@ -196,7 +204,7 @@ export default function App() {
               )}
             </main>
 
-            <Footer />
+            <Footer onGoToLanding={handleLogout} />
           </div>
         </div>
       )}

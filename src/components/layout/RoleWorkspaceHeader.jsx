@@ -1,16 +1,19 @@
 import React from 'react';
 import { ClipboardList, ShieldCheck, Heart, Bell } from 'lucide-react';
 
-export default function RoleWorkspaceHeader({ activeRole, obligations }) {
+export default function RoleWorkspaceHeader({ activeRole, obligations, residents }) {
   const roleNames = {
-    supervisor: 'Ns. Ratna Sari',
-    caregiver: 'Rina Sari',
+    supervisor: 'Ns. Ratna Sari, M.Kep',
+    caregiver: 'Rina Sari, Amd.Kep',
     family: 'Rina Wijaya',
     admin_hr: 'Budi Santoso'
   };
 
   const userName = roleNames[activeRole] || 'Rina Sari';
-  const openObs = obligations.filter(o => o.status !== 'verified_closed');
+  const openObligations = (obligations || []).filter(o => o.status !== 'verified_closed');
+  const completedObligations = (obligations || []).filter(o => o.status === 'verified_closed');
+  const criticalNearDeadline = openObligations.filter(o => o.priority === 'critical');
+  const totalResidents = residents?.length || 8;
 
   return (
     <div className="space-y-6 w-full">
@@ -34,8 +37,8 @@ export default function RoleWorkspaceHeader({ activeRole, obligations }) {
           </div>
           <div>
             <span className="text-xs font-bold text-slate-600 block">Tugas Hari ini</span>
-            <span className="text-2xl font-black text-slate-900 block my-0.5">5</span>
-            <span className="text-[11px] text-sky-600 font-bold block">2 selesai · 3 tersisa</span>
+            <span className="text-2xl font-black text-slate-900 block my-0.5">{obligations?.length || 5}</span>
+            <span className="text-[11px] text-sky-600 font-bold block">{completedObligations.length} selesai · {openObligations.length} tersisa</span>
           </div>
         </div>
 
@@ -46,8 +49,8 @@ export default function RoleWorkspaceHeader({ activeRole, obligations }) {
           </div>
           <div>
             <span className="text-xs font-bold text-slate-600 block">Kewajiban Aktif</span>
-            <span className="text-2xl font-black text-slate-900 block my-0.5">{openObs.length || 12}</span>
-            <span className="text-[11px] text-amber-600 font-bold block">1 mendekati deadline</span>
+            <span className="text-2xl font-black text-slate-900 block my-0.5">{openObligations.length}</span>
+            <span className="text-[11px] text-amber-600 font-bold block">{criticalNearDeadline.length} mendekati deadline</span>
           </div>
         </div>
 
@@ -58,7 +61,7 @@ export default function RoleWorkspaceHeader({ activeRole, obligations }) {
           </div>
           <div>
             <span className="text-xs font-bold text-slate-600 block">Penghuni</span>
-            <span className="text-2xl font-black text-slate-900 block my-0.5">8</span>
+            <span className="text-2xl font-black text-slate-900 block my-0.5">{totalResidents}</span>
             <span className="text-[11px] text-emerald-600 font-bold block">semua dalam kondisi baik</span>
           </div>
         </div>
@@ -70,7 +73,7 @@ export default function RoleWorkspaceHeader({ activeRole, obligations }) {
           </div>
           <div>
             <span className="text-xs font-bold text-slate-600 block">Notifikasi</span>
-            <span className="text-2xl font-black text-slate-900 block my-0.5">3</span>
+            <span className="text-2xl font-black text-slate-900 block my-0.5">{criticalNearDeadline.length > 0 ? criticalNearDeadline.length : 3}</span>
             <span className="text-[11px] text-rose-600 font-bold block">ada yang perlu perhatian</span>
           </div>
         </div>
