@@ -10,7 +10,6 @@ import {
   FileCheck,
   BarChart3,
   MessageSquare,
-  Sparkles,
   Zap,
   Quote
 } from 'lucide-react';
@@ -164,7 +163,7 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
               </div>
 
               <div className="flex items-center space-x-2 bg-white/80 p-2.5 rounded-xl border border-sky-100 shadow-2xs">
-                <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+                <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0" />
                 <div>
                   <div className="font-bold text-slate-900 text-[11px]">Terpercaya</div>
                   <div className="text-[10px] text-slate-500">Superagent</div>
@@ -173,7 +172,7 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
             </div>
           </div>
 
-          {/* Right Hero Column: Orangtua.jpeg Photo + Left Side AI Bubble & Right Side Kondisi Lansia Badge */}
+          {/* Right Hero Column: Orangtua.jpeg Photo + Left Side AI Bubble & Right Side Kondisi Lansia Badge + 3D Robot Image */}
           <div className="lg:col-span-7 relative flex justify-center w-full">
             <div className="relative rounded-3xl overflow-hidden border-4 border-white shadow-2xl shadow-sky-900/10 bg-white w-full">
               <img
@@ -205,10 +204,13 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
                 </div>
               </div>
 
-              {/* Bottom Right 3D Bot Mascot */}
-              <div className="absolute bottom-5 right-5 bg-gradient-to-br from-sky-500 to-blue-600 text-white p-3.5 rounded-2xl shadow-xl flex items-center space-x-2">
-                <Bot className="w-5 h-5 text-sky-200" />
-                <span className="text-xs font-bold">Superagent AI</span>
+              {/* REPLACED: Friendly Futuristic 3D Robot Mascot Image on Bottom Right */}
+              <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 z-10 drop-shadow-2xl">
+                <img
+                  src="/Friendly Futuristic Robot Mascot.png"
+                  alt="Friendly Futuristic Robot Mascot"
+                  className="w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-xl animate-bounce"
+                />
               </div>
             </div>
           </div>
