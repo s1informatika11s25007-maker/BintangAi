@@ -173,7 +173,7 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
             </div>
           </div>
 
-          {/* Right Hero Column: Orangtua.jpeg ULTRA-WIDE Photo Container (7 Cols) */}
+          {/* Right Hero Column: Orangtua.jpeg Photo + Left Side AI Bubble & Right Side Kondisi Lansia Badge */}
           <div className="lg:col-span-7 relative flex justify-center w-full">
             <div className="relative rounded-3xl overflow-hidden border-4 border-white shadow-2xl shadow-sky-900/10 bg-white w-full">
               <img
@@ -183,10 +183,10 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
                 className="w-full h-[450px] sm:h-[500px] lg:h-[560px] object-cover rounded-2xl shadow-inner"
               />
 
-              {/* Floating Overlay Badge 1: Top Right AI Chat Bubble */}
-              <div className="absolute top-5 right-5 bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-slate-200/80 max-w-[260px] text-left">
+              {/* OVERLAY BADGE LEFT: AI Agent Chat Bubble pointing to elderly woman on left */}
+              <div className="absolute top-5 left-4 sm:left-6 bg-white/95 backdrop-blur-md p-3.5 sm:p-4 rounded-2xl shadow-xl border border-slate-200/80 max-w-[230px] sm:max-w-[260px] text-left animate-float">
                 <div className="flex items-center space-x-1.5 text-xs font-bold text-sky-600 mb-1">
-                  <Bot className="w-4 h-4" />
+                  <Bot className="w-4 h-4 text-sky-600" />
                   <span>AI Agent</span>
                 </div>
                 <p className="text-[11px] text-slate-700 font-semibold leading-tight">
@@ -194,8 +194,8 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
                 </p>
               </div>
 
-              {/* Floating Overlay Badge 2: Middle Right Patient Condition */}
-              <div className="absolute top-1/2 right-5 transform -translate-y-1/2 bg-white/95 backdrop-blur-md px-4 py-3 rounded-2xl shadow-lg border border-slate-200/80 flex items-center space-x-3">
+              {/* OVERLAY BADGE RIGHT: Patient Condition Badge pointing to nurse on right */}
+              <div className="absolute top-6 right-4 sm:right-6 bg-white/95 backdrop-blur-md px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-2xl shadow-lg border border-slate-200/80 flex items-center space-x-3">
                 <div className="p-2 rounded-full bg-rose-100 text-rose-600">
                   <Heart className="w-4 h-4 fill-rose-600" />
                 </div>
@@ -205,7 +205,7 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
                 </div>
               </div>
 
-              {/* Floating Overlay Badge 3: Bottom Right 3D Bot Mascot */}
+              {/* Bottom Right 3D Bot Mascot */}
               <div className="absolute bottom-5 right-5 bg-gradient-to-br from-sky-500 to-blue-600 text-white p-3.5 rounded-2xl shadow-xl flex items-center space-x-2">
                 <Bot className="w-5 h-5 text-sky-200" />
                 <span className="text-xs font-bold">Superagent AI</span>
