@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  Shield,
+  Heart,
   Lock,
   Mail,
   ArrowRight,
@@ -28,7 +28,7 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-gradient-to-br from-slate-50 via-sky-50/30 to-slate-100 font-sans text-slate-900">
+    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-gradient-to-br from-slate-50 via-sky-50/30 to-slate-100 font-sans text-slate-900 overflow-x-hidden">
       {/* LEFT COLUMN: Landing Page Light Theme Matching Banner */}
       <div className="w-full lg:w-7/12 bg-gradient-to-br from-sky-50/80 via-blue-50/50 to-sky-100/60 border-r border-sky-200/90 text-slate-900 p-8 lg:p-14 flex flex-col justify-between relative overflow-hidden shadow-sm">
 
@@ -36,13 +36,15 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
         <div className="relative z-10 flex items-center justify-between">
           <div
             onClick={onGoToLanding}
-            className="flex items-center space-x-3 cursor-pointer group"
+            className="flex items-center space-x-2.5 cursor-pointer group"
           >
-            <div className="p-2.5 bg-gradient-to-br from-sky-500 to-blue-600 rounded-2xl shadow-lg shadow-sky-500/20 group-hover:scale-105 transition text-white">
-              <Shield className="w-7 h-7" />
+            <div className="p-2 bg-sky-600 rounded-xl text-white shadow-md shadow-sky-600/20 group-hover:scale-105 transition flex items-center justify-center shrink-0">
+              <Heart className="w-5 h-5 fill-white" />
             </div>
             <div>
-              <h1 className="text-xl font-black tracking-tight text-slate-900">SambungJaga AI</h1>
+              <h1 className="text-xl font-black tracking-tight text-slate-900">
+                Sambung<span className="text-sky-600">.Jaga</span>
+              </h1>
               <p className="text-xs text-sky-700 font-bold">Care Superagent Architecture</p>
             </div>
           </div>

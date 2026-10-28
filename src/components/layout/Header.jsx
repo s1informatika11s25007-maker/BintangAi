@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Bell, Settings, User } from 'lucide-react';
+import { Search, Bell, Settings, Heart } from 'lucide-react';
 import { formatDateID, formatTimeID } from '../../utils/formatters';
 
 export default function Header({ activeRole, onLogout }) {
@@ -20,7 +20,7 @@ export default function Header({ activeRole, onLogout }) {
   const avatar = roleAvatars[activeRole] || roleAvatars.supervisor;
 
   return (
-    <header className="bg-white/95 border-b border-slate-200/90 px-6 py-3.5 sticky top-0 z-40 backdrop-blur-md shadow-xs w-full">
+    <header className="bg-white/95 border-b border-slate-200/90 px-6 py-3.5 sticky top-0 z-40 backdrop-blur-md shadow-xs w-full overflow-x-hidden">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
         {/* Left Search Bar matching reference image */}
         <div className="relative w-full sm:w-96">
