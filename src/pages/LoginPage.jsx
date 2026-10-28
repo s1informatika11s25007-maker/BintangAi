@@ -93,65 +93,67 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
         </div>
       </div>
 
-      {/* RIGHT COLUMN: Streamlined, Ultra-Clean & Professional Form */}
-      <div className="w-full lg:w-7/12 bg-white p-8 lg:p-16 flex flex-col justify-center space-y-6 shadow-xl">
+      {/* RIGHT COLUMN: Full Edge-To-Edge Width Form */}
+      <div className="w-full lg:w-7/12 bg-white p-8 sm:p-12 lg:p-16 flex flex-col justify-center space-y-6 shadow-xl">
 
-        <div className="space-y-1.5 max-w-md mx-auto w-full text-left">
+        {/* Header - Full Width */}
+        <div className="space-y-1.5 w-full text-left">
           <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Selamat Datang Kembali</h2>
           <p className="text-xs sm:text-sm text-slate-500 font-medium">
             Masuk ke akun SambungJaga Anda
           </p>
         </div>
 
-        <div className="max-w-md mx-auto w-full space-y-5">
+        {/* Form Container - Full Width */}
+        <div className="w-full space-y-5">
 
           {/* Quick Demo Login Presets */}
-          <div className="space-y-2 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200">
+          <div className="space-y-2 bg-slate-50/80 p-4 sm:p-5 rounded-2xl border border-slate-200 w-full">
             <span className="text-[11px] font-bold text-slate-600 flex items-center uppercase tracking-wider">
               <Sparkles className="w-3.5 h-3.5 mr-1 text-sky-600" /> Demo Instant Login:
             </span>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 w-full">
               <button
                 type="button"
                 onClick={() => handleQuickDemoLogin('supervisor')}
-                className="text-xs bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-3 rounded-xl transition text-center truncate"
+                className="text-xs bg-sky-600 hover:bg-sky-700 text-white font-bold py-2.5 px-3 rounded-xl transition text-center truncate shadow-2xs"
               >
                 Supervisor
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickDemoLogin('caregiver')}
-                className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 rounded-xl transition text-center truncate"
+                className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-3 rounded-xl transition text-center truncate shadow-2xs"
               >
                 Pengasuh
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickDemoLogin('family')}
-                className="text-xs bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-xl transition text-center truncate"
+                className="text-xs bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 px-3 rounded-xl transition text-center truncate shadow-2xs"
               >
                 Keluarga
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickDemoLogin('admin_hr')}
-                className="text-xs bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-3 rounded-xl transition text-center truncate"
+                className="text-xs bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 px-3 rounded-xl transition text-center truncate shadow-2xs"
               >
                 Admin HR
               </button>
             </div>
           </div>
 
-          {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-4 pt-1 text-left">
+          {/* Login Form - Full Width */}
+          <form onSubmit={handleSubmit} className="space-y-4 pt-1 text-left w-full">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center">
-                <UserCheck className="w-3.5 h-3.5 mr-1 text-sky-600" /> Peran Pengguna
+              <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center">
+                <UserCheck className="w-3.5 h-3.5 mr-1.5 text-sky-600" /> Peran Pengguna
               </label>
               <select
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-3 text-xs text-slate-900 font-bold outline-none focus:ring-2 focus:ring-sky-500 transition"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-xs sm:text-sm text-slate-900 font-bold outline-none focus:ring-2 focus:ring-sky-500 transition"
               >
                 {ACTORS.map(actor => (
                   <option key={actor.id} value={actor.id}>{actor.title}</option>
@@ -160,34 +162,34 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center">
-                <Mail className="w-3.5 h-3.5 mr-1 text-sky-600" /> Email Staf
+              <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center">
+                <Mail className="w-3.5 h-3.5 mr-1.5 text-sky-600" /> Email Staf
               </label>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-3 text-xs text-slate-900 font-semibold outline-none focus:ring-2 focus:ring-sky-500 transition"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-xs sm:text-sm text-slate-900 font-semibold outline-none focus:ring-2 focus:ring-sky-500 transition"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center">
-                <Lock className="w-3.5 h-3.5 mr-1 text-sky-600" /> Kata Sandi
+              <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center">
+                <Lock className="w-3.5 h-3.5 mr-1.5 text-sky-600" /> Kata Sandi
               </label>
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-3 text-xs text-slate-900 font-semibold outline-none focus:ring-2 focus:ring-sky-500 transition"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-xs sm:text-sm text-slate-900 font-semibold outline-none focus:ring-2 focus:ring-sky-500 transition"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold text-sm py-3.5 rounded-xl shadow-lg shadow-sky-600/20 transition flex items-center justify-center space-x-2"
+              className="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold text-sm py-4 rounded-xl shadow-lg shadow-sky-600/20 transition flex items-center justify-center space-x-2"
             >
               <span>Masuk</span>
               <ArrowRight className="w-4 h-4" />
@@ -195,7 +197,7 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
           </form>
 
           {/* Footer Link */}
-          <div className="pt-3 text-center text-xs text-slate-600 border-t border-slate-100">
+          <div className="pt-3 text-center text-xs text-slate-600 border-t border-slate-100 w-full">
             Belum punya akun?{' '}
             <button
               onClick={onGoToRegister}
