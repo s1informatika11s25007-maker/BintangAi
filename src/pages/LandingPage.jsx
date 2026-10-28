@@ -172,7 +172,7 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
             </div>
           </div>
 
-          {/* Right Hero Column: Orangtua.jpeg Photo + 4x LARGER STATIC 3D ROBOT MASCOT IMAGE */}
+          {/* Right Hero Column: Orangtua.jpeg Photo + Perfectly Sized Static 3D Robot Mascot Image */}
           <div className="lg:col-span-7 relative flex justify-center w-full">
             <div className="relative rounded-3xl overflow-hidden border-4 border-white shadow-2xl shadow-sky-900/10 bg-white w-full">
               <img
@@ -204,12 +204,12 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
                 </div>
               </div>
 
-              {/* 4x LARGER STATIC Friendly Futuristic 3D Robot Mascot Image */}
-              <div className="absolute -bottom-6 -right-6 sm:-bottom-8 sm:-right-8 lg:-bottom-10 lg:-right-10 z-20 drop-shadow-2xl pointer-events-none">
+              {/* Perfectly Balanced Static 3D Robot Mascot Image */}
+              <div className="absolute -bottom-4 -right-4 sm:-bottom-6 sm:-right-6 z-20 drop-shadow-2xl pointer-events-none">
                 <img
                   src="/Friendly Futuristic Robot Mascot.png"
                   alt="Friendly Futuristic Robot Mascot"
-                  className="w-56 h-56 sm:w-72 sm:h-72 lg:w-96 lg:h-96 object-contain filter drop-shadow-[0_20px_25px_rgba(0,0,0,0.3)]"
+                  className="w-40 h-40 sm:w-52 sm:h-52 lg:w-64 lg:h-64 object-contain filter drop-shadow-[0_15px_20px_rgba(0,0,0,0.25)]"
                 />
               </div>
             </div>
