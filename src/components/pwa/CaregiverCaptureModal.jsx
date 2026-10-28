@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Mic, Send, AlertTriangle, CheckCircle, X, MicOff } from 'lucide-react';
 
-export default function CaregiverCaptureModal({ isOpen, onClose, residents, onCaptureSubmit }) {
-  const [residentId, setResidentId] = useState(residents?.[0]?.id || 'res-101');
+export default function CaregiverCaptureModal({ isOpen, onClose, residents, onCaptureSubmit, currentUser }) {
+  const [residentId, setResidentId] = useState(residents?.[0]?.id || '');
   const [inputText, setInputText] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [feedback, setFeedback] = useState(null);
@@ -70,8 +70,8 @@ export default function CaregiverCaptureModal({ isOpen, onClose, residents, onCa
       const res = await onCaptureSubmit({
         text: inputText,
         sourceType: isListening ? 'voice_stt' : 'text_input',
-        residentId: residentId || 'res-101',
-        actorName: 'Suster Dewi Pertiwi'
+        residentId: residentId || residents?.[0]?.id,
+        actorName: currentUser?.name || currentUser?.full_name || 'Caregiver'
       });
 
       if (!res?.success) {

@@ -12,12 +12,13 @@ export default function CaregiverMobilePage({
   onSubmitEvidence,
   onOpenTraceModal,
   isOffline,
-  offlineQueue
+  offlineQueue,
+  currentUser
 }) {
   const [isCaptureOpen, setIsCaptureOpen] = useState(false);
   const [selectedObligationForEvidence, setSelectedObligationForEvidence] = useState(null);
 
-  const caregiverObs = obligations.filter(o => o.assigned_caregiver_id === 'staff-01' || o.assigned_caregiver_id === 'staff-02');
+  const caregiverObs = obligations.filter(o => o.assigned_caregiver_id === currentUser?.id || o.status === 'open');
 
   return (
     <div className="w-full space-y-6">
@@ -102,6 +103,7 @@ export default function CaregiverMobilePage({
         onClose={() => setIsCaptureOpen(false)}
         residents={residents}
         onCaptureSubmit={onCaptureSubmit}
+        currentUser={currentUser}
       />
 
       {/* Evidence Upload Modal */}
@@ -110,6 +112,7 @@ export default function CaregiverMobilePage({
         onClose={() => setSelectedObligationForEvidence(null)}
         obligation={selectedObligationForEvidence}
         onSubmitEvidence={onSubmitEvidence}
+        currentUser={currentUser}
       />
     </div>
   );

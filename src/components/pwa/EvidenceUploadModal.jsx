@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Camera, QrCode, UserCheck, ShieldCheck, AlertCircle, X } from 'lucide-react';
 import { EVIDENCE_GRADE, EVIDENCE_GRADE_LABELS } from '../../types/architecture';
 
-export default function EvidenceUploadModal({ isOpen, onClose, obligation, onSubmitEvidence }) {
+export default function EvidenceUploadModal({ isOpen, onClose, obligation, onSubmitEvidence, currentUser }) {
   const [selectedGrade, setSelectedGrade] = useState(obligation?.required_evidence_grade || EVIDENCE_GRADE.E1);
   const [photoSim, setPhotoSim] = useState(true);
   const [secondPersonName, setSecondPersonName] = useState('Perawat Budi Santoso');
@@ -25,7 +25,7 @@ export default function EvidenceUploadModal({ isOpen, onClose, obligation, onSub
       obligationId: obligation.id,
       evidenceGrade: selectedGrade,
       payload,
-      actorName: 'Suster Dewi Pertiwi'
+      actorName: currentUser?.name || currentUser?.full_name || 'Caregiver'
     });
 
     if (!res.success) {

@@ -203,6 +203,7 @@ export default function App() {
                             onOpenTraceModal={setSelectedTrace}
                             isOffline={isOffline}
                             offlineQueue={offlineQueue}
+                            currentUser={currentUser}
                           />
                         }
                       />
@@ -213,6 +214,8 @@ export default function App() {
                             obligations={obligations}
                             epistemicFacts={epistemicFacts}
                             residents={residents}
+                            staff={staff}
+                            currentUser={currentUser}
                             spotChallenges={spotChallenges}
                             onSubmitEvidence={submitEvidenceAndClose}
                             onApproveAction={approveAuthorityAction}
@@ -229,6 +232,8 @@ export default function App() {
                             handoverContracts={handoverContracts}
                             onSignContract={signHandoverContract}
                             currentUserRole={activeRole}
+                            currentUser={currentUser}
+                            staff={staff}
                           />
                         }
                       />

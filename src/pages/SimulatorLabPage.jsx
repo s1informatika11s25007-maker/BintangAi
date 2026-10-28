@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Cpu, Play, ShieldAlert, Layers, Terminal } from 'lucide-react';
+import { Cpu, Play, ShieldAlert, Layers, Terminal, Loader2 } from 'lucide-react';
 import FailureSetSimulationModal from '../components/simulator/FailureSetSimulationModal';
 import Badge from '../components/common/Badge';
+import { validatePromptInjection } from '../utils/validators';
 
 export default function SimulatorLabPage({ staff, obligations }) {
   const [isFailureModalOpen, setIsFailureModalOpen] = useState(false);
@@ -9,39 +10,56 @@ export default function SimulatorLabPage({ staff, obligations }) {
   const [replayStatus, setReplayStatus] = useState(null);
   const [adversarialPrompt, setAdversarialPrompt] = useState('');
   const [adversarialResult, setAdversarialResult] = useState(null);
+  const [isTestingAdversarial, setIsTestingAdversarial] = useState(false);
 
   const handleRunReplay = () => {
     setReplayStatus('running');
+
+    // Count real obligations from the last N days
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - replayDays);
+    const replayedRecords = obligations.filter(o => new Date(o.sys_created_at) >= cutoffDate).length;
+
     setTimeout(() => {
       setReplayStatus({
-        replayedRecords: 142,
+        replayedRecords: replayedRecords,
         ruleVersion: 'v2.1.0-clinical',
         discrepanciesFound: 0,
-        message: 'Retroactive Rule Replay selesai. Tidak ada konflik terdeteksi pada putar ulang 7 hari terakhir.'
+        message: `Retroactive Rule Replay selesai. Sebanyak ${replayedRecords} kewajiban dari ${replayDays} hari terakhir diputar ulang tanpa ada konflik terdeteksi.`
       });
-    }, 1200);
+    }, 1500);
   };
 
-  const handleTestAdversarial = (e) => {
+  const handleTestAdversarial = async (e) => {
     e.preventDefault();
     if (!adversarialPrompt) return;
 
-    if (
-      adversarialPrompt.toLowerCase().includes('ignore') ||
-      adversarialPrompt.toLowerCase().includes('bypass') ||
-      adversarialPrompt.toLowerCase().includes('delete')
-    ) {
+    setIsTestingAdversarial(true);
+    setAdversarialResult(null);
+
+    try {
+      const injectionCheck = await validatePromptInjection(adversarialPrompt);
+      if (injectionCheck.isInjection) {
+        setAdversarialResult({
+          blocked: true,
+          tag: '[A] Prompt Injection Filter',
+          reason: `Percobaan manipulasi prompt terdeteksi (${injectionCheck.matchedRule}). Akses ditolak oleh Gateway.`
+        });
+      } else {
+        setAdversarialResult({
+          blocked: false,
+          tag: 'Perception Gateway',
+          reason: 'Input aman. Laporan diproses secara terstruktur.'
+        });
+      }
+    } catch (err) {
       setAdversarialResult({
         blocked: true,
-        tag: '[A] Prompt Injection Filter',
-        reason: 'Percobaan manipulasi prompt terdeteksi. Akses ditolak oleh Gateway.'
+        tag: 'System Error',
+        reason: 'Gagal menghubungi Edge Function validator.'
       });
-    } else {
-      setAdversarialResult({
-        blocked: false,
-        tag: 'Perception Gateway',
-        reason: 'Input aman. Laporan diproses secara terstruktur.'
-      });
+    } finally {
+      setIsTestingAdversarial(false);
     }
   };
 
@@ -144,9 +162,10 @@ export default function SimulatorLabPage({ staff, obligations }) {
             />
             <button
               type="submit"
-              className="bg-rose-600 hover:bg-rose-700 text-white text-xs px-4 py-2 rounded-xl font-bold shrink-0 shadow-md shadow-rose-600/20"
+              disabled={isTestingAdversarial}
+              className="bg-rose-600 hover:bg-rose-700 text-white text-xs px-4 py-2 rounded-xl font-bold shrink-0 shadow-md shadow-rose-600/20 disabled:opacity-50"
             >
-              Uji Keamanan
+              {isTestingAdversarial ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Uji Keamanan'}
             </button>
           </div>
         </form>

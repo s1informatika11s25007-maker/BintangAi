@@ -76,11 +76,15 @@ export function useSambungJaga() {
 
         const { data: obData, error: e3 } = await supabase.from('bitemporal_obligations').select('*');
         if (!e3 && obData?.length > 0) {
-          setObligations(obData.map(o => ({
-            ...o,
-            resident_name: o.resident_name || 'Penghuni',
-            assigned_caregiver_name: o.assigned_caregiver_name || 'Caregiver'
-          })));
+          setObligations(obData.map(o => {
+            const rName = resData?.find(r => r.id === o.resident_id)?.full_name || 'Penghuni';
+            const cName = staffData?.find(s => s.id === o.assigned_caregiver_id)?.full_name || 'Caregiver';
+            return {
+              ...o,
+              resident_name: rName,
+              assigned_caregiver_name: cName
+            };
+          }));
         }
 
         const { data: factData, error: e4 } = await supabase.from('epistemic_facts').select('*');
@@ -193,24 +197,44 @@ export function useSambungJaga() {
       logAudit('[A] Care Superagent Orchestrator', 'AI_ANALYSIS_COMPLETED', 'SambungJaga AI', { input: text, response: aiResponse });
     }
 
-    // Create Epistemic Fact
-    const newFact = {
-      id: `fact-${Date.now()}`,
-      resident_id: resident.id,
-      resident_name: resident.full_name,
-      fact_key: 'caregiver_voice_report',
-      fact_value: { text_raw: text },
-      status: 'reported',
-      confidence_score: 0.92,
-      source_type: sourceType || 'voice_stt',
-      observed_at: new Date().toISOString(),
-      provenance_chain: [`Capture via ${sourceType}`, `Device Hash: P5-CHAIN-OK`]
-    };
-
-    // Check Contradiction (P3 Epistemic Fact Ledger)
-    const contradictionCheck = detectFactContradiction(epistemicFacts, newFact);
+    // Create Epistemic Fact in DB to get real UUID
+    let dbStatus = 'reported';
+    const contradictionCheck = detectFactContradiction(epistemicFacts, { fact_key: 'caregiver_voice_report', fact_value: { text_raw: text } });
     if (contradictionCheck.hasContradiction) {
-      newFact.status = 'contradicted';
+      dbStatus = 'contradicted';
+    }
+
+    let newFact = null;
+    if (!isOffline) {
+      const { data: insertedFact, error } = await supabase.from('epistemic_facts').insert([{
+        resident_id: resident.id,
+        fact_key: 'caregiver_voice_report',
+        fact_value: { text_raw: text },
+        status: dbStatus,
+        confidence_score: 0.92,
+        source_type: sourceType || 'voice_stt',
+        provenance_chain: [`Capture via ${sourceType}`, `Device Hash: P5-CHAIN-OK`]
+      }]).select().single();
+
+      if (!error && insertedFact) {
+        newFact = insertedFact;
+      }
+    }
+
+    if (!newFact) {
+      // Fallback for offline or error
+      newFact = {
+        id: `fact-${Date.now()}`,
+        resident_id: resident.id,
+        resident_name: resident.full_name,
+        fact_key: 'caregiver_voice_report',
+        fact_value: { text_raw: text },
+        status: dbStatus,
+        confidence_score: 0.92,
+        source_type: sourceType || 'voice_stt',
+        observed_at: new Date().toISOString(),
+        provenance_chain: [`Capture via ${sourceType}`, `Device Hash: P5-CHAIN-OK`]
+      };
     }
 
     setEpistemicFacts(prev => [newFact, ...prev]);
@@ -231,16 +255,6 @@ export function useSambungJaga() {
       message: `Laporan observasi harian baru dicatat oleh caregiver.`,
       type: 'info'
     });
-
-    // Sync to Supabase epistemic_facts table (non-blocking)
-    supabase.from('epistemic_facts').insert([{
-      resident_id: resident.id,
-      fact_key: 'caregiver_voice_report',
-      fact_value: { text_raw: text },
-      status: newFact.status,
-      confidence_score: 0.92,
-      source_type: sourceType || 'voice_stt'
-    }]).catch(() => {});
 
     // Handle P5 Offline Hash Chain Ledger
     if (isOffline) {
@@ -362,18 +376,30 @@ export function useSambungJaga() {
 
   // 4. Create New Obligation
   const createObligation = async (newObData, actorName) => {
-    const ob = {
-      id: `ob-${Date.now()}`,
-      mission_id: `msn-2026-${Date.now()}`,
-      status: OBLIGATION_STATUS.OPEN,
-      valid_from: new Date().toISOString(),
-      valid_until: new Date(Date.now() + 180 * 60 * 1000).toISOString(),
-      sys_created_at: new Date().toISOString(),
+    const validFrom = new Date().toISOString();
+    const validUntil = new Date(Date.now() + 180 * 60 * 1000).toISOString();
+
+    // Insert to Supabase bitemporal_obligations table first to get real UUID
+    const { data: insertedData, error } = await supabase.from('bitemporal_obligations').insert([{
+      mission_id: '00000000-0000-0000-0000-000000000000',
+      resident_id: newObData.resident_id,
+      title: newObData.title,
+      description: newObData.description,
+      priority: newObData.priority || 'routine',
+      status: 'open',
+      valid_from: validFrom,
+      valid_until: validUntil,
       rule_version_id: 'v2.1.0-clinical',
       required_evidence_grade: newObData.required_evidence_grade || 'E1',
-      required_competencies: newObData.required_competencies || [],
-      ...newObData
-    };
+      assigned_caregiver_id: newObData.assigned_caregiver_id || null
+    }]).select().single();
+
+    if (error) {
+      console.error('Insert obligation error:', error);
+      return { success: false, error: error.message };
+    }
+
+    const ob = insertedData;
 
     setObligations(prev => [ob, ...prev]);
     logAudit('[A] Action Contract Builder', 'CREATE_OBLIGATION', actorName, { obligation_id: ob.id, title: ob.title });
@@ -386,31 +412,17 @@ export function useSambungJaga() {
       type: 'urgent'
     });
 
-    // Insert to Supabase bitemporal_obligations table
-    await supabase.from('bitemporal_obligations').insert([{
-      mission_id: '00000000-0000-0000-0000-000000000000',
-      resident_id: newObData.resident_id,
-      title: newObData.title,
-      description: newObData.description,
-      priority: newObData.priority || 'routine',
-      status: 'open',
-      valid_from: ob.valid_from,
-      valid_until: ob.valid_until,
-      rule_version_id: 'v2.1.0-clinical',
-      required_evidence_grade: newObData.required_evidence_grade || 'E1'
-    }]).catch(() => {});
-
     return { success: true, obligation: ob };
   };
 
   // 5. Sign Handover Contract (Two-Sided)
-  const signHandoverContract = async ({ contractId, signerRole, signerName }) => {
+  const signHandoverContract = async ({ contractId, signerRole, signerName, signerId }) => {
     setHandoverContracts(prev => prev.map(c => {
       if (c.id === contractId) {
         if (signerRole === 'incoming') {
           return {
             ...c,
-            incoming_staff_name: signerName,
+            incoming_staff_id: signerId,
             incoming_signed_at: new Date().toISOString(),
             contract_status: 'confirmed'
           };
@@ -428,7 +440,17 @@ export function useSambungJaga() {
       type: 'success'
     });
 
-    await supabase.from('handover_contracts').update({ contract_status: 'confirmed', incoming_signed_at: new Date().toISOString() }).eq('id', contractId).catch(() => {});
+    const { error: dbError } = await supabase.from('handover_contracts')
+      .update({
+        contract_status: 'confirmed',
+        incoming_staff_id: signerId,
+        incoming_signed_at: new Date().toISOString()
+      })
+      .eq('id', contractId);
+
+    if (dbError) {
+      console.error('Failed to update handover contract in DB:', dbError);
+    }
     return { success: true, message: 'Kontrak Serah Terima Dua Sisi (Two-Sided Handover Contract) berhasil dikonfirmasi!' };
   };
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { FileSignature, ShieldCheck } from 'lucide-react';
 import HandoverContractCard from '../components/handover/HandoverContractCard';
 
-export default function HandoverPage({ handoverContracts, onSignContract, currentUserRole }) {
+export default function HandoverPage({ handoverContracts, onSignContract, currentUserRole, currentUser, staff }) {
   return (
     <div className="w-full space-y-6">
       <div>
@@ -32,6 +32,8 @@ export default function HandoverPage({ handoverContracts, onSignContract, curren
             contract={contract}
             onSignContract={onSignContract}
             currentUserRole={currentUserRole}
+            currentUser={currentUser}
+            staff={staff}
           />
         ))}
       </div>

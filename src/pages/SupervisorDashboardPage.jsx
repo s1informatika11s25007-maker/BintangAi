@@ -17,6 +17,8 @@ import Modal from '../components/common/Modal';
 export default function SupervisorDashboardPage({
   obligations,
   residents,
+  staff,
+  currentUser,
   onSubmitEvidence,
   onApproveAction,
   onCreateObligation,
@@ -28,23 +30,28 @@ export default function SupervisorDashboardPage({
   const [newTitle, setNewTitle] = useState('');
   const [newDesc, setNewDesc] = useState('');
   const [newResidentId, setNewResidentId] = useState(residents[0]?.id || '');
+  const [newCaregiverId, setNewCaregiverId] = useState(staff.filter(s => s.role === 'caregiver')[0]?.id || '');
   const [newPriority, setNewPriority] = useState('critical');
   const [newEvidenceGrade, setNewEvidenceGrade] = useState('E1');
 
-  // Reference image priority tasks
-  const priorityTasks = [
-    { id: 'task-1', title: 'Pemberian obat pagi - Bapak Wijaya', time: '08:00', status: 'Sedang berlangsung', statusColor: 'bg-emerald-100 text-emerald-800 border-emerald-300' },
-    { id: 'task-2', title: 'Cek tekanan darah - Ibu Sari', time: '09:00', status: 'Menunggu', statusColor: 'bg-amber-100 text-amber-800 border-amber-300' },
-    { id: 'task-3', title: 'Pembersihan kamar - Ibu Rini', time: '10:00', status: 'Belum mulai', statusColor: 'bg-rose-100 text-rose-800 border-rose-300' },
-    { id: 'task-4', title: 'Observasi pola makan - Bapak Santoso', time: '11:00', status: 'Belum mulai', statusColor: 'bg-rose-100 text-rose-800 border-rose-300' },
-    { id: 'task-5', title: 'Update catatan harian - Semua penghuni', time: '16:00', status: 'Belum mulai', statusColor: 'bg-rose-100 text-rose-800 border-rose-300' },
-  ];
+  // Load priority tasks from real obligations data
+  const priorityTasks = obligations
+    .filter(o => o.status === 'open' || o.status === 'in_progress')
+    .slice(0, 5)
+    .map(o => ({
+      id: o.id,
+      title: o.title,
+      time: new Date(o.valid_until).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+      status: o.status === 'open' ? 'Menunggu' : 'Sedang berlangsung',
+      statusColor: o.status === 'open' ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-emerald-100 text-emerald-800 border-emerald-300'
+    }));
 
   const handleCreateSubmit = (e) => {
     e.preventDefault();
     if (!newTitle) return;
 
     const res = residents.find(r => r.id === newResidentId);
+    const caregiver = staff.find(s => s.id === newCaregiverId);
     onCreateObligation({
       resident_id: newResidentId,
       resident_name: res?.full_name || 'Penghuni',
@@ -52,9 +59,9 @@ export default function SupervisorDashboardPage({
       description: newDesc,
       priority: newPriority,
       required_evidence_grade: newEvidenceGrade,
-      assigned_caregiver_id: 'staff-01',
-      assigned_caregiver_name: 'Suster Dewi Pertiwi'
-    }, 'Ns. Ratna Sari (Supervisor)');
+      assigned_caregiver_id: newCaregiverId,
+      assigned_caregiver_name: caregiver?.full_name || 'Caregiver'
+    }, currentUser?.full_name || 'Supervisor');
 
     setNewTitle('');
     setNewDesc('');
@@ -207,6 +214,7 @@ export default function SupervisorDashboardPage({
         onClose={() => setSelectedObligationForEvidence(null)}
         obligation={selectedObligationForEvidence}
         onSubmitEvidence={onSubmitEvidence}
+        currentUser={currentUser}
       />
 
       {/* Modal Create Obligation */}
@@ -221,6 +229,19 @@ export default function SupervisorDashboardPage({
             >
               {residents.map(r => (
                 <option key={r.id} value={r.id}>{r.full_name} ({r.room_number})</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs text-slate-600 font-semibold mb-1">Pengasuh yang Ditugaskan (Caregiver)</label>
+            <select
+              value={newCaregiverId}
+              onChange={(e) => setNewCaregiverId(e.target.value)}
+              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 font-medium"
+            >
+              {staff.filter(s => s.role === 'caregiver').map(s => (
+                <option key={s.id} value={s.id}>{s.full_name}</option>
               ))}
             </select>
           </div>
