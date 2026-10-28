@@ -172,7 +172,7 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
             </div>
           </div>
 
-          {/* Right Hero Column: Orangtua.jpeg Photo + Perfectly Sized Static 3D Robot Mascot Image */}
+          {/* Right Hero Column: Orangtua.jpeg Photo + Left AI Speech Bubble & Right 3D Robot Mascot with "Kondisi Lansia: Stabil" Speech Bubble */}
           <div className="lg:col-span-7 relative flex justify-center w-full">
             <div className="relative rounded-3xl overflow-hidden border-4 border-white shadow-2xl shadow-sky-900/10 bg-white w-full">
               <img
@@ -193,25 +193,30 @@ export default function LandingPage({ onGoToLogin, onGoToRegister, onDirectDemoL
                 </p>
               </div>
 
-              {/* OVERLAY BADGE RIGHT: Patient Condition Badge pointing to nurse on right */}
-              <div className="absolute top-6 right-4 sm:right-6 bg-white/95 backdrop-blur-md px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-2xl shadow-lg border border-slate-200/80 flex items-center space-x-3">
-                <div className="p-2 rounded-full bg-rose-100 text-rose-600">
-                  <Heart className="w-4 h-4 fill-rose-600" />
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-500 font-bold block">Kondisi Lansia</span>
-                  <span className="text-xs font-black text-emerald-600">Stabil</span>
-                </div>
-              </div>
+              {/* OVERLAY GROUP RIGHT: Speech Bubble "Kondisi Lansia: Stabil" directly on top of 3D Robot Mascot */}
+              <div className="absolute -bottom-2 -right-2 sm:bottom-1 sm:right-1 z-20 flex flex-col items-end pointer-events-none">
 
-              {/* Perfectly Balanced Static 3D Robot Mascot Image */}
-              <div className="absolute -bottom-4 -right-4 sm:-bottom-6 sm:-right-6 z-20 drop-shadow-2xl pointer-events-none">
+                {/* Robot Speech Bubble */}
+                <div className="bg-white/95 backdrop-blur-md px-3.5 py-2.5 rounded-2xl shadow-xl border border-slate-200/90 flex items-center space-x-2.5 mb-1 animate-float relative shadow-sky-900/10">
+                  <div className="p-1.5 rounded-full bg-rose-100 text-rose-600 shrink-0">
+                    <Heart className="w-3.5 h-3.5 fill-rose-600" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 font-bold block leading-none">Kondisi Lansia</span>
+                    <span className="text-xs font-black text-emerald-600">Stabil ✨</span>
+                  </div>
+                  {/* Arrow pointer down to robot */}
+                  <div className="absolute -bottom-1.5 right-8 w-3 h-3 bg-white border-b border-r border-slate-200/90 transform rotate-45"></div>
+                </div>
+
+                {/* 3D Robot Mascot Image */}
                 <img
                   src="/Friendly Futuristic Robot Mascot.png"
                   alt="Friendly Futuristic Robot Mascot"
-                  className="w-40 h-40 sm:w-52 sm:h-52 lg:w-64 lg:h-64 object-contain filter drop-shadow-[0_15px_20px_rgba(0,0,0,0.25)]"
+                  className="w-36 h-36 sm:w-44 sm:h-44 lg:w-52 lg:h-52 object-contain filter drop-shadow-[0_15px_20px_rgba(0,0,0,0.25)]"
                 />
               </div>
+
             </div>
           </div>
 
