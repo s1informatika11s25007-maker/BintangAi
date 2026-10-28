@@ -8,7 +8,7 @@ export default defineConfig({
   workers: 1,
   reporter: [['html', { open: 'never' }], ['list']],
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: 'http://127.0.0.1:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure'
@@ -20,9 +20,9 @@ export default defineConfig({
     }
   ],
   webServer: {
-    command: 'npm run build && npm run preview -- --port 3000 --host',
-    port: 3000,
+    command: 'npx vite preview --port 3000 --host 127.0.0.1',
+    url: 'http://127.0.0.1:3000',
     reuseExistingServer: !process.env.CI,
-    timeout: 120000
+    timeout: 60000
   }
 });
