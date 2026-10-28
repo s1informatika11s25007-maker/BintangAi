@@ -30,8 +30,19 @@ export default function RegisterPage({ onRegisterSuccess, onGoToLogin, onGoToLan
   return (
     <div className="min-h-screen w-full flex flex-col lg:flex-row bg-gradient-to-br from-slate-50 via-sky-50/30 to-slate-100 font-sans text-slate-900 overflow-x-hidden">
 
-      {/* LEFT COLUMN: Landing Page Light Theme Banner with Entrance Animation */}
-      <div className="w-full lg:w-5/12 bg-gradient-to-br from-sky-50/80 via-indigo-50/50 to-sky-100/60 border-r border-sky-200/90 text-slate-900 p-8 lg:p-12 flex flex-col justify-between relative overflow-hidden shadow-sm shrink-0 animate-fade-in">
+      {/* LEFT COLUMN: Full-Height gunung.jpeg Background Banner */}
+      <div className="w-full lg:w-5/12 min-h-[380px] lg:min-h-screen relative flex flex-col justify-between p-8 lg:p-12 overflow-hidden text-white shadow-2xl shrink-0 animate-fade-in">
+
+        {/* Full-Height Background Image (/gunung.jpeg) */}
+        <img
+          src="/gunung.jpeg"
+          onError={(e) => { e.target.src = '/Tua.webp'; }}
+          alt="Pemandangan Alam SambungJaga"
+          className="absolute inset-0 w-full h-full object-cover object-center z-0"
+        />
+
+        {/* Dark Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/60 to-slate-900/75 backdrop-blur-[2px] z-0"></div>
 
         {/* Brand Header */}
         <div className="relative z-10 flex items-center justify-between">
@@ -39,66 +50,50 @@ export default function RegisterPage({ onRegisterSuccess, onGoToLogin, onGoToLan
             onClick={onGoToLanding}
             className="flex items-center space-x-2.5 cursor-pointer group"
           >
-            <div className="p-2 bg-sky-600 rounded-xl text-white shadow-md shadow-sky-600/20 group-hover:scale-105 transition flex items-center justify-center shrink-0">
+            <div className="p-2 bg-sky-600 rounded-xl text-white shadow-lg shadow-sky-600/30 group-hover:scale-105 transition flex items-center justify-center shrink-0">
               <Heart className="w-5 h-5 fill-white" />
             </div>
             <div>
-              <h1 className="text-xl font-black tracking-tight text-slate-900">
-                Sambung<span className="text-sky-600">Jaga</span>
+              <h1 className="text-xl font-black tracking-tight text-white">
+                Sambung<span className="text-sky-400">Jaga</span>
               </h1>
-              <p className="text-xs text-indigo-700 font-bold">Care Superagent</p>
+              <p className="text-xs text-sky-200 font-bold">Care Superagent</p>
             </div>
           </div>
 
           <button
             onClick={onGoToLanding}
-            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 hover:bg-slate-50 border border-slate-300 shadow-2xs transition"
+            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-white/15 hover:bg-white/25 text-white border border-white/20 backdrop-blur-md transition shadow-md"
           >
-            <ArrowLeft className="w-3.5 h-3.5 text-sky-600" />
+            <ArrowLeft className="w-3.5 h-3.5 text-sky-300" />
             <span>Kembali</span>
           </button>
         </div>
 
-        {/* Value Content */}
-        <div className="relative z-10 my-10 space-y-5 text-left">
-          <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-300 text-xs font-bold">
-            <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
+        {/* Hero Message */}
+        <div className="relative z-10 my-auto py-8 space-y-3 text-left">
+          <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400/30 text-xs font-bold backdrop-blur-md">
+            <ShieldCheck className="w-3.5 h-3.5 text-sky-400" />
             <span>Pendaftaran Akun Baru</span>
           </div>
 
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">
+          <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight">
             Bergabung dalam Jaringan <br />
-            <span className="text-sky-600">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-blue-300 to-indigo-300">
               Perawatan Lansia Terverifikasi
             </span>
           </h2>
-
-          <div className="space-y-2.5 pt-2">
-            <div className="flex items-start space-x-2.5 bg-white/90 p-3 rounded-2xl border border-sky-200/80 shadow-xs">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-xs font-bold text-slate-900">Otorisasi Berbasis Peran</h4>
-                <p className="text-[11px] text-slate-600">Hak akses terintegrasi dan terproteksi aman.</p>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-2.5 bg-white/90 p-3 rounded-2xl border border-sky-200/80 shadow-xs">
-              <CheckCircle2 className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-xs font-bold text-slate-900">Verifikasi Perangkat</h4>
-                <p className="text-[11px] text-slate-600">Atestasi perangkat untuk pengasuh di lapangan.</p>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Footer */}
-        <div className="relative z-10 pt-4 border-t border-sky-200/80 flex items-center justify-between text-xs text-slate-600 font-medium">
-          <span>SambungJaga © 2026</span>
+        {/* Trust Footer */}
+        <div className="relative z-10 pt-4 border-t border-white/15 flex items-center justify-between text-xs text-slate-300 font-medium">
+          <span className="flex items-center text-emerald-400 font-bold">
+            <CheckCircle2 className="w-4 h-4 mr-1.5 text-emerald-400" /> Akses Terproteksi
+          </span>
         </div>
       </div>
 
-      {/* RIGHT COLUMN: Streamlined Registration Form with Entrance Animation */}
+      {/* RIGHT COLUMN: Streamlined Registration Form */}
       <div className="w-full lg:w-7/12 bg-white p-8 lg:p-16 flex flex-col justify-center space-y-6 shadow-xl animate-fade-in">
 
         <div className="space-y-1.5 w-full text-left">
