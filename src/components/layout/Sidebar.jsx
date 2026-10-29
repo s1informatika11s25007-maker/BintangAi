@@ -96,7 +96,7 @@ export default function Sidebar({
 
   return (
     <>
-      {/* 1. Mobile Top Header Bar (< md) - Warna disamakan dengan Footer bg-slate-900 */}
+      {/* 1. Mobile Top Header Bar (< md) */}
       <div className="md:hidden bg-slate-900 text-white px-4 py-3 flex items-center justify-between sticky top-0 z-40 border-b border-slate-800 shadow-md w-full">
         <div className="flex items-center space-x-2.5">
           <div className="p-1.5 bg-sky-600 rounded-lg text-white">
@@ -124,7 +124,7 @@ export default function Sidebar({
         ></div>
       )}
 
-      {/* 3. Main Dynamic Collapsible Sidebar - Warna bg-slate-900 (Mirip Footer) */}
+      {/* 3. Main Dynamic Collapsible Sidebar */}
       <aside className={`fixed md:relative top-0 left-0 md:top-auto md:left-auto z-50 md:z-30 h-screen md:h-auto md:min-h-full bg-slate-900 border-r border-slate-800 text-slate-300 transition-all duration-300 ease-in-out shadow-2xl shrink-0 ${
         isCollapsed ? 'md:w-20' : 'md:w-64'
       } ${
@@ -132,160 +132,158 @@ export default function Sidebar({
       }`}>
         <div className="md:sticky md:top-0 h-screen flex flex-col justify-between w-full overflow-hidden">
 
-          {/* Top Scrollable Section */}
-          <div className="p-3.5 space-y-4 overflow-y-auto scrollbar-none flex-1 flex flex-col justify-between">
+          {/* Top Scrollable Section - Padat tanpa gap berlebihan (justify-start) */}
+          <div className="p-3.5 space-y-4 overflow-y-auto scrollbar-none flex-1 flex flex-col justify-start">
 
-            <div className="space-y-4">
-              {/* Brand Header & Rail Toggle */}
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3 shrink-0">
-                <div className="flex items-center space-x-2.5 min-w-0">
-                  <div className="p-2 bg-gradient-to-br from-sky-500 to-blue-600 rounded-xl text-white shadow-md shadow-sky-600/30 shrink-0">
-                    <Heart className="w-5 h-5 fill-white" />
-                  </div>
-                  {(!isCollapsed || mobileOpen) && (
-                    <div className="min-w-0">
-                      <span className="text-lg font-black text-white tracking-tight block leading-tight truncate">
-                        Sambung<span className="text-sky-400">Jaga</span>
-                      </span>
-                      <span className="text-[10px] text-sky-300 font-bold block">Care Superagent</span>
-                    </div>
-                  )}
+            {/* Brand Header & Rail Toggle */}
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3 shrink-0">
+              <div className="flex items-center space-x-2.5 min-w-0">
+                <div className="p-2 bg-gradient-to-br from-sky-500 to-blue-600 rounded-xl text-white shadow-md shadow-sky-600/30 shrink-0">
+                  <Heart className="w-5 h-5 fill-white" />
                 </div>
-
-                {/* Desktop Expand/Collapse Rail Toggle */}
-                <button
-                  type="button"
-                  onClick={() => setIsCollapsed(!isCollapsed)}
-                  className="hidden md:flex p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition"
-                  title={isCollapsed ? "Perluas Sidebar" : "Lipat Sidebar (Mode Rail)"}
-                >
-                  {isCollapsed ? <ChevronRight className="w-4 h-4 text-sky-400" /> : <ChevronLeft className="w-4 h-4 text-slate-400" />}
-                </button>
-
-                <button
-                  onClick={() => setMobileOpen(false)}
-                  className="md:hidden p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                {(!isCollapsed || mobileOpen) && (
+                  <div className="min-w-0">
+                    <span className="text-lg font-black text-white tracking-tight block leading-tight truncate">
+                      Sambung<span className="text-sky-400">Jaga</span>
+                    </span>
+                    <span className="text-[10px] text-sky-300 font-bold block">Care Superagent</span>
+                  </div>
+                )}
               </div>
 
-              {/* Role Switcher Pill in Sidebar */}
-              {(!isCollapsed || mobileOpen) && (
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setRoleMenuOpen(!roleMenuOpen)}
-                    className="w-full flex items-center justify-between p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 text-left hover:border-sky-500/50 transition duration-200 group"
-                  >
-                    <div className="flex items-center space-x-2 min-w-0">
-                      <div className="p-1.5 rounded-lg bg-sky-500/20 text-sky-400 border border-sky-500/30 shrink-0">
-                        <Sparkles className="w-3.5 h-3.5" />
-                      </div>
-                      <div className="min-w-0">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase block tracking-wider">Peran Perangkat</span>
-                        <span className="text-xs font-black text-white truncate block capitalize">
-                          {rolesList.find(r => r.id === activeRole)?.title || activeRole}
-                        </span>
-                      </div>
-                    </div>
-                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${roleMenuOpen ? 'rotate-180 text-sky-400' : ''}`} />
-                  </button>
+              {/* Desktop Expand/Collapse Rail Toggle */}
+              <button
+                type="button"
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className="hidden md:flex p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition"
+                title={isCollapsed ? "Perluas Sidebar" : "Lipat Sidebar (Mode Rail)"}
+              >
+                {isCollapsed ? <ChevronRight className="w-4 h-4 text-sky-400" /> : <ChevronLeft className="w-4 h-4 text-slate-400" />}
+              </button>
 
-                  {/* Role Dropdown Options */}
-                  {roleMenuOpen && (
-                    <div className="absolute left-0 right-0 top-full mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl z-50 p-1.5 space-y-1 animate-fade-in">
-                      {rolesList.map(r => {
-                        const RIcon = r.icon;
-                        const isSelected = activeRole === r.id;
-                        return (
-                          <button
-                            key={r.id}
-                            type="button"
-                            onClick={() => handleRoleSelect(r.id)}
-                            className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold transition text-left ${
-                              isSelected
-                                ? 'bg-sky-600 text-white shadow-md'
-                                : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                            }`}
-                          >
-                            <div className="flex items-center space-x-2 min-w-0">
-                              <RIcon className="w-3.5 h-3.5 shrink-0" />
-                              <span className="truncate">{r.title}</span>
-                            </div>
-                            <span className={`text-[9px] px-1.5 py-0.5 rounded font-mono ${
-                              isSelected ? 'bg-white/20 text-white font-bold' : 'bg-slate-800 text-slate-400'
-                            }`}>
-                              {r.badge}
-                            </span>
-                          </button>
-                        );
-                      })}
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="md:hidden p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Role Switcher Pill in Sidebar */}
+            {(!isCollapsed || mobileOpen) && (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setRoleMenuOpen(!roleMenuOpen)}
+                  className="w-full flex items-center justify-between p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 text-left hover:border-sky-500/50 transition duration-200 group"
+                >
+                  <div className="flex items-center space-x-2 min-w-0">
+                    <div className="p-1.5 rounded-lg bg-sky-500/20 text-sky-400 border border-sky-500/30 shrink-0">
+                      <Sparkles className="w-3.5 h-3.5" />
                     </div>
-                  )}
-                </div>
+                    <div className="min-w-0">
+                      <span className="text-[9px] font-bold text-slate-400 uppercase block tracking-wider">Peran Perangkat</span>
+                      <span className="text-xs font-black text-white truncate block capitalize">
+                        {rolesList.find(r => r.id === activeRole)?.title || activeRole}
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${roleMenuOpen ? 'rotate-180 text-sky-400' : ''}`} />
+                </button>
+
+                {/* Role Dropdown Options */}
+                {roleMenuOpen && (
+                  <div className="absolute left-0 right-0 top-full mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl z-50 p-1.5 space-y-1 animate-fade-in">
+                    {rolesList.map(r => {
+                      const RIcon = r.icon;
+                      const isSelected = activeRole === r.id;
+                      return (
+                        <button
+                          key={r.id}
+                          type="button"
+                          onClick={() => handleRoleSelect(r.id)}
+                          className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold transition text-left ${
+                            isSelected
+                              ? 'bg-sky-600 text-white shadow-md'
+                              : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-2 min-w-0">
+                            <RIcon className="w-3.5 h-3.5 shrink-0" />
+                            <span className="truncate">{r.title}</span>
+                          </div>
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded font-mono ${
+                            isSelected ? 'bg-white/20 text-white font-bold' : 'bg-slate-800 text-slate-400'
+                          }`}>
+                            {r.badge}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Navigation Links */}
+            <nav className="space-y-1.5 text-left">
+              {(!isCollapsed || mobileOpen) && (
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 block mb-1">
+                  Navigasi Utama
+                </span>
               )}
 
-              {/* Navigation Links */}
-              <nav className="space-y-1.5 pt-1 text-left">
-                {(!isCollapsed || mobileOpen) && (
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 block mb-1">
-                    Navigasi Utama
-                  </span>
-                )}
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => handleNavClick(item.id)}
+                    title={isCollapsed && !mobileOpen ? `${item.label} (${item.desc})` : undefined}
+                    className={`w-full flex items-center ${
+                      isCollapsed && !mobileOpen ? 'justify-center p-3' : 'justify-between px-3.5 py-2.5'
+                    } rounded-xl text-xs font-bold transition duration-200 relative group ${
+                      isActive
+                        ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/25 font-black'
+                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                    }`}
+                  >
+                    {/* Active Indicator Bar */}
+                    {isActive && (
+                      <span className="absolute left-0 top-2 bottom-2 w-1 bg-white rounded-r-full shadow-md"></span>
+                    )}
 
-                {navItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = activeTab === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => handleNavClick(item.id)}
-                      title={isCollapsed && !mobileOpen ? `${item.label} (${item.desc})` : undefined}
-                      className={`w-full flex items-center ${
-                        isCollapsed && !mobileOpen ? 'justify-center p-3' : 'justify-between px-3.5 py-2.5'
-                      } rounded-xl text-xs font-bold transition duration-200 relative group ${
-                        isActive
-                          ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/25 font-black'
-                          : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                      }`}
-                    >
-                      {/* Active Indicator Bar */}
-                      {isActive && (
-                        <span className="absolute left-0 top-2 bottom-2 w-1 bg-white rounded-r-full shadow-md"></span>
+                    <div className="flex items-center space-x-2.5 min-w-0">
+                      <Icon className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-110 ${
+                        isActive ? 'text-white' : 'text-slate-400 group-hover:text-sky-300'
+                      }`} />
+
+                      {(!isCollapsed || mobileOpen) && (
+                        <div className="min-w-0 text-left">
+                          <span className="truncate block font-bold leading-tight">{item.label}</span>
+                          <span className={`text-[10px] truncate block font-normal ${isActive ? 'text-sky-100' : 'text-slate-500 group-hover:text-slate-400'}`}>
+                            {item.desc}
+                          </span>
+                        </div>
                       )}
+                    </div>
 
-                      <div className="flex items-center space-x-2.5 min-w-0">
-                        <Icon className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-110 ${
-                          isActive ? 'text-white' : 'text-slate-400 group-hover:text-sky-300'
-                        }`} />
-
-                        {(!isCollapsed || mobileOpen) && (
-                          <div className="min-w-0 text-left">
-                            <span className="truncate block font-bold leading-tight">{item.label}</span>
-                            <span className={`text-[10px] truncate block font-normal ${isActive ? 'text-sky-100' : 'text-slate-500 group-hover:text-slate-400'}`}>
-                              {item.desc}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-
-                      {(!isCollapsed || mobileOpen) && item.badgeCount && (
-                        <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold shrink-0 ml-1 ${
-                          isActive ? 'bg-white text-sky-700' : 'bg-rose-600 text-white'
-                        }`}>
-                          {item.badgeCount}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </nav>
-            </div>
+                    {(!isCollapsed || mobileOpen) && item.badgeCount && (
+                      <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold shrink-0 ml-1 ${
+                        isActive ? 'bg-white text-sky-700' : 'bg-rose-600 text-white'
+                      }`}>
+                        {item.badgeCount}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
 
             {/* Dynamic System Status Card */}
             {(!isCollapsed || mobileOpen) && (
-              <div className="bg-slate-950/60 p-3 rounded-2xl border border-slate-800 space-y-1.5 text-left shrink-0">
+              <div className="bg-slate-950/60 p-3 rounded-2xl border border-slate-800 space-y-1.5 text-left shrink-0 mt-2">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                   Status Perangkat
                 </span>
@@ -304,7 +302,7 @@ export default function Sidebar({
 
           </div>
 
-          {/* Bottom Footer Actions - Warna bg-slate-950/90 samak / selaras dengan Footer */}
+          {/* Bottom Footer Actions */}
           <div className={`p-3 border-t border-slate-800 space-y-2 bg-slate-950/90 shrink-0 ${
             isCollapsed && !mobileOpen ? 'flex flex-col items-center' : ''
           }`}>
