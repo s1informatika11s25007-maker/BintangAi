@@ -65,7 +65,7 @@ export default function App() {
     setUserAvatar
   } = useSambungJaga();
 
-  // Global Loading State component for elegant data fetch (Only show when forcing refresh/logout cache)
+  // Global Loading State component for elegant data fetch
   const GlobalLoader = () => (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center space-y-4">
       <div className="relative flex items-center justify-center">
@@ -74,7 +74,7 @@ export default function App() {
       </div>
       <div className="text-center space-y-1">
         <h2 className="text-sky-800 font-black text-lg">SambungJaga</h2>
-        <p className="text-slate-500 font-semibold text-xs animate-pulse">Menghapus cache sistem...</p>
+        <p className="text-slate-500 font-semibold text-xs animate-pulse">Memuat Data Sistem Terverifikasi...</p>
       </div>
     </div>
   );
@@ -95,10 +95,8 @@ export default function App() {
 
   const handleLogout = () => {
     logoutUserAccount();
-    setTimeout(() => {
-      setIsLoggedIn(false);
-      navigate('/');
-    }, 500); // Wait for the loading animation to play before completely detaching the route
+    setIsLoggedIn(false);
+    navigate('/');
   };
 
   const handleRoleChange = (newRole) => {

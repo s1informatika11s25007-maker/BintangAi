@@ -4,15 +4,23 @@
 
 import { supabase } from '../supabase/client';
 
+// In-Memory Cache for Prompt Injection Checks
+const promptGuardCache = new Map();
+
 /**
  * Detects prompt injection patterns in caregiver input text
- * Menggunakan Real AI Agent (Llama Prompt Guard 2) dari Supabase Edge Functions.
+ * Menggunakan Real AI Agent dari Supabase Edge Functions dengan in-memory LRU caching.
  * @param {string} text
  * @returns {Promise<{ isInjection: boolean, matchedRule?: string }>}
  */
 export async function validatePromptInjection(text) {
   if (!text || typeof text !== 'string') {
     return { isInjection: false };
+  }
+
+  const cleanText = text.trim().toLowerCase();
+  if (promptGuardCache.has(cleanText)) {
+    return promptGuardCache.get(cleanText);
   }
 
   try {
@@ -25,10 +33,13 @@ export async function validatePromptInjection(text) {
       return { isInjection: false };
     }
 
-    return {
+    const result = {
       isInjection: data.isInjection,
       matchedRule: data.matchedRule || 'AI Detected Malicious Intent'
     };
+
+    promptGuardCache.set(cleanText, result);
+    return result;
   } catch (err) {
     console.error("AI Prompt Guard Failed", err);
     return { isInjection: false };

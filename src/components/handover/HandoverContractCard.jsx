@@ -1,6 +1,7 @@
-import React from 'react';
-import { FileCheck, ShieldAlert, ArrowRight, CheckCircle2, UserCheck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { FileCheck, ShieldAlert, ArrowRight, CheckCircle2, UserCheck, Sparkles } from 'lucide-react';
 import Badge from '../common/Badge';
+import { runHandoverAnalysis } from '../../services/handoverContractService';
 
 export default function HandoverContractCard({ contract, onSignContract, currentUserRole, currentUser, staff }) {
   const isConfirmed = contract.contract_status === 'confirmed';
@@ -12,6 +13,24 @@ export default function HandoverContractCard({ contract, onSignContract, current
   const outgoingName = outgoingStaff ? outgoingStaff.full_name : 'Pengasuh Shift Sebelumnya';
   const incomingName = incomingStaff ? incomingStaff.full_name : 'Belum Dikonfirmasi...';
 
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [isLoadingAi, setIsLoadingAi] = useState(false);
+
+  useEffect(() => {
+    async function fetchAiAnalysis() {
+      setIsLoadingAi(true);
+      const res = await runHandoverAnalysis(
+        contract,
+        outgoingStaff,
+        incomingStaff,
+        contract.open_obligations_summary || []
+      );
+      setAiAnalysis(res);
+      setIsLoadingAi(false);
+    }
+    fetchAiAnalysis();
+  }, [contract.id]);
+
   return (
     <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xl shadow-slate-200/50 space-y-4">
       <div className="flex items-center justify-between pb-3 border-b border-slate-100 flex-wrap gap-2">
@@ -19,9 +38,14 @@ export default function HandoverContractCard({ contract, onSignContract, current
           <FileCheck className="w-5 h-5 text-sky-600" />
           <h3 className="font-bold text-slate-900 text-sm">{contract.shift_name}</h3>
         </div>
-        <Badge variant={isConfirmed ? 'success' : 'warning'}>
-          {isConfirmed ? 'Dua Sisi Terdokumentasi (CONFIRMED)' : 'Menunggu Konfirmasi Penerima (PENDING)'}
-        </Badge>
+        <div className="flex items-center space-x-2">
+          <Badge variant={isConfirmed ? 'success' : 'warning'}>
+            {isConfirmed ? 'Dua Sisi Terdokumentasi (CONFIRMED)' : 'Menunggu Konfirmasi Penerima (PENDING)'}
+          </Badge>
+          <Badge variant="kernel" className="font-mono text-[10px]">
+            SambungJaga AI Agent
+          </Badge>
+        </div>
       </div>
 
       {/* Two-Sided Flow Diagram */}
@@ -54,6 +78,22 @@ export default function HandoverContractCard({ contract, onSignContract, current
           )}
         </div>
       </div>
+
+      {/* AI Handover Validation Summary */}
+      {aiAnalysis && (
+        <div className="p-3 bg-purple-50 border border-purple-200 rounded-xl text-xs text-purple-950 space-y-1">
+          <div className="flex items-center space-x-1.5 font-bold text-purple-900">
+            <Sparkles className="w-4 h-4 text-purple-600" />
+            <span>Analisis Handover Contract Agent:</span>
+          </div>
+          <p className="text-[11px] leading-relaxed text-slate-800 font-medium">{aiAnalysis.summaryAnalysis}</p>
+          {aiAnalysis.criticalNotes?.length > 0 && (
+            <div className="text-[10px] text-purple-800 pt-1 font-semibold">
+              Catatan Kritis: {aiAnalysis.criticalNotes.join(' · ')}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Open Obligations Transferred */}
       <div>

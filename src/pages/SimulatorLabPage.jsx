@@ -3,31 +3,36 @@ import { Cpu, Play, ShieldAlert, Layers, Terminal, Loader2 } from 'lucide-react'
 import FailureSetSimulationModal from '../components/simulator/FailureSetSimulationModal';
 import Badge from '../components/common/Badge';
 import { validatePromptInjection } from '../utils/validators';
+import { runRuleReplayAnalysis } from '../services/ruleReplayService';
 
 export default function SimulatorLabPage({ staff, obligations }) {
   const [isFailureModalOpen, setIsFailureModalOpen] = useState(false);
   const [replayDays, setReplayDays] = useState(7);
   const [replayStatus, setReplayStatus] = useState(null);
+  const [isReplaying, setIsReplaying] = useState(false);
   const [adversarialPrompt, setAdversarialPrompt] = useState('');
   const [adversarialResult, setAdversarialResult] = useState(null);
   const [isTestingAdversarial, setIsTestingAdversarial] = useState(false);
 
-  const handleRunReplay = () => {
-    setReplayStatus('running');
+  const handleRunReplay = async () => {
+    setIsReplaying(true);
+    setReplayStatus(null);
 
-    // Count real obligations from the last N days
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - replayDays);
-    const replayedRecords = obligations.filter(o => new Date(o.sys_created_at) >= cutoffDate).length;
-
-    setTimeout(() => {
+    try {
+      const res = await runRuleReplayAnalysis(Number(replayDays), obligations, 'v2.1.0-clinical');
       setReplayStatus({
-        replayedRecords: replayedRecords,
-        ruleVersion: 'v2.1.0-clinical',
-        discrepanciesFound: 0,
-        message: `Retroactive Rule Replay selesai. Sebanyak ${replayedRecords} kewajiban dari ${replayDays} hari terakhir diputar ulang tanpa ada konflik terdeteksi.`
+        replayedRecords: res.replayedRecords,
+        ruleVersion: res.ruleVersion || 'v2.1.0-clinical',
+        discrepanciesFound: res.discrepanciesFound || 0,
+        message: res.analysis || `Retroactive Rule Replay selesai. Sebanyak ${res.replayedRecords} kewajiban dari ${replayDays} hari terakhir diputar ulang.`
       });
-    }, 1500);
+    } catch (err) {
+      setReplayStatus({
+        message: 'Gagal menjalankan Rule Replay Engine via Edge Function.'
+      });
+    } finally {
+      setIsReplaying(false);
+    }
   };
 
   const handleTestAdversarial = async (e) => {
@@ -49,7 +54,7 @@ export default function SimulatorLabPage({ staff, obligations }) {
         setAdversarialResult({
           blocked: false,
           tag: 'Perception Gateway',
-          reason: 'Input aman. Laporan diproses secara terstruktur.'
+          reason: 'Input aman. Laporan diproses secara terstruktur oleh AI Superagent.'
         });
       }
     } catch (err) {
@@ -84,7 +89,7 @@ export default function SimulatorLabPage({ staff, obligations }) {
               <ShieldAlert className="w-4 h-4 mr-1.5 text-amber-600" />
               P4 · Failure-Set Search Simulator
             </h3>
-            <Badge variant="kernel">P4 Kernel</Badge>
+            <Badge variant="kernel">P4 Kernel AI Agent</Badge>
           </div>
           <p className="text-xs text-slate-600">
             Mencari kombinasi kegagalan pengasuh terkecil yang berisiko menelantarkan kewajiban kritis.
@@ -105,7 +110,7 @@ export default function SimulatorLabPage({ staff, obligations }) {
               <Layers className="w-4 h-4 mr-1.5 text-sky-600" />
               Retroactive Rule Replay (P1)
             </h3>
-            <Badge variant="info">P1 Bitemporal</Badge>
+            <Badge variant="info">P1 Bitemporal AI Agent</Badge>
           </div>
           <p className="text-xs text-slate-600">
             Putar ulang N hari riwayat kewajiban menggunakan aturan klinis versi terbaru tanpa merusak data histori transaction time.
@@ -122,13 +127,13 @@ export default function SimulatorLabPage({ staff, obligations }) {
             </select>
             <button
               onClick={handleRunReplay}
-              disabled={replayStatus === 'running'}
-              className="w-full bg-sky-600 hover:bg-sky-700 text-white text-xs py-2 rounded-xl font-bold transition"
+              disabled={isReplaying}
+              className="w-full bg-sky-600 hover:bg-sky-700 text-white text-xs py-2 rounded-xl font-bold transition flex items-center justify-center space-x-1"
             >
-              {replayStatus === 'running' ? 'Memutar Ulang...' : 'Jalankan Rule Replay'}
+              {isReplaying ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>Jalankan Rule Replay</span>}
             </button>
           </div>
-          {replayStatus && replayStatus !== 'running' && (
+          {replayStatus && (
             <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-xl text-xs text-emerald-900 font-medium">
               {replayStatus.message}
             </div>

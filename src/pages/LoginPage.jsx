@@ -20,16 +20,18 @@ import {
 
 export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLanding }) {
   const [demoAccounts, setDemoAccounts] = useState([]);
-  const [selectedAccountKey, setSelectedAccountKey] = useState('');
+  const [selectedAccountKey, setSelectedAccountKey] = useState('none');
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('••••••••••••');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isFetchingAccounts, setIsFetchingAccounts] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
     async function loadAccounts() {
+      setIsFetchingAccounts(true);
       try {
         const accounts = await fetchDemoAccountsPerRole();
         if (isMounted) {
@@ -40,10 +42,16 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
             setSelectedAccountKey(accKey);
             setSelectedAccount(defaultAcc);
             setEmail(defaultAcc.email);
+            setPassword('••••••••••••');
+          } else {
+            setSelectedAccountKey('none');
+            setSelectedAccount(null);
+            setEmail('');
+            setPassword('');
           }
         }
       } finally {
-        // no-op
+        if (isMounted) setIsFetchingAccounts(false);
       }
     }
     loadAccounts();
@@ -54,6 +62,13 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
 
   const handleAccountChange = (accountKey) => {
     setSelectedAccountKey(accountKey);
+    if (accountKey === 'none') {
+      setSelectedAccount(null);
+      setEmail('');
+      setPassword('');
+      return;
+    }
+
     const target = demoAccounts.find(a => (a.key === accountKey || a.id === accountKey));
     if (target) {
       setSelectedAccount(target);
@@ -64,21 +79,53 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (selectedAccount) {
-      setIsLoggingIn(true);
+    if (!email.trim()) return;
 
-      // Simulasi autentikasi karena akun-akun ini hanya ada di tabel staff_profiles
-      // (seed data) dan belum didaftarkan di sistem Supabase Auth
-      try {
-        await new Promise(resolve => setTimeout(resolve, 800));
+    setIsLoggingIn(true);
+
+    try {
+      await new Promise(resolve => setTimeout(resolve, 600));
+
+      if (selectedAccountKey === 'none' || !selectedAccount) {
+        // Mode Manual Input Email & Password
+        // Infer Role automatically from email keyword or default to supervisor
+        const lowerEmail = email.toLowerCase();
+        let inferredRole = 'supervisor';
+        if (lowerEmail.includes('caregiver') || lowerEmail.includes('perawat') || lowerEmail.includes('suster')) {
+          inferredRole = 'caregiver';
+        } else if (lowerEmail.includes('family') || lowerEmail.includes('keluarga') || lowerEmail.includes('wali')) {
+          inferredRole = 'family';
+        } else if (lowerEmail.includes('admin') || lowerEmail.includes('hr')) {
+          inferredRole = 'admin_hr';
+        }
+
+        const namePart = email.split('@')[0];
+        const formattedName = namePart ? (namePart.charAt(0).toUpperCase() + namePart.slice(1)) : 'Staf SambungJaga';
+
+        const customUser = {
+          id: `manual-${Date.now()}`,
+          key: `acc_manual_${Date.now()}`,
+          name: formattedName,
+          role: inferredRole,
+          roleTitle: ROLE_LABELS[inferredRole] || 'Staf Medis',
+          email: email.trim(),
+          avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80',
+          competencies: ['clinical_care', 'vital_signs']
+        };
+
+        onLoginSuccess(inferredRole, customUser);
+      } else {
+        // Mode Demo Account Terpilih
         onLoginSuccess(selectedAccount.role, selectedAccount);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setIsLoggingIn(false);
       }
+    } catch (err) {
+      console.error('Login error:', err);
+    } finally {
+      setIsLoggingIn(false);
     }
   };
+
+  const isManualMode = selectedAccountKey === 'none';
 
   return (
     <div className="min-h-screen w-full flex flex-col lg:flex-row bg-gradient-to-br from-slate-50 via-sky-50/30 to-slate-100 font-sans text-slate-900 overflow-x-hidden">
@@ -135,7 +182,7 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
 
         <div className="relative z-10 pt-4 border-t border-white/15 flex items-center justify-between text-xs text-slate-300 font-medium">
           <span className="flex items-center text-emerald-400 font-bold">
-            <CheckCircle2 className="w-4 h-4 mr-1.5 text-emerald-400" /> Profil Staf Real
+            <CheckCircle2 className="w-4 h-4 mr-1.5 text-emerald-400" /> Profil Staf Real & Input Manual
           </span>
         </div>
       </div>
@@ -144,70 +191,89 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
         <div className="space-y-1.5 w-full text-left">
           <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Selamat Datang Kembali</h2>
           <p className="text-xs sm:text-sm text-slate-500 font-medium">
-            Masuk ke akun SambungJaga Anda menggunakan staf yang telah didaftarkan.
+            Masuk dengan akun terdaftar atau pilih "Tidak Ada (Input Manual)" untuk mengetik email & kata sandi secara bebas.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5 pt-2 text-left w-full">
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center">
-              <UserCheck className="w-4 h-4 mr-1.5 text-sky-600" /> Pilih Akun & Peran Pengguna
-            </label>
-            <select
-              value={selectedAccountKey}
-              onChange={(e) => handleAccountChange(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3.5 text-xs sm:text-sm text-slate-900 font-bold outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition shadow-2xs"
-            >
-              {demoAccounts.map((account) => {
-                const accKey = account.key || account.id;
-                return (
-                  <option key={accKey} value={accKey}>
-                    {account.name} — {ROLE_LABELS[account.role] || account.roleTitle}
-                  </option>
-                );
-              })}
-            </select>
+        {isFetchingAccounts ? (
+          <div className="flex flex-col items-center justify-center py-12 space-y-4">
+            <Loader2 className="w-10 h-10 text-sky-500 animate-spin" />
+            <p className="text-xs text-slate-500 font-bold animate-pulse">Memuat Data Staf dari Database...</p>
           </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center">
-              <Mail className="w-4 h-4 mr-1.5 text-sky-600" /> Email Staf
-            </label>
-            <input
-              type="email"
-              required
-              readOnly
-              value={email}
-              className="w-full bg-slate-100 border border-slate-300 rounded-xl px-4 py-3.5 text-xs sm:text-sm text-slate-600 font-semibold outline-none cursor-not-allowed"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center">
-              <Lock className="w-4 h-4 mr-1.5 text-sky-600" /> Kata Sandi
-            </label>
-            <div className="relative w-full">
-              <input
-                type={showPassword ? "text" : "password"}
-                required
-                readOnly
-                value={password}
-                className="w-full bg-slate-100 border border-slate-300 rounded-xl px-4 py-3.5 pr-11 text-xs sm:text-sm text-slate-600 font-semibold outline-none cursor-not-allowed"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-sky-600 transition duration-200 transform active:scale-90 focus:outline-none"
-                title={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-5 pt-2 text-left w-full">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center">
+                <UserCheck className="w-4 h-4 mr-1.5 text-sky-600" /> Pilih Akun & Peran Pengguna
+              </label>
+              <select
+                value={selectedAccountKey}
+                onChange={(e) => handleAccountChange(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3.5 text-xs sm:text-sm text-slate-900 font-bold outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition shadow-2xs"
               >
-                {showPassword ? (
-                  <EyeOff className="w-4 h-4 transition-transform duration-200" />
-                ) : (
-                  <Eye className="w-4 h-4 transition-transform duration-200" />
-                )}
-              </button>
+                <option value="none">-- Tidak Ada (Input Manual) --</option>
+                {demoAccounts.map((account) => {
+                  const accKey = account.key || account.id;
+                  return (
+                    <option key={accKey} value={accKey}>
+                      {account.name} — {ROLE_LABELS[account.role] || account.roleTitle}
+                    </option>
+                  );
+                })}
+              </select>
             </div>
-          </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center">
+                <Mail className="w-4 h-4 mr-1.5 text-sky-600" /> Email
+              </label>
+              <input
+                type="email"
+                required
+                readOnly={!isManualMode}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={isManualMode ? "Masukkan email Anda (contoh: supervisor@panti.id)" : "Email terisi otomatis"}
+                className={`w-full border rounded-xl px-4 py-3.5 text-xs sm:text-sm font-semibold outline-none transition ${
+                  isManualMode
+                    ? 'bg-slate-50 border-slate-300 text-slate-900 focus:ring-2 focus:ring-sky-500 focus:border-sky-500'
+                    : 'bg-slate-100 border-slate-300 text-slate-600 cursor-not-allowed'
+                }`}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center">
+                <Lock className="w-4 h-4 mr-1.5 text-sky-600" /> Kata Sandi
+              </label>
+              <div className="relative w-full">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  readOnly={!isManualMode}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={isManualMode ? "Masukkan kata sandi..." : "Kata sandi terisi otomatis"}
+                  className={`w-full border rounded-xl px-4 py-3.5 pr-11 text-xs sm:text-sm font-semibold outline-none transition ${
+                    isManualMode
+                      ? 'bg-slate-50 border-slate-300 text-slate-900 focus:ring-2 focus:ring-sky-500 focus:border-sky-500'
+                      : 'bg-slate-100 border-slate-300 text-slate-600 cursor-not-allowed'
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-sky-600 transition duration-200 transform active:scale-90 focus:outline-none"
+                  title={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4 transition-transform duration-200" />
+                  ) : (
+                    <Eye className="w-4 h-4 transition-transform duration-200" />
+                  )}
+                </button>
+              </div>
+            </div>
 
             <button
               type="submit"
@@ -221,12 +287,17 @@ export default function LoginPage({ onLoginSuccess, onGoToRegister, onGoToLandin
                 </>
               ) : (
                 <>
-                  <span>Masuk dengan Profil {selectedAccount ? ROLE_LABELS[selectedAccount.role] : ''}</span>
+                  <span>
+                    {isManualMode
+                      ? 'Masuk dengan Akun'
+                      : `Masuk sebagai ${selectedAccount ? ROLE_LABELS[selectedAccount.role] : ''}`}
+                  </span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </button>
           </form>
+        )}
 
         <div className="pt-3 text-center text-xs text-slate-600 border-t border-slate-100 w-full">
           Belum punya akun?{' '}

@@ -57,20 +57,15 @@ export function useSambungJaga() {
   };
 
   const logoutUserAccount = () => {
-    setIsLoading(true); // Trigger loading screen for cache clearing
     localStorage.removeItem('currentUser');
     localStorage.removeItem('activeRole');
     localStorage.setItem('isLoggedIn', 'false');
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 500); // 500ms delay to simulate cache clearing before navigating away
   };
 
-  // Initial State Setup with Supabase only
+  // Initial State Setup with Supabase
   useEffect(() => {
-    // Data loading from Supabase (Blocking for initial load)
     async function loadSupabaseData() {
-      // Menghapus trigger loading saat memuat data agar terasa cepat dan realtime
+      setIsLoading(true);
       try {
         const { data: resData, error: e1 } = await supabase.from('residents').select('*');
         if (!e1 && resData?.length > 0) setResidents(resData);
@@ -112,7 +107,54 @@ export function useSambungJaga() {
     loadSupabaseData();
   }, []);
 
-  // Notification Handlers (Database Synchronized)
+  // 4. Background Sentinel Agent & Predictive Auto-Reassignment (P4 Live Automation)
+  useEffect(() => {
+    if (isLoading || obligations.length === 0) return;
+
+    const interval = setInterval(() => {
+      const now = new Date();
+      obligations.forEach(ob => {
+        if (ob.status === OBLIGATION_STATUS.OPEN || ob.status === OBLIGATION_STATUS.IN_PROGRESS) {
+          const deadline = new Date(ob.valid_until);
+          const overdueMinutes = Math.floor((now - deadline) / (1000 * 60));
+
+          // If care debt > 45 minutes or priority critical
+          if (overdueMinutes > 45 && ob.priority === 'critical' && !ob.is_reassigned_by_sentinel) {
+            const availableCaregiver = staff.find(s => s.id !== ob.assigned_caregiver_id && (s.shift_status === 'on_duty' || !s.shift_status));
+            if (availableCaregiver) {
+              setObligations(prev => prev.map(o => o.id === ob.id ? {
+                ...o,
+                assigned_caregiver_id: availableCaregiver.id,
+                assigned_caregiver_name: availableCaregiver.full_name,
+                is_reassigned_by_sentinel: true
+              } : o));
+
+              logAudit('[A] P4 Background Sentinel Agent', 'PREDICTIVE_AUTO_REASSIGNMENT', 'SambungJaga Sentinel AI', {
+                obligation_id: ob.id,
+                title: ob.title,
+                overdueMinutes,
+                reassigned_to: availableCaregiver.full_name
+              });
+
+              addNotification({
+                recipientRole: 'supervisor',
+                senderName: 'P4 Background Sentinel Agent',
+                title: 'Peringatan Risk & Auto-Reassignment (P4)',
+                message: `Tugas kritis "${ob.title}" mengalami Care Debt (${overdueMinutes} mnt). Otomatis dialihkan ke ${availableCaregiver.full_name}.`,
+                type: 'urgent'
+              });
+
+              supabase.from('bitemporal_obligations').update({ assigned_caregiver_id: availableCaregiver.id }).eq('id', ob.id).catch(() => {});
+            }
+          }
+        }
+      });
+    }, 20000);
+
+    return () => clearInterval(interval);
+  }, [obligations, staff, isLoading]);
+
+  // Notification Handlers
   const addNotification = async ({ recipientRole, senderName, title, message, type = 'info' }) => {
     const newNotif = {
       id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
@@ -127,7 +169,6 @@ export function useSambungJaga() {
     };
     setNotifications(prev => [newNotif, ...prev]);
 
-    // Insert into Supabase notifications table
     supabase.from('notifications').insert([{
       recipient_role: recipientRole,
       sender_name: senderName || 'Sistem SambungJaga',
@@ -159,7 +200,6 @@ export function useSambungJaga() {
     const updatedTrail = appendAuditEntry(auditTrail, gatewayTag, actionName, actorName, payload);
     setAuditTrail(updatedTrail);
 
-    // Sync to Supabase audit_trail table (non-blocking)
     const latestEntry = updatedTrail[updatedTrail.length - 1];
     if (latestEntry) {
       supabase.from('audit_trail').insert([{
@@ -173,13 +213,9 @@ export function useSambungJaga() {
     }
   };
 
-  // 1. Submit Voice / Text Capture (Care Capture Agent)
+  // 1. Submit Voice / Text Capture (Zero-Friction & Autonomous Task Generation Engine)
   const captureCareReport = async ({ text, sourceType, residentId, actorName }) => {
-    const resident = (residents && residents.length > 0)
-      ? (residents.find(r => r.id === residentId) || residents[0])
-      : { id: 'res-101', full_name: 'Ibu Hj. Aminah (78 th)' };
-
-    // Security Prompt Injection Validation (Menggunakan AI Model Llama Guard 2)
+    // Security Prompt Injection Validation
     const injectionCheck = await validatePromptInjection(text);
     if (injectionCheck.isInjection) {
       logAudit('[A] Prompt Injection Filter Gateway', 'REJECT_INJECTION_ATTEMPT', actorName, { text_blocked: text });
@@ -189,19 +225,33 @@ export function useSambungJaga() {
       };
     }
 
-    // Call the Groq AI Superagent using qwen/qwen3.8-27b
+    const activeObs = obligations.filter(o => o.status !== OBLIGATION_STATUS.VERIFIED_CLOSED);
+    const initialResident = residents.find(r => r.id === residentId) || residents[0];
+
     const aiContext = {
-      resident,
-      activeObligations: obligations.filter(o => o.resident_id === resident.id && o.status !== OBLIGATION_STATUS.VERIFIED_CLOSED)
+      residents,
+      resident: initialResident,
+      activeObligations: activeObs
     };
 
     const aiResponse = await runCareSuperagent(text, aiContext);
 
-    if (aiResponse) {
-      logAudit('[A] Care Superagent Orchestrator', 'AI_ANALYSIS_COMPLETED', 'SambungJaga AI', { input: text, response: aiResponse });
+    // 1. Zero-Friction Auto-Entity Resolution
+    let resolvedResident = initialResident;
+    if ((!residentId || residentId === 'auto') && aiResponse?.detectedResidentId) {
+      const detected = residents.find(r => r.id === aiResponse.detectedResidentId);
+      if (detected) resolvedResident = detected;
     }
 
-    // Create Epistemic Fact in DB to get real UUID
+    if (aiResponse) {
+      logAudit('[A] Care Superagent Orchestrator', 'AI_ANALYSIS_COMPLETED', 'SambungJaga AI', {
+        input: text,
+        resolvedResident: resolvedResident?.full_name,
+        response: aiResponse
+      });
+    }
+
+    // Create Epistemic Fact in DB
     let dbStatus = 'reported';
     const contradictionCheck = detectFactContradiction(epistemicFacts, { fact_key: 'caregiver_voice_report', fact_value: { text_raw: text } });
     if (contradictionCheck.hasContradiction) {
@@ -211,13 +261,13 @@ export function useSambungJaga() {
     let newFact = null;
     if (!isOffline) {
       const { data: insertedFact, error } = await supabase.from('epistemic_facts').insert([{
-        resident_id: resident.id,
+        resident_id: resolvedResident?.id || 'res-101',
         fact_key: 'caregiver_voice_report',
         fact_value: { text_raw: text },
         status: dbStatus,
-        confidence_score: 0.92,
+        confidence_score: 0.95,
         source_type: sourceType || 'voice_stt',
-        provenance_chain: [`Capture via ${sourceType}`, `Device Hash: P5-CHAIN-OK`]
+        provenance_chain: [`Zero-Friction Voice Capture`, `Device Hash: P5-CHAIN-OK`]
       }]).select().single();
 
       if (!error && insertedFact) {
@@ -226,41 +276,72 @@ export function useSambungJaga() {
     }
 
     if (!newFact) {
-      // Fallback for offline or error
       newFact = {
         id: `fact-${Date.now()}`,
-        resident_id: resident.id,
-        resident_name: resident.full_name,
+        resident_id: resolvedResident?.id || 'res-101',
+        resident_name: resolvedResident?.full_name || 'Penghuni',
         fact_key: 'caregiver_voice_report',
         fact_value: { text_raw: text },
         status: dbStatus,
-        confidence_score: 0.92,
+        confidence_score: 0.95,
         source_type: sourceType || 'voice_stt',
         observed_at: new Date().toISOString(),
-        provenance_chain: [`Capture via ${sourceType}`, `Device Hash: P5-CHAIN-OK`]
+        provenance_chain: [`Zero-Friction Voice Capture`, `Device Hash: P5-CHAIN-OK`]
       };
     }
 
     setEpistemicFacts(prev => [newFact, ...prev]);
     logAudit('[A] Perception & Epistemic Gateway', 'ADD_EPISTEMIC_FACT', actorName, { fact_id: newFact.id, status: newFact.status });
 
+    // 2. Auto-Closing via Voice Intent
+    let autoClosedTitle = null;
+    if (aiResponse?.autoCloseObligation) {
+      const targetOb = obligations.find(o => o.id === aiResponse.autoCloseObligation.obligationId);
+      if (targetOb && targetOb.status !== OBLIGATION_STATUS.VERIFIED_CLOSED) {
+        setObligations(prev => prev.map(o => o.id === targetOb.id ? { ...o, status: OBLIGATION_STATUS.VERIFIED_CLOSED } : o));
+        supabase.from('bitemporal_obligations').update({ status: OBLIGATION_STATUS.VERIFIED_CLOSED }).eq('id', targetOb.id).catch(() => {});
+        autoClosedTitle = targetOb.title;
+
+        logAudit('[A] Care Superagent Orchestrator', 'AUTO_CLOSE_VIA_VOICE', actorName, {
+          obligationId: targetOb.id,
+          title: targetOb.title,
+          note: aiResponse.autoCloseObligation.completionNote
+        });
+      }
+    }
+
+    // 3. Autonomous Task Generation Engine
+    const createdAutoObs = [];
+    if (Array.isArray(aiResponse?.proposedObligations) && aiResponse.proposedObligations.length > 0) {
+      for (const proposed of aiResponse.proposedObligations) {
+        const createRes = await createObligation({
+          resident_id: proposed.resident_id || resolvedResident?.id || 'res-101',
+          title: proposed.title,
+          description: proposed.description,
+          priority: proposed.priority || 'critical',
+          required_evidence_grade: proposed.required_evidence_grade || 'E1',
+          assigned_caregiver_id: currentUser?.id || null
+        }, 'SambungJaga Autonomous AI Agent');
+
+        if (createRes.success) {
+          createdAutoObs.push(proposed.title);
+          logAudit('[A] Autonomous Task Generation Engine', 'AUTONOMOUS_OBLIGATION_CREATED', 'SambungJaga AI', {
+            title: proposed.title,
+            priority: proposed.priority
+          });
+        }
+      }
+    }
+
     // Send notifications to affected roles
     addNotification({
       recipientRole: 'supervisor',
       senderName: actorName || 'Caregiver',
-      title: 'Laporan Observasi Baru',
-      message: `Laporan baru dicatat untuk ${resident.full_name}: "${text.length > 50 ? text.substring(0, 50) + '...' : text}"`,
-      type: 'info'
-    });
-    addNotification({
-      recipientRole: 'family',
-      senderName: 'SambungJaga Care Agent',
-      title: `Catatan Perawatan ${resident.full_name}`,
-      message: `Laporan observasi harian baru dicatat oleh caregiver.`,
+      title: 'Laporan Observasi & Auto-Resolution AI',
+      message: `Laporan untuk ${resolvedResident?.full_name}: "${text.length > 40 ? text.substring(0, 40) + '...' : text}". ${autoClosedTitle ? `[Auto-Close: ${autoClosedTitle}]` : ''} ${createdAutoObs.length > 0 ? `[Auto-Task: ${createdAutoObs.join(', ')}]` : ''}`,
       type: 'info'
     });
 
-    // Handle P5 Offline Hash Chain Ledger
     if (isOffline) {
       const offlineEntry = {
         id: `off-${Date.now()}`,
@@ -280,7 +361,10 @@ export function useSambungJaga() {
     return {
       success: true,
       fact: newFact,
-      contradiction: contradictionCheck.hasContradiction ? contradictionCheck.warning : null
+      resolvedResident,
+      autoClosedTitle,
+      createdAutoObs,
+      message: `Laporan diproses! ${resolvedResident ? `Lansia: ${resolvedResident.full_name}.` : ''} ${autoClosedTitle ? `Auto-Closed: "${autoClosedTitle}".` : ''} ${createdAutoObs.length > 0 ? `Auto-Task dibuat: ${createdAutoObs.length} tugas.` : ''}`
     };
   };
 
@@ -291,14 +375,12 @@ export function useSambungJaga() {
       return { success: false, error: 'Kewajiban tidak ditemukan.' };
     }
 
-    // Verify Grade (P2 Evidence-Grade Verifier)
-    const verification = verifyEvidenceSubmission(ob.required_evidence_grade, evidenceGrade, payload);
+    const verification = await verifyEvidenceSubmission(ob.required_evidence_grade, evidenceGrade, payload, ob);
     if (!verification.success) {
       logAudit('[A] Evidence-Grade Verifier', 'REJECT_EVIDENCE', actorName, { obligation_id: obligationId, reason: verification.reason });
       return { success: false, error: verification.reason };
     }
 
-    // Check Authority Envelope (P6 Gate)
     const authorityLevel = ob.priority === 'critical' ? AUTHORITY_ENVELOPE.A3 : AUTHORITY_ENVELOPE.A1;
     const authCheck = evaluateAuthorityEnvelope(ob.title, authorityLevel, false);
 
@@ -318,7 +400,6 @@ export function useSambungJaga() {
       };
     }
 
-    // Update Obligation State
     setObligations(prev => prev.map(o => o.id === obligationId ? { ...o, status: OBLIGATION_STATUS.VERIFIED_CLOSED } : o));
 
     logAudit('[A] Evidence-Grade Verifier', 'VERIFIED_CLOSURE', actorName, {
@@ -327,7 +408,6 @@ export function useSambungJaga() {
       payload
     });
 
-    // Notify Supervisor & Family
     addNotification({
       recipientRole: 'supervisor',
       senderName: actorName || 'Caregiver',
@@ -343,19 +423,21 @@ export function useSambungJaga() {
       type: 'success'
     });
 
-    // Sync to Supabase bitemporal_obligations table
     supabase.from('bitemporal_obligations').update({ status: OBLIGATION_STATUS.VERIFIED_CLOSED }).eq('id', obligationId).catch(() => {});
 
-    // Random Spot Challenge Check
-    const spotChallenge = generateRandomSpotChallenge({ id: `ev-${Date.now()}`, obligationId });
+    const spotChallenge = generateRandomSpotChallenge(
+      { id: `ev-${Date.now()}`, obligationId },
+      verification.triggerSpotChallenge,
+      verification.spotChallengeReason
+    );
     if (spotChallenge) {
       setSpotChallenges(prev => [spotChallenge, ...prev]);
-      logAudit('[A] Spot Challenge Engine', 'SPOT_CHALLENGE_TRIGGERED', actorName, { challenge_id: spotChallenge.id });
+      logAudit('[A] Spot Challenge Engine', 'SPOT_CHALLENGE_TRIGGERED', actorName, { challenge_id: spotChallenge.id, reason: spotChallenge.challenge_reason });
     }
 
     return {
       success: true,
-      message: 'Kewajiban berhasil ditutup dengan Evidence-Grade Verified Closure (P2).'
+      message: verification.message || 'Kewajiban berhasil ditutup dengan Evidence-Grade Verified Closure (P2).'
     };
   };
 
@@ -383,7 +465,6 @@ export function useSambungJaga() {
     const validFrom = new Date().toISOString();
     const validUntil = new Date(Date.now() + 180 * 60 * 1000).toISOString();
 
-    // Insert to Supabase bitemporal_obligations table first to get real UUID
     const { data: insertedData, error } = await supabase.from('bitemporal_obligations').insert([{
       mission_id: '00000000-0000-0000-0000-000000000000',
       resident_id: newObData.resident_id,
@@ -458,7 +539,6 @@ export function useSambungJaga() {
     return { success: true, message: 'Kontrak Serah Terima Dua Sisi (Two-Sided Handover Contract) berhasil dikonfirmasi!' };
   };
 
-  // Sync Offline P5 Ledger Queue
   const syncOfflineLedger = () => {
     if (offlineQueue.length === 0) return;
     logAudit('[A] P5 Offline Hash-Chain Gateway', 'SYNC_OFFLINE_LEDGER', 'PWA Client', { items_synced: offlineQueue.length });

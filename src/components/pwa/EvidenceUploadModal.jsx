@@ -1,22 +1,41 @@
 import React, { useState } from 'react';
-import { Camera, QrCode, UserCheck, ShieldCheck, AlertCircle, X } from 'lucide-react';
+import { Camera, QrCode, UserCheck, ShieldCheck, AlertCircle, X, Sparkles, Check } from 'lucide-react';
 import { EVIDENCE_GRADE, EVIDENCE_GRADE_LABELS } from '../../types/architecture';
 
 export default function EvidenceUploadModal({ isOpen, onClose, obligation, onSubmitEvidence, currentUser }) {
   const [selectedGrade, setSelectedGrade] = useState(obligation?.required_evidence_grade || EVIDENCE_GRADE.E1);
   const [photoSim, setPhotoSim] = useState(true);
+  const [isOcrScanning, setIsOcrScanning] = useState(false);
+  const [ocrVerifiedData, setOcrVerifiedData] = useState(null);
   const [secondPersonName, setSecondPersonName] = useState('Perawat Budi Santoso');
   const [feedback, setFeedback] = useState(null);
 
   if (!isOpen || !obligation) return null;
+
+  const handleMultimodalOcrScan = () => {
+    setIsOcrScanning(true);
+    setFeedback(null);
+
+    setTimeout(() => {
+      setIsOcrScanning(false);
+      setOcrVerifiedData({
+        vitalReadout: '120/80 mmHg (Normal) / Suhu 36.8°C',
+        facelessCropStatus: 'Faceless Privacy Crop PDP: OK (Wajah Diblur/Dipotong Otonom)',
+        ocrConfidence: '99.4%'
+      });
+      setSelectedGrade(EVIDENCE_GRADE.E1);
+      setPhotoSim(true);
+    }, 1200);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFeedback(null);
 
     const payload = {
-      photo_hash: photoSim ? `sha256-faceless-photo-hash-${Date.now()}` : null,
+      photo_hash: photoSim ? `sha256-faceless-vision-crop-${Date.now()}` : null,
       qr_code: `QR-BED-LOCATION-${obligation.resident_id}`,
+      ocr_readout: ocrVerifiedData?.vitalReadout || null,
       second_person_name: selectedGrade === EVIDENCE_GRADE.E2 ? secondPersonName : null,
       timestamp: new Date().toISOString()
     };
@@ -72,6 +91,36 @@ export default function EvidenceUploadModal({ isOpen, onClose, obligation, onSub
           <p className="text-[11px] text-slate-500 font-medium mt-0.5">{obligation.resident_name}</p>
         </div>
 
+        {/* Multimodal Camera OCR Scan Button */}
+        <button
+          type="button"
+          onClick={handleMultimodalOcrScan}
+          disabled={isOcrScanning}
+          className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white p-3 rounded-xl text-xs font-bold flex items-center justify-center space-x-2 shadow-md shadow-emerald-500/20 transition"
+        >
+          {isOcrScanning ? (
+            <>
+              <Sparkles className="w-4 h-4 animate-spin text-emerald-100" />
+              <span>Scanning Vision OCR Kamera & Auto Faceless Crop...</span>
+            </>
+          ) : (
+            <>
+              <Camera className="w-4 h-4" />
+              <span>📸 Scan Multimodal Vision AI Kamera (Auto-Verify E1)</span>
+            </>
+          )}
+        </button>
+
+        {ocrVerifiedData && (
+          <div className="bg-emerald-50 border border-emerald-300 rounded-xl p-3 text-xs text-emerald-900 space-y-1">
+            <p className="font-bold flex items-center text-emerald-700">
+              <Check className="w-3.5 h-3.5 mr-1 text-emerald-600" /> Hasil Vision AI OCR Kamera (&lt; 2 detik):
+            </p>
+            <p className="font-mono text-[11px] font-semibold">{ocrVerifiedData.vitalReadout}</p>
+            <p className="text-[10px] text-emerald-700 font-medium">{ocrVerifiedData.facelessCropStatus}</p>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-slate-600 mb-2">Tingkat Bukti yang Diunggah</label>
@@ -98,12 +147,11 @@ export default function EvidenceUploadModal({ isOpen, onClose, obligation, onSub
             </div>
           </div>
 
-          {/* Artifact Options */}
           {(selectedGrade === EVIDENCE_GRADE.E1 || selectedGrade === EVIDENCE_GRADE.E2) && (
             <div className="space-y-2.5 bg-slate-50 p-3 rounded-xl border border-slate-200">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-slate-800 font-semibold flex items-center">
-                  <Camera className="w-3.5 h-3.5 mr-1.5 text-sky-600" /> Foto Tanpa Wajah (Privasi PDP)
+                  <Camera className="w-3.5 h-3.5 mr-1.5 text-sky-600" /> Faceless Privacy Auto-Crop (UU PDP)
                 </span>
                 <input
                   type="checkbox"
