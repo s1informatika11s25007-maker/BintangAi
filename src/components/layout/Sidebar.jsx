@@ -96,8 +96,8 @@ export default function Sidebar({
 
   return (
     <>
-      {/* 1. Mobile Top Header Bar (< md) */}
-      <div className="md:hidden bg-[#0c1a30] text-white px-4 py-3 flex items-center justify-between sticky top-0 z-40 border-b border-slate-800/80 shadow-md w-full">
+      {/* 1. Mobile Top Header Bar (< md) - Warna disamakan dengan Footer bg-slate-900 */}
+      <div className="md:hidden bg-slate-900 text-white px-4 py-3 flex items-center justify-between sticky top-0 z-40 border-b border-slate-800 shadow-md w-full">
         <div className="flex items-center space-x-2.5">
           <div className="p-1.5 bg-sky-600 rounded-lg text-white">
             <Heart className="w-4 h-4 fill-white" />
@@ -124,8 +124,8 @@ export default function Sidebar({
         ></div>
       )}
 
-      {/* 3. Main Dynamic Collapsible Sidebar */}
-      <aside className={`fixed md:relative top-0 left-0 md:top-auto md:left-auto z-50 md:z-30 h-screen md:h-auto md:min-h-full bg-[#0c1a30] text-slate-300 transition-all duration-300 ease-in-out shadow-2xl shrink-0 ${
+      {/* 3. Main Dynamic Collapsible Sidebar - Warna bg-slate-900 (Mirip Footer) */}
+      <aside className={`fixed md:relative top-0 left-0 md:top-auto md:left-auto z-50 md:z-30 h-screen md:h-auto md:min-h-full bg-slate-900 border-r border-slate-800 text-slate-300 transition-all duration-300 ease-in-out shadow-2xl shrink-0 ${
         isCollapsed ? 'md:w-20' : 'md:w-64'
       } ${
         mobileOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0'
@@ -137,7 +137,7 @@ export default function Sidebar({
 
             <div className="space-y-4">
               {/* Brand Header & Rail Toggle */}
-              <div className="flex items-center justify-between border-b border-slate-800/80 pb-3 shrink-0">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3 shrink-0">
                 <div className="flex items-center space-x-2.5 min-w-0">
                   <div className="p-2 bg-gradient-to-br from-sky-500 to-blue-600 rounded-xl text-white shadow-md shadow-sky-600/30 shrink-0">
                     <Heart className="w-5 h-5 fill-white" />
@@ -156,7 +156,7 @@ export default function Sidebar({
                 <button
                   type="button"
                   onClick={() => setIsCollapsed(!isCollapsed)}
-                  className="hidden md:flex p-1.5 rounded-xl bg-slate-800/80 text-slate-400 hover:text-white hover:bg-slate-700 transition"
+                  className="hidden md:flex p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition"
                   title={isCollapsed ? "Perluas Sidebar" : "Lipat Sidebar (Mode Rail)"}
                 >
                   {isCollapsed ? <ChevronRight className="w-4 h-4 text-sky-400" /> : <ChevronLeft className="w-4 h-4 text-slate-400" />}
@@ -176,7 +176,7 @@ export default function Sidebar({
                   <button
                     type="button"
                     onClick={() => setRoleMenuOpen(!roleMenuOpen)}
-                    className="w-full flex items-center justify-between p-2.5 rounded-xl bg-slate-900/80 border border-slate-800/90 text-left hover:border-sky-500/50 transition duration-200 group"
+                    className="w-full flex items-center justify-between p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 text-left hover:border-sky-500/50 transition duration-200 group"
                   >
                     <div className="flex items-center space-x-2 min-w-0">
                       <div className="p-1.5 rounded-lg bg-sky-500/20 text-sky-400 border border-sky-500/30 shrink-0">
@@ -194,7 +194,7 @@ export default function Sidebar({
 
                   {/* Role Dropdown Options */}
                   {roleMenuOpen && (
-                    <div className="absolute left-0 right-0 top-full mt-1.5 bg-[#091426] border border-slate-700 rounded-2xl shadow-2xl z-50 p-1.5 space-y-1 animate-fade-in">
+                    <div className="absolute left-0 right-0 top-full mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl z-50 p-1.5 space-y-1 animate-fade-in">
                       {rolesList.map(r => {
                         const RIcon = r.icon;
                         const isSelected = activeRole === r.id;
@@ -247,7 +247,7 @@ export default function Sidebar({
                       } rounded-xl text-xs font-bold transition duration-200 relative group ${
                         isActive
                           ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/25 font-black'
-                          : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                          : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                       }`}
                     >
                       {/* Active Indicator Bar */}
@@ -285,7 +285,7 @@ export default function Sidebar({
 
             {/* Dynamic System Status Card */}
             {(!isCollapsed || mobileOpen) && (
-              <div className="bg-slate-900/60 p-3 rounded-2xl border border-slate-800/80 space-y-1.5 text-left shrink-0">
+              <div className="bg-slate-950/60 p-3 rounded-2xl border border-slate-800 space-y-1.5 text-left shrink-0">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                   Status Perangkat
                 </span>
@@ -304,8 +304,8 @@ export default function Sidebar({
 
           </div>
 
-          {/* Bottom Footer Actions */}
-          <div className={`p-3 border-t border-slate-800/80 space-y-2 bg-[#091426] shrink-0 ${
+          {/* Bottom Footer Actions - Warna bg-slate-950/90 samak / selaras dengan Footer */}
+          <div className={`p-3 border-t border-slate-800 space-y-2 bg-slate-950/90 shrink-0 ${
             isCollapsed && !mobileOpen ? 'flex flex-col items-center' : ''
           }`}>
             {/* P5 Offline Toggle Button */}
