@@ -1,303 +1,373 @@
-# SambungJaga AI — Care Superagent Architecture (versi final)
+<div align="center">
 
-> **Evidence-Verified Care Continuity**: dari laporan pengasuh menjadi kewajiban yang terlacak, ditindaklanjuti, dan diverifikasi.
+# 🛡️ SambungJaga AI
+### Care Superagent & Evidence-Verified Care Continuity Kernel
 
-[![Architecture Version](https://img.shields.io/badge/Architecture-SambungJaga%20AI-0284c7?style=for-the-badge)](./SambungJaga_AI_Final_Architecture.json)
-[![Code Quality](https://img.shields.io/badge/Code%20Quality-Clean%20Architecture%20%26%20JSDoc-10b981?style=for-the-badge)](#-kualitas-kode--arsitektur-clean-code)
-[![Database](https://img.shields.io/badge/Database-Supabase%20PostgreSQL-3ecf8e?style=for-the-badge)](./supabase/migrations/20261027000000_initial_schema.sql)
-[![Frontend](https://img.shields.io/badge/Frontend-React.jsx%20%2B%20TailwindCSS-61dafb?style=for-the-badge)](./src)
-[![PWA](https://img.shields.io/badge/PWA-Offline--First%20(P5%20Ledger)-f59e0b?style=for-the-badge)](./public/manifest.json)
+<p align="center">
+  <img src="https://readme-typing-svg.demolab.com?font=Plus+Jakarta+Sans&weight=700&size=26&pause=1200&color=0284C7&center=true&vcenter=true&width=780&height=50&lines=Evidence-Verified+Care+Continuity+for+Elderly+Care;Obligation+Kernel+%2B+Bitemporal+Ledger+(P1-P6);Groq+LLM+%2B+On-Device+Gemini+Nano+Chrome+AI;Tamper-Evident+Offline-First+PWA+(P5+Hash-Chain)" alt="SambungJaga AI Animated Tagline" />
+</p>
 
----
-
-## 📌 Ringkasan Sistem & Visi
-
-**SambungJaga AI** adalah arsitektur *Care Superagent* berbasis *Obligation Kernel* yang dirancang khusus untuk memecahkan masalah kelalaian perawatan, fragmentasi serah terima shift, dan minimnya jejak verifikasi pada panti jompo, rumah perawatan lansia, serta fasilitas *elderly care* di Indonesia.
-
-Sistem ini mentransformasi laporan verbal/suara pengasuh yang informal menjadi **Care Obligation Graph** yang bitemporal, teratur, diverifikasi bukti secara transparan, dan dapat diaudit secara hukum & medis.
+> **Sistem Operasi Perawatan Lansia Terverifikasi Bukti**: Mentransformasi laporan verbal & catatan informal pengasuh menjadi **Care Obligation Graph** bitemporal yang terlacak, terverifikasi bukti, dan berintegritas kriptografis.
 
 ---
 
-## 💎 Kualitas Kode, Arsitektur Clean Code & Best Practices
+<!-- Badges Row 1: CI/CD & Architecture -->
+[![Build & Test CI](https://img.shields.io/github/actions/workflow/status/s1informatika11s25007-maker/SambungJaga/test.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white&label=CI%20Pipeline&color=10b981)](./.github/workflows/test.yml)
+[![Architecture](https://img.shields.io/badge/Arsitektur-SambungJaga%20AI%20Kernel-0284c7?style=for-the-badge&logo=cpu&logoColor=white)](#-9-lapisan-arsitektur-superagent)
+[![PWA Offline First](https://img.shields.io/badge/PWA-Offline--First%20(P5%20Ledger)-f59e0b?style=for-the-badge&logo=pwa&logoColor=white)](./src/pages/CaregiverMobilePage.jsx)
+[![Code Quality](https://img.shields.io/badge/Testing-Vitest%20%2B%20Playwright%20E2E-8b5cf6?style=for-the-badge&logo=vitest&logoColor=white)](#-pengujian-otomatis--quality-assurance)
 
-Sistem dirancang memenuhi standar **Kerapian & Kualitas Kode Tertinggi (Skor 15/15)** dengan menerapkan prinsip-prinsip berikut:
+<!-- Badges Row 2: Tech Stack -->
+[![Frontend](https://img.shields.io/badge/Frontend-React%2018%20%2B%20Vite%205-61dafb?style=for-the-badge&logo=react&logoColor=black)](./src)
+[![Styling](https://img.shields.io/badge/Styling-TailwindCSS%20v3-06b6d4?style=for-the-badge&logo=tailwindcss&logoColor=white)](./tailwind.config.js)
+[![Database](https://img.shields.io/badge/Database-Supabase%20PostgreSQL-3ecf8e?style=for-the-badge&logo=supabase&logoColor=white)](./supabase/migrations/20261027000000_initial_schema.sql)
+[![AI Engine](https://img.shields.io/badge/AI%20Engine-Groq%20LLM%20%2B%20Gemini%20Nano-ff6b00?style=for-the-badge&logo=google&logoColor=white)](./src/services/aiSuperagent.js)
 
-### 1. Struktur Kode & Penamaan yang Jelas
-* **Domain-Driven Directory Layout**: Kode dipisah tegas berdasarkan peran (*pages*, *components*, *services*, *hooks*, *types*, *utils*, *supabase*).
-* **Penamaan Deskriptif & Konsisten**:
-  * PascalCase untuk komponen React (`ObligationGraphCard.jsx`, `RoleWorkspaceHeader.jsx`).
-  * camelCase untuk utilitas & fungsi domain (`calculateCareDebt`, `verifyEvidenceSubmission`, `formatTimeID`).
-  * UPPER_SNAKE_CASE untuk konstanta & enum (`EPISTEMIC_STATUS`, `AUTHORITY_ENVELOPE`).
-
-### 2. Keterbacaan Kode & Dokumentasi JSDoc
-* Seluruh modul layanan (*services*) dilengkapi blok dokumentasi **JSDoc** yang menjelaskan deskripsi fungsi, tipe parameter, dan nilai kembalian.
-* **Tipe Data Terpusat**: Semua enum dan definisi tipe domain didefinisikan secara eksplisit pada `src/types/architecture.js`.
-
-### 3. Penerapan Praktik Pemrograman Terbaik (*Best Practices*)
-* **Single Responsibility Principle (SRP)**: Setiap komponen dan fungsi hanya bertanggung jawab atas satu tugas spesifik.
-* **Kekekalan State (*Immutability*)**: Manipulasi state React menggunakan teknik immutable updater tanpa efek samping.
-* **Separation of Concerns (SoC)**:
-  * Pemisahan logika UI dari logika bisnis domain (menggunakan custom hook `useSambungJaga.js` dan modul *services*).
-  * Pemisahan validasi keamanan (`src/utils/validators.js`) dan pemformat data (`src/utils/formatters.js`).
-* **Keamanan & Validasi Input**: Penyaringan otomatis terhadap serangan *Prompt Injection* dan validasi bukti berjenjang E0–E3.
-* **Integritas Kriptografi Append-Only**: Penjaminan keterhitungan hash SHA-256 berantai untuk audit trail yang *immutable*.
+</div>
 
 ---
 
-## 🏗️ 9 Lapisan Arsitektur (SambungJaga AI Superagent)
+## 📋 Navigation Index
 
-Arsitektur sistem dibangun dari **9 Lapisan Terintegrasi** yang 100% presisi sesuai spesifikasi cetak biru `SambungJaga_AI_Final_Architecture.json`:
+- [📌 Ringkasan Sistem & Masalah yang Diselesaikan](#-ringkasan-sistem--masalah-yang-diselesaikan)
+- [⚡ 6 Inovasi Inti Kernel (P1 – P6)](#-6-inovasi-inti-kernel-p1--p6)
+- [🏗️ 9 Lapisan Arsitektur Superagent](#%EF%B8%8F-9-lapisan-arsitektur-superagent)
+- [🤖 Dual AI Engine Strategy](#-dual-ai-engine-strategy)
+- [👥 Fitur Berdasarkan Peran Pengguna (RBAC)](#-fitur-berdasarkan-peran-pengguna-rbac)
+- [📂 Struktur Codebase Clean Architecture](#-struktur-codebase-clean-architecture)
+- [🧪 Pengujian Otomatis & Quality Assurance](#-pengujian-otomatis--quality-assurance)
+- [🛠️ Panduan Instalasi & Pengoperasian Lokal](#%EF%B8%8F-panduan-instalasi--pengoperasian-lokal)
+- [🚀 Deployment Guide (Vercel & Supabase)](#-deployment-guide-vercel--supabase)
+- [🛡️ Keamanan Data, RLS & Kepatuhan UU PDP](#%EF%B8%8F-keamanan-data-rls--kepatuhan-uu-pdp)
+
+---
+
+## 📌 Ringkasan Sistem & Masalah yang Diselesaikan
+
+Di fasilitas perawatan lansia (panti jompo & *home care*) di Indonesia, **kelalaian perawatan (*care debt*)** sering terjadi bukan karena pengasuh tidak peduli, melainkan akibat:
+1. **Komunikasi Verbal yang Fragmentaris**: Laporan pergantian shift (*handover*) sering hilang atau tidak tercatat dengan konsisten.
+2. **Minimnya Jejak Verifikasi Bukti**: Tidak ada bukti objektif bahwa obat telah diberikan pada jam yang tepat atau kondisi medis telah diperiksa.
+3. **Ketakutan Menutupi Kesalahan**: Pengasuh enggan melaporkan keterlambatan karena takut disalahkan, memicu *care debt* berantai (*cascade failures*).
+
+**SambungJaga AI** hadir sebagai *Care Superagent* berbasis **Obligation Kernel** yang memproses laporan suara/teks pengasuh secara cerdas, mengompilasi kewajiban perawatan ke dalam graf bitemporal, memverifikasi bukti penutupan tugas secara obyektif, dan memberikan sinyal peringatan dini sebelum kelalaian medis terjadi.
+
+---
+
+## ⚡ 6 Inovasi Inti Kernel (P1 – P6)
+
+| Kode | Nama Inovasi | Deskripsi Teknikal | Penegakan Hukum & Keamanan AI |
+| :---: | :--- | :--- | :--- |
+| **P1** | **Bitemporal Obligation Ledger** | Memisahkan *Valid Time* (waktu klinis tindakan) dan *Transaction Time* (waktu nyata data dicatat di DB). Mendukung *Retroactive Rule Replay*. | Mencegah manipulasi histori masa lalu dan memastikan kalkulasi *Care Debt* akurat. |
+| **P2** | **Evidence-Grade Closure & Spot Challenge** | Penutupan tugas wajib melampirkan bukti bertingkat (`E0` Klaim &rarr; `E1` Foto/QR &rarr; `E2` Dual Sign &rarr; `E3` Sensor/IoT) disertai audit acak (*Spot Challenge*). | AI dilarang menutup kewajiban medis tanpa bukti sesuai tingkat risiko klinis. |
+| **P3** | **Epistemic Fact Ledger** | Penjejakan fakta dalam 5 status epistemik: `Observed` (Sensor/IoT), `Reported` (Suara/Teks), `Inferred` (AI Deduction), `Contradicted` (Konflik Data), dan `Stale` (Basi/Kadaluwarsa). | Memisahkan asumsi AI dari fakta lapangan dan mendeteksi kontradiksi data pasien. |
+| **P4** | **Failure-Set Search Simulator** | Simulasi pencarian kombinasi ketidakhadiran pengasuh terkecil yang berisiko menelantarkan kewajiban kritis lansia. | Analisis risiko otomatis untuk keputusan panggilan perawat cadangan (*on-call*). |
+| **P5** | **Tamper-Evident Offline Ledger** | *Cryptographic hash-chain* SHA-256 lokal pada PWA mobile dengan timestamp atestasi perangkat anti-backdate. | Memungkinkan pencatatan offline tanpa risiko pengeditan tanggal mundur (*anti-backdate*). |
+| **P6** | **Authority Envelope Gate** | Pembatasan tingkat wewenang eksekusi AI: `A0` (Read Only), `A1` (Reversible), `A2` (Alert), `A3` (Klinis/Ireversibel). | **A3 Wajib Human Review**: AI dilarang mengeksekusi instruksi medis tanpa persetujuan manusia. |
+
+---
+
+## 🏗️ 9 Lapisan Arsitektur Superagent
+
+Sistem dibangun berdasarkan 9 lapisan arsitektur terintegrasi yang saling terhubung secara terstruktur:
 
 ```mermaid
 graph TD
-    A[AKTOR: Pengasuh, Supervisor, Keluarga, Admin Panti/HR, PWA] --> L1[1 · AKSES & INGESTI]
-    L1 --> L2[2 · PERSEPSI & PENGETAHUAN - P3 Epistemic Ledger]
-    L2 --> L3[3 · OBLIGATION KERNEL - P1 Bitemporal Graph]
-    L3 --> L4[4 · SUPERAGENT & P6 AUTHORITY ENVELOPE]
-    L4 --> L5[5 · EKSEKUSI TERKONTROL - Supabase RLS DB]
-    L5 --> L6[6 · VERIFIKASI BUKTI - P2 Evidence-Grade Verifier]
-    L6 --> L7[7 · PLATFORM AUDIT [A] & OBSERVA]
-    L3 -.-> L8[8 · ANALISIS ASINKRON - P4 Failure-Set Simulator]
-    L6 --> L9[9 · KELUARAN & SERAH TERIMA DUA SISI]
+    A[Aktor: Pengasuh, Supervisor, Keluarga, Admin Panti] --> L1[1 · AKSES & INGESTI]
+    L1 -->|PWA Offline / Voice STT / WA Bot| L2[2 · PERSEPSI & PENGETAHUAN]
+    L2 -->|P3 Epistemic Fact Ledger| L3[3 · OBLIGATION KERNEL]
+    L3 -->|P1 Bitemporal Obligation Graph| L4[4 · SUPERAGENT & P6 AUTHORITY ENVELOPE]
+    L4 -->|P6 Policy Gate - Human Review A3| L5[5 · EKSEKUSI TERKONTROL - Supabase RLS]
+    L5 -->|E0 - E3 Artifact Upload| L6[6 · VERIFIKASI BUKTI - P2 Verifier]
+    L6 -->|Append-Only SHA-256| L7[7 · PLATFORM AUDIT & OBSERVABILITAS]
+    L3 -.->|Asynchronous Replay| L8[8 · ANALISIS ASINKRON - P4 Failure-Set Sim]
+    L6 -->|Dual Signature| L9[9 · SERAH TERIMA SHIFT DUA SISI & PORTAL KELUARGA]
 ```
 
-### 1 · AKSES DAN INGESTI (Offline-First, Konteks Indonesia)
-* **Identity, RBAC dan Consent Gateway `[A]`**: Pengaturan peran pengguna (*Caregiver*, *Supervisor*, *Family*, *Admin HR*) & kontrol persetujuan privasi.
-* **Kanal Capture**: Voice STT (Speech-to-Text), Teks, WhatsApp (mendukung Bahasa Indonesia & *code-switching* bahasa daerah).
-* **P5 · Offline Hash-Chain Ledger**: Atestasi cryptographic hash-chain pada perangkat mobile PWA untuk mencegah manipulasi/tanggal mundur (*anti-backdate*) saat tidak ada sinyal internet.
-* **Event Gateway dan Durable Queue**: Pengolahan antrean pesan bergaransi idempotensi (*idempotency key*).
-* **Filter Prompt-Injection dan PII**: Penyaringan otomatis terhadap percobaan peretasan instruksi AI (*prompt injection*) dan minimisasi data sensitif pasien (PII).
+<details>
+<summary>🔍 Klik untuk melihat rincian fungsi setiap lapisan</summary>
 
-### 2 · PERSEPSI DAN PENGETAHUAN (P3 Epistemic Fact Ledger)
-* **Perception dan Structured Extraction**: Ekstraksi entitas medis (suhu, tensi, konsumsi obat, keluhan mual) dari teks/suara informal.
-* **Minimal-Question Clarification**: Mengajukan tepat 1 pertanyaan yang paling informatif jika data ambigu.
-* **Resident Context dan Provenance Engine**: Melacak asal-usul data (*data lineage*) penghuni panti.
-* **P3 · Epistemic Fact Ledger**: Penjejakan status epistemik 5 tingkat: `Diamati` (Observed), `Dilaporkan` (Reported), `Disimpulkan` (Inferred), `Dikontradiksi` (Contradicted), dan `Basi` (Stale).
-* **Rule dan Policy Library**: Perpustakaan aturan perawatan klinis berversi yang telah disetujui manusia (*human-approved*).
+1. **Akses & Ingesti**: Gateway multi-channel (Voice STT, Teks, WhatsApp Bot) dengan filter *Prompt Injection* & PII. PWA Offline Ledger (`P5`) mencatat transaksi lokal secara *hash-chained*.
+2. **Persepsi & Pengetahuan**: Ekstraksi fakta medis & klasifikasi status epistemik (`P3`). Mengajukan *Minimal-Question Clarification* jika informasi ambigu.
+3. **Obligation Kernel**: Kompiler aturan bitemporal (`P1`), pembuatan *Care Obligation Graph*, pendeteksi *Care Debt*, dan *Negative-Obligation Checker* (misal: larangan makanan tinggi gula).
+4. **Superagent & Authority Envelope**: Orchestrator utama yang mengatur agen spesialis (Capture, Handover, Investigation, Recovery, Competency, Consent) dan menegakkan batas wewenang (`P6`).
+5. **Eksekusi Terkontrol**: Gateway idempoten yang terhubung ke Supabase PostgreSQL dengan skema terpisah (`hr_domain`, `resident_domain`, `kernel_domain`, `audit_domain`) dan RLS.
+6. **Verifikasi Bukti**: Verifikator bukti `P2` (E0–E3), *Spot Challenge Engine*, dan verifikasi kondisi akhir (*Postcondition Verifier*).
+7. **Platform Audit & Observabilitas**: *Append-Only Hash-Chained Audit Trail* berstandar SHA-256 yang merekam seluruh aksi AI, verifikasi, dan intervensi manusia.
+8. **Analisis Asinkron**: Simulasi *Failure-Set Search* (`P4`), laporan *Competency Gap*, dan *Retroactive Rule Replay* N-hari.
+9. **Serah Terima & Keluaran**: Kontrak serah terima shift dua sisi (*Two-Sided Handover Contract*), Dashboard Supervisor Realtime, dan Portal Keluarga berizin UU PDP.
 
-### 3 · OBLIGATION KERNEL (P1) — Inovasi Inti
-* **Temporal Rules Compiler**: Kompiler aturan yang memperhitungkan versi aturan dan rentang tanggal berlaku.
-* **P1 · Bitemporal Obligation Ledger**: Pemisahan tegas antara Waktu Berlaku Klinis (*Valid Time*) dan Waktu Dicatat Sistem (*Transaction Time*).
-* **Care Obligation Graph**: Graf dependensi kejadian, aturan, kewajiban, tenggat waktu, dan bukti.
-* **Negative-Obligation dan Precondition Checker**: Penegakan otomatis terhadap larangan (misal: *"Dilarang memberikan sirup manis pada pasien diabetes"*).
-* **Cascade dan Care Debt Detector**: Pendeteksi risiko penumpukan tunggakan kewajiban (*care debt*) yang dapat memicu kegagalan berantai.
-* **Expected-but-Absent Obligation Detector**: Pendeteksi kewajiban yang seharusnya terjadi tetapi tidak tercatat (misal: *"Pasien belum diberi makan siang hingga pukul 13.30"*).
-
-### 4 · SUPERAGENT: Care Mission Orchestrator + Authority Envelope (P6)
-* **Care Mission State Store**: Satu Mission ID tunggal, satu state terpadu, satu jejak audit (*Audit Trail*).
-* **CARE MISSION ORCHESTRATOR (Agen Induk)**: Memastikan tidak ada agen pendukung yang menutup kewajiban yang masih terbuka di agen lain.
-* **Agen Spesialis**:
-  1. *Care Capture Agent*: Menangkap dan mengurai laporan pengasuh.
-  2. *Handover Contract Agent*: Mengelola serah terima shift dua sisi.
-  3. *Cross-Shift Investigation Agent*: Penyelidikan netral lintas-shift tanpa menyalahkan.
-  4. *Autonomous Recovery Agent*: Pemulihan otomatis dengan *retry idempotent* & realokasi tugas sah.
-  5. *Competency Coverage Agent*: Memastikan kualifikasi pengasuh sesuai tindakan klinis.
-  6. *Consent-Aware Disclosure Agent*: Menyaring informasi sesuai tingkat izin keluarga.
-* **Action Contract Builder → P6 Authority Envelope & Policy Gate → Tool Registry `[A]`**: Penegakan batas wewenang eksekusi AI (Level A0–A3). A3 (tindakan klinis/ireversibel) **wajib** persetujuan manusia (*Human Review*).
-
-### 5 · EKSEKUSI TERKONTROL
-* **Tool Execution Gateway `[A]`**: Eksekusi idempoten, *dry-run diff*, dan eliminasi aksi duplikat.
-* **Supabase PostgreSQL**: Basis data dengan RLS (*Row-Level Security*), pemisahan skema `resident_domain` dan `hr_domain`, serta fitur *Realtime Subscriptions*.
-* **Notification, Task dan Scheduling Services**: Pengiriman notifikasi push, tugas terstruktur, dan penjadwalan.
-* **Signed Evidence Storage**: Penyimpanan foto tanpa wajah (menjaga privasi), QR-code hash, dan tanda tangan digital.
-* **Integrasi Eksternal**: API integrasi resmi WhatsApp dan portal eksternal.
-
-### 6 · VERIFIKASI BUKTI (P2) DAN PENUTUPAN MISI
-* **Caregiver Evidence Upload**: Unggah bukti foto objek, scan QR lokasi/alat, dan konfirmasi orang kedua.
-* **P2 · Evidence-Grade Verifier `[A]`**: Verifikasi bertingkat: `E0` (Klaim), `E1` (Artefak Foto/QR), `E2` (Konfirmasi Pengasuh Kedua), `E3` (Sensor System/IoT).
-* **Spot Challenge Engine**: Sampel audit acak berkala dan penanganan bukti kedaluwarsa.
-* **Postcondition Verifier `[A]`**: Membaca ulang state aktual basis data untuk memastikan kondisi akhir terpenuhi.
-* **Hasil Status Misi**: `Verified Closure`, `Recovery & Escalation [A]`, atau `Human Review (Berwenang)`.
-
-### 7 · PLATFORM: AUDIT, OBSERVABILITAS, KEAMANAN
-* **Append-Only Hash-Chained Audit Trail `[A]`**: Jejak audit SHA-256 yang tidak dapat diubah, mencakup semua gerbang, eksekusi, verifikator, penolakan, dan keputusan manusia.
-* **Observabilitas dan Metrik**: Monitoring performa sistem, latensi, dan skor kesehatan panti.
-* **Keamanan**: Enkripsi data *at-rest* & *in-transit*, pengelolaan rahasia (*secrets*), pencadangan, dan retensi data sesuai UU PDP.
-
-### 8 · ANALISIS DAN JAMINAN (P4) — Asinkron
-* **P4 · Failure-Set Search Simulator**: Simulasi pencarian kombinasi kegagalan pengasuh terkecil yang berisiko menelantarkan kewajiban kritis.
-* **Competency Gap Report**: Laporan kesenjangan kompetensi staf untuk diekspor ke HR/ATS.
-* **Retroactive Rule Replay**: Memutar ulang histori N hari dengan aturan versi terbaru tanpa merusak histori transaksi.
-* **Agent Replay, Benchmark dan Adversarial Lab**: Laboratorium pengujian ambiguitas, bukti palsu, duplikat, dan serangan *prompt injection*.
-* **Synthetic Data Generator**: Pembuat data sintetis untuk pengujian tanpa menggunakan data produksi asli.
-
-### 9 · KELUARAN, SERAH TERIMA, DAN BUKTI
-* **Two-Sided Handover Contract**: Kontrak serah terima dua sisi (penyerah & penerima wajib menandatangani; tanpa penerima = eskalasi).
-* **Realtime Supervisor Dashboard**: Papan pantau kewajiban terbuka, bukti, dan status epistemik secara langsung.
-* **Explainable Execution Trace Viewer**: Pelacak visual transparan dari input → aturan → aksi → DB → penutupan.
-* **Consent Output Filter & Family Portal**: Portal keluarga yang menampilkan ringkasan perawatan berizin.
-* **Care Evidence Pack**: Paket unduhan bukti audit (.json) per kasus untuk analisis medis/hukum.
+</details>
 
 ---
 
-## 🚀 6 Inovasi Inti (P1 – P6)
+## 🤖 Dual AI Engine Strategy
 
-| Kode | Nama Inovasi | Deskripsi Utama | Penegakan Hukum & AI |
-| :---: | :--- | :--- | :--- |
-| **P1** | **Bitemporal Obligation Ledger** | Memisahkan *Valid Time* (waktu klinis) vs *Transaction Time* (waktu catat DB). Memungkinkan *Retroactive Rule Replay*. | Mencegah pembatalan histori masa lalu dan menangani koreksi waktu secara valid. |
-| **P2** | **Evidence-Grade Closure & Spot Challenge** | Penutupan tugas wajib disertai bukti bertingkat E0–E3 & audit acak *Spot Challenge Engine*. | AI dilarang menutup tugas tanpa bukti sesuai tingkat risiko. |
-| **P3** | **Epistemic Fact Ledger** | Menjejaki 5 status data: *Observed*, *Reported*, *Inferred*, *Contradicted*, dan *Stale*. | Memisahkan klaim manusia dari pengamatan faktual dan deteksi kontradiksi. |
-| **P4** | **Failure-Set Search Simulator** | Pencarian kombinasi kegagalan terkecil pengasuh yang mengancam keselamatan lansia. | Analisis asinkron untuk rekomendasi panggilan perawat pengganti (*on-call*). |
-| **P5** | **Tamper-Evident Offline Ledger** | Cryptographic hash-chain lokal pada PWA mobile dengan atestasi perangkat anti-backdate. | Mencegah pengasuh memasukkan laporan dengan tanggal mundur saat offline. |
-| **P6** | **Authority Envelope** | Batas wewenang eksekusi AI: A0 (Baca), A1 (Reversibel), A2 (Alert), A3 (Klinis/Ireversibel). | **A3 Wajib Human Review**: AI dilarang mengeksekusi aksi klinis tanpa persetujuan manusia. |
+SambungJaga AI mengintegrasikan dua mesin AI secara hybrid untuk menjamin kecepatan, privasi, dan ketersediaan:
+
+```
+                  ┌──────────────────────────────────────────┐
+                  │          INGESTI LAPORAN PENGASUH        │
+                  └────────────────────┬─────────────────────┘
+                                       │
+                     ┌─────────────────┴─────────────────┐
+                     ▼                                   ▼
+          ┌─────────────────────┐             ┌─────────────────────┐
+          │  Groq Cloud LLM     │             │ Chrome On-Device AI │
+          │  (Llama 3.3 / Mixtral)│            │ (Gemini Nano Local) │
+          └──────────┬──────────┘             └──────────┬──────────┘
+                     │                                   │
+                     ├─ Extraksi Kompleks                ├─ Ringkasan Offline
+                     ├─ Orchestration Missions           ├─ Zero-Latency Parsing
+                     └─ Failure-Set Search (P4)          └─ Zero Data Leakage
+```
+
+1. **Groq Cloud LLM (Llama 3.3 70B / Mixtral)**:
+   * Ekstraksi entitas medis tingkat tinggi dan pembentukan *Care Obligation Graph*.
+   * Simulasi kegagalan *Failure-Set Search* (`P4`) dan analisis investigasi lintas shift.
+   * Dipanggil melalui Groq Model Gateway (`api.groq.com`).
+2. **On-Device Chrome Built-in AI (Gemini Nano)**:
+   * Berjalan 100% lokal di browser client (`window.ai.languageModel` & `window.ai.summarizer`).
+   * Memproses ringkasan laporan dan ekstraksi fakta dasar saat perangkat tidak terhubung internet (*offline-first*).
+   * Menjamin privasi penuh tanpa data keluar dari perangkat mobile pengasuh.
+3. **Chrome Web Speech & Vision Capabilities**:
+   * *Speech-to-Text* langsung untuk rekaman suara pengasuh (*Floating Voice Mic*).
+   * Camera OCR & Barcode Scanner (`VisionCameraModal.jsx`) untuk verifikasi bukti foto obat dan scan ID penghuni.
 
 ---
 
-## 📁 Struktur Folder Clean Code
+## 👥 Fitur Berdasarkan Peran Pengguna (RBAC)
 
-Struktur kode proyek diorganisir secara modular berdasarkan **Clean Code & Domain-Driven Design (DDD)**:
+ Aplikasi mendukung 4 peran utama dengan hak akses & antarmuka workspace yang disesuaikan:
+
+```
+ ┌──────────────────────────────────────────────────────────────────────────┐
+ │                         ROLES & WORKSPACES                               │
+ ├───────────────────┬───────────────────┬───────────────────┬──────────────┤
+ │  📱 CAREGIVER     │  📊 SUPERVISOR    │  👨‍👩‍👧 KELUARGA      │ ⚙️ ADMIN / HR│
+ │  (Pengasuh PWA)   │  (Kepala Perawat) │  (Wali Lansia)    │ (Kelola Panti│
+ └───────────────────┴───────────────────┴───────────────────┴──────────────┘
+```
+
+### 📱 1. Caregiver Workspace (Pengasuh Shift Mobile)
+* **Floating Voice Capture**: Rekam instruksi/laporan verbal dengan auto STT dan filter prompt injection.
+* **Camera Vision OCR**: Pindai label obat, tensimeter, atau QR lokasi untuk unggah bukti `E1`/`E2`.
+* **Offline Ledger Sync**: Simpan laporan secara lokal saat hilang sinyal; auto-sync dengan hash chain SHA-256 saat online.
+* **Tampilan Tugas Terurut**: Daftar kewajiban perawatan terurut berdasarkan jam berlaku & tingkat urgensi.
+
+### 📊 2. Supervisor Dashboard (Kepala Perawat)
+* **Realtime Care Debt Alerts**: Sinyal peringatan visual & alarm audio (*Web Audio API Synthesizer*) saat *Care Debt* meningkat.
+* **Care Obligation Graph Viewer**: Visualisasi status kewajiban seluruh penghuni panti secara terpusat.
+* **Two-Sided Handover Contract**: Mengelola kontrak pergantian shift yang wajib ditandatangani oleh perawat penyerah & penerima.
+* **P4 Failure-Set Simulator**: Jalankan simulasi untuk mengetahui dampak ketidakhadiran staf terhadap keselamatan lansia.
+
+### 👨‍👩‍👧 3. Family Portal (Keluarga / Wali Penghuni)
+* **PDP-Compliant Consent Filter**: Menampilkan ringkasan perawatan harian yang telah disaring sesuai tingkat izin privasi keluarga.
+* **Timeline Aktivitas & Kesehatan**: Laporan transparan mengenai makanan, obat, vital sign, dan aktivitas lansia.
+* **Verifikasi Bukti Tanpa Wajah**: Foto bukti perawatan yang menjaga privasi lansia (*faceless photo artifact*).
+
+### ⚙️ 4. Admin & HR Workspace
+* **Clinical Rule Library Manager**: Mengelola aturan perawatan klinis berversi (`rule_version`) dan ambang batas medis.
+* **Competency Coverage Engine**: Memetakan kualifikasi staf terhadap tindakan medis kritis.
+* **Care Evidence Pack Exporter**: Mengunduh berkas bukti audit terdekripsi (.json) untuk keperluan audit hukum/medis.
+
+---
+
+## 📂 Struktur Codebase Clean Architecture
+
+Proyek diorganisir secara modular mengikuti prinsip **Domain-Driven Design (DDD)** dan **Clean Architecture**:
 
 ```
 SambungJaga/
+├── .github/
+│   └── workflows/
+│       └── test.yml                 # GitHub Actions CI Workflow (Vitest + Playwright)
 ├── public/
-│   ├── favicon.svg                   # Icon sistem SambungJaga
-│   └── manifest.json                 # Web App Manifest (PWA Setup)
+│   ├── favicon.svg                  # Icon resmi SambungJaga
+│   └── manifest.json                # Web App Manifest untuk PWA Mobile
 ├── src/
-│   ├── components/                   # React UI Components
-│   │   ├── common/
-│   │   │   ├── Badge.jsx             # Komponen Lencana Status
-│   │   │   ├── Card.jsx              # Card Container
-│   │   │   └── Modal.jsx             # Modal Dialog Wrapper
-│   │   ├── dashboard/
-│   │   │   ├── CareDebtAlert.jsx     # Detektor Tunggakan Obligation (P1)
-│   │   │   ├── EpistemicLedgerBadge.jsx # Indicator Status Epistemik (P3)
-│   │   │   └── ObligationGraphCard.jsx  # Kartu Graf Kewajiban Bitemporal
+│   ├── components/                  # UI Components (React + Tailwind)
+│   │   ├── common/                  # Reusable UI Primitives
+│   │   │   ├── ArchitectureModal.jsx# Modal Inspeksi Arsitektur Interactive
+│   │   │   ├── Badge.jsx            # Lencana Status UI
+│   │   │   ├── FloatingVoiceMic.jsx # Capture Suara Melayang
+│   │   │   └── Modal.jsx            # Modal Dialog Base
+│   │   ├── dashboard/               # Widget Dashboard Supervisor
+│   │   │   ├── CareDebtAlert.jsx    # Alert Sinyal Tunggakan Obligation (P1)
+│   │   │   ├── EpistemicLedgerBadge.jsx # Indikator Epistemic Fact (P3)
+│   │   │   └── ObligationGraphCard.jsx  # Kartu Graf Bitemporal
 │   │   ├── handover/
-│   │   │   └── HandoverContractCard.jsx # Kartu Serah Terima Shift Dua Sisi
-│   │   ├── layout/
-│   │   │   ├── Footer.jsx            # Status Bar Kernel Footer
-│   │   │   ├── Header.jsx            # Bar Atas Internal Workspace
-│   │   │   ├── PublicHeader.jsx      # Header Pre-Login (Landing/Login/Register)
-│   │   │   ├── RoleWorkspaceHeader.jsx # Banner Workspace Kustom Per Role
-│   │   │   └── Sidebar.jsx           # Navigasi Sidebar Kiri Modul
-│   │   ├── pwa/
-│   │   │   ├── CaregiverCaptureModal.jsx # Tangkapan Suara/Teks (STT & Prompt Filter)
-│   │   │   └── EvidenceUploadModal.jsx   # Unggah Bukti P2 (Foto/QR/Dual-Sign)
+│   │   │   └── HandoverContractCard.jsx # Kartu Handover Shift Dua Sisi
+│   │   ├── layout/                  # Shell Application Layouts
+│   │   │   ├── Footer.jsx           # Status Kernel Footer
+│   │   │   ├── Header.jsx           # Top Navigation Bar
+│   │   │   ├── Navbar.jsx           # Clean Navbar
+│   │   │   ├── PublicHeader.jsx     # Header Landing Page & Auth
+│   │   │   ├── RoleWorkspaceHeader.jsx # Banner Workspace Kustom per Role
+│   │   │   └── Sidebar.jsx          # Navigasi Modul Utama
+│   │   ├── pwa/                     # Komponen Mobile Caregiver PWA
+│   │   │   ├── CaregiverCaptureModal.jsx # Modal Ingesti Voice/Text STT
+│   │   │   ├── EvidenceUploadModal.jsx   # Modal Unggah Bukti P2 (Foto/QR/Dual-Sign)
+│   │   │   └── VisionCameraModal.jsx     # Camera Vision OCR & Object Scanner
 │   │   ├── simulator/
 │   │   │   └── FailureSetSimulationModal.jsx # Modal Simulator Kegagalan P4
 │   │   └── trace/
-│   │       └── ExecutionTraceModal.jsx   # Pelacak Transparan Eksekusi AI
+│   │       └── ExecutionTraceModal.jsx   # Modal Pelacak Transparansi AI
 │   ├── hooks/
-│   │   └── useSambungJaga.js         # Custom Hook Utama untuk State & Dispatcher
-│   ├── pages/                        # Halaman Aplikasi React.jsx
-│   │   ├── AuditTrailPage.jsx        # Halaman Append-Only Audit Trail [A]
-│   │   ├── CaregiverMobilePage.jsx   # Halaman Mobile PWA Pengasuh (Offline-first)
-│   │   ├── ExecutionTracePage.jsx    # Halaman Transparansi Eksekusi AI
-│   │   ├── FamilyPortalPage.jsx      # Portal Keluarga (Consent PDP Privacy)
-│   │   ├── HandoverPage.jsx          # Halaman Kontrak Serah Terima Shift
-│   │   ├── LandingPage.jsx           # Halaman Landing Page Utama
-│   │   ├── LoginPage.jsx             # Halaman Login Split-Screen
-│   │   ├── RegisterPage.jsx          # Halaman Registrasi Split-Screen
-│   │   ├── RuleLibraryPage.jsx       # Halaman Aturan & Kebijakan Klinis
-│   │   ├── SimulatorLabPage.jsx      # Halaman Simulator P4 & Adversarial Lab
+│   │   └── useSambungJaga.js        # Custom Hook Utama (Central Dispatcher & State)
+│   ├── pages/                       # Halaman Aplikasi SPA
+│   │   ├── AuditTrailPage.jsx       # Halaman Append-Only Audit Trail [A]
+│   │   ├── CaregiverMobilePage.jsx  # Halaman PWA Mobile Pengasuh
+│   │   ├── ExecutionTracePage.jsx   # Pelacak Transparansi Keputusan AI
+│   │   ├── FamilyPortalPage.jsx     # Portal Informasi Keluarga
+│   │   ├── HandoverPage.jsx         # Halaman Kontrak Serah Terima Shift
+│   │   ├── LandingPage.jsx          # Landing Page Utama
+│   │   ├── LoginPage.jsx            # Split-Screen Login Page
+│   │   ├── RegisterPage.jsx         # Split-Screen Register Page
+│   │   ├── RuleLibraryPage.jsx      # Manajemen Aturan Klinis & Kebijakan
+│   │   ├── SimulatorLabPage.jsx     # Laboratorium Simulator P4
 │   │   └── SupervisorDashboardPage.jsx # Dashboard Realtime Supervisor
-│   ├── services/                     # Business Logic & Core Kernel Engines (JSDoc Annotations)
-│   │   ├── auditTrailService.js      # Append-Only SHA-256 Audit Trail
-│   │   ├── authorityEnvelope.js      # Penilai Authority Envelope P6 (A0–A3)
-│   │   ├── epistemicLedger.js        # Mesin Evaluasi Epistemic Fact (P3)
-│   │   ├── evidenceVerifier.js       # Verifikator Bukti E0–E3 & Spot Challenge (P2)
-│   │   ├── failureSetSimulator.js    # Mesin Simulasi Failure-Set Search (P4)
-│   │   ├── mockData.js               # Data Awal Penghuni, Staf, & Obligation
-│   │   └── obligationEngine.js       # Graf Bitemporal & Care Debt Detector (P1)
+│   ├── services/                    # Core Business Engines (JSDoc Annotated)
+│   │   ├── aiSuperagent.js          # Groq Orchestrator & Mission Controller
+│   │   ├── audioAlertService.js     # Web Audio API Synthesizer Peringatan Sound
+│   │   ├── auditTrailService.js     # Append-Only SHA-256 Audit Trail Engine
+│   │   ├── authorityEnvelope.js     # Envelope Evaluator P6 (A0-A3)
+│   │   ├── consentDisclosureService.js # Filter PDP Portal Keluarga
+│   │   ├── epistemicLedger.js       # Evaluator Status Epistemik (P3)
+│   │   ├── evidenceVerifier.js      # Verifikator Bukti E0-E3 & Spot Challenge (P2)
+│   │   ├── failureSetSimulator.js   # Mesin Simulasi Failure-Set Search (P4)
+│   │   ├── geminiNanoService.js     # Local Chrome Built-in AI Gemini Nano
+│   │   ├── handoverContractService.js # Layanan Kontrak Shift Dua Sisi
+│   │   ├── nativeChromeService.js   # Integration Engine Native Browser API
+│   │   ├── obligationEngine.js      # Graf Bitemporal & Care Debt Engine (P1)
+│   │   ├── ruleReplayService.js     # Retroactive Rule Replay Engine
+│   │   ├── staffService.js          # Layanan Profil & Kompetensi Staf
+│   │   └── whatsappBotService.js    # Simulasi & Integrasi WhatsApp Ingestion
 │   ├── supabase/
-│   │   └── client.js                 # Konfigurasi Client Supabase & Fallback
+│   │   └── client.js                # Client Supabase dengan Fallback Resilience
 │   ├── types/
-│   │   └── architecture.js           # Constant, Enum & Interface Arsitektur
-│   ├── utils/                        # Functional Utilities & Security Validators
-│   │   ├── formatters.js             # Pemformat Waktu, Tanggal & Hash
-│   │   └── validators.js             # Validasi Security Prompt Injection & Bukti P2
-│   ├── App.jsx                       # Root React Application Component
-│   ├── index.css                     # Tailwind CSS Imports & Utilities
-│   └── main.jsx                      # Entry Point Client
+│   │   └── architecture.js          # Konstanta, Enum, & Tipe Arsitektur
+│   └── utils/
+│       ├── formatters.js            # Utility Pemformat Waktu, Tanggal & Hash
+│       └── validators.js            # Validasi Prompt Injection & Payload Bukti
 ├── supabase/
 │   └── migrations/
-│       └── 20261027000000_initial_schema.sql # Skema DB Supabase PostgreSQL + RLS
-├── index.html                        # Root HTML Document
-├── package.json                      # Dependency Manifest
-├── postcss.config.js                 # PostCSS Setup
-├── tailwind.config.js                # Design System Theme & Colors
-├── vite.config.js                    # Vite Bundler Configuration
-└── README.md                         # Dokumentasi Arsitektur Lengkap
+│       └── 20261027000000_initial_schema.sql # Skema PostgreSQL + RLS Policy
+├── tests/                           # Suite Pengujian Otomatis
+│   ├── components/                  # Testing Komponen React (Vitest + RTL)
+│   └── unit/
+│       └── services.test.js         # Testing Unit Domain Services
+├── .env                             # Environment Variables
+├── package.json                     # Dependency & Script Manifest
+├── playwright.config.js             # Konfigurasi Automated E2E Playwright
+├── tailwind.config.js               # Design System Theme & Color Palette
+├── vite.config.js                   # Konfigurasi Bundler Vite
+└── vitest.config.js                 # Konfigurasi Unit Testing Vitest
 ```
 
 ---
 
-## 🗄️ Supabase PostgreSQL Skema & RLS
+## 🧪 Pengujian Otomatis & Quality Assurance
 
-Penerapan skema basis data pada `supabase/migrations/20261027000000_initial_schema.sql` memisahkan secara ketat domain data demi kepatuhan UU PDP & keamanan medis:
+Proyek dilengkapi dengan **suite pengujian otomatis komprehensif** untuk menjamin integritas logika domain dan antarmuka pengguna:
 
-### Skema Terpisah
-1. **`hr_domain.staff_profiles`**: Profil staf, peran RBAC, status shift, dan daftar kompetensi.
-2. **`resident_domain.residents`**: Informasi medis dan tingkat izin *consent* keluarga.
-3. **`kernel_domain.epistemic_facts`**: Penyimpanan fakta epistemik (Diamati, Dilaporkan, Disimpulkan, Kontradiksi, Basi).
-4. **`kernel_domain.bitemporal_obligations`**: Tabel bitemporal untuk *Care Obligation Graph*.
-5. **`kernel_domain.evidence_verifications`**: Penyimpanan bukti digital E0–E3 dan *spot challenges*.
-6. **`audit_domain.audit_trail`**: Log audit append-only dengan *trigger function* pencetakan SHA-256 otomatis.
+```bash
+# Running Unit Tests via Vitest
+npm run test:unit
+
+# Running Automated Playwright End-to-End Tests
+npm run test:e2e
+
+# Running All Tests (Unit + E2E)
+npm run test
+```
+
+### Cakupan Pengujian:
+1. **Audit Trail Engine Test**: Verifikasi pembuatan hash chain SHA-256 berantai dan pengujian deteksi manipulasi (*tampered chain*).
+2. **Authority Envelope P6 Test**: Penahanan otomatis aksi klinis `A3` tanpa persetujuan manusia.
+3. **Epistemic Fact Ledger P3 Test**: Pengujian klasifikasi status data (`Observed`, `Reported`, `Stale`) dan deteksi kontradiksi nilai GDS/Tensi.
+4. **Evidence Verifier P2 Test**: Pengujian penolakan bukti jika *grade* yang diunggah lebih rendah dari persyaratan klinis.
+5. **Failure-Set Search P4 Test**: Pengujian penemuan kombinasi staf absen terkecil yang mengancam kewajiban medis.
+6. **Bitemporal Obligation Ledger P1 Test**: Pengujian kalkulasi *Care Debt* dan filter bitemporal pada titik waktu spesifik.
+7. **Security & Prompt Injection Test**: Pengujian pencegahan serangan instruksi berbahaya (*bypass prompt*) dan validasi payload bukti.
+8. **Playwright E2E Multi-Role Test**: Pengujian alur kerja nyata untuk keempat peran pengguna (Caregiver, Supervisor, Family, Admin).
 
 ---
 
 ## 🛠️ Panduan Instalasi & Pengoperasian Lokal
 
-### Prasyarat System
-* **Node.js**: `v18.0.0` atau lebih baru
+### Prasyarat Sistem
+* **Node.js**: `v18.0.0` atau `v20.x` (Direkomendasikan)
 * **npm**: `v9.0.0` atau lebih baru
 
-### Langkah 1: Clone Repository & Install Dependencies
+### Langkah 1: Clone Repositori
 ```bash
 git clone https://github.com/s1informatika11s25007-maker/SambungJaga.git
 cd SambungJaga
+```
+
+### Langkah 2: Install Dependensi Proyek
+```bash
 npm install
 ```
 
-### Langkah 2: Pengaturan Environment Variables
-File `.env` di root proyek:
+### Langkah 3: Konfigurasi Environment Variables
+Buat atau sesuaikan file `.env` di root proyek:
+
 ```env
-GITHUB_PAT=github_pat_xxxx...
-GH_TOKEN=github_pat_xxxx...
+# 1. FRONTEND / VITE PUBLIC CONFIG
 VITE_SUPABASE_URL=https://your-supabase-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+VITE_GROQ_TOKEN=gsk_your_groq_api_key_here
+VITE_APP_ENV=production
+
+# 2. BACKEND & SUPABASE CONNECTION POOLER
+SUPABASE_PROJECT_URL=https://your-supabase-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+SUPABASE_DB_POOLER_URL=postgres://postgres.your-project:password@aws-0-ap-northeast-2.pooler.supabase.com:6543/postgres?pgbouncer=true
 ```
 
-### Langkah 3: Jalankan Mode Pengembang (Development)
+### Langkah 4: Jalankan Mode Pengembang (Development)
 ```bash
 npm run dev
 ```
-Aplikasi dapat diakses di browser melalui `http://localhost:3000`.
-
-### Langkah 4: Build Produksi & Deploy Vercel
-
-```bash
-npm run build
-```
+Buka browser di `http://localhost:3000` (atau port yang ditunjuk Vite).
 
 ---
 
-## 🚀 Deployment 1-Klik ke Vercel (Terpusat `.env`)
+## 🚀 Deployment Guide (Vercel & Supabase)
 
-Konfigurasi `vercel.json` telah terpasang untuk routing SPA Vite otomatis.
+### Deploy Frontend ke Vercel
 
-### Langkah Deploy ke Vercel:
-1. Hubungkan repositori GitHub `s1informatika11s25007-maker/SambungJaga` ke Vercel Dashboard ([vercel.com/new](https://vercel.com/new)).
-2. Masukkan **Environment Variables** di Vercel Dashboard:
-   * **`VITE_SUPABASE_URL`**: `https://qepfuqlnkofzfhfzahpr.supabase.co`
-   * **`VITE_SUPABASE_ANON_KEY`**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
-3. Klik **Deploy** &rarr; Vercel akan secara otomatis membangun aplikasi dalam beberapa detik!
+ Proyek telah dilengkapi `vercel.json` untuk routing SPA Vite otomatis.
 
----
+1. Buka [Vercel Dashboard](https://vercel.com/new) dan impor repositori `s1informatika11s25007-maker/SambungJaga`.
+2. Pada **Environment Variables**, tambahkan:
+   * `VITE_SUPABASE_URL`
+   * `VITE_SUPABASE_ANON_KEY`
+   * `VITE_GROQ_TOKEN`
+3. Klik **Deploy**. Vercel akan mem-build dan menerbitkan aplikasi dalam beberapa detik.
 
-## 🛡️ Prinsip Utama & Jaminan Keamanan Sistem
+### Migration Database Supabase
 
-1. **AI Tidak Mengambil Keputusan Klinis Sendiri**:
-   Semua tindakan berkategori `A3` (modifikasi obat, tindakan medis, transfer darurat) **wajib melalui persetujuan manusia** (*Mandatory Human Review*).
-2. **Penegakan Aturan di Backend, Bukan Prompt**:
-   Semua batasan hukum, *Row-Level Security* (RLS), dan *Authority Envelope* ditegakkan pada tingkat skema backend & DB, bukan hanya bergantung pada sistem instruksi LLM.
-3. **Pemberlakuan Hukum Privasi PDP**:
-   Informasi sensitif disaring pada *Consent-Aware Disclosure Agent* sebelum ditampilkan pada Portal Keluarga. Foto bukti menggunakan opsi tanpa wajah (*faceless photo artifact*).
-4. **Jeplakan Audit Hukum Medis**:
-   Setiap aksi menghasilkan hash SHA-256 yang saling menaut pada *Audit Trail Append-Only*, yang dapat diekspor menjadi **Care Evidence Pack** (.json) sebagai dokumen bukti hukum sah.
+1. Buka SQL Editor di Supabase Dashboard Anda.
+2. Salin dan jalankan skrip migrasi dari file [`supabase/migrations/20261027000000_initial_schema.sql`](./supabase/migrations/20261027000000_initial_schema.sql).
+3. Skrip akan secara otomatis membuat skema `hr_domain`, `resident_domain`, `kernel_domain`, `audit_domain`, memasang kebijakan RLS, serta fungsi pencetus hash SHA-256 otomatis.
 
 ---
 
-### 📄 Lisensi & Hak Cipta
-Hak Cipta © 2026 SambungJaga AI. Seluruh hak cipta dilindungi undang-undang.
-Diterbitkan di bawah Lisensi Kepemilikan Sistem Perawatan Lansia Terverifikasi Indonesia.
+## 🛡️ Keamanan Data, RLS & Kepatuhan UU PDP
+
+1. **Prinsip AI Terkendali**: AI dilarang mengambil keputusan medis ireversibel (`A3`) secara mandiri. Semua tindakan kritis wajib melalui intervensi persetujuan manusia (*Mandatory Human Review*).
+2. **PostgreSQL Row-Level Security (RLS)**: Hak akses data dibatasi langsung pada tingkat basis data Supabase, bukan hanya pada antarmuka frontend.
+3. **Privasi Berbasis Konsen (UU PDP)**: Informasi medis sensitif lansia disaring oleh *Consent Disclosure Service* sebelum ditampilkan di Portal Keluarga. Foto bukti menggunakan teknik proteksi wajah (*faceless photo artifact*).
+4. **Jejak Audit Hukum-Medis**: Setiap interaksi, perubahan status, dan verifikasi bukti disimpan dalam log *append-only* dengan hash SHA-256 berantai yang dapat diekspor sebagai **Care Evidence Pack** (.json) sah.
+
+---
+
+<div align="center">
+
+### 📄 Hak Cipta & Lisensi
+Hak Cipta © 2026 **SambungJaga AI Team**. Seluruh Hak Cipta Dilindungi Undang-Undang.<br/>
+Diterbitkan di bawah standar arsitektur sistem perawatan lansia terverifikasi Indonesia.
+
+</div>
