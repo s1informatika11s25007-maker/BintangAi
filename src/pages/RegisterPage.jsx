@@ -40,14 +40,19 @@ export default function RegisterPage({ onRegisterSuccess, onGoToLogin, onGoToLan
       competencies: ['clinical_care', 'vital_signs']
     };
 
-    // Insert into Supabase staff_profiles table if connected
+    // Insert into Supabase staff_profiles table and capture database ID
     try {
-      await supabase.from('staff_profiles').insert([{
+      const { data: dbStaff, error } = await supabase.from('staff_profiles').insert([{
         full_name: newUser.full_name,
         role: newUser.role,
+        phone_number: newUser.phone,
         avatar_url: newUser.avatar_url,
         competencies: newUser.competencies
-      }]);
+      }]).select().single();
+
+      if (!error && dbStaff) {
+        newUser.id = dbStaff.id;
+      }
     } catch (err) {
       console.warn("Notice: Registered staff saved to local session context.", err);
     }

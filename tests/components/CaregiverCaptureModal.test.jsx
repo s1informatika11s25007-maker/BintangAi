@@ -18,13 +18,13 @@ describe('CaregiverCaptureModal Component Tests', () => {
       />
     );
 
-    expect(screen.getByText('Care Capture Agent')).toBeInTheDocument();
+    expect(screen.getByText('Zero-Friction Voice Capture')).toBeInTheDocument();
   });
 
   it('handles report submission and displays success feedback', async () => {
     const mockSubmit = vi.fn().mockResolvedValue({
       success: true,
-      message: 'Laporan berhasil diproses oleh Care Capture Agent'
+      message: 'Laporan berhasil diproses oleh Care Superagent'
     });
 
     render(
@@ -36,10 +36,10 @@ describe('CaregiverCaptureModal Component Tests', () => {
       />
     );
 
-    const textarea = screen.getByPlaceholderText(/Contoh: Ibu Aminah/i);
+    const textarea = screen.getByPlaceholderText(/Contoh: Tadi Wisma Melati/i);
     fireEvent.change(textarea, { target: { value: 'Tensinya 120/80 normal.' } });
 
-    const submitBtn = screen.getByRole('button', { name: /Kirim Laporan/i });
+    const submitBtn = screen.getByRole('button', { name: /Proses AI Superagent/i });
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
@@ -63,10 +63,10 @@ describe('CaregiverCaptureModal Component Tests', () => {
       />
     );
 
-    const presetBtn = screen.getByRole('button', { name: /Test Prompt Injection/i });
+    const presetBtn = screen.getByRole('button', { name: /Auto-Task/i });
     fireEvent.click(presetBtn);
 
-    const submitBtn = screen.getByRole('button', { name: /Kirim Laporan/i });
+    const submitBtn = screen.getByRole('button', { name: /Proses AI Superagent/i });
     fireEvent.click(submitBtn);
 
     await waitFor(() => {

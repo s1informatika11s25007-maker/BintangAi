@@ -16,17 +16,15 @@ import {
   RefreshCw,
   ChevronLeft,
   ChevronRight,
-  Shield,
-  User,
-  Sparkles,
-  ChevronDown
+  Shield
 } from 'lucide-react';
+import { ROLE_LABELS } from '../../services/staffService';
 
 export default function Sidebar({
   activeTab,
   setActiveTab,
   activeRole,
-  setActiveRole,
+  currentUser,
   isOffline,
   setIsOffline,
   offlineQueue,
@@ -37,13 +35,12 @@ export default function Sidebar({
   const [isCollapsed, setIsCollapsed] = useState(() => {
     return localStorage.getItem('sidebar_collapsed') === 'true';
   });
-  const [roleMenuOpen, setRoleMenuOpen] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('sidebar_collapsed', isCollapsed);
   }, [isCollapsed]);
 
-  // Dynamic Navigation Items per Role
+  // Dynamic Navigation Items strictly per logged-in Role
   const getNavItemsByRole = (role) => {
     switch (role) {
       case 'caregiver':
@@ -75,23 +72,9 @@ export default function Sidebar({
 
   const navItems = getNavItemsByRole(activeRole);
 
-  const rolesList = [
-    { id: 'supervisor', title: 'Supervisor Klinis', icon: Shield, badge: 'A3 Gate' },
-    { id: 'caregiver', title: 'Perawat / Caregiver', icon: User, badge: 'PWA' },
-    { id: 'family', title: 'Portal Keluarga', icon: Heart, badge: 'PDP' },
-    { id: 'admin_hr', title: 'Admin Panti & HR', icon: Cpu, badge: 'P4 Lab' }
-  ];
-
   const handleNavClick = (id) => {
     setActiveTab(id);
     setMobileOpen(false);
-  };
-
-  const handleRoleSelect = (roleId) => {
-    if (setActiveRole) {
-      setActiveRole(roleId);
-    }
-    setRoleMenuOpen(false);
   };
 
   return (
@@ -124,7 +107,7 @@ export default function Sidebar({
         ></div>
       )}
 
-      {/* 3. Fixed Desktop Sidebar Overlay (Never scrolls, never empty, 100% pinned) */}
+      {/* 3. Fixed Desktop Sidebar Overlay */}
       <aside className={`fixed top-0 left-0 bottom-0 z-50 md:z-30 h-screen bg-slate-900 border-r border-slate-800 text-slate-300 transition-all duration-300 ease-in-out shadow-2xl flex flex-col justify-between overflow-hidden ${
         isCollapsed ? 'md:w-20' : 'md:w-64'
       } ${
@@ -168,59 +151,18 @@ export default function Sidebar({
             </button>
           </div>
 
-          {/* Role Switcher Pill in Sidebar */}
+          {/* Professional Verified Role Tag (Strictly follows logged-in account, no arbitrary switching) */}
           {(!isCollapsed || mobileOpen) && (
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setRoleMenuOpen(!roleMenuOpen)}
-                className="w-full flex items-center justify-between p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 text-left hover:border-sky-500/50 transition duration-200 group"
-              >
-                <div className="flex items-center space-x-2 min-w-0">
-                  <div className="p-1.5 rounded-lg bg-sky-500/20 text-sky-400 border border-sky-500/30 shrink-0">
-                    <Sparkles className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-[9px] font-bold text-slate-400 uppercase block tracking-wider">Peran Perangkat</span>
-                    <span className="text-xs font-black text-white truncate block capitalize">
-                      {rolesList.find(r => r.id === activeRole)?.title || activeRole}
-                    </span>
-                  </div>
-                </div>
-                <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${roleMenuOpen ? 'rotate-180 text-sky-400' : ''}`} />
-              </button>
-
-              {/* Role Dropdown Options */}
-              {roleMenuOpen && (
-                <div className="absolute left-0 right-0 top-full mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl z-50 p-1.5 space-y-1 animate-fade-in">
-                  {rolesList.map(r => {
-                    const RIcon = r.icon;
-                    const isSelected = activeRole === r.id;
-                    return (
-                      <button
-                        key={r.id}
-                        type="button"
-                        onClick={() => handleRoleSelect(r.id)}
-                        className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold transition text-left ${
-                          isSelected
-                            ? 'bg-sky-600 text-white shadow-md'
-                            : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                        }`}
-                      >
-                        <div className="flex items-center space-x-2 min-w-0">
-                          <RIcon className="w-3.5 h-3.5 shrink-0" />
-                          <span className="truncate">{r.title}</span>
-                        </div>
-                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-mono ${
-                          isSelected ? 'bg-white/20 text-white font-bold' : 'bg-slate-800 text-slate-400'
-                        }`}>
-                          {r.badge}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
+            <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-center space-x-2.5 min-w-0">
+              <div className="p-1.5 rounded-lg bg-sky-500/20 text-sky-400 border border-sky-500/30 shrink-0">
+                <Shield className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[9px] font-bold text-slate-400 uppercase block tracking-wider">Peran Terverifikasi</span>
+                <span className="text-xs font-black text-white truncate block capitalize">
+                  {currentUser?.roleTitle || ROLE_LABELS[activeRole] || activeRole}
+                </span>
+              </div>
             </div>
           )}
 
@@ -348,7 +290,7 @@ export default function Sidebar({
 
       </aside>
 
-      {/* 4. Layout Spacer to reserve exact desktop width in Flexbox Flow (Prevents overlap & white leaks) */}
+      {/* 4. Layout Spacer to reserve exact desktop width in Flexbox Flow */}
       <div className={`hidden md:block shrink-0 transition-all duration-300 ease-in-out ${
         isCollapsed ? 'w-20' : 'w-64'
       }`} />

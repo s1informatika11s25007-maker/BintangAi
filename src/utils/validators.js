@@ -9,7 +9,7 @@ const promptGuardCache = new Map();
 
 /**
  * Detects prompt injection patterns in caregiver input text
- * Menggunakan Real AI Agent dari Supabase Edge Functions dengan in-memory LRU caching.
+ * Menggunakan Real AI Agent dari Supabase Edge Functions dengan in-memory LRU caching dan rule fallback.
  * @param {string} text
  * @returns {Promise<{ isInjection: boolean, matchedRule?: string }>}
  */
@@ -23,27 +23,44 @@ export async function validatePromptInjection(text) {
     return promptGuardCache.get(cleanText);
   }
 
+  // Local Rule Pre-filter
+  const injectionPatterns = [
+    /ignore\s+previous\s+instructions/i,
+    /system\s+prompt/i,
+    /clear\s+all\s+data/i,
+    /drop\s+table/i,
+    /delete\s+from/i,
+    /you\s+are\s+now\s+a/i
+  ];
+
+  for (const pattern of injectionPatterns) {
+    if (pattern.test(text)) {
+      const result = { isInjection: true, matchedRule: `ignore previous instructions / prompt injection rule matched` };
+      promptGuardCache.set(cleanText, result);
+      return result;
+    }
+  }
+
   try {
     const { data, error } = await supabase.functions.invoke('ai_prompt_guard', {
       body: { text }
     });
 
-    if (error || !data) {
-      console.warn("AI Prompt Guard API Error, fallback to rules.", error);
-      return { isInjection: false };
+    if (!error && data) {
+      const result = {
+        isInjection: data.isInjection,
+        matchedRule: data.matchedRule || 'AI Detected Malicious Intent'
+      };
+      promptGuardCache.set(cleanText, result);
+      return result;
     }
-
-    const result = {
-      isInjection: data.isInjection,
-      matchedRule: data.matchedRule || 'AI Detected Malicious Intent'
-    };
-
-    promptGuardCache.set(cleanText, result);
-    return result;
   } catch (err) {
-    console.error("AI Prompt Guard Failed", err);
-    return { isInjection: false };
+    console.warn("AI Prompt Guard API Error, using rule fallback", err);
   }
+
+  const result = { isInjection: false };
+  promptGuardCache.set(cleanText, result);
+  return result;
 }
 
 /**

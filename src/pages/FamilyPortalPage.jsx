@@ -4,23 +4,25 @@ import Badge from '../components/common/Badge';
 import { filterFamilyPortalData } from '../services/consentDisclosureService';
 
 export default function FamilyPortalPage({ residents, obligations }) {
-  const familyResident = (residents && residents.length > 0)
-    ? residents[0]
-    : { id: 'res-101', full_name: 'Ibu Hj. Aminah (78 th)', room_number: 'Kamar 102 — Dahlia' };
-  const rawObs = (obligations || []).filter(o => o.resident_id === familyResident.id);
+  const familyResident = (residents && residents.length > 0) ? residents[0] : null;
+  const rawObs = familyResident ? (obligations || []).filter(o => o.resident_id === familyResident.id) : [];
 
   const [aiFilteredData, setAiFilteredData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function loadFilteredData() {
+      if (!familyResident) {
+        setIsLoading(false);
+        return;
+      }
       setIsLoading(true);
       const res = await filterFamilyPortalData(familyResident, rawObs);
       setAiFilteredData(res);
       setIsLoading(false);
     }
     loadFilteredData();
-  }, [familyResident.id, rawObs.length]);
+  }, [familyResident?.id, rawObs.length]);
 
   return (
     <div className="w-full space-y-6">
@@ -46,11 +48,11 @@ export default function FamilyPortalPage({ residents, obligations }) {
           <Heart className="w-7 h-7" />
         </div>
         <div>
-          <h3 className="text-sm font-bold text-slate-900">{familyResident.full_name}</h3>
-          <p className="text-xs text-slate-500 font-medium">{familyResident.room_number}</p>
+          <h3 className="text-sm font-bold text-slate-900">{familyResident?.full_name || 'Tidak ada data lansia'}</h3>
+          <p className="text-xs text-slate-500 font-medium">{familyResident?.room_number || '-'}</p>
           <div className="flex items-center space-x-2 mt-2">
             <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded border border-emerald-300 font-bold">
-              {aiFilteredData?.residentStatusSummary || 'Kondisi Stabil & Terawat'}
+              {aiFilteredData?.residentStatusSummary || 'Kondisi Terhubung ke Database'}
             </span>
           </div>
         </div>

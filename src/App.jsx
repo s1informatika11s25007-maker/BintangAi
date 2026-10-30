@@ -48,6 +48,7 @@ export default function App() {
     auditTrail,
     handoverContracts,
     rules,
+    setRules,
     spotChallenges,
     isOffline,
     setIsOffline,
@@ -166,7 +167,7 @@ export default function App() {
                   activeTab={location.pathname.replace('/app/', '') || 'supervisor_dashboard'}
                   setActiveTab={(tab) => navigate(`/app/${tab}`)}
                   activeRole={activeRole}
-                  setActiveRole={handleRoleChange}
+                  currentUser={currentUser}
                   isOffline={isOffline}
                   setIsOffline={setIsOffline}
                   offlineQueue={offlineQueue}
@@ -234,6 +235,8 @@ export default function App() {
                             currentUserRole={activeRole}
                             currentUser={currentUser}
                             staff={staff}
+                            obligations={obligations}
+                            residents={residents}
                           />
                         }
                       />
@@ -260,7 +263,19 @@ export default function App() {
                         path="simulator_lab"
                         element={<SimulatorLabPage staff={staff} obligations={obligations} />}
                       />
-                      <Route path="rule_library" element={<RuleLibraryPage rules={rules} />} />
+                      <Route
+                        path="rule_library"
+                        element={
+                          <RuleLibraryPage
+                            rules={rules}
+                            setRules={setRules}
+                            activeRole={activeRole}
+                            currentUser={currentUser}
+                            obligations={obligations}
+                            epistemicFacts={epistemicFacts}
+                          />
+                        }
+                      />
                       <Route path="audit_trail" element={<AuditTrailPage auditTrail={auditTrail} />} />
                       <Route path="*" element={<Navigate to="supervisor_dashboard" replace />} />
                     </Routes>
