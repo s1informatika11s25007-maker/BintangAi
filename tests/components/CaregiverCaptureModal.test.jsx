@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import CaregiverCaptureModal from '../../src/components/pwa/CaregiverCaptureModal';
+import CaregiverCaptureModal from '../../src/components/caregiver/CaregiverCaptureModal';
 
 describe('CaregiverCaptureModal Component Tests', () => {
   const mockResidents = [

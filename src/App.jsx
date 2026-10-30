@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Heart, Loader2 } from 'lucide-react';
-import { useSambungJaga } from './hooks/useSambungJaga';
+import { useSambungJaga } from './hooks/core/useSambungJaga';
 import PublicHeader from './components/layout/PublicHeader';
 import Header from './components/layout/Header';
 import Sidebar from './components/layout/Sidebar';
@@ -9,19 +9,19 @@ import RoleWorkspaceHeader from './components/layout/RoleWorkspaceHeader';
 import Footer from './components/layout/Footer';
 
 // Pre-Login Pages
-import LandingPage from './pages/LandingPage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
+import LandingPage from './pages/auth/LandingPage';
+import LoginPage from './pages/auth/LoginPage';
+import RegisterPage from './pages/auth/RegisterPage';
 
 // Post-Login Pages
-import CaregiverMobilePage from './pages/CaregiverMobilePage';
-import SupervisorDashboardPage from './pages/SupervisorDashboardPage';
-import HandoverPage from './pages/HandoverPage';
-import ExecutionTracePage from './pages/ExecutionTracePage';
-import FamilyPortalPage from './pages/FamilyPortalPage';
-import SimulatorLabPage from './pages/SimulatorLabPage';
-import RuleLibraryPage from './pages/RuleLibraryPage';
-import AuditTrailPage from './pages/AuditTrailPage';
+import CaregiverMobilePage from './pages/caregiver/CaregiverMobilePage';
+import SupervisorDashboardPage from './pages/dashboard/SupervisorDashboardPage';
+import HandoverPage from './pages/handover/HandoverPage';
+import ExecutionTracePage from './pages/trace/ExecutionTracePage';
+import FamilyPortalPage from './pages/family/FamilyPortalPage';
+import SimulatorLabPage from './pages/simulator/SimulatorLabPage';
+import RuleLibraryPage from './pages/rule/RuleLibraryPage';
+import AuditTrailPage from './pages/audit/AuditTrailPage';
 import ExecutionTraceModal from './components/trace/ExecutionTraceModal';
 
 export default function App() {

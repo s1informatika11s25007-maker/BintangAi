@@ -1,80 +1,68 @@
 import React from 'react';
-import { ClipboardList, ShieldCheck, Heart, Bell } from 'lucide-react';
+import { ShieldCheck, Sparkles, Activity, Clock, AlertCircle } from 'lucide-react';
+import { calculateCareDebt } from '../../services/rule/obligationEngine';
 
-export default function RoleWorkspaceHeader({ activeRole, obligations, residents }) {
-  const roleNames = {
-    supervisor: 'Ns. Ratna Sari, M.Kep',
-    caregiver: 'Rina Sari, Amd.Kep',
-    family: 'Rina Wijaya',
-    admin_hr: 'Budi Santoso'
+export default function RoleWorkspaceHeader({ activeRole, obligations = [], epistemicFacts = [], staff = [] }) {
+  const { totalDebtMinutes, healthScore } = calculateCareDebt(obligations);
+
+  const roleBanners = {
+    supervisor: {
+      title: 'Selamat pagi, Ns. Ratna Sari, M.Kep (Supervisor)',
+      badge: 'Supervisor Klinis',
+      color: 'from-sky-600 via-sky-500 to-indigo-600',
+      description: 'Pusat Kontrol & Triage Klinis Multi-Lansia. Memantau Care Debt, persetujuan envelope A3, dan verifikasi bukti E0-E3.'
+    },
+    caregiver: {
+      title: 'Selamat bertugas, Suster Dewi Pertiwi, Amd.Kep',
+      badge: 'Pengasuh / Perawat',
+      color: 'from-teal-600 via-emerald-600 to-teal-700',
+      description: 'PWA Mobile Care Capture. Rekam laporan suara (STT), unggah bukti E1-E3, dan jalankan misi perawatan otonom.'
+    },
+    family: {
+      title: 'Selamat datang, Rina Wijaya (Wali Ibu Hj. Aminah)',
+      badge: 'Portal Keluarga Pasien',
+      color: 'from-purple-600 via-indigo-600 to-purple-700',
+      description: 'Ringkasan perkembangan medis transparan & aman. Informasi disaring otomatis oleh Consent-Aware Disclosure Agent (UU PDP).'
+    },
+    admin_hr: {
+      title: 'Selamat datang, Budi Santoso (Admin HR & Panti)',
+      badge: 'Admin HR & Simulator Lab',
+      color: 'from-slate-800 via-slate-700 to-slate-900',
+      description: 'Simulasi P4 Failure-Set Search, evaluasi cakupan kompetensi perawat, dan retroaktif rule replay.'
+    }
   };
 
-  const userName = roleNames[activeRole] || 'Rina Sari';
-  const openObligations = (obligations || []).filter(o => o.status !== 'verified_closed');
-  const completedObligations = (obligations || []).filter(o => o.status === 'verified_closed');
-  const criticalNearDeadline = openObligations.filter(o => o.priority === 'critical');
-  const totalResidents = residents?.length || 8;
+  const currentBanner = roleBanners[activeRole] || roleBanners.supervisor;
 
   return (
-    <div className="space-y-6 w-full">
-      {/* Welcome Greeting Banner matching reference image */}
-      <div className="space-y-1 text-left">
-        <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center space-x-2">
-          <span>Selamat pagi, {userName}</span>
-          <span className="text-2xl animate-bounce">👋</span>
-        </h2>
-        <p className="text-xs text-slate-500 font-medium">
-          Semoga harimu berjalan dengan lancar. Berikut ringkasan tugas dan kondisi penghuni.
-        </p>
-      </div>
-
-      {/* 4 Summary Metric Widget Cards matching reference image */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
-        {/* Widget 1: Tugas Hari ini */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-md shadow-slate-200/40 flex items-start space-x-4">
-          <div className="p-3 bg-sky-100 text-sky-600 rounded-2xl font-bold shrink-0">
-            <ClipboardList className="w-6 h-6" />
+    <div className={`bg-gradient-to-r ${currentBanner.color} rounded-2xl p-5 sm:p-6 text-white shadow-xl space-y-3 relative overflow-hidden`}>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="space-y-1 max-w-2xl">
+          <div className="flex items-center space-x-2">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur border border-white/30 text-white">
+              {currentBanner.badge}
+            </span>
+            <span className="text-[10px] text-white/80 font-mono flex items-center">
+              <Sparkles className="w-3 h-3 mr-1 text-amber-300" /> Auto-Orchestrated
+            </span>
           </div>
-          <div>
-            <span className="text-xs font-bold text-slate-600 block">Tugas Hari ini</span>
-            <span className="text-2xl font-black text-slate-900 block my-0.5">{obligations?.length || 5}</span>
-            <span className="text-[11px] text-sky-600 font-bold block">{completedObligations.length} selesai · {openObligations.length} tersisa</span>
-          </div>
+          <h2 className="font-extrabold text-base sm:text-xl tracking-tight leading-snug">
+            {currentBanner.title}
+          </h2>
+          <p className="text-xs text-white/80 leading-relaxed font-medium">
+            {currentBanner.description}
+          </p>
         </div>
 
-        {/* Widget 2: Kewajiban Aktif */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-md shadow-slate-200/40 flex items-start space-x-4">
-          <div className="p-3 bg-amber-100 text-amber-600 rounded-2xl font-bold shrink-0">
-            <ShieldCheck className="w-6 h-6" />
-          </div>
+        {/* Live System Metrics Card */}
+        <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/20 flex items-center space-x-4 shrink-0 text-xs">
           <div>
-            <span className="text-xs font-bold text-slate-600 block">Kewajiban Aktif</span>
-            <span className="text-2xl font-black text-slate-900 block my-0.5">{openObligations.length}</span>
-            <span className="text-[11px] text-amber-600 font-bold block">{criticalNearDeadline.length} mendekati deadline</span>
+            <p className="text-[10px] text-white/70 font-semibold">Care Health Score</p>
+            <p className="font-extrabold text-sm text-emerald-300">{healthScore}%</p>
           </div>
-        </div>
-
-        {/* Widget 3: Penghuni */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-md shadow-slate-200/40 flex items-start space-x-4">
-          <div className="p-3 bg-emerald-100 text-emerald-600 rounded-2xl font-bold shrink-0">
-            <Heart className="w-6 h-6 fill-emerald-600" />
-          </div>
-          <div>
-            <span className="text-xs font-bold text-slate-600 block">Penghuni</span>
-            <span className="text-2xl font-black text-slate-900 block my-0.5">{totalResidents}</span>
-            <span className="text-[11px] text-emerald-600 font-bold block">semua dalam kondisi baik</span>
-          </div>
-        </div>
-
-        {/* Widget 4: Notifikasi */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-md shadow-slate-200/40 flex items-start space-x-4">
-          <div className="p-3 bg-rose-100 text-rose-600 rounded-2xl font-bold shrink-0">
-            <Bell className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="text-xs font-bold text-slate-600 block">Notifikasi</span>
-            <span className="text-2xl font-black text-slate-900 block my-0.5">{criticalNearDeadline.length > 0 ? criticalNearDeadline.length : 3}</span>
-            <span className="text-[11px] text-rose-600 font-bold block">ada yang perlu perhatian</span>
+          <div className="border-l border-white/20 pl-4">
+            <p className="text-[10px] text-white/70 font-semibold">Care Debt Kumulatif</p>
+            <p className="font-extrabold text-sm text-amber-300">{totalDebtMinutes} mnt</p>
           </div>
         </div>
       </div>

@@ -174,7 +174,7 @@ SambungJaga AI mengintegrasikan dua mesin AI secara hybrid untuk menjamin kecepa
 
 ## 📂 Struktur Codebase Clean Architecture
 
-Proyek diorganisir secara modular mengikuti prinsip **Domain-Driven Design (DDD)** dan **Clean Architecture**:
+Proyek diorganisir secara modular mengikuti arsitektur **Clean Architecture berbasis Feature-First** dan **Domain-Driven Design (DDD)**:
 
 ```
 SambungJaga/
@@ -185,17 +185,21 @@ SambungJaga/
 │   ├── favicon.svg                  # Icon resmi SambungJaga
 │   └── manifest.json                # Web App Manifest untuk PWA Mobile
 ├── src/
-│   ├── components/                  # UI Components (React + Tailwind)
-│   │   ├── common/                  # Reusable UI Primitives
+│   ├── components/                  # UI Components (Feature-First Architecture)
+│   │   ├── caregiver/               # Modul UI Pengasuh / PWA Mobile
+│   │   │   ├── CaregiverCaptureModal.jsx # Modal Ingesti Voice/Text STT
+│   │   │   ├── EvidenceUploadModal.jsx   # Modal Unggah Bukti P2 (Foto/QR/Dual-Sign)
+│   │   │   └── VisionCameraModal.jsx     # Camera Vision OCR & Object Scanner
+│   │   ├── common/                  # Modul UI Komponen Umum
 │   │   │   ├── ArchitectureModal.jsx# Modal Inspeksi Arsitektur Interactive
 │   │   │   ├── Badge.jsx            # Lencana Status UI
 │   │   │   ├── FloatingVoiceMic.jsx # Capture Suara Melayang
 │   │   │   └── Modal.jsx            # Modal Dialog Base
-│   │   ├── dashboard/               # Widget Dashboard Supervisor
+│   │   ├── dashboard/               # Modul UI Widget Dashboard Supervisor
 │   │   │   ├── CareDebtAlert.jsx    # Alert Sinyal Tunggakan Obligation (P1)
 │   │   │   ├── EpistemicLedgerBadge.jsx # Indikator Epistemic Fact (P3)
 │   │   │   └── ObligationGraphCard.jsx  # Kartu Graf Bitemporal
-│   │   ├── handover/
+│   │   ├── handover/                # Modul UI Serah Terima Shift
 │   │   │   └── HandoverContractCard.jsx # Kartu Handover Shift Dua Sisi
 │   │   ├── layout/                  # Shell Application Layouts
 │   │   │   ├── Footer.jsx           # Status Kernel Footer
@@ -204,51 +208,69 @@ SambungJaga/
 │   │   │   ├── PublicHeader.jsx     # Header Landing Page & Auth
 │   │   │   ├── RoleWorkspaceHeader.jsx # Banner Workspace Kustom per Role
 │   │   │   └── Sidebar.jsx          # Navigasi Modul Utama
-│   │   ├── pwa/                     # Komponen Mobile Caregiver PWA
-│   │   │   ├── CaregiverCaptureModal.jsx # Modal Ingesti Voice/Text STT
-│   │   │   ├── EvidenceUploadModal.jsx   # Modal Unggah Bukti P2 (Foto/QR/Dual-Sign)
-│   │   │   └── VisionCameraModal.jsx     # Camera Vision OCR & Object Scanner
-│   │   ├── simulator/
+│   │   ├── simulator/               # Modul UI Simulator Lab P4
 │   │   │   └── FailureSetSimulationModal.jsx # Modal Simulator Kegagalan P4
-│   │   └── trace/
+│   │   └── trace/                   # Modul UI Transparansi & Traceability
 │   │       └── ExecutionTraceModal.jsx   # Modal Pelacak Transparansi AI
-│   ├── hooks/
-│   │   └── useSambungJaga.js        # Custom Hook Utama (Central Dispatcher & State)
-│   ├── pages/                       # Halaman Aplikasi SPA
-│   │   ├── AuditTrailPage.jsx       # Halaman Append-Only Audit Trail [A]
-│   │   ├── CaregiverMobilePage.jsx  # Halaman PWA Mobile Pengasuh
-│   │   ├── ExecutionTracePage.jsx   # Pelacak Transparansi Keputusan AI
-│   │   ├── FamilyPortalPage.jsx     # Portal Informasi Keluarga
-│   │   ├── HandoverPage.jsx         # Halaman Kontrak Serah Terima Shift
-│   │   ├── LandingPage.jsx          # Landing Page Utama
-│   │   ├── LoginPage.jsx            # Split-Screen Login Page
-│   │   ├── RegisterPage.jsx         # Split-Screen Register Page
-│   │   ├── RuleLibraryPage.jsx      # Manajemen Aturan Klinis & Kebijakan
-│   │   ├── SimulatorLabPage.jsx     # Laboratorium Simulator P4
-│   │   └── SupervisorDashboardPage.jsx # Dashboard Realtime Supervisor
-│   ├── services/                    # Core Business Engines (JSDoc Annotated)
-│   │   ├── aiSuperagent.js          # Groq Orchestrator & Mission Controller
-│   │   ├── audioAlertService.js     # Web Audio API Synthesizer Peringatan Sound
-│   │   ├── auditTrailService.js     # Append-Only SHA-256 Audit Trail Engine
-│   │   ├── authorityEnvelope.js     # Envelope Evaluator P6 (A0-A3)
-│   │   ├── consentDisclosureService.js # Filter PDP Portal Keluarga
-│   │   ├── epistemicLedger.js       # Evaluator Status Epistemik (P3)
-│   │   ├── evidenceVerifier.js      # Verifikator Bukti E0-E3 & Spot Challenge (P2)
-│   │   ├── failureSetSimulator.js   # Mesin Simulasi Failure-Set Search (P4)
-│   │   ├── geminiNanoService.js     # Local Chrome Built-in AI Gemini Nano
-│   │   ├── handoverContractService.js # Layanan Kontrak Shift Dua Sisi
-│   │   ├── nativeChromeService.js   # Integration Engine Native Browser API
-│   │   ├── obligationEngine.js      # Graf Bitemporal & Care Debt Engine (P1)
-│   │   ├── ruleReplayService.js     # Retroactive Rule Replay Engine
-│   │   ├── staffService.js          # Layanan Profil & Kompetensi Staf
-│   │   └── whatsappBotService.js    # Simulasi & Integrasi WhatsApp Ingestion
-│   ├── supabase/
-│   │   └── client.js                # Client Supabase dengan Fallback Resilience
-│   ├── types/
-│   │   └── architecture.js          # Konstanta, Enum, & Tipe Arsitektur
-│   └── utils/
-│       ├── formatters.js            # Utility Pemformat Waktu, Tanggal & Hash
-│       └── validators.js            # Validasi Prompt Injection & Payload Bukti
+│   ├── hooks/                       # Custom React Hooks
+│   │   └── core/                    # Feature Core Hook
+│   │       └── useSambungJaga.js    # Custom Hook Utama (Central Dispatcher & State)
+│   ├── pages/                       # Halaman Aplikasi SPA (Feature-First)
+│   │   ├── audit/                   # Fitur Audit Trail
+│   │   │   └── AuditTrailPage.jsx   # Halaman Append-Only Audit Trail [A]
+│   │   ├── auth/                    # Fitur Autentikasi & Landing
+│   │   │   ├── LandingPage.jsx      # Landing Page Utama
+│   │   │   ├── LoginPage.jsx        # Split-Screen Login Page
+│   │   │   └── RegisterPage.jsx     # Split-Screen Register Page
+│   │   ├── caregiver/               # Fitur Pengasuh / PWA
+│   │   │   └── CaregiverMobilePage.jsx # Halaman PWA Mobile Pengasuh
+│   │   ├── dashboard/               # Fitur Dashboard Supervisor
+│   │   │   └── SupervisorDashboardPage.jsx # Dashboard Realtime Supervisor
+│   │   ├── family/                  # Fitur Portal Keluarga
+│   │   │   └── FamilyPortalPage.jsx # Portal Informasi Keluarga
+│   │   ├── handover/                # Fitur Handover Shift
+│   │   │   └── HandoverPage.jsx     # Halaman Kontrak Serah Terima Shift
+│   │   ├── rule/                    # Fitur Aturan Klinis
+│   │   │   └── RuleLibraryPage.jsx  # Manajemen Aturan Klinis & Kebijakan
+│   │   ├── simulator/               # Fitur Simulator Lab P4
+│   │   │   └── SimulatorLabPage.jsx # Laboratorium Simulator P4
+│   │   └── trace/                   # Fitur Traceability & Investigation
+│   │       └── ExecutionTracePage.jsx # Pelacak Transparansi Keputusan AI
+│   ├── services/                    # Core Business Engines (Feature-First)
+│   │   ├── ai/                      # Service AI Engine & Local Chrome AI
+│   │   │   ├── aiSuperagent.js      # Groq Orchestrator & Mission Controller
+│   │   │   ├── geminiNanoService.js # Local Chrome Built-in AI Gemini Nano
+│   │   │   └── nativeChromeService.js # Integration Engine Native Browser API
+│   │   ├── audit/                   # Service Audit Trail
+│   │   │   └── auditTrailService.js # Append-Only SHA-256 Audit Trail Engine
+│   │   ├── auth/                    # Service Autentikasi & Consent PDP
+│   │   │   └── consentDisclosureService.js # Filter PDP Portal Keluarga
+│   │   ├── caregiver/               # Service Perawat / Evidence
+│   │   │   ├── evidenceVerifier.js  # Verifikator Bukti E0-E3 & Spot Challenge (P2)
+│   │   │   └── whatsappBotService.js # Simulasi & Integrasi WhatsApp Ingestion
+│   │   ├── dashboard/               # Service Dashboard & Staff Management
+│   │   │   ├── audioAlertService.js # Web Audio API Synthesizer Peringatan Sound
+│   │   │   └── staffService.js      # Layanan Profil & Kompetensi Staf
+│   │   ├── handover/                # Service Handover & Envelope
+│   │   │   ├── authorityEnvelope.js # Envelope Evaluator P6 (A0-A3)
+│   │   │   └── handoverContractService.js # Layanan Kontrak Shift Dua Sisi
+│   │   ├── rule/                    # Service Obligation & Rule Engine
+│   │   │   ├── obligationEngine.js  # Graf Bitemporal & Care Debt Engine (P1)
+│   │   │   └── ruleReplayService.js # Retroactive Rule Replay Engine
+│   │   ├── simulator/               # Service Simulator P4
+│   │   │   └── failureSetSimulator.js # Mesin Simulasi Failure-Set Search (P4)
+│   │   └── trace/                   # Service Traceability & Epistemic
+│   │       └── epistemicLedger.js   # Evaluator Status Epistemik (P3)
+│   ├── supabase/                    # Supabase Configuration Layer
+│   │   └── client/                  # Feature Client
+│   │       └── client.js            # Client Supabase dengan Fallback Resilience
+│   ├── types/                       # Type Primitives Layer
+│   │   └── core/                    # Feature Core Architecture Types
+│   │       └── architecture.js      # Konstanta, Enum, & Tipe Arsitektur
+│   └── utils/                       # Shared Utilities Layer
+│       └── common/                  # Common Helpers
+│           ├── formatters.js        # Utility Pemformat Waktu, Tanggal & Hash
+│           └── validators.js        # Utility Validasi Prompt Injection & Bukti
 ├── supabase/
 │   └── migrations/
 │       └── 20261027000000_initial_schema.sql # Skema PostgreSQL + RLS Policy

@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { appendAuditEntry, verifyAuditChainIntegrity } from '../../src/services/auditTrailService';
-import { evaluateAuthorityEnvelope } from '../../src/services/authorityEnvelope';
-import { classifyEpistemicStatus, detectFactContradiction } from '../../src/services/epistemicLedger';
-import { verifyEvidenceSubmission, generateRandomSpotChallenge } from '../../src/services/evidenceVerifier';
-import { runFailureSetSimulation } from '../../src/services/failureSetSimulator';
-import { calculateCareDebt, checkNegativeObligationViolation, filterBitemporalObligations } from '../../src/services/obligationEngine';
-import { validatePromptInjection, validateEvidencePayload } from '../../src/utils/validators';
-import { AUTHORITY_ENVELOPE, EPISTEMIC_STATUS, EVIDENCE_GRADE, OBLIGATION_STATUS } from '../../src/types/architecture';
+import { appendAuditEntry, verifyAuditChainIntegrity } from '../../src/services/audit/auditTrailService';
+import { evaluateAuthorityEnvelope } from '../../src/services/handover/authorityEnvelope';
+import { classifyEpistemicStatus, detectFactContradiction } from '../../src/services/trace/epistemicLedger';
+import { verifyEvidenceSubmission, generateRandomSpotChallenge } from '../../src/services/caregiver/evidenceVerifier';
+import { runFailureSetSimulation } from '../../src/services/simulator/failureSetSimulator';
+import { calculateCareDebt, checkNegativeObligationViolation, filterBitemporalObligations } from '../../src/services/rule/obligationEngine';
+import { validatePromptInjection, validateEvidencePayload } from '../../src/utils/common/validators';
+import { AUTHORITY_ENVELOPE, EPISTEMIC_STATUS, EVIDENCE_GRADE, OBLIGATION_STATUS } from '../../src/types/core/architecture';
 
 describe('SambungJaga AI Core Domain Services Unit Tests', () => {
 
