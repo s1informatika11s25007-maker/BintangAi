@@ -1,7 +1,7 @@
 /**
  * SambungJaga AI — Care Superagent Architecture Primitives & Constants
  *
- * @module types/core/architecture
+ * @module types/architecture
  * @description Centralized domain types, status enums, authority envelope definitions, and core innovations metadata.
  */
 

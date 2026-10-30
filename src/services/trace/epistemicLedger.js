@@ -1,7 +1,7 @@
 /**
  * SambungJaga AI — Epistemic Fact Ledger Engine (P3 Innovation)
  *
- * @module services/trace/epistemicLedger
+ * @module services/epistemicLedger
  * @description Classifies data into 5 epistemic states: Observed (Diamati), Reported (Dilaporkan), Inferred (Disimpulkan), Contradicted (Dikontradiksi), and Stale (Basi).
  */
 

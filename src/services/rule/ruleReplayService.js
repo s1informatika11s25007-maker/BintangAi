@@ -1,7 +1,7 @@
 /**
  * SambungJaga AI — Retroactive Rule Replay Engine (P1 Bitemporal)
  *
- * @module services/rule/ruleReplayService
+ * @module services/ruleReplayService
  * @description Re-evaluates historical bitemporal data against updated rules via Supabase Edge Function with caching.
  */
 

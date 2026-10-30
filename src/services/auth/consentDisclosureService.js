@@ -1,7 +1,7 @@
 /**
  * SambungJaga AI — Consent-Aware Disclosure Agent (Family Portal)
  *
- * @module services/auth/consentDisclosureService
+ * @module services/consentDisclosureService
  * @description Filters clinical updates into PDP-compliant summaries via Supabase Edge Function with smart caching.
  */
 

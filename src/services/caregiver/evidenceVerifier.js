@@ -1,7 +1,7 @@
 /**
  * SambungJaga AI — Evidence-Grade Verifier (P2 Innovation) & Spot Challenge Engine
  *
- * @module services/caregiver/evidenceVerifier
+ * @module services/evidenceVerifier
  * @description Validates E0–E3 evidence submissions via Supabase Edge Function.
  */
 

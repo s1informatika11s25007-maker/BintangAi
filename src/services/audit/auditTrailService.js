@@ -1,7 +1,7 @@
 /**
  * SambungJaga AI — Append-Only Hash-Chained Audit Trail Engine [A]
  *
- * @module services/audit/auditTrailService
+ * @module services/auditTrailService
  * @description Provides immutable SHA-256 hash-chain calculation and integrity verification for all system transactions.
  */
 

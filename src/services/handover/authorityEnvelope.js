@@ -1,7 +1,7 @@
 /**
  * SambungJaga AI — Authority Envelope Gate (P6 Innovation)
  *
- * @module services/handover/authorityEnvelope
+ * @module services/authorityEnvelope
  * @description Evaluates execution authority bounds (A0 Read, A1 Reversible, A2 Alert, A3 Clinical/Irreversible).
  */
 

@@ -63,8 +63,9 @@ export default function SimulatorLabPage({ staff, obligations }) {
         tag: 'System Error',
         reason: 'Gagal menghubungi Edge Function validator.'
       });
-    } font-medium;
-    setIsTestingAdversarial(false);
+    } finally {
+      setIsTestingAdversarial(false);
+    }
   };
 
   return (

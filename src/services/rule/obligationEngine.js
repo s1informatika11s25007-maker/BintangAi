@@ -1,7 +1,7 @@
 /**
  * SambungJaga AI — Obligation Kernel Engine (P1 Bitemporal Obligation Ledger & Care Graph)
  *
- * @module services/rule/obligationEngine
+ * @module services/obligationEngine
  * @description Core engine for bitemporal obligation calculations, care debt accumulation, negative-obligation checking, and temporal filtering.
  */
 

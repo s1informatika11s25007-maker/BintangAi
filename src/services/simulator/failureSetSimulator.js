@@ -1,7 +1,7 @@
 /**
  * SambungJaga AI — P4 Failure-Set Search Simulator Engine
  *
- * @module services/simulator/failureSetSimulator
+ * @module services/failureSetSimulator
  * @description Simulates caregiver absence combinations to identify minimal failure sets via Supabase Edge Function with caching.
  */
 

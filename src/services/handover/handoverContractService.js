@@ -1,7 +1,7 @@
 /**
  * SambungJaga AI — Handover Contract Agent (Two-Sided)
  *
- * @module services/handover/handoverContractService
+ * @module services/handoverContractService
  * @description Validates cross-shift care continuity via Supabase Edge Function with smart in-memory caching
  * and automated 1-click shift synthesis from live obligation graph.
  */
