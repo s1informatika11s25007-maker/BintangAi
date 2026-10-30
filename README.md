@@ -182,7 +182,7 @@ Codebase disusun secara rapi dan modular mengikuti arsitektur **Clean Architectu
 SambungJaga/
 ├── .github/
 │   └── workflows/
-│       └── test.yml                 # GitHub Actions CI Workflow (Vitest + Playwright)
+│       └── test.yml                 # GitHub Actions CI/CD Workflow (Lint, Test, Security, Build, Grading, Feedback, Deploy)
 ├── public/
 │   ├── favicon.svg                  # Icon resmi SambungJaga
 │   └── manifest.json                # Web App Manifest untuk PWA Mobile
