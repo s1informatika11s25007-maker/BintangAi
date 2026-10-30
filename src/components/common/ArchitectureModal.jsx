@@ -15,8 +15,6 @@ import {
   Layers,
   FileCheck
 } from 'lucide-react';
-import architectureData from '../../SambungJaga_AI_Final_Architecture.json';
-
 export default function ArchitectureModal({ isOpen, onClose }) {
   useEffect(() => {
     if (!isOpen) return;
@@ -29,9 +27,9 @@ export default function ArchitectureModal({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
-  const title = architectureData.diagrams[0]?.cells.find(c => c.id === 'title')?.value || "SambungJaga AI — Care Superagent Architecture (Obligation Kernel, versi final)";
-  const subtitle = architectureData.diagrams[0]?.cells.find(c => c.id === 'subtitle')?.value || "Evidence-Verified Care Continuity: dari laporan pengasuh menjadi kewajiban yang terlacak, ditindaklanjuti, dan diverifikasi";
-  const sha256 = architectureData.fidelity.source_xml_sha256;
+  const title = "SambungJaga AI — Care Superagent Architecture (Obligation Kernel, versi final)";
+  const subtitle = "Evidence-Verified Care Continuity: dari laporan pengasuh menjadi kewajiban yang terlacak, ditindaklanjuti, dan diverifikasi";
+  const sha256 = "d6506a84281d93e8507c11e762aaf0beb7dba593";
 
   return (
     <div
