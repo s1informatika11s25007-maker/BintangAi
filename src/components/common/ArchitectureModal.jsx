@@ -15,7 +15,7 @@ import {
   Layers,
   FileCheck
 } from 'lucide-react';
-import architectureData from '../../../SambungJaga_AI_Final_Architecture.json';
+import architectureData from '../../SambungJaga_AI_Final_Architecture.json';
 
 export default function ArchitectureModal({ isOpen, onClose }) {
   useEffect(() => {
