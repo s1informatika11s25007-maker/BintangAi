@@ -53,8 +53,12 @@ jobs:
           for sql in supabase/migrations/*.sql; do
             if [ -f "$sql" ]; then
               echo "Auditing Migration SQL: $sql"
-              grep -q "CREATE TABLE" "$sql" && echo "  - Table creation statements verified"
-              grep -q "ENABLE ROW LEVEL SECURITY" "$sql" && echo "  - Row Level Security (RLS) statements verified"
+              if grep -q "CREATE TABLE" "$sql"; then
+                echo "  - Table creation statements verified"
+              fi
+              if grep -q "ENABLE ROW LEVEL SECURITY" "$sql"; then
+                echo "  - Row Level Security (RLS) statements verified"
+              fi
             fi
           done
 
