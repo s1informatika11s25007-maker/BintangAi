@@ -1,4 +1,4 @@
-name: SambungJaga AI — Production CI/CD Pipeline & Competition Automation
+name: SambungJaga AI - Production CI/CD Pipeline & Competition Automation
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
   # 1. LINT: Cek aturan penulisan & kerapian kode (eslint, prettier, deno, sql)
   # ===========================================================================
   lint:
-    name: 🔍 Lint - Code Quality & Syntax Audit
+    name: Lint - Code Quality & Syntax Audit
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Codebase
@@ -66,7 +66,7 @@ jobs:
   # 2. TEST: Cek logika dan fungsionalitas kode (vitest, unit testing)
   # ===========================================================================
   test:
-    name: 🧪 Test - Unit & Logic Validation
+    name: Test - Unit & Logic Validation
     runs-on: ubuntu-latest
     needs: [lint]
     steps:
@@ -97,7 +97,7 @@ jobs:
   # 3. SECURITY: Cek celah keamanan & kebocoran token (trufflehog, snyk, npm audit)
   # ===========================================================================
   security:
-    name: 🛡️ Security - Secret Scanning & Vulnerability Audit
+    name: Security - Secret Scanning & Vulnerability Audit
     runs-on: ubuntu-latest
     needs: [lint]
     steps:
@@ -125,7 +125,7 @@ jobs:
   # 4. BUILD: Mengubah kode jadi aplikasi siap pakai (vite build)
   # ===========================================================================
   build:
-    name: 📦 Build - Production Bundle Compilation
+    name: Build - Production Bundle Compilation
     runs-on: ubuntu-latest
     needs: [test, security]
     steps:
@@ -155,7 +155,7 @@ jobs:
   # 5. GRADING (BARU): Menghitung poin & memperbarui leaderboard
   # ===========================================================================
   grading:
-    name: 📊 Grading - Score Calculation & Leaderboard Update
+    name: Grading - Score Calculation & Leaderboard Update
     runs-on: ubuntu-latest
     needs: [test, build]
     if: always()
@@ -175,16 +175,16 @@ jobs:
           SCORE=0
           if [ "$TEST_STATUS" = "success" ]; then
             SCORE=$((SCORE + 60))
-            echo "✅ Unit & Logic Tests Passed: +60 Points"
+            echo "[PASSED] Unit & Logic Tests: +60 Points"
           else
-            echo "❌ Tests Failed: 0 Points"
+            echo "[FAILED] Unit & Logic Tests: 0 Points"
           fi
           
           if [ "$BUILD_STATUS" = "success" ]; then
             SCORE=$((SCORE + 40))
-            echo "✅ Production Build Passed: +40 Points"
+            echo "[PASSED] Production Build: +40 Points"
           else
-            echo "❌ Build Failed: 0 Points"
+            echo "[FAILED] Production Build: 0 Points"
           fi
           
           echo "-------------------------------------------------"
@@ -204,7 +204,7 @@ jobs:
   # 6. FEEDBACK (BARU): Memberi tahu hasil & log eror ke peserta via PR & Actions Summary
   # ===========================================================================
   feedback:
-    name: 💬 Feedback - Automated Notification & Error Summary
+    name: Feedback - Automated Notification & Error Summary
     runs-on: ubuntu-latest
     needs: [lint, test, security, build, grading]
     if: always()
@@ -219,36 +219,36 @@ jobs:
           script: |
             const fs = require('fs');
 
-            const lintStatus = '${{ needs.lint.result }}' === 'success' ? '✅ Passed' : '❌ Failed';
-            const testStatus = '${{ needs.test.result }}' === 'success' ? '✅ Passed' : '❌ Failed';
-            const securityStatus = '${{ needs.security.result }}' === 'success' ? '✅ Passed' : '❌ Failed';
-            const buildStatus = '${{ needs.build.result }}' === 'success' ? '✅ Passed' : '❌ Failed';
-            const gradingStatus = '${{ needs.grading.result }}' === 'success' ? '✅ Passed' : '❌ Failed';
+            const lintStatus = '${{ needs.lint.result }}' === 'success' ? 'PASSED' : 'FAILED';
+            const testStatus = '${{ needs.test.result }}' === 'success' ? 'PASSED' : 'FAILED';
+            const securityStatus = '${{ needs.security.result }}' === 'success' ? 'PASSED' : 'FAILED';
+            const buildStatus = '${{ needs.build.result }}' === 'success' ? 'PASSED' : 'FAILED';
+            const gradingStatus = '${{ needs.grading.result }}' === 'success' ? 'PASSED' : 'FAILED';
             
             const isAllPassed = '${{ needs.lint.result }}' === 'success' && 
                                 '${{ needs.test.result }}' === 'success' && 
                                 '${{ needs.build.result }}' === 'success';
 
-            const feedbackContent = `### 📢 Umpan Balik Otomatis (Competition Feedback)
+            const feedbackContent = `### Umpan Balik Otomatis (Competition Feedback)
 
             Halo @${context.actor}! Berikut adalah ringkasan hasil evaluasi CI/CD untuk aktivitas ini:
 
             | Nama Proses | Status | Fungsi Utama |
             | :--- | :---: | :--- |
-            | 🔍 **Lint** | ${lintStatus} | Cek aturan penulisan & kerapian kode |
-            | 🧪 **Test** | ${testStatus} | Cek logika dan fungsionalitas kode |
-            | 🛡️ **Security** | ${securityStatus} | Cek celah keamanan & kebocoran token |
-            | 📦 **Build** | ${buildStatus} | Mengubah kode jadi aplikasi siap pakai |
-            | 📊 **Grading** | ${gradingStatus} | Menghitung poin & memperbarui leaderboard |
+            | Lint | ${lintStatus} | Cek aturan penulisan dan kerapian kode |
+            | Test | ${testStatus} | Cek logika dan fungsionalitas kode |
+            | Security | ${securityStatus} | Cek celah keamanan dan kebocoran token |
+            | Build | ${buildStatus} | Mengubah kode jadi aplikasi siap pakai |
+            | Grading | ${gradingStatus} | Menghitung poin dan memperbarui leaderboard |
 
             ---
 
             ${isAllPassed 
-              ? '🎉 **Selamat! Seluruh proses pengujian berhasil.** Kode Anda memenuhi kriteria dan siap digabungkan.' 
-              : '⚠️ **Perhatian:** Terdapat bagian pengujian yang belum lulus. Silakan perbaiki bagian yang error pada lokal Anda, lalu lakukan `git push` kembali ke GitHub agar ter-evaluasi ulang.'
+              ? 'Selamat! Seluruh proses pengujian berhasil. Kode Anda memenuhi kriteria dan siap digabungkan.' 
+              : 'Perhatian: Terdapat bagian pengujian yang belum lulus. Silakan perbaiki bagian yang error pada lokal Anda, lalu lakukan git push kembali ke GitHub agar ter-evaluasi ulang.'
             }
 
-            *Log Otomatis diproses oleh SambungJaga Competition Bot*`;
+            Log Otomatis diproses oleh SambungJaga Competition Bot`;
 
             // 1. Selalu tulis ke GitHub Actions Step Summary (Bisa dilihat di tab Actions setiap push)
             if (process.env.GITHUB_STEP_SUMMARY) {
@@ -266,7 +266,7 @@ jobs:
               });
 
               const botComment = comments.data.find(c => 
-                c.body && c.body.includes('📢 Umpan Balik Otomatis (Competition Feedback)')
+                c.body && c.body.includes('Umpan Balik Otomatis (Competition Feedback)')
               );
 
               if (botComment) {
@@ -290,7 +290,7 @@ jobs:
   # 7. DEPLOY: Mengirim aplikasi ke server / cloud (Vercel)
   # ===========================================================================
   deploy:
-    name: 🚀 Deploy - Cloud Deployment
+    name: Deploy - Cloud Deployment
     runs-on: ubuntu-latest
     needs: [build, grading]
     if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && github.event_name == 'push'
