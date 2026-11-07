@@ -1,24 +1,35 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import App from './App.jsx';
-import './index.css';
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App'
+import './styles/globals.css'
+import './styles/adaptive.css'
 
-// Register Service Worker for P5 Offline-First Capability
-if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').then((registration) => {
-      console.log('SambungJaga PWA Service Worker registered:', registration.scope);
-    }).catch((err) => {
-      console.warn('Service Worker registration failed:', err);
-    });
-  });
+// Reapply mode on initial load before React mounts
+// This helps prevent "flash of unstyled content" for accessibility modes
+try {
+  const persistedData = localStorage.getItem('bintangai-accessibility');
+  if (persistedData) {
+    const { state } = JSON.parse(persistedData);
+    const savedMode = state?.mode;
+
+    if (savedMode) {
+      const root = document.documentElement;
+      root.classList.add(`${savedMode}-mode`);
+      root.setAttribute('data-disability', savedMode);
+
+      if (savedMode === 'tunanetra') {
+        root.style.fontSize = '125%';
+      } else if (savedMode === 'tunarungu') {
+        root.style.fontSize = '115%';
+      }
+    }
+  }
+} catch (e) {
+  console.error("Failed to reapply accessibility mode on boot", e);
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <App />
   </React.StrictMode>
-);
+)

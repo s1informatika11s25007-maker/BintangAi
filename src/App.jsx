@@ -1,500 +1,111 @@
-import React, { useState, useEffect } from 'react';
-import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { Heart, Loader2 } from 'lucide-react';
-import { useSambungJaga } from './hooks/core/useSambungJaga';
-import PublicHeader from './components/layout/PublicHeader';
-import Header from './components/layout/Header';
-import Sidebar from './components/layout/Sidebar';
-import Footer from './components/layout/Footer';
-import CommandCenter from './components/dashboard/CommandCenter';
-
-// Pre-Login Pages
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { InactivityLogout } from './features/auth';
+import { Subtitles, GlobalGestureCamera, BlindAIAssistant, AccessibilityProvider, useAccessibilityStore } from './features/accessibility';
+import { useAI } from './features/ai-tutor';
+import { useNotification } from './hooks/useNotification';
+import NotificationContainer from './components/feedback/NotificationContainer';
+import AppLayout from './components/layout/AppLayout';
 import LandingPage from './pages/auth/LandingPage';
-import LoginPage from './pages/auth/LoginPage';
-import RegisterPage from './pages/auth/RegisterPage';
+import Login from './pages/auth/LoginPage';
+import Register from './pages/auth/RegisterPage';
+import Profile from './pages/profile/index';
+import StudentDashboard from './pages/student/Dashboard';
+import StudentModules from './pages/student/Modules';
+import StudentPlayground from './pages/student/Playground';
+import StudentTanyaAI from './pages/student/TanyaAI';
+import StudentTasks from './pages/student/Tasks';
+import StudentLiveCaptions from './pages/student/LiveCaptions';
+import StudentTaskDetail from './pages/student/TaskDetail';
+import StudentQuiz from './pages/student/Quiz';
+import StudentCollaboration from './pages/student/Collaboration';
+import TeacherDashboard from './pages/teacher/Dashboard';
+import TeacherUploadModule from './pages/teacher/UploadModule';
+import TeacherCreateTask from './pages/teacher/CreateTask';
+import TeacherChat from './pages/teacher/Chat';
+import TeacherCollaboration from './pages/teacher/Collaboration';
+import ParentDashboard from './pages/parent/Dashboard';
+import ParentChat from './pages/parent/Chat';
 
-// Post-Login Pages
-import CaregiverMobilePage from './pages/caregiver/CaregiverMobilePage';
-import SupervisorDashboardPage from './pages/dashboard/SupervisorDashboardPage';
-import HandoverPage from './pages/handover/HandoverPage';
-import ExecutionTracePage from './pages/trace/ExecutionTracePage';
-import FamilyPortalPage from './pages/family/FamilyPortalPage';
-import SimulatorLabPage from './pages/simulator/SimulatorLabPage';
-import RuleLibraryPage from './pages/rule/RuleLibraryPage';
-import AuditTrailPage from './pages/audit/AuditTrailPage';
-import WorkforcePage from './pages/workforce/WorkforcePage';
-import AdminAgentHealthPage from './pages/admin/AdminAgentHealthPage';
-import AdminQueueMonitorPage from './pages/admin/AdminQueueMonitorPage';
-import AdminSecurityConfigPage from './pages/admin/AdminSecurityConfigPage';
-
-import ExecutionTraceModal from './components/trace/ExecutionTraceModal';
-import { supabase } from './supabase/client/client';
-import { getAuthenticatedAccount, signOutUser } from './services/auth/authService';
-
-const PAGE_TITLES = {
-  caregiver_pwa: 'Dashboard Perawatan',
-  supervisor_dashboard: 'Pusat Supervisor',
-  workforce: 'Manajemen Tim & Shift',
-  handover_contract: 'Serah Terima & Aktivitas',
-  execution_trace: 'Pelacakan Keputusan AI',
-  family_portal: 'Portal Perawatan Keluarga',
-  simulator_lab: 'Simulator & Analisis Lab',
-  rule_library: 'Perpustakaan Aturan',
-  audit_trail: 'Jejak Audit Keamanan [A]',
-  admin_agent_health: 'Monitor Kesehatan Agent',
-  admin_queue: 'Monitor Antrean Otomasi',
-  admin_security: 'Keamanan & Konfigurasi'
-};
-
-/**
- * Reusable Protected App Route Component with Strict Role Matrix Guards
- */
-function ProtectedAppRoute({ userRole, allowedRoles, fallbackPath, children }) {
-  if (!allowedRoles.includes(userRole)) {
-    return <Navigate to={fallbackPath} replace />;
-  }
-  return children;
-}
-
-export default function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isAuthChecking, setIsAuthChecking] = useState(true);
-
-  const navigate = useNavigate();
+function AppContent() {
+  const { reapplyMode } = useAccessibilityStore();
   const location = useLocation();
+  const { pingSupabase, pingAI } = useAI();
+  const { showToast } = useNotification();
 
-  const {
-    activeRole,
-    currentUser,
-    loginUserAccount,
-    logoutUserAccount,
-    residents,
-    staff,
-    obligations,
-    epistemicFacts,
-    notifications,
-    deleteNotification,
-    clearRoleNotifications,
-    auditTrail,
-    handoverContracts,
-    rules,
-    setRules,
-    spotChallenges,
-    isOffline,
-    setIsOffline,
-    offlineQueue,
-    syncOfflineLedger,
-    captureCareReport,
-    submitEvidenceAndClose,
-    approveAuthorityAction,
-    createObligation,
-    signHandoverContract,
-    createHandoverContract,
-    selectedTrace,
-    setSelectedTrace,
-    isLoading,
-    userAvatar,
-    setUserAvatar,
-    autopilotPlan,
-    runAutopilot
-  } = useSambungJaga();
-
-  // A browser-stored role is never treated as proof of identity. Restore only a real Supabase session.
+  // 🛡️ GLOBAL ALERT HIJACKING
+  // Memastikan tidak ada satupun 'alert()' browser yang muncul di seluruh project
   useEffect(() => {
-    let active = true;
-    const restoreSession = async () => {
-      try {
-        const { data, error } = await supabase.auth.getSession();
-        if (error) throw error;
-        if (!active) return;
-        if (data.session?.user) {
-          const account = await getAuthenticatedAccount(data.session.user);
-          if (active && account) {
-            loginUserAccount(account);
-            setIsLoggedIn(true);
-          } else if (active) {
-            await supabase.auth.signOut();
-            setIsLoggedIn(false);
-          }
-        } else if (active) {
-          setIsLoggedIn(false);
-          localStorage.removeItem('isLoggedIn');
-          localStorage.removeItem('currentUser');
-          localStorage.removeItem('activeRole');
-        }
-      } catch (error) {
-        console.warn('Session restoration failed:', error);
-        if (active) setIsLoggedIn(false);
-      } finally {
-        if (active) setIsAuthChecking(false);
-      }
+    window.alert = (message) => {
+      // Jika pesan mengandung kata berhasil, gunakan type success
+      const isSuccess = /berhasil|success|✅/i.test(message);
+      showToast(message, isSuccess ? 'success' : 'error');
+      console.log("Alert Hijacked:", message);
     };
-    restoreSession();
-    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_OUT' && active) {
-        logoutUserAccount();
-        setIsLoggedIn(false);
-      }
-    });
-    return () => {
-      active = false;
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
+  }, [showToast]);
 
-  // Global Loading State component for elegant data fetch
-  const GlobalLoader = () => (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center space-y-4">
-      <div className="relative flex items-center justify-center">
-        <Loader2 className="w-16 h-16 text-sky-200 animate-spin" />
-        <Heart className="w-6 h-6 text-sky-600 absolute animate-pulse" />
-      </div>
-      <div className="text-center space-y-1">
-        <h2 className="text-sky-800 font-black text-lg">SambungJaga</h2>
-        <p className="text-slate-500 font-semibold text-xs animate-pulse">Memuat Data Sistem Terverifikasi...</p>
-      </div>
-    </div>
-  );
+  useEffect(() => {
+    const publicPaths = ['/', '/auth/login', '/auth/register'];
+    const isPublic = publicPaths.includes(location.pathname);
+    reapplyMode(isPublic);
+  }, [location.pathname, reapplyMode]);
 
-  // Auth Handlers — only authenticated profiles can enter a role workspace.
-  const handleLoginSuccess = (_roleId, accountObj) => {
-    if (!accountObj?.id || !['caregiver', 'supervisor', 'family', 'admin_hr', 'platform_admin'].includes(accountObj?.role)) {
-      navigate('/login');
-      return;
-    }
-    loginUserAccount(accountObj);
-    setIsLoggedIn(true);
-    if (accountObj.role === 'caregiver') navigate('/app/caregiver_pwa');
-    else if (accountObj.role === 'family') navigate('/app/family_portal');
-    else if (accountObj.role === 'admin_hr') navigate('/app/workforce');
-    else if (accountObj.role === 'platform_admin') navigate('/app/admin_agent_health');
-    else if (accountObj.role === 'supervisor') navigate('/app/supervisor_dashboard');
-    else navigate('/login');
-  };
-
-  const handleLogout = async () => {
-    try { await signOutUser(); } catch (error) { console.warn('Sign out warning:', error); }
-    logoutUserAccount();
-    setIsLoggedIn(false);
-    navigate('/');
-  };
-
-  const defaultWorkspace = activeRole === 'caregiver'
-    ? 'caregiver_pwa'
-    : activeRole === 'family'
-      ? 'family_portal'
-      : activeRole === 'admin_hr'
-        ? 'workforce'
-        : activeRole === 'platform_admin'
-          ? 'admin_agent_health'
-          : 'supervisor_dashboard';
-  const defaultPath = `/app/${defaultWorkspace}`;
-
-  if (isAuthChecking) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-[#f5f8f6]">
-        <div className="relative grid h-16 w-16 place-items-center rounded-2xl bg-white shadow-lg shadow-emerald-950/5">
-          <Heart className="h-7 w-7 fill-emerald-700 text-emerald-700" />
-          <Loader2 className="absolute -inset-1 h-[72px] w-[72px] animate-spin text-emerald-300" />
-        </div>
-        <div className="text-center"><h1 className="font-extrabold tracking-tight text-slate-800">SambungJaga</h1><p className="mt-1 text-xs text-slate-500">Memeriksa sesi yang aman…</p></div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    pingSupabase();
+    pingAI();
+    const interval = setInterval(() => {
+      pingSupabase();
+      pingAI();
+    }, 4 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [pingSupabase, pingAI]);
 
   return (
-    <div className="min-h-screen bg-[#f5f8f6] text-slate-800 font-sans selection:bg-emerald-100 selection:text-emerald-950 w-full overflow-x-hidden">
-      <Routes>
-        {!isLoggedIn ? (
-          <>
-            <Route
-              path="/"
-              element={
-                <div className="min-h-screen flex flex-col justify-between w-full">
-                  <PublicHeader
-                    onGoToLanding={() => navigate('/')}
-                    onGoToLogin={() => navigate('/login')}
-                    onGoToRegister={() => navigate('/register')}
-                  />
-                  <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-6">
-                    <LandingPage
-                      onGoToLogin={() => navigate('/login')}
-                      onGoToRegister={() => navigate('/register')}
-                      onDirectDemoLogin={handleLoginSuccess}
-                    />
-                  </main>
-                  <Footer onGoToLanding={() => navigate('/')} />
-                </div>
-              }
-            />
-            <Route
-              path="/login"
-              element={
-                <LoginPage
-                  onLoginSuccess={handleLoginSuccess}
-                  onGoToRegister={() => navigate('/register')}
-                  onGoToLanding={() => navigate('/')}
-                />
-              }
-            />
-            <Route
-              path="/register"
-              element={
-                <RegisterPage
-                  onRegisterSuccess={handleLoginSuccess}
-                  onGoToLogin={() => navigate('/login')}
-                  onGoToLanding={() => navigate('/')}
-                />
-              }
-            />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </>
-        ) : isLoading ? (
-          <Route path="*" element={<GlobalLoader />} />
-        ) : (
-          <Route
-            path="/app/*"
-            element={
-              <div className="flex flex-col md:flex-row min-h-screen w-full overflow-x-hidden">
-                <Sidebar
-                  activeTab={location.pathname.replace('/app/', '') || defaultWorkspace}
-                  setActiveTab={(tab) => navigate(`/app/${tab}`)}
-                  activeRole={activeRole}
-                  currentUser={currentUser}
-                  obligations={obligations}
-                  isOffline={isOffline}
-                  setIsOffline={setIsOffline}
-                  offlineQueue={offlineQueue}
-                  syncOfflineLedger={syncOfflineLedger}
-                  onLogout={handleLogout}
-                />
-                <div className="flex-1 flex flex-col justify-between min-w-0 w-full overflow-x-hidden">
-                  <Header
-                    activeRole={activeRole}
-                    currentUser={currentUser}
-                    notifications={notifications}
-                    onDeleteNotification={deleteNotification}
-                    onClearRoleNotifications={clearRoleNotifications}
-                    userAvatar={userAvatar}
-                    setUserAvatar={setUserAvatar}
-                    onLogout={handleLogout}
-                    title={PAGE_TITLES[location.pathname.replace('/app/', '')] || 'Ruang Kerja'}
-                  />
-                  <main className="sj-app-main">
-                    {location.pathname.replace('/app/', '') === 'supervisor_dashboard' && activeRole === 'supervisor' && (
-                      <CommandCenter
-                        activeRole={activeRole}
-                        currentUser={currentUser}
-                        obligations={obligations}
-                        residents={residents}
-                        autopilotPlan={autopilotPlan}
-                        onRunAutopilot={runAutopilot}
-                        onCommand={(text) => captureCareReport({
-                          text,
-                          sourceType: 'text',
-                          residentId: 'auto',
-                          actorName: currentUser?.name || currentUser?.full_name || activeRole
-                        })}
-                      />
-                    )}
-                    <Routes>
-                      <Route index element={<Navigate to={defaultPath} replace />} />
-
-                      {/* Caregiver Workspace: caregiver and supervisor oversight only */}
-                      <Route
-                        path="caregiver_pwa"
-                        element={
-                          <ProtectedAppRoute allowedRoles={['caregiver', 'supervisor']} fallbackPath={defaultPath} userRole={activeRole}>
-                            <CaregiverMobilePage
-                              residents={residents}
-                              obligations={obligations}
-                              onCaptureSubmit={captureCareReport}
-                              onSubmitEvidence={submitEvidenceAndClose}
-                              onOpenTraceModal={setSelectedTrace}
-                              isOffline={isOffline}
-                              offlineQueue={offlineQueue}
-                              currentUser={currentUser}
-                            />
-                          </ProtectedAppRoute>
-                        }
-                      />
-
-                      {/* Workforce Workspace: supervisor and HR */}
-                      <Route
-                        path="workforce"
-                        element={
-                          <ProtectedAppRoute allowedRoles={['supervisor', 'admin_hr']} fallbackPath={defaultPath} userRole={activeRole}>
-                            <WorkforcePage
-                              staff={staff}
-                              residents={residents}
-                              obligations={obligations}
-                              userRole={activeRole}
-                              currentUser={currentUser}
-                            />
-                          </ProtectedAppRoute>
-                        }
-                      />
-
-                      {/* Supervisor Command Center: supervisor only */}
-                      <Route
-                        path="supervisor_dashboard"
-                        element={
-                          <ProtectedAppRoute allowedRoles={['supervisor']} fallbackPath={defaultPath} userRole={activeRole}>
-                            <SupervisorDashboardPage
-                              obligations={obligations}
-                              epistemicFacts={epistemicFacts}
-                              residents={residents}
-                              staff={staff}
-                              currentUser={currentUser}
-                              spotChallenges={spotChallenges}
-                              onSubmitEvidence={submitEvidenceAndClose}
-                              onApproveAction={approveAuthorityAction}
-                              onCreateObligation={createObligation}
-                              onOpenTraceModal={setSelectedTrace}
-                              setActiveTab={(tab) => navigate(`/app/${tab}`)}
-                              onRunAutopilot={runAutopilot}
-                              autopilotPlan={autopilotPlan}
-                            />
-                          </ProtectedAppRoute>
-                        }
-                      />
-
-                      {/* Handover Contract: caregiver and supervisor only */}
-                      <Route
-                        path="handover_contract"
-                        element={
-                          <ProtectedAppRoute allowedRoles={['caregiver', 'supervisor']} fallbackPath={defaultPath} userRole={activeRole}>
-                            <HandoverPage
-                              handoverContracts={handoverContracts}
-                              onSignContract={signHandoverContract}
-                              onCreateContract={createHandoverContract}
-                              currentUserRole={activeRole}
-                              currentUser={currentUser}
-                              staff={staff}
-                              obligations={obligations}
-                              residents={residents}
-                            />
-                          </ProtectedAppRoute>
-                        }
-                      />
-
-                      {/* Execution Trace: Accessible by caregiver, supervisor, admin_hr */}
-                      <Route
-                        path="execution_trace"
-                        element={
-                          <ProtectedAppRoute allowedRoles={['caregiver', 'supervisor']} fallbackPath={defaultPath} userRole={activeRole}>
-                            <ExecutionTracePage
-                              obligations={obligations}
-                              onOpenTraceModal={setSelectedTrace}
-                            />
-                          </ProtectedAppRoute>
-                        }
-                      />
-
-                      {/* Family Portal: family member and authorized supervisor only */}
-                      <Route
-                        path="family_portal"
-                        element={
-                          <ProtectedAppRoute allowedRoles={['family', 'supervisor']} fallbackPath={defaultPath} userRole={activeRole}>
-                            <FamilyPortalPage
-                              currentUser={currentUser}
-                              residents={residents}
-                              obligations={obligations}
-                              epistemicFacts={epistemicFacts}
-                            />
-                          </ProtectedAppRoute>
-                        }
-                      />
-
-                      {/* Simulator Lab: supervisor-only internal tool */}
-                      <Route
-                        path="simulator_lab"
-                        element={
-                          <ProtectedAppRoute allowedRoles={['supervisor']} fallbackPath={defaultPath} userRole={activeRole}>
-                            <SimulatorLabPage staff={staff} obligations={obligations} />
-                          </ProtectedAppRoute>
-                        }
-                      />
-
-                      {/* Rule Library: supervisor policy authority only */}
-                      <Route
-                        path="rule_library"
-                        element={
-                          <ProtectedAppRoute allowedRoles={['supervisor']} fallbackPath={defaultPath} userRole={activeRole}>
-                            <RuleLibraryPage
-                              rules={rules}
-                              setRules={setRules}
-                              activeRole={activeRole}
-                              currentUser={currentUser}
-                              obligations={obligations}
-                              epistemicFacts={epistemicFacts}
-                            />
-                          </ProtectedAppRoute>
-                        }
-                      />
-
-                      {/* Audit Trail: supervisor decisions and platform security audit */}
-                      <Route
-                        path="audit_trail"
-                        element={
-                          <ProtectedAppRoute allowedRoles={['supervisor']} fallbackPath={defaultPath} userRole={activeRole}>
-                            <AuditTrailPage auditTrail={auditTrail} />
-                          </ProtectedAppRoute>
-                        }
-                      />
-
-                      {/* Platform administration: separate platform_admin role only */}
-                      <Route
-                        path="admin_agent_health"
-                        element={
-                          <ProtectedAppRoute allowedRoles={['platform_admin']} fallbackPath={defaultPath} userRole={activeRole}>
-                            <AdminAgentHealthPage />
-                          </ProtectedAppRoute>
-                        }
-                      />
-                      <Route
-                        path="admin_queue"
-                        element={
-                          <ProtectedAppRoute allowedRoles={['platform_admin']} fallbackPath={defaultPath} userRole={activeRole}>
-                            <AdminQueueMonitorPage />
-                          </ProtectedAppRoute>
-                        }
-                      />
-                      <Route
-                        path="admin_security"
-                        element={
-                          <ProtectedAppRoute allowedRoles={['platform_admin']} fallbackPath={defaultPath} userRole={activeRole}>
-                            <AdminSecurityConfigPage />
-                          </ProtectedAppRoute>
-                        }
-                      />
-
-                      <Route
-                        path="*"
-                        element={<Navigate to={defaultPath} replace />}
-                      />
-                    </Routes>
-                  </main>
-                  <Footer compact onGoToLanding={handleLogout} />
-                </div>
-              </div>
-            }
-          />
-        )}
-        <Route
-          path="*"
-          element={<Navigate to={isLoggedIn ? defaultPath : '/'} replace />}
-        />
-      </Routes>
-
-      {/* Trace Modal Global */}
-      {selectedTrace && (
-        <ExecutionTraceModal
-          isOpen={!!selectedTrace}
-          onClose={() => setSelectedTrace(null)}
-          obligation={selectedTrace}
-        />
-      )}
-    </div>
+    <AccessibilityProvider>
+      <NotificationContainer />
+      <Subtitles />
+      <BlindAIAssistant />
+      <GlobalGestureCamera />
+      <AppLayout>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/auth" element={<Navigate to="/auth/login" replace />} />
+          <Route path="/auth/login" element={<Login />} />
+          <Route path="/auth/register" element={<Register />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/student/dashboard" element={<StudentDashboard />} />
+          <Route path="/student/live-captions" element={<StudentLiveCaptions />} />
+          <Route path="/student/modules" element={<StudentModules />} />
+          <Route path="/student/playground" element={<StudentPlayground />} />
+          <Route path="/student/tanya-ai" element={<StudentTanyaAI />} />
+          <Route path="/student/tasks" element={<StudentTasks />} />
+          <Route path="/student/task/:id" element={<StudentTaskDetail />} />
+          <Route path="/student/quiz/:id" element={<StudentQuiz />} />
+          <Route path="/student/collaboration" element={<StudentCollaboration />} />
+          <Route path="/student/collaboration/:groupId" element={<StudentCollaboration />} />
+          <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
+          <Route path="/teacher/upload" element={<TeacherUploadModule />} />
+          <Route path="/teacher/create-task" element={<TeacherCreateTask />} />
+          <Route path="/teacher/chat" element={<TeacherChat />} />
+          <Route path="/teacher/collaboration" element={<TeacherCollaboration />} />
+          <Route path="/teacher/collaboration/:groupId" element={<TeacherCollaboration />} />
+          <Route path="/parent/dashboard" element={<ParentDashboard />} />
+          <Route path="/parent/chat" element={<ParentChat />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AppLayout>
+    </AccessibilityProvider>
   );
 }
+
+function App() {
+  return (
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <InactivityLogout>
+        <AppContent />
+      </InactivityLogout>
+    </BrowserRouter>
+  );
+}
+
+export default App;
