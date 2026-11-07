@@ -59,13 +59,38 @@ export const useAuthStore = create(
         set({ loading: true });
 
         try {
-          const { data: profileData, error: profileError } = await supabase
+          let { data: profileData } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', userId)
-            .single();
+            .maybeSingle();
 
-          if (profileError) throw profileError;
+          // Jika profil belum ada di database, buat profil otomatis dari user metadata
+          if (!profileData) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user && user.id === userId) {
+              const meta = user.user_metadata || {};
+              const defaultProfile = {
+                id: userId,
+                email: user.email,
+                full_name: meta.full_name || user.email?.split('@')[0] || 'User',
+                role: meta.role || 'siswa',
+                disability_type: meta.disability_type || 'tidak_ada',
+                slb_name: meta.slb_name || null,
+                class_level: meta.class_level || null,
+                class_code: meta.class_code || null,
+                xp: 0
+              };
+
+              const { data: createdProfile } = await supabase
+                .from('profiles')
+                .upsert(defaultProfile)
+                .select()
+                .maybeSingle();
+
+              profileData = createdProfile || defaultProfile;
+            }
+          }
 
           if (profileData) {
             // Jalankan subscription realtime setelah profile ditemukan
