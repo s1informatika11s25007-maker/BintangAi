@@ -294,12 +294,32 @@ export const useAI = () => {
     }
   };
 
+  const generateAndSaveReport = async (studentId) => {
+    setLoading(true);
+    try {
+      const apiKey = import.meta.env.VITE_CUSTOM_AI_TUTOR_KEY || "christian";
+      const { data, error: invokeError } = await supabase.functions.invoke('generate-report', {
+        body: { student_id: studentId },
+        headers: { 'x-api-key': apiKey }
+      });
+
+      if (invokeError) throw invokeError;
+      return { success: true, report: data.report, content: data.content };
+    } catch (err) {
+      console.error("Generate Report Error:", err);
+      return { success: false, error: err.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     askTutor,
     askNay,
     smartVoiceAssistant,
     askMateriAI,
     generateAIQuiz,
+    generateAndSaveReport,
     transcribeAudio,
     getAudioGuide,
     getWeakTopics,
