@@ -80,7 +80,7 @@
   </g>
 
   <!-- Title Header inside Graphic -->
-  <text x="450" y="38" font-family="system-ui, sans-serif" font-weight="900" font-size="16" fill="#38bdf8" text-anchor="middle" letter-spacing="1">CARA KERJA SAMBUNGJAGA AI — ASISTEN PINTAR PERAWATAN LANSIA</text>
+  <text x="450" y="38" font-family="system-ui, sans-serif" font-weight="900" font-size="16" fill="#38bdf8" text-anchor="middle" letter-spacing="1">CARA KERJA BINTANGAI — PEMBELAJARAN INKLUSIF</text>
   <text x="450" y="56" font-family="system-ui, sans-serif" font-size="11" fill="#94a3b8" text-anchor="middle">Menghubungkan Laporan, Tugas, Bukti, dan Serah Terima Shift dalam Satu Alur Mudah</text>
 
   <!-- Floating Hologram Light Halo behind Robot -->
@@ -173,5 +173,5 @@
 
   <!-- Bottom Message Bar -->
   <rect x="180" y="405" width="540" height="38" rx="12" fill="#090d16" stroke="#1e293b" stroke-width="1"/>
-  <text x="450" y="429" font-family="system-ui, sans-serif" font-size="11" fill="#e2e8f0" text-anchor="middle">✨ <tspan font-weight="800" fill="#38bdf8">SambungJaga AI</tspan>: Perawatan lansia lebih tenang, terorganisir, dan terpercaya.</text>
+  <text x="450" y="429" font-family="system-ui, sans-serif" font-size="11" fill="#e2e8f0" text-anchor="middle">✨ <tspan font-weight="800" fill="#38bdf8">BINTANGAI — PEMBELAJARAN INKLUSIF</tspan>: Asisten Pembelajaran Inklusif lebih tenang, terorganisir, dan terpercaya.</text>
 </svg>

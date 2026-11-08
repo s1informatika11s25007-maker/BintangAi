@@ -1,179 +1,88 @@
-import { supabase } from '../../../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../../../lib/supabase';
 
-// Memory per session
 let userSelectedLanguage = null;
 let userDialectLevel = 'ringan';
 let languageConfirmed = false;
 
-/**
- * Reset memory
- */
 export const resetTutorMemory = () => {
   userSelectedLanguage = null;
   userDialectLevel = 'ringan';
   languageConfirmed = false;
 };
 
-/**
- * Load preferences dari database
- */
 export const loadUserPreferences = async (userId) => {
-  try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('preferred_language, dialect_level, use_local_analogies')
-      .eq('id', userId)
-      .single();
-
-    if (error) throw error;
-
-    const prefs = {
-      language: data?.preferred_language || 'auto',
-      dialect_level: data?.dialect_level || 'ringan',
-      analogi_lokal: data?.use_local_analogies !== false,
-    };
-
-    // Update memory
-    if (prefs.language !== 'auto') userSelectedLanguage = prefs.language;
-    userDialectLevel = prefs.dialect_level;
-
-    return prefs;
-  } catch {
-    return { language: 'auto', dialect_level: 'ringan', analogi_lokal: true };
-  }
+  if (!isSupabaseConfigured || !userId) return { language: 'auto', dialect_level: 'ringan', analogi_lokal: true };
+  const { data, error } = await supabase.from('profiles')
+    .select('preferred_language, dialect_level, use_local_analogies')
+    .eq('id', userId).maybeSingle();
+  if (error || !data) return { language: 'auto', dialect_level: 'ringan', analogi_lokal: true };
+  const prefs = {
+    language: data.preferred_language || 'auto',
+    dialect_level: data.dialect_level || 'ringan',
+    analogi_lokal: data.use_local_analogies !== false,
+  };
+  if (prefs.language !== 'auto') userSelectedLanguage = prefs.language;
+  userDialectLevel = prefs.dialect_level;
+  return prefs;
 };
 
-/**
- * Save preferences ke database
- */
-export const saveUserPreferences = async (userId, preferences) => {
-  try {
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        preferred_language: preferences.language === 'auto' ? null : preferences.language,
-        dialect_level: preferences.dialect_level,
-        use_local_analogies: preferences.analogi_lokal,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', userId);
-
-    if (error) throw error;
-
-    if (preferences.language !== 'auto') userSelectedLanguage = preferences.language;
-    userDialectLevel = preferences.dialect_level;
-    languageConfirmed = true;
-
-    return true;
-  } catch (err) {
-    console.error('Gagal menyimpan preferensi:', err);
-    return false;
-  }
+export const saveUserPreferences = async (userId, preferences = {}) => {
+  if (!isSupabaseConfigured || !userId) return false;
+  const allowedDialects = ['ringan', 'sedang', 'penuh'];
+  const dialect = allowedDialects.includes(preferences.dialect_level) ? preferences.dialect_level : 'ringan';
+  const { error } = await supabase.from('profiles').update({
+    preferred_language: preferences.language === 'auto' ? null : String(preferences.language || '').slice(0, 40),
+    dialect_level: dialect,
+    use_local_analogies: preferences.analogi_lokal !== false,
+    updated_at: new Date().toISOString(),
+  }).eq('id', userId);
+  if (error) return false;
+  userSelectedLanguage = preferences.language === 'auto' ? null : preferences.language;
+  userDialectLevel = dialect;
+  languageConfirmed = true;
+  return true;
 };
 
-/**
- * Chat dengan Kak BintangAi - SMART with Dialect Level
- */
-export const askTutorApi = async (
-  query,
-  studentId,
-  chatHistory = [],
-  manualPrefs = {}
-) => {
+export const askTutorApi = async (query, studentId, chatHistory = [], manualPrefs = {}) => {
+  const message = String(query || '').trim();
+  if (!message) throw new Error('Pertanyaan belum diisi.');
+  if (!isSupabaseConfigured) throw new Error('Supabase BintangAi belum dikonfigurasi.');
 
-  // Cek user request ganti bahasa
-  const translateMatch = query.match(/terjemahkan (ke|dalam) (bahasa )?(batak|jawa|sunda|karo|indonesia|inggris)/i);
-  let requestedLanguage = null;
-
+  const translateMatch = message.match(/terjemahkan (ke|dalam) (bahasa )?(batak|jawa|sunda|karo|indonesia|inggris)/i);
   if (translateMatch) {
-    const langMap = {
-      'batak': 'batak', 'jawa': 'jawa', 'sunda': 'sunda',
-      'karo': 'karo', 'indonesia': 'indonesia', 'inggris': 'english'
-    };
-    requestedLanguage = langMap[translateMatch[3]?.toLowerCase()];
-    if (requestedLanguage) {
-      userSelectedLanguage = requestedLanguage;
-      languageConfirmed = true;
-      await saveUserPreferences(studentId, {
-        language: requestedLanguage,
-        dialect_level: userDialectLevel,
-        analogi_lokal: true
-      });
-    }
+    const lang = translateMatch[3]?.toLowerCase();
+    userSelectedLanguage = lang === 'inggris' ? 'english' : lang;
+    await saveUserPreferences(studentId, { language: userSelectedLanguage, dialect_level: userDialectLevel, analogi_lokal: true });
   }
-
-  // Cek user request ganti tingkat dialek
-  const dialectMatch = query.match(/dialek (ringan|sedang|penuh)/i);
+  const dialectMatch = message.match(/dialek (ringan|sedang|penuh)/i);
   if (dialectMatch) {
-    const newLevel = dialectMatch[1].toLowerCase();
-    if (['ringan', 'sedang', 'penuh'].includes(newLevel)) {
-      userDialectLevel = newLevel;
-      await saveUserPreferences(studentId, {
-        language: userSelectedLanguage || 'auto',
-        dialect_level: newLevel,
-        analogi_lokal: true
-      });
-    }
+    userDialectLevel = dialectMatch[1].toLowerCase();
+    await saveUserPreferences(studentId, { language: userSelectedLanguage || 'auto', dialect_level: userDialectLevel, analogi_lokal: true });
   }
 
-  // Tentukan bahasa
-  let languageToUse = manualPrefs?.language || userSelectedLanguage || 'auto';
-  const isFirstMessage = chatHistory.length === 0;
-
-  if (isFirstMessage && !languageConfirmed && languageToUse === 'auto') {
-    // Biarkan backend auto-detect
-  }
-
-  const finalDialectLevel = manualPrefs?.dialect_level || userDialectLevel;
-
-  const apiKey = import.meta.env.VITE_CUSTOM_AI_TUTOR_KEY;
-
-  const { data: profileData } = await supabase
-    .from('profiles')
-    .select('full_name')
-    .eq('id', studentId)
-    .single();
-
-  const nama = profileData?.full_name?.split(' ')[0] || "Teman";
-
-  const { data, error } = await supabase.functions.invoke('ai-tutor', {
-    body: {
-      message: query,
-      student_id: studentId,
-      nama: nama,
-      kelas: 4,
-      language: languageToUse,
-      dialect_level: finalDialectLevel,
-      is_first_message: isFirstMessage && !languageConfirmed,
-      language_confirmed: languageConfirmed,
-    },
-    headers: { 'x-api-key': apiKey || 'christian' }
-  });
-
+  const { data: profile } = await supabase.from('profiles').select('full_name, class_level')
+    .eq('id', studentId).maybeSingle();
+  const { data, error } = await supabase.functions.invoke('ai-tutor', { body: {
+    task: 'tutor', message, student_id: studentId || null,
+    history: Array.isArray(chatHistory) ? chatHistory.slice(-10) : [],
+    language: manualPrefs.language || userSelectedLanguage || 'auto',
+    dialect_level: manualPrefs.dialect_level || userDialectLevel,
+    language_confirmed: languageConfirmed,
+    student_name: profile?.full_name || null,
+    class_level: profile?.class_level || null,
+  } });
   if (error) throw error;
-
-  // Update memory
-  if (data.language_used && data.language_used !== 'auto' && !userSelectedLanguage) {
-    userSelectedLanguage = data.language_used;
-    languageConfirmed = true;
-  }
-  if (data.dialect_level_used) {
-    userDialectLevel = data.dialect_level_used;
-  }
-
-  const newHistory = [
-    ...chatHistory,
-    { role: 'user', content: query },
-    { role: 'assistant', content: data.reply }
-  ];
-
+  if (!data?.success) throw new Error(data?.error || 'Tutor belum dapat menjawab.');
+  if (data.language_used && data.language_used !== 'auto' && !userSelectedLanguage) userSelectedLanguage = data.language_used;
+  if (data.dialect_level_used) userDialectLevel = data.dialect_level_used;
+  const reply = data.reply || '';
   return {
-    response: data.reply,
-    newHistory,
-    languageUsed: data.language_used || languageToUse,
-    dialectUsed: data.dialect_level_used || finalDialectLevel
+    response: reply,
+    answer: reply,
+    newHistory: [...chatHistory, { role: 'user', content: message }, { role: 'assistant', content: reply }],
+    languageUsed: data.language_used || manualPrefs.language || userSelectedLanguage || 'auto',
+    dialectUsed: data.dialect_level_used || userDialectLevel,
   };
 };
 
-// Alias for compatibility if needed
 export const askTutorSmart = askTutorApi;

@@ -1,16 +1,19 @@
 {
-  "short_name": "SambungJaga",
-  "name": "SambungJaga AI — Care Continuity Superagent",
+  "short_name": "BintangAi",
+  "name": "BintangAi \u2014 Pembelajaran Inklusif",
+  "description": "Platform belajar inklusif untuk siswa SD kelas 1\u20136, guru, dan orang tua.",
   "icons": [
     {
       "src": "favicon.svg",
       "type": "image/svg+xml",
-      "sizes": "192x192 512x512"
+      "sizes": "any",
+      "purpose": "any maskable"
     }
   ],
   "start_url": "/",
-  "background_color": "#0f172a",
-  "theme_color": "#2a6f64",
+  "scope": "/",
+  "background_color": "#ffffff",
+  "theme_color": "#4F46E5",
   "display": "standalone",
-  "orientation": "portrait-primary"
+  "orientation": "any"
 }

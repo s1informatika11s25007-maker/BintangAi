@@ -120,11 +120,11 @@ const TeacherUploadModule = () => {
       const fileName = `${profile.id}-${Date.now()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage
         .from('modules')
-        .upload(`public/${fileName}`, file);
+        .upload(`${profile.id}/${fileName}`, file);
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage.from('modules').getPublicUrl(`public/${fileName}`);
+      const { data: { publicUrl } } = supabase.storage.from('modules').getPublicUrl(`${profile.id}/${fileName}`);
 
       const tagArray = tags.split(',').map(t => t.trim().toLowerCase()).filter(t => t !== '');
 
@@ -133,6 +133,9 @@ const TeacherUploadModule = () => {
         pdf_url: publicUrl,
         content: extractedText,
         teacher_id: profile.id,
+        created_by: profile.id,
+        class_code: profile.class_code || null,
+        class_level: profile.class_level || null,
         is_public: isPublic,
         tags: tagArray,
         target_students: selectedStudents.length > 0 ? selectedStudents : [],

@@ -88,7 +88,7 @@
   <rect width="100%" height="100%" fill="url(#bgGrad)"/>
 
   <!-- Title Header inside Graphic -->
-  <text x="460" y="35" font-family="system-ui, sans-serif" font-weight="900" font-size="18" fill="#38bdf8" text-anchor="middle" letter-spacing="1">SAMBUNGJAGA AI — 10-LAYER DATA PROCESSING PIPELINE</text>
+  <text x="460" y="35" font-family="system-ui, sans-serif" font-weight="900" font-size="18" fill="#38bdf8" text-anchor="middle" letter-spacing="1">BINTANGAI — PEMBELAJARAN INKLUSIF</text>
   <text x="460" y="55" font-family="system-ui, sans-serif" font-size="11" fill="#94a3b8" text-anchor="middle">Arsitektur Pemrosesan Data Berkelanjutan Berbasis Obligation Kernel (P1-P6)</text>
 
   <!-- 3D Stack Layer Container -->

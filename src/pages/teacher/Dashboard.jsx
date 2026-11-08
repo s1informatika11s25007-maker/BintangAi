@@ -35,6 +35,12 @@ const TeacherDashboard = () => {
   const [subLoading, setSubLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(null);
   const [xpModal, setXpModal] = useState({ show: false, student: null, amount: 10 });
+  const [reviewSubmission, setReviewSubmission] = useState(null);
+  const [reviewAnswers, setReviewAnswers] = useState([]);
+  const [reviewScores, setReviewScores] = useState({});
+  const [reviewFeedback, setReviewFeedback] = useState({});
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [savingReview, setSavingReview] = useState(false);
   const [toast, setToast] = useState(null);
 
   // Monitoring & Report State
@@ -111,14 +117,13 @@ const TeacherDashboard = () => {
   const fetchStats = async () => {
     setLoading(true);
     try {
-      const classCode = profile?.class_code || 'DEMO01';
+      const classCode = profile?.class_code || null;
       const teacherId = profile?.id;
 
-      const { data: classStudents, count: siswaCount } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact' })
-        .eq('role', 'siswa')
-        .eq('class_code', classCode);
+      let studentsQuery = supabase.from('profiles').select('*', { count: 'exact' }).eq('role', 'siswa');
+      if (classCode) studentsQuery = studentsQuery.eq('class_code', classCode);
+      else studentsQuery = studentsQuery.eq('class_code', '__NO_CLASS_ASSIGNED__');
+      const { data: classStudents, count: siswaCount } = await studentsQuery;
 
       const today = new Date().toISOString().split('T')[0];
       const activeToday = classStudents?.filter(s => {
@@ -130,32 +135,31 @@ const TeacherDashboard = () => {
       threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
       const inactive3Days = classStudents?.filter(s => !s.last_active || new Date(s.last_active) < threeDaysAgo).length || 0;
 
-      const { count: modulCount } = await supabase
-        .from('modules')
-        .select('*', { count: 'exact', head: true })
-        .or(`created_by.eq.${teacherId},class_code.eq.${classCode}`);
+      let modulesQuery = supabase.from('modules').select('*', { count: 'exact', head: true }).eq('created_by', teacherId);
+      if (classCode) modulesQuery = supabase.from('modules').select('*', { count: 'exact', head: true }).or(`created_by.eq.${teacherId},class_code.eq.${classCode}`);
+      const { count: modulCount } = await modulesQuery;
 
       const { data: subs, error: subsError } = await supabase
         .from('submissions')
-        .select('*, profiles!inner(id, full_name, xp, class_code), assignments!inner(id, title, class_code, created_by)')
-        .eq('profiles.class_code', classCode)
+        .select('*, profiles!inner(id, full_name, xp, class_code), assignments!inner(id, title, class_code, created_by, teacher_id)')
         .order('submitted_at', { ascending: false });
+      const scopedSubs = classCode ? (subs || []).filter((row) => row.profiles?.class_code === classCode) : (subs || []).filter((row) => row.assignments?.created_by === teacherId);
 
       if (subsError) console.error("subsError:", subsError);
 
-      const totalScore = subs?.reduce((acc, curr) => acc + Number(curr.score || curr.total_score || 0), 0) || 0;
-      const avg = subs?.length > 0 ? (totalScore / subs.length).toFixed(1) : 0;
+      const totalScore = scopedSubs.reduce((acc, curr) => acc + Number(curr.score ?? curr.total_score ?? 0), 0);
+      const avg = scopedSubs.length > 0 ? (totalScore / scopedSubs.length).toFixed(1) : 0;
 
       setStats({
         totalSiswa: siswaCount || 0,
         totalModul: modulCount || 0,
-        tugasPending: subs?.filter(s => s.status !== 'graded').length || 0,
+        tugasPending: scopedSubs.filter(s => s.status !== 'graded').length,
         avgScore: avg,
-        activeToday: activeToday || siswaCount || 0,
+        activeToday,
         inactive3Days
       });
 
-      setRecentSubmissions(subs?.slice(0, 5) || []);
+      setRecentSubmissions(scopedSubs.slice(0, 5));
     } catch (error) {
       console.error("Error fetching stats:", error);
     } finally {
@@ -165,21 +169,16 @@ const TeacherDashboard = () => {
 
   const fetchStudents = async () => {
     try {
-      const classCode = profile?.class_code || 'DEMO01';
-      const { data, error } = await supabase
-        .from('profiles')
-        .select(`
-          *,
-          submissions(id, score, submitted_at, assignment_id)
-        `)
-        .eq('role', 'siswa')
-        .eq('class_code', classCode);
+      const classCode = profile?.class_code || null;
+      let query = supabase.from('profiles').select('*, submissions(id, score, submitted_at, assignment_id)').eq('role', 'siswa');
+      query = classCode ? query.eq('class_code', classCode) : query.eq('class_code', '__NO_CLASS_ASSIGNED__');
+      const { data, error } = await query;
 
       if (error) throw error;
 
       const processedStudents = data.map(s => {
         const completed = s.submissions?.length || 0;
-        const isRecentlyActive = !s.last_active || new Date(s.last_active) >= new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const isRecentlyActive = Boolean(s.last_active) && new Date(s.last_active) >= new Date(Date.now() - 24 * 60 * 60 * 1000);
         const status = isRecentlyActive ? 'aktif' : 'tidak aktif';
         return { ...s, completed, status };
       });
@@ -226,25 +225,21 @@ const TeacherDashboard = () => {
   };
 
   const fetchMyModules = async () => {
-    const classCode = profile?.class_code || 'DEMO01';
+    const classCode = profile?.class_code || null;
     const teacherId = profile?.id;
-    const { data, error } = await supabase
-      .from('modules')
-      .select('*')
-      .or(`created_by.eq.${teacherId},class_code.eq.${classCode}`)
-      .order('created_at', { ascending: false });
+    let query = supabase.from('modules').select('*');
+    query = classCode ? query.or(`created_by.eq.${teacherId},class_code.eq.${classCode}`) : query.eq('created_by', teacherId);
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (!error) setMyModules(data);
   };
 
   const fetchMyAssignments = async () => {
-    const classCode = profile?.class_code || 'DEMO01';
+    const classCode = profile?.class_code || null;
     const teacherId = profile?.id;
-    const { data, error } = await supabase
-      .from('assignments')
-      .select('*, assignment_questions(count)')
-      .or(`created_by.eq.${teacherId},class_code.eq.${classCode}`)
-      .order('created_at', { ascending: false });
+    let query = supabase.from('assignments').select('*, assignment_questions(count)');
+    query = classCode ? query.or(`created_by.eq.${teacherId},class_code.eq.${classCode}`) : query.eq('created_by', teacherId);
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (!error) setMyAssignments(data);
   };
@@ -256,7 +251,7 @@ const TeacherDashboard = () => {
     try {
       const { data, error } = await supabase
         .from('submissions')
-        .select('*, profiles(id, full_name, xp), submission_answers(id, is_correct, points_earned)')
+        .select('*, profiles(id, full_name, xp), submission_answers(id, is_correct, points_earned, answer_text, teacher_feedback)')
         .eq('assignment_id', assignment.id)
         .order('submitted_at', { ascending: false });
 
@@ -267,6 +262,76 @@ const TeacherDashboard = () => {
       showToast(err.message, 'error');
     } finally {
       setSubLoading(false);
+    }
+  };
+
+  const handleOpenEssayReview = async (submission) => {
+    setReviewLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('submission_answers')
+        .select('id, answer_text, points_earned, is_correct, teacher_feedback, assignment_questions!inner(id, question_text, question_type, points, rubric_text)')
+        .eq('submission_id', submission.id);
+      if (error) throw error;
+      const essayAnswers = (data || []).filter((answer) => answer.assignment_questions?.question_type === 'esai');
+      setReviewAnswers(essayAnswers);
+      setReviewScores(Object.fromEntries(essayAnswers.map((answer) => [answer.id, Number(answer.points_earned || 0)])));
+      setReviewFeedback(Object.fromEntries(essayAnswers.map((answer) => [answer.id, answer.teacher_feedback || ''])));
+      setReviewSubmission(submission);
+      if (essayAnswers.length === 0) showToast('Tidak ada jawaban esai untuk ditinjau.', 'error');
+    } catch (error) {
+      showToast(`Gagal membuka jawaban: ${error.message}`, 'error');
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
+  const handleSaveEssayReview = async () => {
+    if (!reviewSubmission || reviewAnswers.length === 0 || savingReview) return;
+    setSavingReview(true);
+    try {
+      // Read every answer so the final score includes both auto-graded and teacher-graded items.
+      const { data: allAnswers, error: readError } = await supabase
+        .from('submission_answers')
+        .select('id, points_earned, assignment_questions!inner(question_type, points)')
+        .eq('submission_id', reviewSubmission.id);
+      if (readError) throw readError;
+
+      for (const answer of reviewAnswers) {
+        const maxPoints = Number(answer.assignment_questions?.points || 0);
+        const score = Number(reviewScores[answer.id] ?? 0);
+        if (!Number.isFinite(score) || score < 0 || score > maxPoints) {
+          throw new Error(`Nilai harus berada antara 0 dan ${maxPoints} untuk setiap jawaban esai.`);
+        }
+        const { error } = await supabase.from('submission_answers').update({
+          points_earned: score,
+          is_correct: maxPoints > 0 && score >= maxPoints,
+          teacher_feedback: String(reviewFeedback[answer.id] || '').trim().slice(0, 2000) || null,
+        }).eq('id', answer.id);
+        if (error) throw error;
+      }
+
+      const essayScores = new Map(reviewAnswers.map((answer) => [answer.id, Number(reviewScores[answer.id] ?? 0)]));
+      const finalPoints = (allAnswers || []).reduce((total, answer) => {
+        return total + (essayScores.has(answer.id) ? essayScores.get(answer.id) : Number(answer.points_earned || 0));
+      }, 0);
+      const maximumPoints = (allAnswers || []).reduce((total, answer) => total + Number(answer.assignment_questions?.points || 0), 0);
+      const percentage = maximumPoints > 0 ? Math.round((finalPoints / maximumPoints) * 100) : 0;
+      const { error: submissionError } = await supabase.from('submissions').update({
+        status: 'graded',
+        total_score: finalPoints,
+        score: percentage,
+      }).eq('id', reviewSubmission.id);
+      if (submissionError) throw submissionError;
+
+      showToast('Penilaian esai berhasil disimpan.');
+      setReviewSubmission(null);
+      if (selectedAssignment) await fetchAssignmentDetails(selectedAssignment);
+      await fetchStats();
+    } catch (error) {
+      showToast(`Penilaian belum tersimpan: ${error.message}`, 'error');
+    } finally {
+      setSavingReview(false);
     }
   };
 
@@ -716,6 +781,15 @@ const TeacherDashboard = () => {
                                    </div>
                                 </td>
                                 <td className="px-10 py-8 text-right">
+                                      {sub.status === 'submitted' && sub.submission_answers?.some((answer) => Boolean(answer.answer_text)) && (
+                                        <button
+                                          onClick={() => handleOpenEssayReview(sub)}
+                                          disabled={reviewLoading}
+                                          className="px-5 py-3 mb-2 bg-indigo-50 text-indigo-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all disabled:opacity-50"
+                                        >
+                                          {reviewLoading ? 'Memuat...' : 'Periksa Esai'}
+                                        </button>
+                                      )}
                                       <button
                                         onClick={() => setXpModal({ show: true, student: sub.profiles, amount: 10 })}
                                         className="px-6 py-3 bg-amber-50 text-amber-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all flex items-center gap-2 ml-auto"
@@ -775,6 +849,47 @@ const TeacherDashboard = () => {
             )}
           </AnimatePresence>
         </div>
+
+        {/* Essay review dialog */}
+        <AnimatePresence>
+          {reviewSubmission && (
+            <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 md:p-8">
+              <motion.button aria-label="Tutup penilaian" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => !savingReview && setReviewSubmission(null)} className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" />
+              <motion.section initial={{ opacity: 0, y: 20, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 20 }} className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white rounded-3xl shadow-2xl p-6 md:p-10 space-y-6">
+                <header className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="text-xl md:text-2xl font-black text-slate-900">Penilaian Jawaban Esai</h3>
+                    <p className="text-sm text-slate-500 mt-1">{reviewSubmission.profiles?.full_name || 'Siswa'} · {selectedAssignment?.title}</p>
+                  </div>
+                  <button onClick={() => !savingReview && setReviewSubmission(null)} className="rounded-xl bg-slate-100 px-3 py-2 font-bold text-slate-600" disabled={savingReview}>Tutup</button>
+                </header>
+                {reviewAnswers.map((answer, index) => {
+                  const question = answer.assignment_questions || {};
+                  const maxPoints = Number(question.points || 0);
+                  return (
+                    <article key={answer.id} className="rounded-2xl border border-slate-200 p-5 space-y-4">
+                      <div className="space-y-1">
+                        <p className="text-xs font-black uppercase tracking-widest text-indigo-600">Jawaban {index + 1} · Maksimal {maxPoints} poin</p>
+                        <h4 className="font-bold text-slate-900">{question.question_text}</h4>
+                      </div>
+                      <div className="rounded-xl bg-slate-50 p-4 text-slate-700 whitespace-pre-wrap">{answer.answer_text || 'Tidak ada jawaban tertulis.'}</div>
+                      {question.rubric_text && <p className="text-sm text-slate-500"><strong>Rubrik:</strong> {question.rubric_text}</p>}
+                      <label className="block text-sm font-bold text-slate-700">Nilai (0–{maxPoints})
+                        <input type="number" min="0" max={maxPoints} step="0.5" value={reviewScores[answer.id] ?? 0} onChange={(event) => setReviewScores((previous) => ({ ...previous, [answer.id]: event.target.value }))} className="mt-2 w-full rounded-xl border border-slate-200 p-3" />
+                      </label>
+                      <label className="block text-sm font-bold text-slate-700">Umpan balik untuk siswa
+                        <textarea rows="2" maxLength="2000" value={reviewFeedback[answer.id] ?? ''} onChange={(event) => setReviewFeedback((previous) => ({ ...previous, [answer.id]: event.target.value }))} className="mt-2 w-full rounded-xl border border-slate-200 p-3 font-normal" placeholder="Tulis saran singkat yang membangun..." />
+                      </label>
+                    </article>
+                  );
+                })}
+                <button onClick={handleSaveEssayReview} disabled={savingReview || reviewAnswers.length === 0} className="w-full rounded-xl bg-indigo-600 px-5 py-4 text-sm font-black uppercase tracking-widest text-white disabled:opacity-50">
+                  {savingReview ? 'Menyimpan penilaian...' : 'Simpan Penilaian'}
+                </button>
+              </motion.section>
+            </div>
+          )}
+        </AnimatePresence>
 
         {/* Professional XP Modal */}
         <AnimatePresence>

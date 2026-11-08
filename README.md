@@ -1,154 +1,45 @@
-# 🌟 BintangAi (2026 Next-Gen Edition)
-### *Empowering Inclusive Education Through Adaptive Multimodal AI*
+# BintangAi — Inclusive Learning Platform
 
-[![React](https://img.shields.io/badge/React-18.3.1-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
-[![Vite](https://img.shields.io/badge/Vite-4.5.14-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
-[![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-3.4.1-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Supabase](https://img.shields.io/badge/Supabase-Database_%26_Auth-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
-[![License](https://img.shields.io/badge/Release-2026.1_Production-indigo?style=for-the-badge)](https://github.com)
+BintangAi adalah aplikasi pembelajaran inklusif untuk siswa SD kelas 1–6, guru, dan orang tua/wali. Aplikasi menyediakan materi, tugas, kuis, komunikasi visual, tutor AI, captions/dikte browser, kolaborasi, gamifikasi, dan pengaturan aksesibilitas.
 
----
+## Fitur yang dipertahankan
 
-## 📌 Deskripsi Singkat
+Semua source fitur BintangAi dari arsip awal dipertahankan, termasuk dashboard siswa/guru/orang tua, autentikasi, materi, tugas, kuis, Playground, Live Captions, AI Tutor, chat, kolaborasi, gamifikasi, profil, dan komponen aksesibilitas. Login demo merupakan pengecualian hardcoded yang disengaja dan tetap tersedia.
 
-**BintangAi** adalah platform pembelajaran digital inklusif generasi baru tahun 2026 yang memanfaatkan **Kecerdasan Buatan Multi-Modal (Multimodal AI)**, **Interaksi Suara (Voice-First)**, dan **Deteksi Gestur Visual Real-time** untuk meruntuhkan batasan belajar bagi penyandang disabilitas (Tunanetra, Tunarungu, dan Tunawicara) di Sekolah Luar Biasa (SLB) dan sekolah inklusif.
+## Teknologi
 
-Melalui pendampingan cerdas **Kak Bintang (AI Tutor)**, setiap anak memiliki kesempatan yang sama untuk tumbuh, belajar mandiri, dan mengasah potensi terbaik mereka secara interaktif.
+- React 18 + Vite
+- Supabase Auth, Postgres, RLS, Storage, Realtime, Edge Functions
+- Groq API melalui Edge Functions
+- Browser Web Speech API dan `getUserMedia` untuk fitur aksesibilitas perangkat
 
----
+## Menjalankan aplikasi
 
-## 🌟 Fitur Inovasi Utama (Edition 2026)
+Persyaratan: Node.js 20.19+ dan npm 10+.
 
-### 🦯 1. Mode Aksesibilitas Tunanetra (Visually Impaired)
-- **Asisten Voice-First (Kak Bintang Voice)**: Navigasi dan tanya-jawab materi berbasis suara natural. Cukup tekan tombol suara atau gunakan perintah vokal.
-- **Auto Screen Reader & Audio Guide**: Penjelasan struktur halaman otomatis saat pengguna berpindah menu.
-- **Haptic & Sound Feedback**: Konfirmasi audio instan untuk setiap interaksi tombol dan form.
-
-### 🤟 2. Mode Aksesibilitas Tunarungu & Tunawicara (Hearing & Speech Impaired)
-- **Real-Time Live Subtitles**: Transkripsi ucapan guru atau audio menjadi subtitle teks berakurasi tinggi secara langsung.
-- **Kamera Navigasi Gestur (Vision Control)**: Mengontrol navigasi dan aksi aplikasi menggunakan gerakan 1–10 jari tanpa menyentuh layar.
-- **Antarmuka Visual Adaptif**: Tipografi berkontras tinggi dan ukuran teks yang dinamis untuk kenyamanan membaca maksimal.
-
-### 🎮 3. Gamifikasi & Motivasi Belajar
-- **Sistem XP & Leveling**: Siswa mendapatkan Experience Points (XP) dari penyelesaian modul dan tugas.
-- **Streak Counter**: Lacak konsistensi belajar harian siswa.
-- **Efek Confetti Interaktif**: Perayaan visual menarik setiap kali siswa menyelesaikan kuis atau latihan.
-
-### 👨‍🏫 4. Ekosistem Multi-Peran Terpadu
-- **Dashboard Siswa**: Ruang belajar pribadi lengkap dengan modul, kuis, arena eksperimen (playground), dan Tanya AI.
-- **Dashboard Guru**: Pusat pengelolaan materi, pembuatan tugas, dan pemantauan statistik perkembangan siswa.
-- **Dashboard Orang Tua**: Ringkasan laporan kemajuan anak dan komunikasi langsung dengan tenaga pendidik.
-
----
-
-## 🛠️ Arsitektur & Teknologi (Tech Stack 2026)
-
-```mermaid
-graph TD
-    A[Client UI - React 18 + Vite] --> B[Accessibility Engine]
-    A --> C[Zustand Global State]
-    B --> D[Voice & Speech Recognition]
-    B --> E[Computer Vision Gesture Engine]
-    A --> F[Supabase Cloud Backend]
-    F --> G[PostgreSQL RLS Database]
-    F --> H[Edge Functions - Deno Runtime / LLM]
-    F --> I[Supabase Storage - PDF Modules]
-```
-
-### Stack Spesifikasi
-- **Frontend**: React 18, Vite 4, Tailwind CSS, Framer Motion, React Icons / Lucide Icons.
-- **State Management**: Zustand (ringan, cepat, dan reaktif).
-- **Backend & Database**: Supabase PostgreSQL dengan *Row Level Security* (RLS) ketat.
-- **Serverless Compute**: Supabase Edge Functions (Deno Runtime) untuk pemrosesan AI Tutor & Vision OCR.
-- **Routing**: React Router DOM v6 dengan *Lazy Loading* & *Code Splitting*.
-
----
-
-## 📂 Struktur Proyek (Terorganisir & Standar 2026)
-
-```text
-SambungJaga/
-├── public/                 # Aset statis & manifes PWA
-├── src/
-│   ├── components/         # Komponen UI modular
-│   │   ├── feedback/       # ConfettiEffect, LoadingOverlay, NotificationContainer
-│   │   ├── layout/         # AppLayout, TeacherSidebar, StudentSidebar, ParentSidebar
-│   │   └── ui/             # Button, Card, AudioPlayer (Reusable UI)
-│   ├── features/           # Arsitektur Domain-Driven Design (DDD)
-│   │   ├── accessibility/  # GlobalGestureCamera, Subtitles, BlindAIAssistant, VoiceNav
-│   │   ├── ai-tutor/       # BintangAvatar, ChatBubble, useAI, useBintangVoice
-│   │   ├── auth/           # Session API, InactivityLogout, Auth Store
-│   │   ├── gamification/   # XPBar, StreakBadge, xpApi, xpStore
-│   │   └── quiz/           # Tasks, SubmitResultApi, GenerateQuizApi
-│   ├── hooks/              # Custom React Hooks (useNotification, dll)
-│   ├── lib/                # Supabase Client & API Instance
-│   ├── pages/              # Halaman Berdasarkan Peran
-│   │   ├── auth/           # LoginPage.jsx, RegisterPage.jsx, LandingPage.jsx
-│   │   ├── student/        # Dashboard, Modules, Quiz, TanyaAI, Playground
-│   │   ├── teacher/        # Dashboard, UploadModule, CreateTask, Chat
-│   │   ├── parent/         # Dashboard, Chat
-│   │   └── profile/        # Profil Pengguna & Setting Aksesibilitas
-│   ├── styles/             # globals.css, adaptive.css
-│   ├── utils/              # Helper utilities
-│   │   └── common/         # validators.js, formatters.js
-│   ├── App.jsx             # Main Application Routing
-│   └── main.jsx            # Entry point & Accessibility Bootstrapper
-├── package.json
-├── tailwind.config.js
-├── vite.config.js
-└── README.md
-```
-
----
-
-## 🚀 Panduan Instalasi & Jalankan Aplikasi
-
-### 1. Prasyarat
-Pastikan lingkungan Anda telah terinstal:
-- **Node.js**: `v18.0.0` atau versi lebih baru
-- **npm** atau **pnpm**
-
-### 2. Clone Repository
 ```bash
-git clone https://github.com/s1informatika11s25007-maker/SambungJagaAI.git
-cd SambungJagaAI
-```
-
-### 3. Instalasi Dependensi
-```bash
-npm install
-```
-
-### 4. Konfigurasi Environment Variables (`.env`)
-Buat file `.env` di direktori utama proyek:
-```env
-VITE_SUPABASE_URL=https://your-supabase-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
-```
-
-### 5. Jalankan Mode Pengembang (Development)
-```bash
+npm ci
+cp .env.example .env.local
+npm run check
+npm test
+npm run build
 npm run dev
 ```
-Buka browser di `http://localhost:5173`.
 
-### 6. Build Produksi
-```bash
-npm run build
-```
+Isi `.env.local` dengan URL dan anon key Supabase untuk project BintangAi milik Anda. Jangan memasukkan provider API key AI ke variabel `VITE_*`.
 
----
+## Supabase
 
-## 🔐 Keamanan & Integritas Data (PDP Compliance)
+Terapkan migration di `supabase/migrations/` ke project Supabase khusus BintangAi, lalu deploy function di `supabase/functions/`. Atur `GROQ_API_KEY` sebagai Edge Function secret. RLS menjadi bagian dari perlindungan akses antar siswa, guru, dan orang tua.
 
-- **Row Level Security (RLS)**: Data kuis, jawaban siswa, dan profil pengguna dilindungi RLS Supabase sehingga hanya pemilik role resmi yang dapat mengaksesnya.
-- **Inactivity Session Lock**: Fitur otomatis pemutusan sesi saat pengguna tidak aktif untuk melindungi kerahasiaan data anak.
-- **Protected Environment Credentials**: Pemisahan variabel kredensial publik dan privat secara aman.
+Data operasional aplikasi dibaca/ditulis melalui Supabase. Migration tidak mengisi data akun atau materi dummy. Pengecualian: akun demo yang sengaja disediakan untuk demonstrasi login.
 
----
+Registrasi publik tidak langsung memberikan role guru/orang tua atau akses kelas/anak. Pilihan role disimpan sebagai permintaan (`requested_role`); class code dan ID anak disimpan sebagai permintaan terpisah. Administrator harus memeriksa permintaan lalu mempromosikan role dan menautkan anak melalui Supabase sebelum akses guru/orang tua diaktifkan. Panduan persetujuan dan query tersedia di `docs/ROLE_APPROVAL.md`. Lima alamat demo yang ditentukan adalah pengecualian khusus demonstrasi.
 
-## 🤝 Lisensi & Kontribusi
+## Model AI
 
-Proyek ini dikembangkan sebagai bagian dari ekosistem digital inklusif **BintangAi 2026**. Hak Cipta dilindungi Undang-Undang.
+Lihat `modellist.md` untuk katalog enam model, ID, kuota, release stage, dan tanggal rilis. Runtime memakai model teks yang diizinkan pada katalog. Model Whisper hanya didokumentasikan dan tidak digunakan untuk kamera/dikte; pengenalan suara memakai Web Speech API browser.
 
-© 2026 **BintangAi Digital Ecosystem**. Built with ❤️ for inclusive education.
+## Pemeriksaan dan batas verifikasi
+
+Lihat `VERIFICATION_REPORT.md` untuk hasil audit dan batas yang belum dapat diverifikasi. Di lingkungan pembuatan arsip, 16 unit test dan parse sintaks lulus; production build Vite belum terverifikasi karena instalasi dependency npm tidak selesai. Terapkan migration/Edge Functions ke Supabase staging sebelum deployment produksi.

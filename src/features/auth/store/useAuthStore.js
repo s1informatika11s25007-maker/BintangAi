@@ -59,37 +59,17 @@ export const useAuthStore = create(
         set({ loading: true });
 
         try {
+          // Update the learner's activity streak from the authenticated account, not from client-supplied identity.
+          await supabase.rpc('update_user_streak', { user_id: userId });
           let { data: profileData } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', userId)
             .maybeSingle();
 
-          // Jika profil belum ada di database, buat profil otomatis dari user metadata
+          // Database trigger on auth.users creates the real profile. Do not invent a local fallback.
           if (!profileData) {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user && user.id === userId) {
-              const meta = user.user_metadata || {};
-              const defaultProfile = {
-                id: userId,
-                email: user.email,
-                full_name: meta.full_name || user.email?.split('@')[0] || 'User',
-                role: meta.role || 'siswa',
-                disability_type: meta.disability_type || 'tidak_ada',
-                slb_name: meta.slb_name || null,
-                class_level: meta.class_level || null,
-                class_code: meta.class_code || null,
-                xp: 0
-              };
-
-              const { data: createdProfile } = await supabase
-                .from('profiles')
-                .upsert(defaultProfile)
-                .select()
-                .maybeSingle();
-
-              profileData = createdProfile || defaultProfile;
-            }
+            console.error('Profil BintangAi belum tersedia di database untuk akun ini.');
           }
 
           if (profileData) {
@@ -113,16 +93,11 @@ export const useAuthStore = create(
       updateXP: async (xpGained) => {
         const { profile } = get()
         if (profile) {
-          const { data, error } = await supabase.rpc('increment_xp', {
-            user_id: profile.id,
-            amount: xpGained
-          });
-
-          if (error) {
-            // Fallback manual jika RPC belum ada
-            const newXP = Number(profile.xp || 0) + Number(xpGained);
-            await supabase.from('profiles').update({ xp: newXP }).eq('id', profile.id);
-          }
+          const amount = Math.max(0, Math.min(500, Math.floor(Number(xpGained) || 0)));
+          if (!amount) return;
+          const { error } = await supabase.rpc('add_xp', { amount });
+          if (error) throw error;
+          await get().fetchProfile(profile.id);
         }
       },
 

@@ -22,14 +22,7 @@ const GlobalGestureCamera = () => {
   const lastProcessedFinger = useRef(-1);
   const cooldownRef = useRef(false);
 
-  const { videoRef, canvasRef, isActive, handDetected, totalFingers } = useGestureControl({
-    enabled: isEnabled,
-    onScroll: (dir) => {
-      if ((path === '/student/dashboard' || path === '/') && !menuActive) {
-        window.scrollBy({ top: dir === 'down' ? 250 : -250, behavior: 'smooth' });
-      }
-    }
-  });
+  const { videoRef, isActive, totalFingers, triggerGesture, startCamera, stopCamera, cameraError, cameraSupported } = useGestureControl({ enabled: isEnabled });
 
   // Determine page context
   const isLandingPage = path === '/';
@@ -204,15 +197,18 @@ const GlobalGestureCamera = () => {
     cooldownRef.current = false;
   }, [path]);
 
-  if (!isEnabled) return null;
+  if (!isEnabled || path.startsWith('/student/quiz/')) return null;
 
   return (
     <GestureCameraOverlay
       videoRef={videoRef}
-      canvasRef={canvasRef}
       isActive={isActive}
-      handDetected={handDetected}
       totalFingers={totalFingers}
+      onManualGesture={triggerGesture}
+      startCamera={startCamera}
+      stopCamera={stopCamera}
+      cameraError={cameraError}
+      cameraSupported={cameraSupported}
       menuActive={menuActive}
       isProfilePage={isProfilePage}
       isLandingPage={isLandingPage}

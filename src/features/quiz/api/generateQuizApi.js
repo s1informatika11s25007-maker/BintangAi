@@ -1,18 +1,13 @@
 import { supabase } from '../../../lib/supabase';
 
-export const generateQuizApi = async (config) => {
+export const generateQuizApi = async (config = {}) => {
   try {
-    const { data, error: invokeError } = await supabase.functions.invoke('generate-quiz', {
-      body: config,
-      headers: {
-        'x-api-key': import.meta.env.VITE_CUSTOM_AI_TUTOR_KEY || 'christian'
-      }
-    });
-
-    if (invokeError) throw invokeError;
-    return { success: true, quiz: data };
-  } catch (err) {
-    console.error("Generate AI Quiz Error:", err);
-    return { success: false, message: err.message };
+    const { data, error } = await supabase.functions.invoke('generate-quiz', { body: config });
+    if (error) throw error;
+    if (!data) throw new Error('Server tidak mengembalikan kuis.');
+    return { success: true, quiz: data.quiz || data };
+  } catch (error) {
+    console.error('Generate BintangAi Quiz Error:', error);
+    return { success: false, message: error?.message || 'Kuis belum dapat dibuat.' };
   }
 };

@@ -15,7 +15,7 @@ const Playground = () => {
   const { smartVoiceAssistant } = useAI();
   const { isBlind } = useAccessibility();
   const { speak, stopSpeaking } = useVoice();
-  const { isRecording, startRecording, stopRecording, audioBlob } = useAudioRecorder();
+  const { isRecording, transcript, startRecording, stopRecording, clearAudio, error: speechError } = useAudioRecorder();
   const navigate = useNavigate();
 
   const [isProcessing, setIsProcessing] = useState(false);
@@ -34,10 +34,11 @@ const Playground = () => {
     }
   }, [profile?.id, initialized, studentName, isBlind, speak]);
 
-  const handleVoiceProcess = useCallback(async (blob) => {
+  const handleVoiceProcess = useCallback(async (recognizedText) => {
+    if (!recognizedText?.trim()) return;
     setIsProcessing(true);
     try {
-      const response = await smartVoiceAssistant(blob, studentName, "Playground Voice Mode");
+      const response = await smartVoiceAssistant(recognizedText, studentName, "Playground Voice Mode");
       if (response && response.success && !response.isNoise) {
         speak(response.answer);
         if (response.navigateTo) {
@@ -56,12 +57,13 @@ const Playground = () => {
       speak("Maaf, ada gangguan teknis.");
     } finally {
       setIsProcessing(false);
+      clearAudio();
     }
-  }, [smartVoiceAssistant, studentName, speak, navigate]);
+  }, [smartVoiceAssistant, studentName, speak, navigate, clearAudio]);
 
   useEffect(() => {
-    if (audioBlob) handleVoiceProcess(audioBlob);
-  }, [audioBlob, handleVoiceProcess]);
+    if (!isRecording && transcript.trim() && !isProcessing) handleVoiceProcess(transcript);
+  }, [isRecording, transcript, isProcessing, handleVoiceProcess]);
 
   const toggleMic = useCallback(() => {
     // Lock interaction during processing or preparation to avoid double triggers
@@ -96,6 +98,7 @@ const Playground = () => {
 
   return (
     <div className="h-[100dvh] w-full bg-[#020617] flex font-sans overflow-hidden touch-none select-none">
+      {speechError && <p role="status" className="mb-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">{speechError}</p>}
       <StudentSidebar />
 
       <main

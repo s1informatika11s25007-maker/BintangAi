@@ -1,67 +1,55 @@
-# Model List Specification & API Rate Limits
+# BintangAi — Katalog Model AI yang Diizinkan
 
-Document berisi daftar model AI, provider, ID model, batas kuota (limits), release stage, dan tanggal rilis yang digunakan dalam ekosistem SambungJaga AI.
-
----
+Dokumen ini adalah satu-satunya daftar model AI yang boleh dipanggil oleh BintangAi. Model untuk kamera dan mikrofon tidak digunakan; akses kamera, pengenalan ucapan, dan pembacaan teks memakai API bawaan browser (Chrome/Web Speech API, getUserMedia, dan SpeechSynthesis).
 
 ## 1. Qwen 3.8 27B
-* **Provider**: Alibaba Cloud
-* **Model ID**: `qwen/qwen3.8-27b`
-* **Limits**:
-  * **Requests**: 30 / minute | 1K / day
-  * **Tokens**: 8K / minute | 200K / day
-* **Release Stage**: preview
-* **Released**: August 17, 2026
-
----
+- **Provider:** Alibaba Cloud (akses model melalui gateway Groq)
+- **Model ID:** `qwen/qwen3.8-27b`
+- **Limits:** 30 requests/minute | 1K/day; 8K tokens/minute | 200K/day
+- **Release stage:** preview
+- **Released:** August 17, 2026
+- **Penggunaan:** tutor belajar, penjelasan materi, pembuatan kuis.
 
 ## 2. Llama Prompt Guard 2 22M
-* **Provider**: Meta
-* **Model ID**: `meta-llama/llama-prompt-guard-2-22m`
-* **Limits**:
-  * **Requests**: 30 / minute | 14.4K / day
-  * **Tokens**: 15K / minute | 500K / day
-* **Release Stage**: preview
-* **Released**: May 31, 2025
-
----
+- **Provider:** Meta (akses model melalui gateway Groq)
+- **Model ID:** `meta-llama/llama-prompt-guard-2-22m`
+- **Limits:** 30 requests/minute | 14.4K/day; 15K tokens/minute | 500K/day
+- **Release stage:** preview
+- **Released:** May 31, 2025
+- **Penggunaan:** pemeriksaan prompt masuk.
 
 ## 3. GPT OSS 120B
-* **Provider**: OpenAI
-* **Model ID**: `openai/gpt-oss-120b`
-* **Limits**:
-  * **Requests**: 30 / minute | 1K / day
-  * **Tokens**: 8K / minute | 200K / day
-* **Release Stage**: production
-* **Released**: August 5, 2025
-
----
+- **Provider:** OpenAI (akses model melalui gateway Groq)
+- **Model ID:** `openai/gpt-oss-120b`
+- **Limits:** 30 requests/minute | 1K/day; 8K tokens/minute | 200K/day
+- **Release stage:** production
+- **Released:** August 5, 2025
+- **Penggunaan:** fallback untuk tutor dan generator kuis ketika model utama gagal tersedia.
 
 ## 4. Safety GPT OSS 20B
-* **Provider**: OpenAI
-* **Model ID**: `openai/gpt-oss-safeguard-20b`
-* **Limits**:
-  * **Requests**: 3 / minute | 1K / day
-  * **Tokens**: 2K / minute | 200K / day
-* **Release Stage**: preview
-* **Released**: October 29, 2025
-
----
+- **Provider:** OpenAI (akses model melalui gateway Groq)
+- **Model ID:** `openai/gpt-oss-safeguard-20b`
+- **Limits:** 3 requests/minute | 1K/day; 2K tokens/minute | 200K/day
+- **Release stage:** preview
+- **Released:** October 29, 2025
+- **Penggunaan:** pemeriksaan tambahan saat jawaban berpotensi sensitif/tidak sesuai usia.
 
 ## 5. Whisper Large V3
-* **Provider**: OpenAI
-* **Model ID**: `whisper-large-v3`
-* **Limits**:
-  * **Requests**: 20 / minute | 2K / day
-* **Release Stage**: production
-* **Released**: September 3, 2023
+- **Provider:** OpenAI
+- **Model ID:** `whisper-large-v3`
+- **Limits:** 20 requests/minute | 2K/day
+- **Release stage:** production
+- **Released:** September 3, 2023
+- **Penggunaan:** tidak dipanggil oleh aplikasi. Transkripsi memanfaatkan Web Speech API browser.
+
+## 6. Whisper Large V3 Turbo
+- **Provider:** OpenAI
+- **Model ID:** `whisper-large-v3-turbo`
+- **Limits:** 20 requests/minute | 2K/day
+- **Release stage:** production
+- **Released:** October 9, 2024
+- **Penggunaan:** tidak dipanggil oleh aplikasi. Transkripsi memanfaatkan Web Speech API browser.
 
 ---
 
-## 6. Whisper Large V3 Turbo
-* **Provider**: OpenAI
-* **Model ID**: `whisper-large-v3-turbo`
-* **Limits**:
-  * **Requests**: 20 / minute | 2K / day
-* **Release Stage**: production
-* **Released**: October 9, 2024
+**Aturan penting:** Jangan menambahkan model lain tanpa memperbarui dokumen ini dan `src/config/aiModels.js`. API key provider hanya boleh berada di environment server/Edge Functions, tidak boleh menggunakan prefix `VITE_`.

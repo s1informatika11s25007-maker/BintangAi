@@ -1,36 +1,47 @@
-# Verification Report — SambungJaga AI
+# Laporan Verifikasi — BintangAi 2.2.0 Full Feature Preservation
 
-Tanggal: 7 November 2026
+Tanggal: 8 November 2026
 
-## Yang berhasil diperiksa
+## Cakupan dan pelestarian fitur
+- Seluruh 94 file source `src/` BintangAi yang ada pada `kenyang.zip` dipertahankan tanpa penghapusan.
+- Dua file helper baru ditambahkan sehingga folder `src/` memiliki 96 file.
+- Route dan source fitur siswa, guru, orang tua, materi, tugas, kuis, Playground, Live Captions, AI Tutor, chat, kolaborasi, gamifikasi, profil, serta komponen aksesibilitas tetap dipertahankan.
+- Login demo BintangAi tetap tersedia sebagai pengecualian hardcoded yang disengaja. Akun demo tidak digunakan dalam pengujian.
+- Registrasi publik tidak lagi boleh menetapkan role `guru`/`ortu`, class_code, atau linked_student_id secara langsung. Permintaan role/tautan disimpan untuk verifikasi administrator; hanya lima alamat demo yang ditentukan mendapat role demo secara otomatis.
+- Backend non-pendidikan yang tidak sesuai dari arsip awal diganti dengan schema, RLS, storage policy, dan Edge Functions pendidikan BintangAi. Data aplikasi tidak di-seed sebagai data dummy.
 
-| Pemeriksaan | Hasil | Keterangan |
-|---|---|---|
-| JavaScript syntax check (`npm run lint`) | PASS | 111 file JavaScript lolos `node --check`. |
-| Dependency install (`npm ci`) | BLOCKED | Proses instalasi tidak selesai sebelum timeout. |
-| Runtime Node.js | BLOCKED | Runtime pemeriksaan v22.16.0; proyek mensyaratkan >=22.22.2. |
-| Unit tests | NOT RUN | Memerlukan dependency terpasang. |
-| Vite production build | NOT RUN | Memerlukan dependency terpasang; JSX belum divalidasi oleh build. |
-| Playwright E2E | NOT RUN | Memerlukan dependency dan environment staging/akun demo. |
-| npm security audit | NOT RUN | Tidak ada hasil audit dependency yang valid pada sesi ini. |
-| Supabase migrations and RLS | NOT VERIFIED | Memerlukan project staging dan akses database. |
-| AI, messaging, storage and cron integrations | NOT VERIFIED | Memerlukan secret/provider dan deployment sebenarnya. |
+## Perbaikan alur utama
+- Guru membuat tugas: informasi assignment, normalized question, pilihan jawaban, dan dokumen kuis pilihan ganda disimpan konsisten.
+- Siswa mengerjakan tugas: rute TaskDetail mendukung pilihan ganda dan esai; jawaban esai tetap berstatus menunggu penilaian guru.
+- Guru menilai esai: guru dapat mengisi poin dan umpan balik; siswa dapat melihat umpan balik setelah submission dinilai.
+- Dashboard guru menghitung aktivitas hanya dari timestamp aktivitas sebenarnya.
+- Pendaftaran guru/orang tua menyimpan `requested_role`, `requested_class_code`, dan `requested_linked_student_id`; administrator harus memverifikasi sebelum mengaktifkan akses atau relasi keluarga.
+- Pembuatan soal AI dibatasi 1–20 soal per permintaan dan kelas 1–6 harus dipilih secara eksplisit.
 
-## Perintah verifikasi setelah ekstraksi ZIP
+## Privasi dan model AI
+- `modellist.md` memuat tepat enam model yang diberikan pengguna.
+- Runtime Edge Functions memakai empat model teks yang disetujui; Whisper tidak digunakan pada jalur runtime.
+- Provider API key hanya dibaca pada Edge Function melalui secret `GROQ_API_KEY`, bukan dari bundle frontend.
+- Kamera memakai `navigator.mediaDevices.getUserMedia` browser; tidak memakai model visi.
+- Dikte/caption menggunakan Web Speech API browser. Audio mentah tidak diunggah ke model.
 
-Gunakan Node.js 22.22.2 atau lebih baru dan npm 10 atau lebih baru:
+## Hasil pemeriksaan statis
+- Pemeriksaan proyek: dijalankan dengan `node scripts/check-project.js`.
+- Unit test regresi: dijalankan dengan `node --test tests/*.test.js`.
+- Parser sintaks JavaScript/JSX/TypeScript: seluruh file aplikasi diparse menggunakan TypeScript transpile parser yang tersedia di lingkungan audit.
+- Pelestarian file: 94/94 file `src/` dari arsip awal masih tersedia; total akhir 96 file.
+- Uji akun demo: tidak dilakukan.
 
-```bash
-npm ci
-npm run lint
-npm run test:unit
-npm run build
-npm run test:e2e
-npm audit --audit-level=high
-```
+Hasil terakhir di lingkungan pembuatan arsip:
 
-Kemudian terapkan migration ke project Supabase **staging**, bukan production, dan jalankan authorization/RLS matrix untuk minimal dua fasilitas serta role caregiver, supervisor, keluarga, HR, dan platform admin.
+- `node scripts/check-project.js`: lulus, 7 pemeriksaan ringkas.
+- `node --test tests/*.test.js`: 16/16 lulus.
+- TypeScript transpile parser: 100 file JavaScript/JSX/TypeScript diparse, 0 diagnostic.
+- Perbandingan berkas: 94/94 file `src/` awal tetap ada; total 96.
+- Registry lockfile: seluruh URL menggunakan registry npm resmi, tanpa referensi mirror lama.
 
-## Batas klaim
-
-ZIP ini memuat perbaikan source, migration, dokumentasi dan quality-gate workflow. ZIP ini bukan bukti bahwa aplikasi telah berhasil dibangun, diuji end-to-end, dimigrasikan ke Supabase, atau di-deploy. Folder `dist/` lama sengaja tidak disertakan karena tidak dibangun ulang setelah source berubah.
+## Batas yang belum terverifikasi
+- Production build Vite belum berhasil dijalankan. Instalasi dependency npm berhenti/time-out sehingga executable Vite tidak tersedia di lingkungan ini. Tidak ada klaim bahwa production build telah lulus.
+- Migration SQL belum dijalankan terhadap instance PostgreSQL/Supabase nyata dalam sesi audit ini; tinjauan SQL bersifat statis. Wajib uji migration dan RLS pada project staging.
+- Supabase migration, RLS, Storage, Realtime, dan Edge Function perlu diterapkan serta diuji pada project staging BintangAi.
+- Uji browser end-to-end (login nyata, komunikasi lintas role, upload, kamera, captions, dan ukuran layar) belum dijalankan.

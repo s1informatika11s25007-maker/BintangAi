@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
-import { useAuthStore } from '../../store/authStore';
-import { useAccessibilityStore } from '../../store/accessibilityStore';
+import { useAuthStore } from '../../features/auth/store/useAuthStore';
+import { useAccessibilityStore } from '../../features/accessibility/store/accessibilityStore';
 import { loginDemoAccount, fetchDemoAccountsFromDB, DEFAULT_DEMO_ACCOUNTS } from '../../features/auth/api/sessionApi';
 
 const Auth = () => {
@@ -163,15 +163,9 @@ const Auth = () => {
         let finalClassLevel = classLevel;
 
         if (role === 'ortu') {
-          if (!studentIdInput) throw new Error("ID Siswa tidak boleh kosong");
-          const { data: child, error: childError } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('id', studentIdInput.trim())
-            .maybeSingle();
-
-          if (childError || !child) throw new Error("ID Siswa tidak ditemukan!");
-          linkedId = child.id;
+          const candidateId = studentIdInput.trim();
+          if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(candidateId)) throw new Error("Masukkan ID siswa dengan format yang benar. Tautan akan diverifikasi admin.");
+          linkedId = candidateId;
         }
 
         if (role === 'guru') {
@@ -200,7 +194,9 @@ const Auth = () => {
         if (error) throw new Error(error.message);
 
         if (data.user) {
-          setMessage(role === 'guru' ? `Daftar berhasil! Kode Kelas Anda: ${finalClassCode}` : "Daftar berhasil! Silakan masuk.");
+          setMessage(role === 'siswa'
+            ? "Daftar berhasil! Silakan masuk."
+            : "Daftar berhasil. Permintaan peran dan tautan kelas menunggu verifikasi admin sebelum akses diaktifkan.");
           setIsLogin(true);
         }
       }

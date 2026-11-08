@@ -1,162 +1,93 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { useAccessibilityStore } from '../store/accessibilityStore';
 
-const HAND_CONNECTIONS = [
-  [0, 1], [1, 2], [2, 3], [3, 4], [0, 5], [5, 6], [6, 7], [7, 8],
-  [5, 9], [9, 10], [10, 11], [11, 12], [9, 13], [13, 14], [14, 15], [15, 16],
-  [13, 17], [17, 18], [18, 19], [19, 20], [0, 17]
-];
-
-const detectFingers = (landmarks) => {
-  if (!landmarks) return 0;
-  let count = 0;
-
-  const tips = [8, 12, 16, 20];
-  const joints = [6, 10, 14, 18];
-  tips.forEach((tip, i) => {
-    if (landmarks[tip].y < landmarks[joints[i]].y) count++;
-  });
-
-  const thumbTip = landmarks[4];
-  const thumbMCP = landmarks[2];
-  const pinkyBase = landmarks[17];
-
-  const distTip = Math.sqrt(Math.pow(thumbTip.x - pinkyBase.x, 2) + Math.pow(thumbTip.y - pinkyBase.y, 2));
-  const distBase = Math.sqrt(Math.pow(thumbMCP.x - pinkyBase.x, 2) + Math.pow(thumbMCP.y - pinkyBase.y, 2));
-
-  if (distTip > distBase * 1.15) count++;
-
-  return count;
-};
-
-export function useGestureControl({ onGesture, onScroll, enabled } = {}) {
+/**
+ * BintangAi's accessibility navigation does not infer hand gestures with an AI model.
+ * Camera preview is optional and uses only the browser MediaDevices API. The
+ * on-screen controls provide reliable keyboard/touch alternatives.
+ */
+export function useGestureControl({ onGesture, enabled } = {}) {
   const { mode, isGestureActive } = useAccessibilityStore();
   const isActiveMode = enabled !== undefined ? enabled : (mode === 'tunawicara' || isGestureActive);
-
   const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-  const handsRef = useRef(null);
   const streamRef = useRef(null);
-  const lastYRef = useRef(null);
   const onGestureRef = useRef(onGesture);
-  const onScrollRef = useRef(onScroll);
-
+  const resetTimerRef = useRef(null);
   const [isActive, setIsActive] = useState(false);
-  const [handDetected, setHandDetected] = useState(false);
   const [totalFingers, setTotalFingers] = useState(0);
+  const [cameraError, setCameraError] = useState('');
+  const [cameraSupported, setCameraSupported] = useState(false);
 
   useEffect(() => { onGestureRef.current = onGesture; }, [onGesture]);
-  useEffect(() => { onScrollRef.current = onScroll; }, [onScroll]);
+  useEffect(() => {
+    setCameraSupported(Boolean(navigator.mediaDevices?.getUserMedia));
+  }, []);
 
-  const initHands = useCallback(() => {
-    if (handsRef.current || !window.Hands) return;
-    const hands = new window.Hands({
-      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-    });
-
-    hands.setOptions({
-      maxNumHands: 2,
-      modelComplexity: 1,
-      minDetectionConfidence: 0.8,
-      minTrackingConfidence: 0.8
-    });
-
-    let countBuffer = [];
-    let lastFinalCount = 0;
-
-    hands.onResults((results) => {
-      const hasHand = results.multiHandLandmarks?.length > 0;
-      setHandDetected(hasHand);
-
-      if (canvasRef.current && videoRef.current?.readyState >= 2) {
-        const ctx = canvasRef.current.getContext('2d');
-        const { clientWidth: w, clientHeight: h } = canvasRef.current;
-        if (canvasRef.current.width !== w || canvasRef.current.height !== h) {
-          canvasRef.current.width = w; canvasRef.current.height = h;
-        }
-        ctx.clearRect(0, 0, w, h);
-
-        let currentFrameCount = 0;
-        if (hasHand) {
-          results.multiHandLandmarks.forEach((lm) => {
-            currentFrameCount += detectFingers(lm);
-            ctx.strokeStyle = '#6366F1'; ctx.lineWidth = 4; ctx.lineCap = 'round';
-            HAND_CONNECTIONS.forEach(([s, e]) => {
-              ctx.beginPath(); ctx.moveTo(lm[s].x * w, lm[s].y * h); ctx.lineTo(lm[e].x * w, lm[e].y * h); ctx.stroke();
-            });
-            lm.forEach(p => { ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.arc(p.x * w, p.y * h, 3, 0, 2 * Math.PI); ctx.fill(); });
-          });
-
-          const y = results.multiHandLandmarks[0][9].y;
-          if (lastYRef.current !== null && onScrollRef.current) {
-            const dy = y - lastYRef.current;
-            if (Math.abs(dy) > 0.05) onScrollRef.current(dy > 0 ? 'down' : 'up');
-          }
-          lastYRef.current = y;
-        } else {
-          lastYRef.current = null;
-        }
-
-        countBuffer.push(currentFrameCount);
-        if (countBuffer.length > 10) countBuffer.shift();
-
-        const counts = {};
-        countBuffer.forEach(x => { counts[x] = (counts[x] || 0) + 1; });
-        let modeCount = 0;
-        let maxFreq = 0;
-        for (const val in counts) {
-          if (counts[val] > maxFreq) { maxFreq = counts[val]; modeCount = parseInt(val); }
-        }
-
-        if (maxFreq >= 7 && modeCount !== lastFinalCount) {
-          lastFinalCount = modeCount;
-          setTotalFingers(modeCount);
-          if (onGestureRef.current) onGestureRef.current(modeCount);
-        }
-      }
-    });
-    handsRef.current = hands;
+  const stopCamera = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) videoRef.current.srcObject = null;
+    setIsActive(false);
   }, []);
 
   const startCamera = useCallback(async () => {
-    if (streamRef.current) return;
+    setCameraError('');
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setCameraError('Browser ini tidak mendukung preview kamera. Kontrol tombol tetap bisa digunakan.');
+      return false;
+    }
+    if (streamRef.current) return true;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 640, height: 480, frameRate: { ideal: 30 } }
+        audio: false,
+        video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
       });
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = () => { videoRef.current.play(); setIsActive(true); };
+        await videoRef.current.play();
       }
-      if (!window.Hands) {
-        const s = document.createElement('script');
-        s.src = 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js';
-        s.async = true; s.onload = initHands; document.head.appendChild(s);
-      } else initHands();
-    } catch (e) { console.error(e); }
-  }, [initHands]);
-
-  useEffect(() => {
-    if (isActiveMode) startCamera();
-    else {
-      setIsActive(false);
-      if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
-      streamRef.current = null;
+      setIsActive(true);
+      return true;
+    } catch (error) {
+      setCameraError(error?.name === 'NotAllowedError'
+        ? 'Izin kamera ditolak. Kontrol tombol tetap tersedia.'
+        : 'Preview kamera tidak dapat dimulai. Kontrol tombol tetap tersedia.');
+      stopCamera();
+      return false;
     }
-  }, [isActiveMode, startCamera]);
+  }, [stopCamera]);
+
+  const triggerGesture = useCallback((count) => {
+    const value = Number(count);
+    if (!Number.isInteger(value) || value < 1 || value > 10) return;
+    setTotalFingers(value);
+    onGestureRef.current?.(value);
+    if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
+    resetTimerRef.current = setTimeout(() => setTotalFingers(0), 1100);
+  }, []);
 
   useEffect(() => {
-    let m = true;
-    const loop = async () => {
-      if (m && handsRef.current && videoRef.current?.readyState >= 2 && isActive) {
-        try { await handsRef.current.send({ image: videoRef.current }); } catch(e){}
-      }
-      requestAnimationFrame(loop);
-    };
-    loop();
-    return () => { m = false; };
-  }, [isActive]);
+    if (!isActiveMode) stopCamera();
+  }, [isActiveMode, stopCamera]);
 
-  return { videoRef, canvasRef, isActive, handDetected, totalFingers };
+  useEffect(() => () => {
+    if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
+    stopCamera();
+  }, [stopCamera]);
+
+  return {
+    videoRef,
+    canvasRef: null,
+    isActive,
+    handDetected: false,
+    totalFingers,
+    triggerGesture,
+    startCamera,
+    stopCamera,
+    cameraError,
+    cameraSupported,
+  };
 }

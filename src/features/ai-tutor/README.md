@@ -1,37 +1,10 @@
-# 🤖 Kak Bintang AI Tutor Module (Edition 2026)
+# AI Tutor BintangAi
 
-Modul **AI Tutor (Kak Bintang)** adalah otak kecerdasan buatan utama pada platform **BintangAi 2026**. Modul ini menyediakan pendampingan belajar interaktif berbasis **Kecerdasan Buatan Multi-Modal (Text, Voice, and Vision)** untuk siswa Tunanetra, Tunarungu, dan Tunawicara.
+Seluruh pemanggilan model melewati Supabase Edge Functions. Browser tidak menyimpan API key provider. Model dibatasi oleh `modellist.md` dan `src/config/aiModels.js`.
 
----
+- Tutor dan navigasi: Qwen 3.8 27B; fallback GPT OSS 120B.
+- Prompt safety: Llama Prompt Guard 2 22M.
+- Safety review jawaban sensitif: Safety GPT OSS 20B (hanya bila diperlukan).
+- Dikte, subtitle dan speech output: API bawaan browser. Whisper tidak dipanggil.
 
-## 🛠️ Arsitektur Modul
-
-```text
-src/features/ai-tutor/
-├── api/
-│   ├── askTutorApi.js        # Integrasi Supabase Edge Functions LLM
-│   ├── textToSpeechApi.js    # Sintesis Suara Natural (Text-to-Speech)
-│   └── visionApi.js          # Pemrosesan OCR & Visual Understanding
-├── components/
-│   ├── AILoadingSkeleton.jsx # Skeleton UI saat AI merespons
-│   ├── BintangAvatar.jsx     # Avatar animasi interaktif Kak Bintang
-│   └── ChatBubble.jsx        # Gelembung pesan chat adaptif
-├── hooks/
-│   ├── useAI.js              # Hook utama pengelola state chat & Supabase ping
-│   ├── useAIPrompt.js        # Formatter prompt & penyesuaian konteks belajar
-│   └── useBintangVoice.js    # Interaksi suara natural (Speech-to-Intent)
-└── index.js                  # Module Exporter
-```
-
----
-
-## 🌟 Kemampuan Utama (2026 Features)
-
-1. **Multimodal Reasoning**: Memahami pertanyaan berbasis teks, perintah suara, maupun gambar materi PDF.
-2. **Personalized Context Tuning**: Mengadaptasi gaya bahasa sesuai tipe disabilitas dan peran siswa.
-3. **Voice-First Interactivity**: Integrasi langsung dengan sintesis audio untuk kemandirian siswa Tunanetra.
-4. **Realtime Availability Check**: Fitur pinger otomatis untuk memastikan konektivitas Supabase AI Service selalu aktif.
-
----
-
-© 2026 **BintangAi Digital Ecosystem**. Built with ❤️ for inclusive education.
+Endpoint: `ai-tutor`, `generate-quiz`, `materi-ai`, dan `generate-report`. Semua endpoint memvalidasi JWT Supabase dan role/profil yang tersimpan di database.

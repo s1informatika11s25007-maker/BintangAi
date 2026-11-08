@@ -41,15 +41,9 @@ const Register = () => {
       let finalClassLevel = classLevel;
 
       if (role === 'ortu') {
-        if (!studentIdInput) throw new Error("ID Siswa tidak boleh kosong");
-        const { data: child, error: childError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', studentIdInput.trim())
-          .maybeSingle();
-
-        if (childError || !child) throw new Error("ID Siswa tidak ditemukan!");
-        linkedId = child.id;
+        const candidateId = studentIdInput.trim();
+        if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(candidateId)) throw new Error("Masukkan ID siswa dengan format yang benar. Tautan akan diverifikasi admin.");
+        linkedId = candidateId;
       }
 
       if (role === 'guru') {
@@ -80,7 +74,9 @@ const Register = () => {
       if (data.user) {
         setMessage({
           type: 'success',
-          text: role === 'guru' ? `Berhasil! Kode Kelas: ${finalClassCode}. Segera diarahkan...` : "Daftar berhasil! Silakan masuk."
+          text: role === 'siswa'
+            ? "Pendaftaran siswa berhasil. Silakan masuk."
+            : "Pendaftaran berhasil. Permintaan peran guru/orang tua dan tautan kelas akan diverifikasi admin sebelum akses diaktifkan."
         });
         setTimeout(() => navigate('/auth/login'), 2500);
       }
