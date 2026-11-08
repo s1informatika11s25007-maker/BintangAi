@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import TeacherSidebar from '@/components/layout/TeacherSidebar';
-import { HiCheck, HiX, HiUserAdd, HiChatAlt2, HiTrash, HiLockClosed, HiLockOpen, HiUsers, HiSparkles, HiSearch, HiBell } from 'react-icons/hi';
+import { HiCheck, HiX, HiUserAdd, HiChatAlt2, HiTrash, HiLockClosed, HiLockOpen, HiUsers, HiUserGroup, HiSparkles, HiSearch, HiBell } from 'react-icons/hi';
 
 const TeacherCollaboration = () => {
   const { profile } = useAuthStore();
@@ -198,7 +198,7 @@ const TeacherCollaboration = () => {
                 </div>
               </>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center p-20 text-center opacity-20"><HiSparkles className="text-9xl mb-6 text-indigo-200" /><p className="font-black uppercase tracking-[0.4em] text-xs">Pilih Manajemen Kelompok</p></div>
+              <div className="flex-1 flex flex-col items-center justify-center p-20 text-center opacity-30"><HiUserGroup className="text-8xl mb-6 text-indigo-400" /><p className="font-black uppercase tracking-[0.4em] text-xs text-slate-500">Pilih Manajemen Kelompok</p></div>
             )}
           </div>
         </div>

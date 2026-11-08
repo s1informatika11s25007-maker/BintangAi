@@ -8,7 +8,7 @@ import { useVoice } from '@/features/accessibility/hooks/useVoice';
 import { useAccessibility } from '@/features/accessibility/hooks/useAccessibility';
 import { useSubtitle } from '@/features/accessibility/components/Subtitles';
 import {
-  HiChatAlt2, HiUsers, HiLockClosed, HiLockOpen,
+  HiChatAlt2, HiUsers, HiUserGroup, HiLockClosed, HiLockOpen,
   HiPaperAirplane, HiX, HiSearch, HiCheckCircle,
   HiInformationCircle, HiChevronLeft, HiDotsVertical,
   HiSparkles, HiChatAlt, HiClock, HiCheck
@@ -354,8 +354,10 @@ const StudentCollaboration = () => {
               </>
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center p-12 text-center bg-white">
-                <motion.div animate={{ y: [0, -15, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className="w-48 h-48 bg-indigo-50 rounded-[3rem] flex items-center justify-center mb-10 border border-indigo-100/50 relative"><HiChatAlt className="text-8xl text-indigo-600/20" /><div className="absolute inset-0 flex items-center justify-center"><HiSparkles className="text-4xl text-indigo-600 animate-pulse" /></div></motion.div>
-                <h3 className="text-2xl font-black text-slate-900 mb-4">Grup Belajar & Kolaborasi</h3>
+                <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className="w-44 h-44 bg-indigo-50/80 rounded-[3rem] flex items-center justify-center mb-8 border border-indigo-100/60 shadow-inner">
+                  <HiUserGroup className="text-7xl text-indigo-600" />
+                </motion.div>
+                <h3 className="text-2xl font-black text-slate-900 mb-3">Grup Belajar & Kolaborasi</h3>
                 <p className="text-sm font-bold text-slate-400 max-w-sm uppercase tracking-widest">Bergabunglah dalam komunitas belajar interaktif.</p>
               </div>
             )}
