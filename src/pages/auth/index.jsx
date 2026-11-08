@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
 import { useAccessibilityStore } from '../../store/accessibilityStore';
+import { loginDemoAccount, fetchDemoAccountsFromDB, DEFAULT_DEMO_ACCOUNTS } from '../../features/auth/api/sessionApi';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -21,25 +22,53 @@ const Auth = () => {
   const [message, setMessage] = useState(null);
   const [studentIdInput, setStudentIdInput] = useState('');
 
+  // Inisialisasi awal dengan data instan agar 0ms delay & bebas animasi memuat
+  const [demoAccounts, setDemoAccounts] = useState(DEFAULT_DEMO_ACCOUNTS);
+
   const navigate = useNavigate();
   const location = useLocation();
   const { setUser, setProfile, fetchProfile } = useAuthStore();
   const { setModeFromProfile } = useAccessibilityStore();
 
-  const demoAccounts = [
-    { label: 'Guru', email: 'santaku@gmail.com', pass: 'santaku', icon: '👨‍🏫', color: 'bg-blue-50 text-blue-700' },
-    { label: 'Tunanetra', email: 'zakaria@gmail.com', pass: 'zakaria', icon: '🦯', color: 'bg-purple-50 text-purple-700' },
-    { label: 'Tunarungu', email: 'zabarku@gmail.com', pass: 'zabarku', icon: '🤟', color: 'bg-orange-50 text-orange-700' },
-    { label: 'Tunawicara', email: 'apapula@gmail.com', pass: 'apapula', icon: '🗣️', color: 'bg-emerald-50 text-emerald-700' },
-    { label: 'Orang Tua', email: 'Mega@gmail.com', pass: 'Megakulah', icon: '👪', color: 'bg-rose-50 text-rose-700' },
-  ];
+  useEffect(() => {
+    let isMounted = true;
+    if (isLogin) {
+      fetchDemoAccountsFromDB()
+        .then((accounts) => {
+          if (isMounted && accounts && accounts.length > 0) {
+            setDemoAccounts(accounts);
+          }
+        })
+        .catch((err) => {
+          console.error("Error loading demo accounts from DB:", err);
+        });
+    }
+    return () => { isMounted = false; };
+  }, [isLogin]);
 
-  const fillDemoAccount = (acc) => {
+  const handleDemoAccountClick = async (acc) => {
     setEmail(acc.email);
-    setPassword(acc.pass);
-    setMessage(`Akun ${acc.label} terpilih! Klik Masuk Sekarang.`);
-    // Scroll to top of form if needed
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setPassword('••••••••');
+    setLoading(true);
+    setMessage(`Menyiapkan akun demo ${acc.label}...`);
+
+    try {
+      const { data } = await loginDemoAccount(acc.email);
+      setUser(data.user);
+
+      const profileData = await fetchProfile(data.user.id);
+      if (profileData) {
+        setModeFromProfile(profileData);
+        const targetPath = profileData.role === 'guru' ? '/teacher/dashboard' :
+                           profileData.role === 'ortu' ? '/parent/dashboard' :
+                           '/student/dashboard';
+        navigate(targetPath);
+      }
+    } catch (error) {
+      setMessage(`Gagal masuk demo: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -84,20 +113,29 @@ const Auth = () => {
 
     try {
       if (isLogin) {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: cleanEmail,
-          password: password,
-        });
+        const matchedDemo = demoAccounts.find(
+          acc => acc.email.toLowerCase() === cleanEmail
+        );
 
-        if (error) throw new Error("Email atau kata sandi salah");
+        let authResult;
+        if (matchedDemo) {
+          authResult = await loginDemoAccount(matchedDemo.email);
+        } else {
+          const res = await supabase.auth.signInWithPassword({
+            email: cleanEmail,
+            password: password,
+          });
+          if (res.error) throw new Error("Email atau kata sandi salah");
+          authResult = { data: res.data };
+        }
 
-        setUser(data.user);
-        const profileData = await fetchProfile(data.user.id);
+        setUser(authResult.data.user);
+        const profileData = await fetchProfile(authResult.data.user.id);
 
         if (!profileData) {
-            const metadata = data.user.user_metadata || {};
+            const metadata = authResult.data.user.user_metadata || {};
             const fallbackProfile = {
-                id: data.user.id,
+                id: authResult.data.user.id,
                 full_name: metadata.full_name || cleanEmail.split('@')[0],
                 role: metadata.role || 'siswa',
                 disability_type: metadata.disability_type || 'tidak_ada',
@@ -251,13 +289,9 @@ const Auth = () => {
           <div className="bg-white p-10 md:p-12 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-50 rounded-full -mr-20 -mt-20 opacity-40 blur-2xl" />
 
-            {/* Akses Cepat Akun Demo */}
+            {/* Akses Cepat Akun Demo Instan tanpa Animasi Memuat */}
             {isLogin && (
-              <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-8 relative z-10"
-              >
+              <div className="mb-8 relative z-10">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="h-[2px] flex-1 bg-slate-100" />
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Akun Terdaftar</span>
@@ -267,22 +301,20 @@ const Auth = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {demoAccounts.map((acc) => (
                     <button
-                      key={acc.email}
+                      key={acc.id || acc.email}
                       type="button"
-                      onClick={() => fillDemoAccount(acc)}
-                      className={`flex items-center gap-3 p-3 rounded-2xl border-2 border-transparent hover:border-indigo-200 hover:bg-white transition-all shadow-sm group ${acc.color}`}
+                      onClick={() => handleDemoAccountClick(acc)}
+                      className="flex items-center gap-3 p-3.5 rounded-2xl border-2 border-slate-100 hover:border-indigo-200 hover:bg-white transition-all shadow-sm group bg-white text-slate-700"
                     >
-                      <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-xl shadow-sm group-hover:scale-110 transition-transform">
-                        {acc.icon}
-                      </div>
+                      <div className={`w-3 h-3 rounded-full shrink-0 ${acc.color || 'bg-indigo-500'}`} />
                       <div className="text-left overflow-hidden">
                         <p className="text-xs font-black truncate">{acc.label}</p>
-                        <p className="text-[10px] opacity-70 font-bold truncate">Klik pilih</p>
+                        <p className="text-[10px] text-slate-400 font-bold truncate">Klik masuk</p>
                       </div>
                     </button>
                   ))}
                 </div>
-              </motion.div>
+              </div>
             )}
 
             <AnimatePresence mode="wait">

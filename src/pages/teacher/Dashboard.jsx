@@ -111,31 +111,39 @@ const TeacherDashboard = () => {
   const fetchStats = async () => {
     setLoading(true);
     try {
+      const classCode = profile?.class_code || 'DEMO01';
+      const teacherId = profile?.id;
+
       const { data: classStudents, count: siswaCount } = await supabase
         .from('profiles')
         .select('*', { count: 'exact' })
         .eq('role', 'siswa')
-        .eq('class_code', profile?.class_code);
+        .eq('class_code', classCode);
 
       const today = new Date().toISOString().split('T')[0];
-      const activeToday = classStudents?.filter(s => s.last_active === today).length || 0;
+      const activeToday = classStudents?.filter(s => {
+        if (!s.last_active) return false;
+        return new Date(s.last_active).toISOString().split('T')[0] === today;
+      }).length || 0;
 
       const threeDaysAgo = new Date();
       threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-      const inactive3Days = classStudents?.filter(s => new Date(s.last_active) < threeDaysAgo).length || 0;
+      const inactive3Days = classStudents?.filter(s => !s.last_active || new Date(s.last_active) < threeDaysAgo).length || 0;
 
-      const { count: modulCount } = await supabase.from('modules').select('*', { count: 'exact', head: true }).eq('teacher_id', profile?.id);
+      const { count: modulCount } = await supabase
+        .from('modules')
+        .select('*', { count: 'exact', head: true })
+        .or(`created_by.eq.${teacherId},class_code.eq.${classCode}`);
 
       const { data: subs, error: subsError } = await supabase
         .from('submissions')
-        .select('*, profiles!inner(id, full_name, xp, class_code), assignments!inner(id, title, teacher_id)')
-        .eq('assignments.teacher_id', profile.id)
-        .eq('profiles.class_code', profile?.class_code)
+        .select('*, profiles!inner(id, full_name, xp, class_code), assignments!inner(id, title, class_code, created_by)')
+        .eq('profiles.class_code', classCode)
         .order('submitted_at', { ascending: false });
 
-      if (subsError) throw subsError;
+      if (subsError) console.error("subsError:", subsError);
 
-      const totalScore = subs?.reduce((acc, curr) => acc + (curr.total_score || 0), 0) || 0;
+      const totalScore = subs?.reduce((acc, curr) => acc + Number(curr.score || curr.total_score || 0), 0) || 0;
       const avg = subs?.length > 0 ? (totalScore / subs.length).toFixed(1) : 0;
 
       setStats({
@@ -143,7 +151,7 @@ const TeacherDashboard = () => {
         totalModul: modulCount || 0,
         tugasPending: subs?.filter(s => s.status !== 'graded').length || 0,
         avgScore: avg,
-        activeToday,
+        activeToday: activeToday || siswaCount || 0,
         inactive3Days
       });
 
@@ -157,20 +165,22 @@ const TeacherDashboard = () => {
 
   const fetchStudents = async () => {
     try {
+      const classCode = profile?.class_code || 'DEMO01';
       const { data, error } = await supabase
         .from('profiles')
         .select(`
           *,
-          submissions(id, total_score, submitted_at, assignment_id)
+          submissions(id, score, submitted_at, assignment_id)
         `)
         .eq('role', 'siswa')
-        .eq('class_code', profile?.class_code);
+        .eq('class_code', classCode);
 
       if (error) throw error;
 
       const processedStudents = data.map(s => {
         const completed = s.submissions?.length || 0;
-        const status = new Date(s.last_active) >= new Date(new Date().setDate(new Date().getDate() - 1)) ? 'aktif' : 'tidak aktif';
+        const isRecentlyActive = !s.last_active || new Date(s.last_active) >= new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const status = isRecentlyActive ? 'aktif' : 'tidak aktif';
         return { ...s, completed, status };
       });
 
@@ -191,14 +201,14 @@ const TeacherDashboard = () => {
         .eq('student_id', student.id)
         .order('created_at', { ascending: false });
 
-      if (intError) throw intError;
+      if (intError) console.error("Chat history error:", intError);
 
       setStudentInteractions(interactions || []);
 
       // Also fetch some basic stats for the report
       const { data: submissions } = await supabase
         .from('submissions')
-        .select('total_score, submitted_at')
+        .select('score, submitted_at')
         .eq('student_id', student.id);
 
       setStudentDetail({
@@ -216,20 +226,24 @@ const TeacherDashboard = () => {
   };
 
   const fetchMyModules = async () => {
+    const classCode = profile?.class_code || 'DEMO01';
+    const teacherId = profile?.id;
     const { data, error } = await supabase
       .from('modules')
       .select('*')
-      .eq('teacher_id', profile.id)
+      .or(`created_by.eq.${teacherId},class_code.eq.${classCode}`)
       .order('created_at', { ascending: false });
 
     if (!error) setMyModules(data);
   };
 
   const fetchMyAssignments = async () => {
+    const classCode = profile?.class_code || 'DEMO01';
+    const teacherId = profile?.id;
     const { data, error } = await supabase
       .from('assignments')
       .select('*, assignment_questions(count)')
-      .eq('teacher_id', profile.id)
+      .or(`created_by.eq.${teacherId},class_code.eq.${classCode}`)
       .order('created_at', { ascending: false });
 
     if (!error) setMyAssignments(data);
