@@ -163,15 +163,6 @@ const Register = () => {
             </div>
           </div>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex gap-4 text-indigo-200/70 text-[11px] font-bold drop-shadow pt-4"
-          >
-            <span>PRIVASI</span>
-            <span>SYARAT</span>
-            <span>BANTUAN</span>
-          </motion.div>
         </div>
       </div>
 
