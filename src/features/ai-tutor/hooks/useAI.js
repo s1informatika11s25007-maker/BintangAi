@@ -184,13 +184,8 @@ export const useAI = () => {
       const { data, error } = await supabase.functions.invoke('ai-tutor', {
         body: {
           message: "berikan panduan navigasi lengkap",
-          system_prompt: `Kamu adalah Kak Bintang, asisten navigasi pintar. Sapa ${fullName} dengan hangat.
-          Jelaskan struktur halaman dashboard ini secara terstruktur untuk tunanetra:
-          1. Di paling kiri ada Sidebar Menu: Beranda, Tanya AI, QuizKu, Materi, dan Profil.
-          2. Di tengah layar ada Status Level dan XP kamu.
-          3. Di kanan bawah ada tombol Mikrofon 'Nay' yang bisa kamu aktifkan kapan saja dengan menekan SPASI untuk membantumu bernavigasi atau bertanya apa saja.
-          Gunakan bahasa yang sangat jelas, sopan, dan instruktif. Maksimal 40 kata.`,
-          model: "llama-3.1-8b-instant" // Model sangat cepat & akurat untuk instruksi
+          task: "navigation",
+          context: `Sapa ${fullName} dengan hangat. Jelaskan struktur halaman dashboard ini secara terstruktur untuk tunanetra: 1. Di paling kiri ada Sidebar Menu. 2. Di tengah layar ada Status Level dan XP kamu. 3. Di kanan bawah ada tombol Mikrofon Nay yang bisa kamu aktifkan kapan saja. Maksimal 40 kata.`
         },
         headers: { 'x-api-key': 'christian' }
       });
@@ -212,14 +207,7 @@ export const useAI = () => {
           message: query,
           student_id: studentId,
           context: pageContext,
-          system_prompt: `Kamu adalah Nay, asisten navigasi & belajar pintar untuk siswa tunanetra.
-          Tugasmu:
-          1. Jawab pertanyaan tentang isi halaman.
-          2. Jika pengguna ingin pindah fitur (contoh: "buka quiz", "ke materi", "ke profil"), balas dengan format: [NAVIGATE:target] diikuti jawabanmu.
-             Target yang tersedia: dashboard, playground, tasks, modules, profile.
-          3. Gunakan bahasa ramah, singkat (max 30 kata), dan sangat jelas.
-          Konteks Halaman: ${pageContext}`,
-          model: "llama-3.1-8b-instant" // Model akurat & cepat
+          task: "navigation"
         },
         headers: { 'x-api-key': apiKey }
       });
@@ -283,7 +271,7 @@ export const useAI = () => {
           question,
           module_id: moduleId,
           grade_level: options.gradeLevel || "SD",
-          model_preference: options.model || "llama-3.3-70b-versatile"
+          model_preference: options.model || "qwen/qwen3.8-27b"
         },
         headers: { 'x-api-key': apiKey }
       });
