@@ -233,24 +233,27 @@ export const useAI = () => {
   const smartVoiceAssistant = async (audioBlob, studentName, pageContext = "") => {
     setLoading(true);
     try {
-      const formData = new FormData();
-      formData.append('file', audioBlob, 'voice.webm');
-      formData.append('studentName', studentName);
-      formData.append('context', pageContext);
-
-      const { data, error: invokeError } = await supabase.functions.invoke('smart-voice-assistant', {
-        body: formData,
+      const apiKey = import.meta.env.VITE_CUSTOM_AI_TUTOR_KEY || "christian";
+      const { data, error: invokeError } = await supabase.functions.invoke('ai-tutor', {
+        body: {
+          message: "Halo Kak Bintang, berikan panduan halaman ini",
+          task: "navigation",
+          context: pageContext,
+          nama: studentName
+        },
+        headers: { 'x-api-key': apiKey }
       });
 
       if (invokeError) throw invokeError;
 
+      const reply = data?.reply || "";
+      const navMatch = reply.match(/\[NAVIGATE:(.*?)\]/);
+
       return {
         success: true,
-        transcript: data.transcript,
-        answer: data.reply,
-        navigateTo: data.navigateTo,
-        action: data.action,
-        actionData: data.actionData
+        transcript: "Bantu Navigasi",
+        answer: reply.replace(/\[NAVIGATE:.*?\]/, '').trim(),
+        navigateTo: navMatch ? navMatch[1] : null
       };
     } catch (err) {
       console.error("Smart Voice Assistant Error:", err);
