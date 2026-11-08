@@ -41,9 +41,15 @@ const Register = () => {
       let finalClassLevel = classLevel;
 
       if (role === 'ortu') {
-        const candidateId = studentIdInput.trim();
-        if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(candidateId)) throw new Error("Masukkan ID siswa dengan format yang benar. Tautan akan diverifikasi admin.");
-        linkedId = candidateId;
+        if (!studentIdInput) throw new Error("ID Siswa tidak boleh kosong");
+        const { data: child, error: childError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', studentIdInput.trim())
+          .maybeSingle();
+
+        if (childError || !child) throw new Error("ID Siswa tidak ditemukan!");
+        linkedId = child.id;
       }
 
       if (role === 'guru') {
@@ -74,9 +80,7 @@ const Register = () => {
       if (data.user) {
         setMessage({
           type: 'success',
-          text: role === 'siswa'
-            ? "Pendaftaran siswa berhasil. Silakan masuk."
-            : "Pendaftaran berhasil. Permintaan peran guru/orang tua dan tautan kelas akan diverifikasi admin sebelum akses diaktifkan."
+          text: role === 'guru' ? `Berhasil! Kode Kelas: ${finalClassCode}. Segera diarahkan...` : "Daftar berhasil! Silakan masuk."
         });
         setTimeout(() => navigate('/auth/login'), 2500);
       }
@@ -96,18 +100,18 @@ const Register = () => {
   };
 
   const itemVariants = {
-    hidden: { y: 10, opacity: 0 },
+    hidden: { y: 15, opacity: 0 },
     visible: { y: 0, opacity: 1 }
   };
 
   return (
-    <div className="h-screen max-h-screen flex font-sans bg-white selection:bg-indigo-100 overflow-hidden">
-      {/* Sidebar Visual (Tampilan Jelas & Responsif) */}
-      <div className="hidden lg:flex lg:w-[38%] h-full relative overflow-hidden bg-slate-950 shrink-0">
+    <div className="h-[100dvh] w-screen flex font-sans bg-white selection:bg-indigo-100 overflow-hidden">
+      {/* Sidebar Visual */}
+      <div className="hidden lg:flex lg:w-[40%] h-full relative overflow-hidden bg-indigo-950 flex-col justify-between">
         <motion.div
-          initial={{ scale: 1.1, opacity: 0 }}
-          animate={{ scale: 1, opacity: 0.75 }}
-          transition={{ duration: 1.5 }}
+          initial={{ scale: 1.2, opacity: 0 }}
+          animate={{ scale: 1, opacity: 0.8 }}
+          transition={{ duration: 2 }}
           className="absolute inset-0 z-0"
           style={{
             backgroundImage: 'url("https://images.unsplash.com/photo-1491841573634-28140fc7ced7?auto=format&fit=crop&q=80")',
@@ -115,51 +119,44 @@ const Register = () => {
             backgroundPosition: 'center'
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-900/35 to-slate-950/75 z-10" />
+        <div className="absolute inset-0 bg-gradient-to-b from-indigo-950/85 via-indigo-900/25 to-indigo-950/50 z-10" />
 
         <div className="relative z-20 w-full h-full flex flex-col justify-between p-8 lg:p-12">
-          {/* Top Container: Logo & Teks Tersusun Rapi di Bagian Atas */}
-          <div className="space-y-6 max-w-sm">
-            {/* Logo BintangAi Konsisten */}
+          {/* Top Section - Brand + Main Text */}
+          <div className="space-y-6">
             <motion.div
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              className="flex items-center gap-3.5 cursor-pointer group w-fit"
+              whileHover={{ scale: 1.05 }}
+              className="flex items-center gap-3 cursor-pointer w-fit"
               onClick={() => navigate('/')}
             >
-              <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-600/30 group-hover:scale-105 transition-transform duration-300">
+              <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-600/20">
                 <span className="text-white font-black text-xl">B</span>
               </div>
-              <span className="text-2xl font-black tracking-tight text-white drop-shadow-sm">
-                Bintang<span className="text-indigo-400">Ai</span>
-              </span>
+              <span className="text-xl font-bold tracking-tight text-white drop-shadow">BintangAi</span>
             </motion.div>
 
-            {/* Teks Terletak Di Atas Rapi (Tidak di Tengah Gambar) */}
-            <div className="space-y-3.5 pt-1">
+            <div className="space-y-4 max-w-sm">
               <motion.div
-                initial={{ y: 15, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-950/60 backdrop-blur-md border border-indigo-500/30 text-indigo-300 text-[10px] font-bold uppercase tracking-[0.2em]"
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-900/80 border border-white/20 text-indigo-100 text-[10px] font-bold uppercase tracking-[0.2em] shadow-sm"
               >
                 <HiSparkles className="animate-pulse text-indigo-400" /> Mulai Petualangan
               </motion.div>
-
               <motion.h2
                 initial={{ y: 15, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="text-3xl lg:text-4xl font-black text-white leading-tight drop-shadow-md"
+                transition={{ delay: 0.5 }}
+                className="text-3xl lg:text-4xl font-black text-white leading-tight drop-shadow-lg"
               >
                 Setiap Anak Adalah <span className="text-indigo-400">Bintang</span>.
               </motion.h2>
-
               <motion.p
                 initial={{ y: 15, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="text-sm text-slate-200 font-medium leading-relaxed drop-shadow-sm"
+                transition={{ delay: 0.6 }}
+                className="text-sm lg:text-base text-indigo-100/90 font-medium leading-relaxed drop-shadow"
               >
                 Bergabunglah dengan ribuan siswa dan guru dalam menciptakan lingkungan belajar yang setara.
               </motion.p>
@@ -169,8 +166,7 @@ const Register = () => {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="flex gap-4 text-slate-400 text-[11px] font-bold tracking-wider drop-shadow-sm"
+            className="flex gap-4 text-indigo-200/70 text-[11px] font-bold drop-shadow pt-4"
           >
             <span>PRIVASI</span>
             <span>SYARAT</span>
@@ -179,13 +175,13 @@ const Register = () => {
         </div>
       </div>
 
-      {/* Main Content Form (Presisi 100% Layar Tanpa Scroll di Desktop/Tablet) */}
-      <div className="w-full lg:w-[62%] h-full flex flex-col justify-center items-center p-4 sm:p-6 lg:p-8 bg-slate-50/50 overflow-y-auto lg:overflow-hidden">
-        <div className="max-w-[540px] mx-auto w-full">
+      {/* Main Content */}
+      <div className="w-full lg:w-[60%] h-full flex flex-col justify-center items-center p-6 md:p-10 lg:p-12 overflow-y-auto bg-slate-50/50">
+        <div className="w-full max-w-xl my-auto">
           <motion.button
-            whileHover={{ x: -4 }}
+            whileHover={{ x: -5 }}
             onClick={() => navigate('/auth/login')}
-            className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold text-xs mb-3 lg:mb-4 transition-colors"
+            className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold text-xs mb-6 transition-colors"
           >
             <HiArrowLeft /> Kembali ke Masuk
           </motion.button>
@@ -194,11 +190,11 @@ const Register = () => {
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="space-y-4 lg:space-y-5"
+            className="space-y-6"
           >
             <div>
-              <h1 className="text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">Daftar Akun Baru</h1>
-              <p className="text-slate-500 font-medium text-xs mt-1">Pilih peran dan lengkapi data diri Anda</p>
+              <h1 className="text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">Daftar Akun Baru</h1>
+              <p className="text-slate-500 text-sm font-medium mt-1">Pilih peran dan lengkapi data diri Anda</p>
             </div>
 
             <AnimatePresence mode="wait">
@@ -207,7 +203,7 @@ const Register = () => {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  className={`p-3 rounded-xl text-xs font-bold flex items-center gap-2.5 ${
+                  className={`p-3.5 rounded-2xl text-xs font-bold flex items-center gap-3 ${
                     message.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-rose-50 text-rose-700 border border-rose-100'
                   }`}
                 >
@@ -217,40 +213,40 @@ const Register = () => {
               )}
             </AnimatePresence>
 
-            <form onSubmit={handleRegister} className="grid grid-cols-1 md:grid-cols-2 gap-3 lg:gap-4">
+            <form onSubmit={handleRegister} className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Basic Info */}
-              <motion.div variants={itemVariants} className="space-y-2 md:col-span-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-[10px]">1</div>
+              <motion.div variants={itemVariants} className="space-y-3 md:col-span-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs">1</div>
                   <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Informasi Dasar</h3>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="relative group">
-                    <HiUser className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600" />
+                    <HiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600" />
                     <input
                       type="text" required placeholder="Nama Lengkap"
                       value={fullName} onChange={(e) => setFullName(e.target.value)}
-                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-white border border-slate-200 focus:border-indigo-600 outline-none font-semibold text-xs transition-all shadow-sm"
+                      className="w-full pl-11 pr-4 py-3 rounded-2xl bg-white border-2 border-slate-100 focus:border-indigo-600 outline-none font-semibold text-sm transition-all shadow-sm"
                     />
                   </div>
                   <div className="relative group">
-                    <HiMail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600" />
+                    <HiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600" />
                     <input
-                      type="email" required placeholder="Email (@gmail.com)"
+                      type="email" required placeholder="Email"
                       value={email} onChange={(e) => setEmail(e.target.value)}
-                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-white border border-slate-200 focus:border-indigo-600 outline-none font-semibold text-xs transition-all shadow-sm"
+                      className="w-full pl-11 pr-4 py-3 rounded-2xl bg-white border-2 border-slate-100 focus:border-indigo-600 outline-none font-semibold text-sm transition-all shadow-sm"
                     />
                   </div>
                 </div>
               </motion.div>
 
               {/* Role Selection */}
-              <motion.div variants={itemVariants} className="space-y-2 md:col-span-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-[10px]">2</div>
+              <motion.div variants={itemVariants} className="space-y-3 md:col-span-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs">2</div>
                   <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Pilih Peran</h3>
                 </div>
-                <div className="grid grid-cols-3 gap-2.5">
+                <div className="grid grid-cols-3 gap-3">
                   {[
                     { id: 'siswa', label: 'Siswa', icon: <HiAcademicCap /> },
                     { id: 'guru', label: 'Guru', icon: <HiUserGroup /> },
@@ -260,8 +256,8 @@ const Register = () => {
                       key={r.id}
                       type="button"
                       onClick={() => setRole(r.id)}
-                      className={`p-2.5 rounded-xl border transition-all flex flex-col items-center gap-1 font-bold text-xs ${
-                        role === r.id ? 'border-indigo-600 bg-indigo-50 text-indigo-600 shadow-sm' : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                      className={`p-3 rounded-2xl border-2 transition-all flex flex-col items-center gap-1.5 font-bold text-xs ${
+                        role === r.id ? 'border-indigo-600 bg-indigo-50 text-indigo-600' : 'border-slate-100 bg-white text-slate-400 hover:border-slate-200'
                       }`}
                     >
                       <span className="text-xl">{r.icon}</span>
@@ -276,16 +272,16 @@ const Register = () => {
                 {role === 'siswa' && (
                   <motion.div
                     key="siswa-fields"
-                    initial={{ opacity: 0, y: 8 }}
+                    initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-2.5"
+                    exit={{ opacity: 0, y: -10 }}
+                    className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3"
                   >
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Tipe Disabilitas</label>
+                      <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Tipe Disabilitas</label>
                       <select
                         value={disabilityType} onChange={(e) => setDisabilityType(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-200 focus:border-indigo-600 outline-none font-semibold text-xs transition-all shadow-sm"
+                        className="w-full px-5 py-3 rounded-2xl bg-white border-2 border-slate-100 focus:border-indigo-600 outline-none font-semibold text-xs transition-all shadow-sm"
                       >
                         <option value="tidak_ada">Umum / Tanpa Hambatan</option>
                         <option value="tunanetra">Tunanetra</option>
@@ -294,11 +290,11 @@ const Register = () => {
                       </select>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Kode Kelas (Wajib)</label>
+                      <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Kode Kelas (Wajib)</label>
                       <input
                         type="text" required placeholder="Contoh: X8J2K1"
                         value={classCode} onChange={(e) => setClassCode(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-200 focus:border-indigo-600 outline-none font-semibold text-xs transition-all shadow-sm"
+                        className="w-full px-5 py-3 rounded-2xl bg-white border-2 border-slate-100 focus:border-indigo-600 outline-none font-semibold text-xs transition-all shadow-sm"
                       />
                     </div>
                   </motion.div>
@@ -307,25 +303,25 @@ const Register = () => {
                 {role === 'guru' && (
                   <motion.div
                     key="guru-fields"
-                    initial={{ opacity: 0, y: 8 }}
+                    initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-2.5"
+                    className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-3"
                   >
                     <input
                       type="text" required placeholder="Nama Sekolah/SLB"
                       value={slbName} onChange={(e) => setSlbName(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-200 focus:border-indigo-600 outline-none font-semibold text-xs transition-all shadow-sm"
+                      className="w-full px-5 py-3 rounded-2xl bg-white border-2 border-slate-100 focus:border-indigo-600 outline-none font-semibold text-xs transition-all shadow-sm"
                     />
                     <select
                       value={classLevel} onChange={(e) => setClassLevel(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-200 focus:border-indigo-600 outline-none font-semibold text-xs transition-all shadow-sm"
+                      className="w-full px-5 py-3 rounded-2xl bg-white border-2 border-slate-100 focus:border-indigo-600 outline-none font-semibold text-xs transition-all shadow-sm"
                     >
                       <option value="">Pilih Kelas</option>
                       {classLevels.map(cl => <option key={cl} value={cl}>{cl}</option>)}
                     </select>
                     <select
                       value={subject} onChange={(e) => setSubject(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-200 focus:border-indigo-600 outline-none font-semibold text-xs transition-all shadow-sm"
+                      className="w-full px-5 py-3 rounded-2xl bg-white border-2 border-slate-100 focus:border-indigo-600 outline-none font-semibold text-xs transition-all shadow-sm"
                     >
                       <option value="">Pilih Mapel</option>
                       {subjects.map(s => <option key={s} value={s}>{s}</option>)}
@@ -336,46 +332,46 @@ const Register = () => {
                 {role === 'ortu' && (
                   <motion.div
                     key="ortu-fields"
-                    initial={{ opacity: 0, y: 8 }}
+                    initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="md:col-span-2"
                   >
                     <input
                       type="text" required placeholder="ID Unik Siswa (Tanyakan pada anak/guru)"
                       value={studentIdInput} onChange={(e) => setStudentIdInput(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-200 focus:border-indigo-600 outline-none font-semibold text-xs transition-all shadow-sm"
+                      className="w-full px-5 py-3 rounded-2xl bg-white border-2 border-slate-100 focus:border-indigo-600 outline-none font-semibold text-xs transition-all shadow-sm"
                     />
                   </motion.div>
                 )}
               </AnimatePresence>
 
               {/* Security */}
-              <motion.div variants={itemVariants} className="space-y-2 md:col-span-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-[10px]">3</div>
+              <motion.div variants={itemVariants} className="space-y-3 md:col-span-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs">3</div>
                   <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Keamanan</h3>
                 </div>
                 <div className="relative group">
-                  <HiLockClosed className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600" />
+                  <HiLockClosed className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600" />
                   <input
                     type={showPassword ? "text" : "password"} required placeholder="Buat Kata Sandi (Min. 8 Karakter)"
                     value={password} onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-white border border-slate-200 focus:border-indigo-600 outline-none font-semibold text-xs transition-all shadow-sm"
+                    className="w-full pl-11 pr-11 py-3 rounded-2xl bg-white border-2 border-slate-100 focus:border-indigo-600 outline-none font-semibold text-xs transition-all shadow-sm"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors"
                   >
                     {showPassword ? <HiEyeOff className="text-lg" /> : <HiEye className="text-lg" />}
                   </button>
                 </div>
               </motion.div>
 
-              <motion.div variants={itemVariants} className="md:col-span-2 pt-1">
+              <motion.div variants={itemVariants} className="md:col-span-2 pt-2">
                 <button
                   type="submit" disabled={loading}
-                  className="w-full py-3 lg:py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm rounded-xl shadow-lg shadow-indigo-200 transition-all flex items-center justify-center gap-2 group"
+                  className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm rounded-2xl shadow-xl shadow-indigo-200 transition-all flex items-center justify-center gap-2 group disabled:opacity-70"
                 >
                   {loading ? (
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -389,7 +385,7 @@ const Register = () => {
               </motion.div>
             </form>
 
-            <motion.p variants={itemVariants} className="text-center text-slate-400 text-[10px] font-medium">
+            <motion.p variants={itemVariants} className="text-center text-slate-400 text-[11px] font-medium">
               Dengan mendaftar, Anda menyetujui <span className="text-slate-600 underline">Kebijakan Privasi</span> dan <span className="text-slate-600 underline">Ketentuan Layanan</span> kami.
             </motion.p>
           </motion.div>

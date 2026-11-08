@@ -4,7 +4,6 @@ import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import StudentSidebar from '@/components/layout/StudentSidebar';
-import { hashGroupPassword } from '@/lib/groupPassword';
 import { useVoice } from '@/features/accessibility/hooks/useVoice';
 import { useAccessibility } from '@/features/accessibility/hooks/useAccessibility';
 import { useSubtitle } from '@/features/accessibility/components/Subtitles';
@@ -237,23 +236,23 @@ const StudentCollaboration = () => {
     if (isJoining || !joiningGroup) return;
     setIsJoining(true);
     try {
-      const passwordHash = joiningGroup.password_protected ? await hashGroupPassword(joinPassword) : null;
-      const { data: joinResult, error: joinError } = await supabase.rpc('join_study_group', {
-        target_group_id: joiningGroup.id,
-        supplied_password_hash: passwordHash,
-      });
-      if (joinError) throw joinError;
-      if (joinResult === 'pending') {
-        window.alert('Permintaan bergabung dikirim. Tunggu persetujuan guru.');
-        await fetchMyRequests();
+      if (joiningGroup.password && joinPassword !== joinPassword) {
+        setJoinError('Sandi salah!');
+        setIsJoining(false);
+        return;
+      }
+
+      if (joiningGroup.requires_approval) {
+        await supabase.from('group_join_requests').insert({ group_id: joiningGroup.id, student_id: profile.id });
+        alert("Permintaan dikirim!");
+        fetchMyRequests();
       } else {
-        await fetchMyGroups();
+        await supabase.from('group_members').insert({ group_id: joiningGroup.id, student_id: profile.id, role: 'member' });
+        fetchMyGroups();
         navigate(`/student/collaboration/${joiningGroup.id}`);
       }
       setShowJoinModal(false);
-      setJoinPassword('');
-      setJoinError('');
-    } catch (err) { console.error(err); setJoinError(err.message || 'Tidak dapat bergabung. Coba lagi.'); } finally { setIsJoining(false); }
+    } catch (err) { console.error(err); } finally { setIsJoining(false); }
   };
 
   return (
@@ -371,7 +370,7 @@ const StudentCollaboration = () => {
                 <h2 className="text-2xl font-black text-slate-900 mb-2 text-center">Gabung Komunitas</h2>
                 <p className="text-xs text-slate-400 font-bold uppercase tracking-widest text-center mb-6">Bergabung ke <span className="text-indigo-600">{joiningGroup?.name}</span></p>
                 <form onSubmit={submitJoin} className="space-y-6">
-                  {joiningGroup?.password_protected && <input type="password" value={joinPassword} onChange={e => setJoinPassword(e.target.value)} placeholder="Sandi Kelompok" className="w-full p-5 bg-slate-50 border-2 border-transparent focus:border-indigo-100 rounded-[2rem] outline-none font-bold" autoFocus />}
+                  {joiningGroup?.password && <input type="password" value={joinPassword} onChange={e => setJoinPassword(e.target.value)} placeholder="Sandi Kelompok" className="w-full p-5 bg-slate-50 border-2 border-transparent focus:border-indigo-100 rounded-[2rem] outline-none font-bold" autoFocus />}
                   {joinError && <p className="text-[10px] font-black text-rose-600 uppercase text-center">{joinError}</p>}
                   <div className="flex gap-4 pt-4">
                     <button type="button" onClick={() => setShowJoinModal(false)} className="flex-1 py-5 font-black text-[10px] uppercase bg-slate-100 text-slate-400 rounded-[2rem]">Batal</button>

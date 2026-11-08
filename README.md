@@ -1,45 +1,116 @@
-# BintangAi — Inclusive Learning Platform
+# BintangAi 🌟
 
-BintangAi adalah aplikasi pembelajaran inklusif untuk siswa SD kelas 1–6, guru, dan orang tua/wali. Aplikasi menyediakan materi, tugas, kuis, komunikasi visual, tutor AI, captions/dikte browser, kolaborasi, gamifikasi, dan pengaturan aksesibilitas.
+**BintangAi** adalah platform belajar inklusif berbasis AI yang dirancang untuk siswa **Tunanetra dan Tunarungu**. Project ini berfokus pada kemudahan akses melalui **Navigasi Suara** dan **Deteksi Gestur Tangan**, serta bantuan asisten belajar cerdas (**AI Tutor**).
 
-## Fitur yang dipertahankan
+---
 
-Semua source fitur BintangAi dari arsip awal dipertahankan, termasuk dashboard siswa/guru/orang tua, autentikasi, materi, tugas, kuis, Playground, Live Captions, AI Tutor, chat, kolaborasi, gamifikasi, profil, dan komponen aksesibilitas. Login demo merupakan pengecualian hardcoded yang disengaja dan tetap tersedia.
+## 🛠️ Arsitektur Teknologi
 
-## Teknologi
+### Frontend
+- **Framework**: React 18 dengan Vite sebagai build tool.
+- **State Management**: Zustand untuk manajemen state yang ringan dan efisien.
+- **Styling**: Tailwind CSS untuk desain antarmuka yang modern dan responsif.
+- **Animation**: Framer Motion untuk transisi dan interaksi yang halus.
+- **Routing**: React Router DOM v6.
 
-- React 18 + Vite
-- Supabase Auth, Postgres, RLS, Storage, Realtime, Edge Functions
-- Groq API melalui Edge Functions
-- Browser Web Speech API dan `getUserMedia` untuk fitur aksesibilitas perangkat
+### Backend (BintangAi Core)
+- **Platform**: Supabase (Backend as a Service).
+- **Edge Functions**: Deno-based serverless functions untuk logika AI.
+- **Database**: PostgreSQL dengan Row Level Security (RLS) yang ketat.
+- **Storage**: Supabase Storage untuk penyimpanan modul pembelajaran (PDF).
+- **Realtime**: PostgreSQL CDC untuk fitur kolaborasi grup belajar.
 
-## Menjalankan aplikasi
+---
 
-Persyaratan: Node.js 20.19+ dan npm 10+.
+## 📁 Struktur Proyek (Comprehensive)
 
-```bash
-npm ci
-cp .env.example .env.local
-npm run check
-npm test
-npm run build
-npm run dev
+### 🖥️ Frontend Structure (`/src`)
+```text
+src/
+├── components/             # Komponen UI Reusable
+│   ├── feedback/           # Toast, Notification, Confetti
+│   ├── layout/             # Sidebar, Navbar, AppLayout
+│   └── common/             # Button, Input, Card khusus
+├── features/               # Modul Fitur (Domain Driven)
+│   ├── accessibility/      # Hooks & Components khusus aksesibilitas
+│   │   ├── hooks/          # useGesture, useVoice, useAudioRecorder
+│   │   └── components/     # BlindAIAssistant, Subtitles, GestureCamera
+│   ├── ai-tutor/           # Otak AI Kak Bintang
+│   │   ├── api/            # Wrapper API Supabase Functions
+│   │   └── hooks/          # useAI, useAIPrompt
+│   └── auth/               # Sistem Keamanan & User Session
+├── pages/                  # Views berdasarkan User Role
+│   ├── student/            # Dashboard, Tanya AI (Chat), QuizKu, Modules
+│   ├── teacher/            # Management Panel (Upload, Task Creation)
+│   └── parent/             # Monitoring Dashboard
+├── lib/                    # SDK Configuration (Supabase Client)
+└── styles/                 # Tailwind & Global CSS
 ```
 
-Isi `.env.local` dengan URL dan anon key Supabase untuk project BintangAi milik Anda. Jangan memasukkan provider API key AI ke variabel `VITE_*`.
+### ⚙️ Backend Structure (`/backend` / Supabase Cloud)
+```text
+backend/ (Logic & Database Schema)
+├── supabase/
+│   ├── functions/          # Edge Functions (Deno Runtime)
+│   │   ├── ai-tutor/       # Main Brain (Integrasi LLM & Prompt Engineering)
+│   │   ├── materi-ai/      # RAG (Retrieval Augmented Generation) untuk PDF
+│   │   ├── smart-voice/    # Speech-to-Intent & Voice Interaction
+│   │   └── transcribe/     # Real-time Voice Transcription
+│   ├── migrations/         # Database Schema & Version Control
+│   └── seed.sql            # Data awal untuk pengembangan
+├── database_schema/        # Dokumentasi Relasi Tabel
+│   ├── profiles            # Data User (Role & Tipe Disabilitas)
+│   ├── modules             # Repository Materi (PDF Metadata)
+│   ├── assignments         # Quiz & Tugas dari Guru
+│   └── submissions         # Jawaban & Progress Siswa
+└── security/               # RLS (Row Level Security) Policies
+```
 
-## Supabase
+---
 
-Terapkan migration di `supabase/migrations/` ke project Supabase khusus BintangAi, lalu deploy function di `supabase/functions/`. Atur `GROQ_API_KEY` sebagai Edge Function secret. RLS menjadi bagian dari perlindungan akses antar siswa, guru, dan orang tua.
+## 🌟 Fitur Utama Berbasis Peran
 
-Data operasional aplikasi dibaca/ditulis melalui Supabase. Migration tidak mengisi data akun atau materi dummy. Pengecualian: akun demo yang sengaja disediakan untuk demonstrasi login.
+### 1. Siswa Tunawicara & Tunarungu
+- **Tanya AI (Chat Mode)**: Antarmuka chat teks full-screen yang responsif dengan animasi profesional.
+- **Mata Pintar AI**: Transkripsi suara guru secara real-time menjadi teks subtitle.
+- **Gesture Navigation**: Mengontrol aplikasi menggunakan 1-10 jari melalui kamera (Hand Tracking).
 
-Registrasi publik tidak langsung memberikan role guru/orang tua atau akses kelas/anak. Pilihan role disimpan sebagai permintaan (`requested_role`); class code dan ID anak disimpan sebagai permintaan terpisah. Administrator harus memeriksa permintaan lalu mempromosikan role dan menautkan anak melalui Supabase sebelum akses guru/orang tua diaktifkan. Panduan persetujuan dan query tersedia di `docs/ROLE_APPROVAL.md`. Lima alamat demo yang ditentukan adalah pengecualian khusus demonstrasi.
+### 2. Siswa Tunanetra
+- **Asisten Nay**: Navigasi berbasis suara penuh. Pengguna cukup menekan Spasi dan berbicara.
+- **Audio Guide**: Panduan suara otomatis yang menjelaskan struktur halaman saat ini.
+- **Voice-to-Action**: Pindah halaman atau membuka materi cukup dengan perintah suara.
 
-## Model AI
+---
 
-Lihat `modellist.md` untuk katalog enam model, ID, kuota, release stage, dan tanggal rilis. Runtime memakai model teks yang diizinkan pada katalog. Model Whisper hanya didokumentasikan dan tidak digunakan untuk kamera/dikte; pengenalan suara memakai Web Speech API browser.
+## 🚀 Instalasi & Pengembangan
 
-## Pemeriksaan dan batas verifikasi
+1.  **Clone & Install**:
+    ```bash
+    git clone https://github.com/bintangainya/bintangainya.git
+    cd bintangainya
+    npm install
+    ```
 
-Lihat `VERIFICATION_REPORT.md` untuk hasil audit dan batas yang belum dapat diverifikasi. Di lingkungan pembuatan arsip, 16 unit test dan parse sintaks lulus; production build Vite belum terverifikasi karena instalasi dependency npm tidak selesai. Terapkan migration/Edge Functions ke Supabase staging sebelum deployment produksi.
+2.  **Environment Variables**:
+    Buat file `.env` dan masukkan kredensial Supabase Anda:
+    ```env
+    VITE_SUPABASE_URL=your_url
+    VITE_SUPABASE_ANON_KEY=your_key
+    VITE_CUSTOM_AI_TUTOR_KEY=christian
+    ```
+
+3.  **Run Application**:
+    ```bash
+    npm run dev
+    ```
+
+---
+
+## 🔒 Keamanan & Performa
+- **Optimasi Vite**: Code-splitting otomatis untuk pemuatan halaman yang instan.
+- **Supabase RLS**: Memastikan data siswa hanya dapat diakses oleh guru atau orang tua yang bersangkutan.
+- **Edge Runtime**: Logika AI dijalankan di lokasi server terdekat dari pengguna untuk latensi rendah.
+
+---
+
+© 2024 **BintangAi Team**. Built with ❤️ for inclusive education.

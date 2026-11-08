@@ -44,7 +44,7 @@ const TeacherCreateTask = () => {
     { id: 'english', name: 'English', icon: '🇬🇧', color: 'purple', bg: 'bg-purple-50', text: 'text-purple-600', border: 'border-purple-200' }
   ];
 
-  const [aiConfig, setAiConfig] = useState({ subject: profile?.subject || '', gradeLevel: profile?.class_level || '', difficulty: 'medium', types: ['multiple_choice'], count: 5, topic: '' });
+  const [aiConfig, setAiConfig] = useState({ subject: 'matematika', gradeLevel: 4, difficulty: 'medium', types: ['multiple_choice'], count: 5, topic: '' });
   const [taskData, setTaskData] = useState({ title: '', description: '', deadlineDate: '', deadlineTime: '', duration: '', isPublic: false, enrollKey: '' });
   const [questions, setQuestions] = useState([]);
 
@@ -96,7 +96,6 @@ const TeacherCreateTask = () => {
         });
         setSelectedStudents(task.target_students || []);
         setSelectedClasses(task.target_classes || []);
-        setAiConfig(prev => ({ ...prev, subject: task.subject || profile?.subject || '', gradeLevel: task.class_level || profile?.class_level || '' }));
         const formattedQs = (task.assignment_questions || []).map(q => ({
           id: q.id,
           type: q.question_type,
@@ -119,7 +118,6 @@ const TeacherCreateTask = () => {
 
   const handleGenerateAI = async () => {
     if (!aiConfig.topic.trim() && !aiConfig.subject) return showToast("Pilih Mapel atau isi Topik", "error");
-    if (!Number(aiConfig.gradeLevel) || Number(aiConfig.gradeLevel) < 1 || Number(aiConfig.gradeLevel) > 6) return showToast("Pilih kelas siswa terlebih dahulu", "error");
     setAiLoading(true);
     try {
       const selectedSub = subjects.find(s => s.id === aiConfig.subject);
@@ -212,10 +210,6 @@ const TeacherCreateTask = () => {
         is_public: taskData.isPublic,
         enroll_key: taskData.isPublic ? null : taskData.enrollKey?.trim(),
         teacher_id: profile.id,
-        created_by: profile.id,
-        class_code: profile.class_code || null,
-        class_level: Number(aiConfig.gradeLevel) || profile.class_level || null,
-        subject: aiConfig.subject || null,
         target_students: selectedStudents.length > 0 ? selectedStudents : [],
         target_classes: selectedClasses.length > 0 ? selectedClasses : []
       };
@@ -247,40 +241,14 @@ const TeacherCreateTask = () => {
         if (qErr) throw qErr;
 
         if (q.type === 'pilihan_ganda' && insertedQ) {
-          const { error: optionError } = await supabase.from('assignment_question_options').insert(q.options.map((o, i) => ({
+          await supabase.from('assignment_question_options').insert(q.options.map((o, i) => ({
             question_id: insertedQ.id,
-            option_text: String(o.text || '').trim(),
+            option_text: o.text.trim(),
             is_correct: !!(o.is_correct || o.isCorrect),
             order_index: i
           })));
-          if (optionError) throw optionError;
         }
       }
-
-      // The legacy StudentQuiz JSON route supports multiple choice questions.
-      // Essays remain in normalized assignment_questions and are answered/reviewed
-      // through TaskDetail, where teacher_feedback and human grading are supported.
-      const quizDocument = questions.filter((question) => question.type === 'pilihan_ganda').map((question) => {
-        const options = Array.isArray(question.options) ? question.options : [];
-        const correctIndex = options.findIndex((option) => Boolean(option.is_correct || option.isCorrect));
-        const correctAnswer = correctIndex >= 0 ? String(options[correctIndex].text || '') : String(question.correctAnswer || '');
-        return {
-          text: String(question.text || '').trim(),
-          question: String(question.text || '').trim(),
-          options: options.map((option) => String(option.text || '').trim()).filter(Boolean),
-          correctIndex: correctIndex >= 0 ? correctIndex : -1,
-          correct_answer: correctAnswer,
-          points: Number(question.points) || 0,
-          explanation: String(question.feedbackCorrect || ''),
-          feedback_wrong: String(question.feedbackWrong || ''),
-        };
-      });
-      const { error: quizError } = await supabase.from('quizzes').upsert({
-        assignment_id: assignmentId,
-        questions: quizDocument,
-      }, { onConflict: 'assignment_id' });
-      if (quizError) throw quizError;
-
       showToast("✅ QuizKu Berhasil diterbitkan!", "success");
       setTimeout(() => navigate('/teacher/dashboard?tab=assignments'), 1500);
     } catch (err) {
@@ -571,13 +539,12 @@ const TeacherCreateTask = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                    <div className="space-y-2"><label className="text-[8px] font-black text-slate-400 uppercase ml-3">Tingkat Kelas</label>
-                    <select value={aiConfig.gradeLevel} onChange={e => setAiConfig({...aiConfig, gradeLevel: e.target.value ? parseInt(e.target.value, 10) : ''})} className="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-indigo-100 rounded-2xl font-black text-xs outline-none">
-                        <option value="">Pilih kelas</option>
+                    <select value={aiConfig.gradeLevel} onChange={e => setAiConfig({...aiConfig, gradeLevel: parseInt(e.target.value)})} className="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-indigo-100 rounded-2xl font-black text-xs outline-none">
                         {[1,2,3,4,5,6].map(g => <option key={g} value={g}>Kelas {g} SD</option>)}
                     </select>
                    </div>
                    <div className="space-y-2"><label className="text-[8px] font-black text-slate-400 uppercase ml-3">Jumlah Soal</label>
-                    <input type="number" value={aiConfig.count} onChange={e => setAiConfig({...aiConfig, count: parseInt(e.target.value) || 1})} min="1" max="20" className="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-indigo-100 rounded-2xl font-black text-xs outline-none" />
+                    <input type="number" value={aiConfig.count} onChange={e => setAiConfig({...aiConfig, count: parseInt(e.target.value) || 1})} min="1" max="100" className="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-indigo-100 rounded-2xl font-black text-xs outline-none" />
                    </div>
                 </div>
 

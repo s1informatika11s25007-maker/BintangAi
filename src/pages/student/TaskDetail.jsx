@@ -95,13 +95,6 @@ const StudentTaskDetail = () => {
     if (isMute) showSubtitle(`Jawaban ${String.fromCharCode(65 + index)} terpilih. 5 Jari untuk Lanjut.`, 'success');
   };
 
-  const handleEssayChange = (questionId, answerText) => {
-    setAnswers((previous) => ({
-      ...previous,
-      [questionId]: { ...previous[questionId], answer_text: answerText },
-    }));
-  };
-
   const handleNext = () => {
     if (currentStep < questions.length) {
         setCurrentStep(prev => prev + 1);
@@ -114,57 +107,34 @@ const StudentTaskDetail = () => {
 
   const handleSubmit = async () => {
     if (submitting) return;
-    const unanswered = questions.some((question) => {
-      const answer = answers[question.id] || {};
-      return question.question_type === 'esai'
-        ? !String(answer.answer_text || '').trim()
-        : !answer.selected_option_id;
-    });
-    if (unanswered) {
-      window.alert('Lengkapi jawaban setiap soal sebelum dikirim.');
-      return;
-    }
     setSubmitting(true);
     setAvatarState('thinking');
     try {
       let totalScore = 0;
       let correctCount = 0;
-      const hasEssay = questions.some((question) => question.question_type === 'esai');
       const questionResults = questions.map(q => {
         const ans = answers[q.id] || {};
-        const isEssay = q.question_type === 'esai';
         const correctOpt = q.assignment_question_options?.find(o => o.is_correct);
-        const isCorrect = !isEssay && ans.selected_option_id === correctOpt?.id;
-        const pointsEarned = isCorrect ? Number(q.points || 10) : 0;
+        const isCorrect = ans.selected_option_id === correctOpt?.id;
         if (isCorrect) {
-          totalScore += pointsEarned;
+          totalScore += (q.points || 10);
           correctCount += 1;
         }
-        return {
-          question_id: q.id,
-          selected_option_id: isEssay ? null : ans.selected_option_id,
-          answer_text: isEssay ? String(ans.answer_text || '').trim() : null,
-          is_correct: isCorrect,
-          points_earned: pointsEarned,
-        };
+        return { question_id: q.id, selected_option_id: ans.selected_option_id, is_correct: isCorrect };
       });
 
       const { data: sub, error: subError } = await supabase.from('submissions').insert({
         assignment_id: id,
         student_id: profile.id,
-        status: hasEssay ? 'submitted' : 'graded',
+        status: 'graded',
         total_score: totalScore,
         submitted_at: new Date().toISOString(),
         started_at: new Date(Date.now() - (initialDuration - timeLeft) * 1000).toISOString()
       }).select().single();
 
       if (subError) throw subError;
-      const { error: answerError } = await supabase.from('submission_answers').insert(questionResults.map(res => ({ ...res, submission_id: sub.id })));
-      if (answerError) throw answerError;
-      if (correctCount > 0) {
-        const { error: xpError } = await supabase.rpc('add_xp', { amount: correctCount * 20 });
-        if (xpError) console.error('XP tidak dapat diperbarui:', xpError);
-      }
+      await supabase.from('submission_answers').insert(questionResults.map(res => ({ ...res, submission_id: sub.id })));
+      await supabase.rpc('add_xp', { amount: correctCount * 20 });
       await fetchProfile(profile.id);
 
       setShowConfetti(true);
@@ -199,8 +169,7 @@ const StudentTaskDetail = () => {
 
         <div className="w-full max-w-4xl bg-white rounded-[2.5rem] md:rounded-[3.5rem] p-8 md:p-12 shadow-2xl shadow-indigo-100/50 text-center relative overflow-hidden mb-12 border border-slate-50">
            <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 md:mb-6">Skor Akhir</p>
-           <p className="text-7xl md:text-[10rem] font-black text-indigo-600 leading-none mb-3 md:mb-4">{submissionRecord.total_score}</p>
-           {submissionRecord.status === 'submitted' && <p className="text-sm font-bold text-amber-600 mb-6">Jawaban esai menunggu penilaian guru. Nilai di atas adalah poin pilihan ganda sementara.</p>}
+           <p className="text-7xl md:text-[10rem] font-black text-indigo-600 leading-none mb-8 md:mb-10">{submissionRecord.total_score}</p>
            <button
             onClick={() => navigate('/student/tasks')}
             data-gesture-item="true"
@@ -209,23 +178,6 @@ const StudentTaskDetail = () => {
              Kembali ke Daftar
            </button>
         </div>
-
-        {submissionDetails.some((item) => String(item.teacher_feedback || '').trim()) && (
-          <section className="w-full max-w-4xl rounded-[2rem] border border-emerald-100 bg-emerald-50 p-6 md:p-8 mb-10 text-left">
-            <h3 className="text-lg md:text-xl font-black text-emerald-900 mb-4">Umpan Balik Guru</h3>
-            <div className="space-y-4">
-              {submissionDetails.filter((item) => String(item.teacher_feedback || '').trim()).map((item) => (
-                <article key={item.id} className="rounded-2xl bg-white/90 p-4 border border-emerald-100">
-                  <p className="text-xs font-bold uppercase tracking-wide text-emerald-700 mb-2">
-                    {item.assignment_questions?.question_text || 'Jawaban esai'}
-                  </p>
-                  <p className="text-sm leading-relaxed text-slate-700 whitespace-pre-wrap">{item.teacher_feedback}</p>
-                  <p className="mt-2 text-xs font-bold text-emerald-700">Nilai: {Number(item.points_earned || 0)} poin</p>
-                </article>
-              ))}
-            </div>
-          </section>
-        )}
       </div>
     );
   }
@@ -272,22 +224,7 @@ const StudentTaskDetail = () => {
 
                        <h3 className="text-xl md:text-5xl font-black text-slate-800 leading-tight mb-8 md:mb-16 tracking-tight">{q.question_text}</h3>
 
-                       {q.question_type === 'esai' ? (
-                         <div className="mt-auto space-y-3">
-                           <label htmlFor={`essay-${q.id}`} className="block text-xs font-black uppercase tracking-widest text-slate-500">Tulis jawabanmu</label>
-                           <textarea
-                             id={`essay-${q.id}`}
-                             value={answers[q.id]?.answer_text || ''}
-                             onChange={(event) => handleEssayChange(q.id, event.target.value)}
-                             rows={5}
-                             maxLength={5000}
-                             className="w-full resize-y rounded-2xl border-2 border-slate-100 p-5 text-base font-medium text-slate-800 outline-none transition focus:border-indigo-300 focus:ring-4 focus:ring-indigo-50"
-                             placeholder="Tuliskan jawaban dengan kata-katamu sendiri..."
-                           />
-                           <p className="text-right text-xs text-slate-400">{(answers[q.id]?.answer_text || '').length}/5000</p>
-                         </div>
-                       ) : (
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6 mt-auto">
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6 mt-auto">
                             {q.assignment_question_options?.map((opt, oi) => (
                                 <button
                                     key={opt.id}
@@ -311,15 +248,15 @@ const StudentTaskDetail = () => {
                                     </div>
 
                                     {isMute && (
-                                      <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl flex items-center justify-center font-black text-lg md:text-xl relative z-10 ${answers[q.id]?.selected_option_id === opt.id ? 'bg-white/20 text-white' : 'bg-indigo-50 text-indigo-600'}`}>
-                                        {['☝️', '✌️', '🤘', '🖖'][oi]}
-                                      </div>
+                                       <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl flex items-center justify-center font-black text-lg md:text-xl relative z-10 ${answers[q.id]?.selected_option_id === opt.id ? 'bg-white/20 text-white' : 'bg-indigo-50 text-indigo-600'}`}>
+                                          {['☝️', '✌️', '🤘', '🖖'][oi]}
+                                       </div>
                                     )}
+
                                     {answers[q.id]?.selected_option_id === opt.id && <HiCheckCircle className="text-2xl md:text-3xl relative z-10 flex-shrink-0" />}
                                 </button>
                             ))}
-                         </div>
-                       )}
+                       </div>
                     </div>
 
                     <div className="flex flex-col items-center gap-4 md:gap-6">

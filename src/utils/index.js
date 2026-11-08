@@ -1,2 +1,2 @@
-export * from './common/formatters';
-export * from './common/validators';
+export * from './formatters';
+export * from './validators';

@@ -47,14 +47,16 @@ const StudentQuiz = () => {
   }, [finished, alreadyDone, isBlind, quiz, existingResult, score, questions.length, loading]);
 
   const {
-    videoRef, isActive: camActive, triggerGesture, startCamera, stopCamera, cameraError, cameraSupported
+    videoRef, canvasRef, isActive: camActive, gestureLabel, lastGesture, confidence, handDetected
   } = useGestureControl({
     enabled: isMute,
-    onGesture: (choice) => {
+    onGesture: (gesture, action) => {
       if (!currentQ || finished) return;
-      const choiceToAnswer = { 1: 0, 2: 1, 3: 2, 4: 3 };
-      if (choiceToAnswer[choice] !== undefined && selectedAnswer === null) handleAnswer(choiceToAnswer[choice]);
-      if (choice === 5) finishQuiz();
+      const gestureToAnswer = { 'point_up': 0, 'peace': 1, 'three_fingers': 2, 'four_fingers': 3 };
+      if (gestureToAnswer[gesture] !== undefined && selectedAnswer === null) {
+        handleAnswer(gestureToAnswer[gesture]);
+      }
+      if (action === 'stop' || gesture === 'fist') finishQuiz();
     }
   });
 
@@ -95,9 +97,9 @@ const StudentQuiz = () => {
 
       if (assignError) throw assignError;
 
-      // Temporary object to hold title if quiz fetch fails
-      const assignmentContext = { assignments: assignment };
-      setQuiz(assignmentContext);
+      // Initial object to hold title while quiz details load
+      const initialQuizState = { assignments: assignment };
+      setQuiz(initialQuizState);
 
       // 2. Fetch the actual quiz questions
       const { data: quizData, error: quizError } = await supabase
@@ -338,8 +340,8 @@ const StudentQuiz = () => {
   return (
     <div className="min-h-screen bg-slate-50 pb-24 md:pb-32">
       {isMute && (
-        <GestureCameraOverlay videoRef={videoRef} isActive={camActive} onManualGesture={triggerGesture}
-          startCamera={startCamera} stopCamera={stopCamera} cameraError={cameraError} cameraSupported={cameraSupported} />
+        <GestureCameraOverlay videoRef={videoRef} canvasRef={canvasRef} isActive={camActive}
+          gestureLabel={gestureLabel} lastGesture={lastGesture} confidence={confidence} handDetected={handDetected} />
       )}
 
       <header className={`bg-white border-b-2 md:border-b-2 border-slate-100 p-4 md:p-5 sticky z-20 flex justify-between items-center transition-all ${isBlind || isMute ? 'top-4 md:top-6' : 'top-0'}`}>

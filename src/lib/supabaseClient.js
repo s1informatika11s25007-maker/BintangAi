@@ -1,2 +1,2 @@
-import { supabase, isSupabaseConfigured, assertSupabaseConfigured } from './supabase';
-export { supabase, isSupabaseConfigured, assertSupabaseConfigured };
+import { supabase } from './supabase';
+export { supabase };

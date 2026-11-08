@@ -11,15 +11,15 @@ import { useAudioRecorder } from '../hooks/useAudioRecorder';
 const BlindAIAssistant = () => {
   const { isBlind } = useAccessibility();
   const { profile } = useAuthStore();
-  const { speak, stopSpeaking } = useVoice();
-  const { isRecording, transcript, startRecording, stopRecording, clearAudio, error: speechError } = useAudioRecorder();
+  const { speak, stopSpeaking, startListening, stopListening } = useVoice();
+  const { isRecording, startRecording, stopRecording, audioBlob, clearAudio } = useAudioRecorder();
   const { smartVoiceAssistant } = useAI();
   const [isProcessing, setIsProcessing] = useState(false);
   const [liveTranscript, setLiveTranscript] = useState("");
   const [aiResponse, setAiResponse] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
-  const lastProcessedTranscriptRef = useRef('');
+  const lastProcessedBlobRef = useRef(null);
   const lastTranscriptRef = useRef("");
 
   const isPlaygroundPage = location.pathname.includes('/student/playground');
@@ -114,15 +114,15 @@ const BlindAIAssistant = () => {
     }
   }, [navigate]);
 
-  const handleProcessAudio = useCallback(async (recognizedText) => {
-    if (isProcessing || !recognizedText?.trim()) return;
+  const handleProcessAudio = useCallback(async (blob) => {
+    if (isProcessing || !blob) return;
     setIsProcessing(true);
     setAiResponse("Nay sedang memproses...");
 
     try {
       const context = getPageContent();
       const studentName = profile?.full_name?.split(' ')[0] || "Teman";
-      const response = await smartVoiceAssistant(recognizedText, studentName, context);
+      const response = await smartVoiceAssistant(blob, studentName, context);
 
       if (response.success) {
         lastTranscriptRef.current = response.transcript;
@@ -167,15 +167,16 @@ const BlindAIAssistant = () => {
   }, [smartVoiceAssistant, profile, navigate, speak, handleAction, location.pathname, clearAudio, isProcessing]);
 
   useEffect(() => {
-    if (!isRecording && transcript.trim() && transcript !== lastProcessedTranscriptRef.current) {
-      lastProcessedTranscriptRef.current = transcript;
-      handleProcessAudio(transcript);
+    if (audioBlob && audioBlob !== lastProcessedBlobRef.current) {
+      lastProcessedBlobRef.current = audioBlob;
+      handleProcessAudio(audioBlob);
     }
-  }, [isRecording, transcript, handleProcessAudio]);
+  }, [audioBlob, handleProcessAudio]);
 
   const handleMicClick = useCallback(() => {
     if (isRecording) {
       stopRecording();
+      stopListening();
     } else if (!isProcessing) {
       stopSpeaking();
       setAiResponse("");
@@ -183,11 +184,11 @@ const BlindAIAssistant = () => {
       speak("Ya?", 1.5, true);
 
       setTimeout(() => {
-        lastProcessedTranscriptRef.current = '';
         startRecording();
+        startListening((text) => setLiveTranscript(text));
       }, 400);
     }
-  }, [isRecording, isProcessing, startRecording, stopRecording, speak, stopSpeaking]);
+  }, [isRecording, isProcessing, startRecording, stopRecording, startListening, stopListening, speak, stopSpeaking]);
 
   useEffect(() => {
     if (!isBlind) return;
@@ -207,7 +208,7 @@ const BlindAIAssistant = () => {
     <div className="fixed inset-x-0 bottom-0 z-[500] flex flex-col items-center pointer-events-none pb-6 md:pb-12">
       {/* PROFESSIONAL SUBTITLES & FEEDBACK */}
       <AnimatePresence>
-        {(isRecording || isProcessing || aiResponse || speechError) && (
+        {(isRecording || isProcessing || aiResponse) && (
           <motion.div
             initial={{ opacity: 0, y: 50, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -291,7 +292,6 @@ const BlindAIAssistant = () => {
           <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent" />
 
           <AnimatePresence>
-            {speechError && <p role="alert" className="text-sm text-rose-300">{speechError}</p>}
             {isRecording && (
               <motion.div
                 initial={{ scale: 0 }} animate={{ scale: 2 }} exit={{ scale: 0 }}

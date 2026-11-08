@@ -59,18 +59,13 @@ export const useAuthStore = create(
         set({ loading: true });
 
         try {
-          // Update the learner's activity streak from the authenticated account, not from client-supplied identity.
-          await supabase.rpc('update_user_streak', { user_id: userId });
-          let { data: profileData } = await supabase
+          const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', userId)
-            .maybeSingle();
+            .single();
 
-          // Database trigger on auth.users creates the real profile. Do not invent a local fallback.
-          if (!profileData) {
-            console.error('Profil BintangAi belum tersedia di database untuk akun ini.');
-          }
+          if (profileError) throw profileError;
 
           if (profileData) {
             // Jalankan subscription realtime setelah profile ditemukan
@@ -93,11 +88,16 @@ export const useAuthStore = create(
       updateXP: async (xpGained) => {
         const { profile } = get()
         if (profile) {
-          const amount = Math.max(0, Math.min(500, Math.floor(Number(xpGained) || 0)));
-          if (!amount) return;
-          const { error } = await supabase.rpc('add_xp', { amount });
-          if (error) throw error;
-          await get().fetchProfile(profile.id);
+          const { data, error } = await supabase.rpc('increment_xp', {
+            user_id: profile.id,
+            amount: xpGained
+          });
+
+          if (error) {
+            // Fallback manual jika RPC belum ada
+            const newXP = Number(profile.xp || 0) + Number(xpGained);
+            await supabase.from('profiles').update({ xp: newXP }).eq('id', profile.id);
+          }
         }
       },
 

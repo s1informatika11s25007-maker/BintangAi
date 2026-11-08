@@ -89,15 +89,6 @@ const ParentDashboard = () => {
   const handleDownloadPdf = () => window.print();
   const onTabChange = (tabId) => setSearchParams({ tab: tabId });
 
-  const formatReportContent = (content) => {
-    if (!content) return 'Belum ada isi laporan.';
-    if (typeof content === 'string') return content;
-    if (typeof content === 'object') {
-      return content.summary || content.text || content.report || JSON.stringify(content, null, 2);
-    }
-    return String(content);
-  };
-
   if (!profile?.linked_student_id) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
@@ -269,7 +260,7 @@ const ParentDashboard = () => {
 
                 <div className="flex-1 overflow-y-auto p-8 md:p-12">
                   <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 whitespace-pre-wrap text-slate-700 leading-relaxed text-lg">
-                    {formatReportContent(selectedReport.content)}
+                    {selectedReport.content}
                   </div>
                 </div>
 
@@ -320,7 +311,7 @@ const ParentDashboard = () => {
               <div className="bg-slate-50 p-10 rounded-[2rem] border border-slate-100 min-h-[500px]">
                 <h3 className="text-sm font-bold text-indigo-600 uppercase tracking-widest mb-6 border-b border-indigo-100 pb-4">Analisis & Rekomendasi AI</h3>
                 <div className="whitespace-pre-wrap text-slate-800 leading-relaxed">
-                  {formatReportContent(selectedReport.content)}
+                  {selectedReport.content}
                 </div>
               </div>
 

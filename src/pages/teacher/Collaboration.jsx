@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import TeacherSidebar from '@/components/layout/TeacherSidebar';
-import { hashGroupPassword } from '@/lib/groupPassword';
 import { HiCheck, HiX, HiUserAdd, HiChatAlt2, HiTrash, HiLockClosed, HiLockOpen, HiUsers, HiSparkles, HiSearch, HiBell } from 'react-icons/hi';
 
 const TeacherCollaboration = () => {
@@ -92,47 +91,10 @@ const TeacherCollaboration = () => {
   }, [messages]);
 
   // Handlers
-  const handleCreateOrUpdateGroup = async (event) => {
-    event.preventDefault();
-    const name = String(groupForm.name || '').trim();
-    if (!profile?.id || profile.role !== 'guru' || !name) return;
-    try {
-      const passwordHash = await hashGroupPassword(groupForm.password);
-      const payload = {
-        name: name.slice(0, 100),
-        description: String(groupForm.description || '').trim().slice(0, 1000) || null,
-        created_by: profile.id,
-        class_code: profile.class_code || null,
-        requires_approval: Boolean(groupForm.requires_approval),
-        password_protected: Boolean(passwordHash),
-      };
-      const query = isEditing && selectedGroup
-        ? await supabase.from('study_groups').update(payload).eq('id', selectedGroup.id).select().single()
-        : await supabase.from('study_groups').insert(payload).select().single();
-      if (query.error) throw query.error;
-      if (passwordHash) {
-        const { error: secretError } = await supabase.from('study_group_secrets').upsert({ group_id: query.data.id, password_hash: passwordHash }, { onConflict: 'group_id' });
-        if (secretError) throw secretError;
-      } else {
-        const { error: secretError } = await supabase.from('study_group_secrets').delete().eq('group_id', query.data.id);
-        if (secretError) throw secretError;
-      }
-      setShowCreateModal(false);
-      setIsEditing(false);
-      setGroupForm({ name: '', description: '', password: '', requires_approval: false });
-      await fetchGroups();
-      if (query.data?.id) navigate(`/teacher/collaboration/${query.data.id}`);
-    } catch (error) {
-      console.error('Gagal menyimpan grup belajar:', error);
-      window.alert(error.message || 'Grup belum dapat disimpan.');
-    }
-  };
-
   const handleApprove = async (requestId, studentId) => {
-    const { error } = await supabase.from('group_members').upsert([{ group_id: selectedGroup.id, student_id: studentId, role: 'member' }], { onConflict: 'group_id,student_id' });
-    if (error) { window.alert(error.message); return; }
+    await supabase.from('group_members').insert([{ group_id: selectedGroup.id, student_id: studentId, role: 'member' }]);
     await supabase.from('group_join_requests').delete().eq('id', requestId);
-    await fetchGroups();
+    fetchGroups();
   };
 
   const handleReject = async (requestId) => {
@@ -251,7 +213,6 @@ const TeacherCollaboration = () => {
               <form onSubmit={handleCreateOrUpdateGroup} className="space-y-6">
                 <input type="text" required value={groupForm.name} onChange={e => setGroupForm({...groupForm, name: e.target.value})} placeholder="Nama Kelompok" className="w-full p-5 bg-slate-50 border-2 border-transparent focus:border-indigo-100 rounded-[2rem] outline-none font-bold shadow-inner" />
                 <textarea value={groupForm.description} onChange={e => setGroupForm({...groupForm, description: e.target.value})} placeholder="Deskripsi Singkat" className="w-full p-5 bg-slate-50 border-2 border-transparent focus:border-indigo-100 rounded-[2rem] outline-none font-bold min-h-[120px] shadow-inner" />
-                <input type="password" value={groupForm.password} onChange={e => setGroupForm({...groupForm, password: e.target.value})} placeholder="Sandi kelompok (opsional)" autoComplete="new-password" className="w-full p-5 bg-slate-50 border-2 border-transparent focus:border-indigo-100 rounded-[2rem] outline-none font-bold" />
                 <label className="flex items-center gap-4 p-4 bg-indigo-50 rounded-3xl border border-indigo-100 cursor-pointer"><input type="checkbox" checked={groupForm.requires_approval} onChange={e => setGroupForm({...groupForm, requires_approval: e.target.checked})} className="w-6 h-6 rounded-xl border-slate-300 text-indigo-600" /><span className="text-[10px] font-black text-indigo-700 uppercase tracking-widest">Sistem Persetujuan</span></label>
                 <div className="flex gap-4 pt-6"><button type="button" onClick={() => setShowCreateModal(false)} className="flex-1 py-5 font-black text-[10px] uppercase bg-slate-100 text-slate-400 rounded-[2rem]">Batal</button><button type="submit" className="flex-1 py-5 font-black text-[10px] uppercase bg-indigo-600 text-white rounded-[2rem] shadow-xl shadow-indigo-200">Buat Sekarang</button></div>
               </form>

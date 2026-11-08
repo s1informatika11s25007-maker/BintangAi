@@ -1,10 +1,11 @@
-# AI Tutor BintangAi
+# AI Tutor Feature
 
-Seluruh pemanggilan model melewati Supabase Edge Functions. Browser tidak menyimpan API key provider. Model dibatasi oleh `modellist.md` dan `src/config/aiModels.js`.
+Fitur ini menangani komunikasi dengan AI (Groq/Llama) untuk membantu siswa belajar.
 
-- Tutor dan navigasi: Qwen 3.8 27B; fallback GPT OSS 120B.
-- Prompt safety: Llama Prompt Guard 2 22M.
-- Safety review jawaban sensitif: Safety GPT OSS 20B (hanya bila diperlukan).
-- Dikte, subtitle dan speech output: API bawaan browser. Whisper tidak dipanggil.
+## Struktur
+- `api/`: Endpoint untuk fetch ke Supabase Edge Functions.
+- `hooks/`: `useAI.js` untuk mengelola state chat dan ping.
+- `components/`: UI khusus Chat AI (BintangAi).
 
-Endpoint: `ai-tutor`, `generate-quiz`, `materi-ai`, dan `generate-report`. Semua endpoint memvalidasi JWT Supabase dan role/profil yang tersimpan di database.
+## Cara Penggunaan
+Gunakan hook `useAI` untuk mendapatkan fungsi `sendMessage` dan status loading.

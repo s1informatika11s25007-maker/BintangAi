@@ -1,190 +1,320 @@
-import { useCallback, useState } from 'react';
-import { supabase, isSupabaseConfigured } from '../../../lib/supabaseClient';
+// hooks/useAI.js
 
-const cleanHistory = (history = []) => history
-  .filter((item) => typeof item?.content === 'string' && item.content.trim())
-  .slice(-12)
-  .map((item) => ({
-    role: item.role === 'ai' ? 'assistant' : (item.role === 'assistant' ? 'assistant' : 'user'),
-    content: item.content.trim().slice(0, 3000),
-  }));
-
-const invokeFunction = async (name, body) => {
-  if (!isSupabaseConfigured) throw new Error('Supabase belum dikonfigurasi. Periksa environment BintangAi.');
-  const { data, error } = await supabase.functions.invoke(name, { body });
-  if (error) throw error;
-  if (!data) throw new Error('Server tidak mengembalikan data.');
-  return data;
-};
+import { useState, useCallback } from 'react';
+import { supabase } from '../../../lib/supabaseClient';
 
 export const useAI = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const withLoading = useCallback(async (work) => {
+  const askTutor = async (query, studentId, weakTopics = [], options = {}) => {
+    // Validasi input
+    if (!query || query.trim() === '') {
+      return {
+        answer: "Apa yang ingin Adik tanyakan ke Kak Bintang? 😊",
+        success: false,
+        error: "Pertanyaan kosong"
+      };
+    }
+
     setLoading(true);
     setError(null);
+
     try {
-      return await work();
+      // Get student profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('full_name, class_level, disability_type')
+        .eq('id', studentId)
+        .single();
+
+      if (profileError) {
+        console.warn("Profile fetch error:", profileError);
+      }
+
+      const nama = profileData?.full_name?.split(' ')[0] || "Teman";
+      const kelas = parseInt(profileData?.class_level || "4", 10);
+
+      // Ambil API Key dari environment, gunakan fallback 'christian' agar tetap terhubung
+      const apiKey = import.meta.env.VITE_CUSTOM_AI_TUTOR_KEY || "christian";
+
+      // Filter history agar valid dan tidak kosong
+      const formattedHistory = (options.history || [])
+        .filter(h => h.content && h.content.trim() !== '')
+        .map(h => ({
+          role: h.role === 'ai' ? 'assistant' : (h.role || 'user'),
+          content: h.content
+        }));
+
+      const { data, error: invokeError } = await supabase.functions.invoke('ai-tutor', {
+        body: {
+          message: query.trim(),
+          student_id: studentId,
+          nama: nama,
+          kelas: kelas,
+          disability_type: profileData?.disability_type || "umum",
+          history: formattedHistory,
+          weak_topics: Array.isArray(weakTopics) ? weakTopics : [],
+        },
+        headers: {
+          'x-api-key': apiKey
+        }
+      });
+
+      if (invokeError) {
+        console.error("Invoke error:", invokeError);
+        throw invokeError;
+      }
+
+      if (!data) {
+        throw new Error("No response data from AI function");
+      }
+
+      return {
+        answer: data.reply || "Maaf, Kak Bintang lagi bingung. 😊",
+        success: data.success !== false,
+        detectedTopic: data.detected_topic,
+        xpGained: data.xp_gained,
+        options: data.options || []
+      };
+
     } catch (err) {
-      setError(err?.message || 'Terjadi kendala layanan AI.');
-      throw err;
+      console.error("AI Tutor Error:", err.message);
+      return {
+        answer: "Waduh, Kak BintangAi lagi istirahat sebentar. Coba tanya lagi ya! 😊",
+        success: false,
+        error: err.message
+      };
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  const askTutor = async (query, studentId, weakTopics = [], options = {}) => {
-    const message = String(query || '').trim();
-    if (!message) return { answer: 'Tuliskan pertanyaan yang ingin kamu pelajari.', success: false, error: 'Pertanyaan kosong' };
-    try {
-      return await withLoading(async () => {
-        const data = await invokeFunction('ai-tutor', {
-          task: 'tutor',
-          message,
-          student_id: studentId || null,
-          history: cleanHistory(options.history),
-          weak_topics: Array.isArray(weakTopics) ? weakTopics.slice(0, 10) : [],
-        });
-        return {
-          answer: data.reply || 'Kak Bintang belum mendapat jawaban. Coba tanyakan dengan kalimat lain.',
-          success: data.success !== false,
-          detectedTopic: data.detected_topic || null,
-          xpGained: data.xp_gained || 0,
-          options: Array.isArray(data.options) ? data.options : [],
-        };
-      });
-    } catch (err) {
-      console.error('BintangAi Tutor:', err);
-      return { answer: 'Kak Bintang sedang tidak terhubung. Silakan coba lagi sebentar.', success: false, error: err.message };
-    }
   };
 
-  const generateAIQuiz = async (config = {}) => {
+  const generateAIQuiz = async (config) => {
+    setLoading(true);
+    setError(null);
+
     try {
-      return await withLoading(async () => {
-        const data = await invokeFunction('generate-quiz', config);
-        return { success: true, quiz: data.quiz || data };
+      const apiKey = import.meta.env.VITE_CUSTOM_AI_TUTOR_KEY || "christian";
+
+      const { data, error: invokeError } = await supabase.functions.invoke('generate-quiz', {
+        body: config,
+        headers: {
+          'x-api-key': apiKey
+        }
       });
+
+      if (invokeError) throw invokeError;
+
+      return { success: true, quiz: data };
     } catch (err) {
-      console.error('BintangAi Quiz Generator:', err);
+      console.error("Generate AI Quiz Error:", err);
       return { success: false, message: err.message };
+    } finally {
+      setLoading(false);
     }
   };
 
   const getWeakTopics = async (studentId) => {
-    if (!studentId || !isSupabaseConfigured) return { topics: [] };
+    if (!studentId) return { topics: [] };
     try {
-      const { data, error: queryError } = await supabase.from('profiles')
-        .select('weak_topics').eq('id', studentId).maybeSingle();
-      if (queryError) throw queryError;
-      return { topics: Array.isArray(data?.weak_topics) ? data.weak_topics : [] };
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('weak_topics')
+        .eq('id', studentId)
+        .single();
+
+      if (error) throw error;
+
+      return { topics: data?.weak_topics || [] };
     } catch (err) {
-      console.error('Get weak topics:', err);
+      console.error("Get weak topics error:", err);
       return { topics: [] };
     }
   };
 
   const pingSupabase = useCallback(async () => {
-    if (!isSupabaseConfigured) return false;
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return true;
-      const { error: queryError } = await supabase.from('profiles').select('id').eq('id', session.user.id).maybeSingle();
-      return !queryError;
-    } catch { return false; }
+      const { error } = await supabase.from('profiles').select('id').limit(1);
+      return !error;
+    } catch (e) {
+      console.error("Ping Supabase error:", e);
+      return false;
+    }
   }, []);
 
   const pingAI = useCallback(async () => {
-    if (!isSupabaseConfigured) return false;
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return false;
-      const data = await invokeFunction('ai-tutor', { ping: true });
-      return data?.success === true;
-    } catch { return false; }
+      const apiKey = import.meta.env.VITE_CUSTOM_AI_TUTOR_KEY || "christian";
+
+      const { error } = await supabase.functions.invoke('ai-tutor', {
+        body: { ping: true, message: "ping" },
+        headers: { 'x-api-key': apiKey }
+      });
+
+      return !error;
+    } catch (e) {
+      console.error("Ping AI error:", e);
+      return false;
+    }
   }, []);
 
-  // Compatibility API: transcription is performed by Chrome/Edge Web Speech API.
-  // This method never uploads microphone audio or calls Whisper.
-  const transcribeAudio = async (browserTranscript) => ({
-    success: typeof browserTranscript === 'string' && Boolean(browserTranscript.trim()),
-    text: typeof browserTranscript === 'string' ? browserTranscript.trim() : '',
-    error: typeof browserTranscript === 'string' ? undefined : 'Transkrip harus berasal dari pengenalan suara browser.',
-  });
-
-  const getAudioGuide = async (_role, fullName) => {
-    const name = String(fullName || '').trim();
-    const prompt = `Buat panduan singkat untuk pengguna tunanetra di halaman dashboard BintangAi. Nama sapaan: ${name || 'pengguna'}. Jelaskan navigasi dengan keyboard Tab dan Enter, dan opsi bantuan suara browser. Maksimal 45 kata.`;
+  const transcribeAudio = async (audioBlob) => {
+    setLoading(true);
     try {
-      const data = await invokeFunction('ai-tutor', { task: 'navigation', message: prompt, context: 'Panduan dashboard' });
-      return data.reply;
-    } catch {
-      return 'Gunakan tombol Tab untuk berpindah elemen dan Enter untuk memilih. Kamu juga dapat menggunakan tombol bantuan suara browser jika tersedia.';
-    }
-  };
+      const formData = new FormData();
+      formData.append('file', audioBlob, 'audio.webm');
 
-  const askNay = async (query, studentId, pageContext = '', options = {}) => {
-    const message = String(query || '').trim();
-    if (!message) return { answer: 'Apa yang ingin kamu lakukan?', success: false };
-    try {
-      const data = await withLoading(() => invokeFunction('ai-tutor', {
-        task: 'navigation', message, student_id: studentId || null,
-        context: String(pageContext || '').slice(0, 2500),
-        history: cleanHistory(options.history),
-      }));
-      const reply = data.reply || '';
-      const nav = reply.match(/\[NAVIGATE:([a-z-]+)\]/i);
-      return { answer: reply.replace(/\[NAVIGATE:[a-z-]+\]/ig, '').trim(), navigateTo: nav?.[1] || null, success: true };
-    } catch (err) {
-      return { answer: 'Nay belum bisa terhubung. Silakan gunakan menu navigasi yang tersedia.', success: false, error: err.message };
-    }
-  };
-
-  // Voice is recognized locally by Chrome; only the resulting text is sent to the tutor.
-  const smartVoiceAssistant = async (browserTranscript, studentName, pageContext = '') => {
-    const transcript = String(browserTranscript || '').trim();
-    if (!transcript) return { success: false, answer: 'Suara belum terbaca. Silakan coba lagi.' };
-    const response = await askNay(transcript, null, `${pageContext}. Nama pengguna: ${studentName || ''}`);
-    return {
-      success: response.success,
-      transcript,
-      answer: response.answer,
-      navigateTo: response.navigateTo,
-      action: response.navigateTo ? 'NAVIGATE_TO' : null,
-      actionData: response.navigateTo,
-    };
-  };
-
-  const generateAndSaveReport = async (studentId, teacherId) => {
-    try {
-      return await withLoading(async () => {
-        const data = await invokeFunction('generate-report', { student_id: studentId, teacher_id: teacherId });
-        return { success: data.success === true, report: data.report, content: data.content };
+      const { data, error: invokeError } = await supabase.functions.invoke('transcribe-live', {
+        body: formData,
       });
+
+      if (invokeError) throw invokeError;
+      return { success: true, text: data.text };
     } catch (err) {
-      return { success: false, message: err.message };
+      console.error("Transcription Error:", err);
+      return { success: false, error: err.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getAudioGuide = async (role, fullName) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-tutor', {
+        body: {
+          message: "berikan panduan navigasi lengkap",
+          system_prompt: `Kamu adalah Kak Bintang, asisten navigasi pintar. Sapa ${fullName} dengan hangat.
+          Jelaskan struktur halaman dashboard ini secara terstruktur untuk tunanetra:
+          1. Di paling kiri ada Sidebar Menu: Beranda, Tanya AI, QuizKu, Materi, dan Profil.
+          2. Di tengah layar ada Status Level dan XP kamu.
+          3. Di kanan bawah ada tombol Mikrofon 'Nay' yang bisa kamu aktifkan kapan saja dengan menekan SPASI untuk membantumu bernavigasi atau bertanya apa saja.
+          Gunakan bahasa yang sangat jelas, sopan, dan instruktif. Maksimal 40 kata.`,
+          model: "llama-3.1-8b-instant" // Model sangat cepat & akurat untuk instruksi
+        },
+        headers: { 'x-api-key': 'christian' }
+      });
+      return data?.reply;
+    } catch {
+      return `Halo ${fullName}, selamat datang kembali. Kamu berada di Beranda. Gunakan tombol Tab untuk berpindah menu atau tekan Spasi untuk bertanya pada asisten Nay.`;
+    }
+  };
+
+  const askNay = async (query, studentId, pageContext = "", options = {}) => {
+    if (!query || query.trim() === '') return { answer: "Bintang siap membantu, apa yang ingin ditanyakan?", success: false };
+
+    setLoading(true);
+    try {
+      const apiKey = import.meta.env.VITE_CUSTOM_AI_TUTOR_KEY || "christian";
+
+      const { data, error: invokeError } = await supabase.functions.invoke('ai-tutor', {
+        body: {
+          message: query,
+          student_id: studentId,
+          context: pageContext,
+          system_prompt: `Kamu adalah Nay, asisten navigasi & belajar pintar untuk siswa tunanetra.
+          Tugasmu:
+          1. Jawab pertanyaan tentang isi halaman.
+          2. Jika pengguna ingin pindah fitur (contoh: "buka quiz", "ke materi", "ke profil"), balas dengan format: [NAVIGATE:target] diikuti jawabanmu.
+             Target yang tersedia: dashboard, playground, tasks, modules, profile.
+          3. Gunakan bahasa ramah, singkat (max 30 kata), dan sangat jelas.
+          Konteks Halaman: ${pageContext}`,
+          model: "llama-3.1-8b-instant" // Model akurat & cepat
+        },
+        headers: { 'x-api-key': apiKey }
+      });
+
+      if (invokeError) throw invokeError;
+
+      const reply = data?.reply || "";
+      const navMatch = reply.match(/\[NAVIGATE:(.*?)\]/);
+
+      return {
+        answer: reply.replace(/\[NAVIGATE:.*?\]/, '').trim(),
+        navigateTo: navMatch ? navMatch[1] : null,
+        success: true
+      };
+    } catch (err) {
+      console.error("Nay Error:", err);
+      return { answer: "Waduh, ada kendala koneksi ke Nay.", success: false };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const smartVoiceAssistant = async (audioBlob, studentName, pageContext = "") => {
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', audioBlob, 'voice.webm');
+      formData.append('studentName', studentName);
+      formData.append('context', pageContext);
+
+      const { data, error: invokeError } = await supabase.functions.invoke('smart-voice-assistant', {
+        body: formData,
+      });
+
+      if (invokeError) throw invokeError;
+
+      return {
+        success: true,
+        transcript: data.transcript,
+        answer: data.reply,
+        navigateTo: data.navigateTo,
+        action: data.action,
+        actionData: data.actionData
+      };
+    } catch (err) {
+      console.error("Smart Voice Assistant Error:", err);
+      return { success: false, answer: "Maaf, Nay sedang mengalami gangguan teknis." };
+    } finally {
+      setLoading(false);
     }
   };
 
   const askMateriAI = async (question, moduleId, options = {}) => {
-    if (!String(question || '').trim()) return { answer: 'Tulis pertanyaan tentang materi ini.', success: false };
+    if (!question) return { answer: "Tanya apa tentang materi ini? 😊", success: false };
+
+    setLoading(true);
     try {
-      return await withLoading(async () => {
-        const data = await invokeFunction('materi-ai', {
-          question: String(question).trim(), module_id: moduleId || null,
-          grade_level: options.gradeLevel || null,
-        });
-        return { answer: data.answer, found: data.found !== false, citations: data.citations || [], success: true };
+      const apiKey = import.meta.env.VITE_CUSTOM_AI_TUTOR_KEY || "christian";
+      const { data, error: invokeError } = await supabase.functions.invoke('materi-ai', {
+        body: {
+          question,
+          module_id: moduleId,
+          grade_level: options.gradeLevel || "SD",
+          model_preference: options.model || "llama-3.3-70b-versatile"
+        },
+        headers: { 'x-api-key': apiKey }
       });
+
+      if (invokeError) throw invokeError;
+      return {
+        answer: data.answer,
+        found: data.found,
+        citations: data.citations,
+        success: true
+      };
     } catch (err) {
-      return { answer: 'Materi belum dapat diproses. Periksa koneksi dan coba lagi.', success: false, error: err.message };
+      console.error("Materi AI Hook Error:", err);
+      return { answer: "Maaf, ada kendala saat mengakses materi. Coba lagi ya!", success: false };
+    } finally {
+      setLoading(false);
     }
   };
 
   return {
-    askTutor, askNay, smartVoiceAssistant, askMateriAI, generateAIQuiz,
-    transcribeAudio, getAudioGuide, getWeakTopics, generateAndSaveReport, pingSupabase, pingAI,
-    loading, error,
+    askTutor,
+    askNay,
+    smartVoiceAssistant,
+    askMateriAI,
+    generateAIQuiz,
+    transcribeAudio,
+    getAudioGuide,
+    getWeakTopics,
+    pingSupabase,
+    pingAI,
+    loading,
+    error
   };
 };

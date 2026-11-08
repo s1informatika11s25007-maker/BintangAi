@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
-import { useAuthStore } from '../../features/auth/store/useAuthStore';
-import { useAccessibilityStore } from '../../features/accessibility/store/accessibilityStore';
-import { loginDemoAccount, fetchDemoAccountsFromDB, DEFAULT_DEMO_ACCOUNTS } from '../../features/auth/api/sessionApi';
+import { useAuthStore } from '../../store/authStore';
+import { useAccessibilityStore } from '../../store/accessibilityStore';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -21,9 +20,7 @@ const Auth = () => {
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState(null);
   const [studentIdInput, setStudentIdInput] = useState('');
-
-  // Inisialisasi awal dengan data instan agar 0ms delay & bebas animasi memuat
-  const [demoAccounts, setDemoAccounts] = useState(DEFAULT_DEMO_ACCOUNTS);
+  const [demoAccounts, setDemoAccounts] = useState([]);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -31,44 +28,77 @@ const Auth = () => {
   const { setModeFromProfile } = useAccessibilityStore();
 
   useEffect(() => {
-    let isMounted = true;
-    if (isLogin) {
-      fetchDemoAccountsFromDB()
-        .then((accounts) => {
-          if (isMounted && accounts && accounts.length > 0) {
-            setDemoAccounts(accounts);
-          }
-        })
-        .catch((err) => {
-          console.error("Error loading demo accounts from DB:", err);
-        });
-    }
-    return () => { isMounted = false; };
-  }, [isLogin]);
+    const fetchDemoAccounts = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, full_name, email, role, disability_type, student_password_hash')
+          .or('is_demo_account.eq.true,role.in.(guru,ortu,siswa)')
+          .not('email', 'is', null);
 
-  const handleDemoAccountClick = async (acc) => {
-    setEmail(acc.email);
-    setPassword('••••••••');
-    setLoading(true);
-    setMessage(`Menyiapkan akun demo ${acc.label}...`);
+        if (error) throw error;
 
-    try {
-      const { data } = await loginDemoAccount(acc.email);
-      setUser(data.user);
+        if (data && data.length > 0) {
+          const accountsMap = {};
 
-      const profileData = await fetchProfile(data.user.id);
-      if (profileData) {
-        setModeFromProfile(profileData);
-        const targetPath = profileData.role === 'guru' ? '/teacher/dashboard' :
-                           profileData.role === 'ortu' ? '/parent/dashboard' :
-                           '/student/dashboard';
-        navigate(targetPath);
+          data.forEach(p => {
+            let key = p.role;
+            if (p.role === 'siswa' && p.disability_type) {
+              key = p.disability_type;
+            }
+
+            if (!accountsMap[key]) {
+              let label = p.role === 'guru' ? 'Guru' : p.role === 'ortu' ? 'Orang Tua' : `Siswa (${p.disability_type || 'Umum'})`;
+              let icon = '👨‍🏫';
+              let color = 'bg-blue-50 text-blue-700';
+
+              if (p.role === 'guru') {
+                label = 'Guru'; icon = '👨‍🏫'; color = 'bg-blue-50 text-blue-700';
+              } else if (p.role === 'ortu') {
+                label = 'Orang Tua'; icon = '👪'; color = 'bg-rose-50 text-rose-700';
+              } else if (p.disability_type === 'tunanetra') {
+                label = 'Tunanetra'; icon = '🦯'; color = 'bg-purple-50 text-purple-700';
+              } else if (p.disability_type === 'tunarungu') {
+                label = 'Tunarungu'; icon = '🤟'; color = 'bg-orange-50 text-orange-700';
+              } else if (p.disability_type === 'tunawicara') {
+                label = 'Tunawicara'; icon = '🗣️'; color = 'bg-emerald-50 text-emerald-700';
+              }
+
+              accountsMap[key] = {
+                label,
+                email: p.email,
+                pass: p.student_password_hash || 'demo123456',
+                icon,
+                color,
+                full_name: p.full_name
+              };
+            }
+          });
+
+          const desiredOrder = ['guru', 'tunanetra', 'tunarungu', 'tunawicara', 'ortu'];
+          const orderedAccounts = [];
+          desiredOrder.forEach(k => {
+            if (accountsMap[k]) orderedAccounts.push(accountsMap[k]);
+          });
+
+          Object.keys(accountsMap).forEach(k => {
+            if (!desiredOrder.includes(k)) orderedAccounts.push(accountsMap[k]);
+          });
+
+          setDemoAccounts(orderedAccounts);
+        }
+      } catch (err) {
+        console.error("Gagal memuat akun demo dari database:", err);
       }
-    } catch (error) {
-      setMessage(`Gagal masuk demo: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
+    };
+
+    fetchDemoAccounts();
+  }, []);
+
+  const fillDemoAccount = (acc) => {
+    setEmail(acc.email);
+    setPassword(acc.pass);
+    setMessage(`Akun Demo (${acc.label} - ${acc.full_name}) terpilih! Klik Masuk Sekarang.`);
   };
 
   useEffect(() => {
@@ -113,29 +143,20 @@ const Auth = () => {
 
     try {
       if (isLogin) {
-        const matchedDemo = demoAccounts.find(
-          acc => acc.email.toLowerCase() === cleanEmail
-        );
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password: password,
+        });
 
-        let authResult;
-        if (matchedDemo) {
-          authResult = await loginDemoAccount(matchedDemo.email);
-        } else {
-          const res = await supabase.auth.signInWithPassword({
-            email: cleanEmail,
-            password: password,
-          });
-          if (res.error) throw new Error("Email atau kata sandi salah");
-          authResult = { data: res.data };
-        }
+        if (error) throw new Error("Email atau kata sandi salah");
 
-        setUser(authResult.data.user);
-        const profileData = await fetchProfile(authResult.data.user.id);
+        setUser(data.user);
+        const profileData = await fetchProfile(data.user.id);
 
         if (!profileData) {
-            const metadata = authResult.data.user.user_metadata || {};
+            const metadata = data.user.user_metadata || {};
             const fallbackProfile = {
-                id: authResult.data.user.id,
+                id: data.user.id,
                 full_name: metadata.full_name || cleanEmail.split('@')[0],
                 role: metadata.role || 'siswa',
                 disability_type: metadata.disability_type || 'tidak_ada',
@@ -163,9 +184,15 @@ const Auth = () => {
         let finalClassLevel = classLevel;
 
         if (role === 'ortu') {
-          const candidateId = studentIdInput.trim();
-          if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(candidateId)) throw new Error("Masukkan ID siswa dengan format yang benar. Tautan akan diverifikasi admin.");
-          linkedId = candidateId;
+          if (!studentIdInput) throw new Error("ID Siswa tidak boleh kosong");
+          const { data: child, error: childError } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('id', studentIdInput.trim())
+            .maybeSingle();
+
+          if (childError || !child) throw new Error("ID Siswa tidak ditemukan!");
+          linkedId = child.id;
         }
 
         if (role === 'guru') {
@@ -194,9 +221,7 @@ const Auth = () => {
         if (error) throw new Error(error.message);
 
         if (data.user) {
-          setMessage(role === 'siswa'
-            ? "Daftar berhasil! Silakan masuk."
-            : "Daftar berhasil. Permintaan peran dan tautan kelas menunggu verifikasi admin sebelum akses diaktifkan.");
+          setMessage(role === 'guru' ? `Daftar berhasil! Kode Kelas Anda: ${finalClassCode}` : "Daftar berhasil! Silakan masuk.");
           setIsLogin(true);
         }
       }
@@ -213,112 +238,123 @@ const Auth = () => {
 
   const classLevels = ["1 SD", "2 SD", "3 SD", "4 SD", "5 SD", "6 SD"];
 
-  const labelStyles = "text-sm font-bold text-slate-700 mb-2 block ml-1 tracking-tight";
-  const inputStyles = "w-full px-6 py-4 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-indigo-600 focus:bg-white focus:ring-4 focus:ring-indigo-600/5 outline-none font-semibold transition-all text-slate-900 placeholder:text-slate-400 shadow-sm";
+  const labelStyles = "text-xs font-bold text-slate-700 mb-1.5 block ml-1 tracking-tight uppercase";
+  const inputStyles = "w-full px-5 py-3.5 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-indigo-600 focus:bg-white focus:ring-4 focus:ring-indigo-600/5 outline-none font-semibold text-sm transition-all text-slate-900 placeholder:text-slate-400 shadow-sm";
 
   return (
-    <div className="min-h-screen flex font-sans bg-[#F8FAFC] selection:bg-indigo-100">
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+    <div className="h-[100dvh] w-screen flex font-sans bg-[#F8FAFC] selection:bg-indigo-100 overflow-hidden">
+      {/* Left Sidebar */}
+      <div className="hidden lg:flex lg:w-1/2 h-full relative overflow-hidden bg-indigo-950 flex-col justify-between">
         <div
           className="absolute inset-0 z-0"
           style={{
             backgroundImage: 'url("https://images.pexels.com/photos/1586981/pexels-photo-1586981.jpeg")',
             backgroundSize: 'cover',
-            backgroundPosition: 'center'
+            backgroundPosition: 'center',
+            opacity: 0.85
           }}
         />
-        <div className="absolute inset-0 bg-white/20 z-10 backdrop-blur-[2px]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-indigo-950/85 via-indigo-900/25 to-indigo-950/50 z-10" />
 
-        <div className="relative z-20 w-full flex flex-col justify-between p-16">
-          <div
-            onClick={() => navigate('/')}
-            className="flex items-center gap-4 cursor-pointer group w-fit"
-          >
-            <div className="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-indigo-600/30 group-hover:scale-110 transition-all duration-500">
-              <span className="text-white font-black text-3xl">B</span>
+        <div className="relative z-20 w-full h-full flex flex-col justify-between p-8 lg:p-12">
+          <div className="space-y-6">
+            <div
+              onClick={() => navigate('/')}
+              className="flex items-center gap-3 cursor-pointer group w-fit"
+            >
+              <div className="w-12 h-12 bg-white/95 rounded-2xl flex items-center justify-center shadow-2xl group-hover:scale-105 transition-all duration-300">
+                <span className="text-indigo-600 font-black text-2xl">B</span>
+              </div>
+              <span className="text-2xl font-black tracking-tight text-white drop-shadow-md">
+                Bintang<span className="text-indigo-400">Ai</span>
+              </span>
             </div>
-            <span className="text-3xl font-black tracking-tight text-slate-900">
-              Bintang<span className="text-indigo-600">Ai</span>
-            </span>
+
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="max-w-xl space-y-3"
+            >
+              <div
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-indigo-900/80 text-white backdrop-blur-md shadow-xl border border-white/20"
+              >
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-400"></span>
+                </span>
+                Platform Belajar Inklusif
+              </div>
+              <h2 className="text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight drop-shadow-lg">
+                Platform course berbasis <span className="text-indigo-400">AI</span> untuk anak <span className="text-indigo-400">Istimewa</span>.
+              </h2>
+              <p className="text-sm lg:text-base font-medium text-indigo-100/90 leading-relaxed drop-shadow">
+                Belajar mandiri dengan visual adaptif, dan bimbingan AI yang memahami kebutuhan setiap bintang.
+              </p>
+            </motion.div>
           </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="max-w-xl"
-          >
-            <div
-              className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-xs font-bold mb-8 uppercase tracking-wider bg-indigo-600 text-white shadow-xl shadow-indigo-600/20"
-            >
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-              </span>
-              Platform Belajar Inklusif
-            </div>
-            <h2 className="text-6xl font-black mb-8 leading-[1.1] text-slate-900 tracking-tight">
-              Platform course berbasis <span className="text-indigo-600">AI</span> untuk anak <span className="text-indigo-600">Istimewa</span>.
-            </h2>
-            <p className="text-xl font-medium text-slate-700 leading-relaxed">
-              Belajar mandiri dengan visual adaptif, dan bimbingan AI yang memahami kebutuhan setiap bintang.
-            </p>
-          </motion.div>
-
-          <div className="text-xs font-bold uppercase tracking-widest text-slate-500">
+          <div className="text-[10px] font-bold uppercase tracking-widest text-indigo-200/70 drop-shadow pt-4">
             © 2026 BINTANGAI • EMPOWERING INCLUSIVITY
           </div>
         </div>
       </div>
 
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-12 bg-slate-50">
-        <div className="w-full max-w-lg">
-          <div className="mb-10 text-center lg:text-left">
-            <h1 className="text-4xl font-black text-slate-900 tracking-tight mb-3">
+      {/* Right Content */}
+      <div className="w-full lg:w-1/2 h-full flex flex-col justify-center items-center p-6 md:p-10 lg:p-12 overflow-y-auto bg-slate-50">
+        <div className="w-full max-w-md my-auto">
+          <div className="mb-6 text-center lg:text-left">
+            <h1 className="text-3xl lg:text-4xl font-black text-slate-900 tracking-tight mb-1.5">
               {isLogin ? 'Selamat Datang Kembali' : 'Bergabung Bersama Kami'}
             </h1>
-            <p className="text-slate-500 font-medium text-lg">
+            <p className="text-slate-500 font-medium text-sm">
               {isLogin ? 'Masuk untuk melanjutkan petualangan' : 'Mulai perjalanan belajarmu hari ini'}
             </p>
           </div>
 
-          <div className="bg-white p-10 md:p-12 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-50 rounded-full -mr-20 -mt-20 opacity-40 blur-2xl" />
+          <div className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-50 rounded-full -mr-20 -mt-20 opacity-40 blur-2xl pointer-events-none" />
 
-            {/* Akses Cepat Akun Demo Instan tanpa Animasi Memuat */}
-            {isLogin && (
-              <div className="mb-8 relative z-10">
-                <div className="flex items-center gap-3 mb-4">
+            {/* Akses Cepat Akun Demo Dinamis Database */}
+            {isLogin && demoAccounts.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-6 relative z-10"
+              >
+                <div className="flex items-center gap-3 mb-3">
                   <div className="h-[2px] flex-1 bg-slate-100" />
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Akun Terdaftar</span>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Akun Demo (Database)</span>
                   <div className="h-[2px] flex-1 bg-slate-100" />
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-[160px] overflow-y-auto p-1">
                   {demoAccounts.map((acc) => (
                     <button
-                      key={acc.id || acc.email}
+                      key={acc.email}
                       type="button"
-                      onClick={() => handleDemoAccountClick(acc)}
-                      className="flex items-center gap-3 p-3.5 rounded-2xl border-2 border-slate-100 hover:border-indigo-200 hover:bg-white transition-all shadow-sm group bg-white text-slate-700"
+                      onClick={() => fillDemoAccount(acc)}
+                      className={`flex items-center gap-2.5 p-2.5 rounded-2xl border-2 border-transparent hover:border-indigo-200 hover:bg-white transition-all shadow-sm group ${acc.color}`}
                     >
-                      <div className={`w-3 h-3 rounded-full shrink-0 ${acc.color || 'bg-indigo-500'}`} />
+                      <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center text-lg shadow-sm group-hover:scale-110 transition-transform">
+                        {acc.icon}
+                      </div>
                       <div className="text-left overflow-hidden">
                         <p className="text-xs font-black truncate">{acc.label}</p>
-                        <p className="text-[10px] text-slate-400 font-bold truncate">Klik masuk</p>
+                        <p className="text-[10px] opacity-75 font-bold truncate">{acc.full_name}</p>
                       </div>
                     </button>
                   ))}
                 </div>
-              </div>
+              </motion.div>
             )}
 
             <AnimatePresence mode="wait">
               {message && (
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
+                  initial={{ opacity: 0, scale: 0.98 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className={`mb-8 p-5 rounded-2xl text-sm font-bold text-center relative z-10 ${
+                  className={`mb-6 p-4 rounded-2xl text-xs font-bold text-center relative z-10 ${
                     message.includes('berhasil') || message.includes('terpilih') ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-rose-50 text-rose-700 border border-rose-100'
                   }`}
                 >
@@ -327,9 +363,9 @@ const Auth = () => {
               )}
             </AnimatePresence>
 
-            <form onSubmit={handleAuth} className="space-y-6 relative z-10">
+            <form onSubmit={handleAuth} className="space-y-4 relative z-10">
               {!isLogin && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
                   <div>
                     <label className={labelStyles}>Nama Lengkap 👤</label>
                     <input
@@ -361,7 +397,7 @@ const Auth = () => {
                   )}
 
                   {role === 'siswa' && (
-                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
                       <div>
                         <label className={labelStyles}>Kebutuhan Khusus ✨</label>
                         <select
@@ -385,7 +421,7 @@ const Auth = () => {
                   )}
 
                   {role === 'guru' && (
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className={labelStyles}>Kelas 📖</label>
                         <select
@@ -429,7 +465,7 @@ const Auth = () => {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors p-2"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors p-2"
                   >
                     {showPassword ? (
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
@@ -457,24 +493,24 @@ const Auth = () => {
 
               <button
                 type="submit" disabled={loading}
-                className="w-full py-5 bg-indigo-600 text-white font-bold text-lg rounded-2xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 active:scale-[0.98] transition-all disabled:opacity-50 mt-6"
+                className="w-full py-4 bg-indigo-600 text-white font-bold text-sm rounded-2xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 active:scale-[0.98] transition-all disabled:opacity-50 mt-4"
               >
                 {loading ? (
                   <div className="flex items-center justify-center gap-2">
-                    <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     <span>Memproses...</span>
                   </div>
                 ) : (isLogin ? 'Masuk Sekarang' : 'Daftar Akun')}
               </button>
             </form>
 
-            <div className="mt-10 text-center border-t border-slate-100 pt-8 relative z-10">
-              <p className="text-slate-500 font-medium mb-2">
+            <div className="mt-6 text-center border-t border-slate-100 pt-5 relative z-10">
+              <p className="text-slate-500 font-medium text-xs mb-1">
                 {isLogin ? 'Belum punya akun?' : 'Sudah memiliki akun?'}
               </p>
               <button
                 onClick={() => setIsLogin(!isLogin)}
-                className="text-indigo-600 font-bold hover:text-indigo-700 transition-colors"
+                className="text-indigo-600 font-bold text-xs hover:text-indigo-700 transition-colors"
               >
                 {isLogin ? 'Buat Akun Baru Gratis' : 'Masuk ke Akun Anda'}
               </button>

@@ -1,12 +1,14 @@
-/** Browser-native speech synthesis. No TTS provider or model is called. */
-export const textToSpeechApi = async (text, options = {}) => {
-  if (typeof window === 'undefined' || !window.speechSynthesis || !text) {
-    return { success: false, error: 'Browser tidak mendukung SpeechSynthesis.' };
+import { supabase } from '../../../lib/supabaseClient';
+
+export const textToSpeechApi = async (text) => {
+  try {
+    const { data, error } = await supabase.functions.invoke('text-to-speech', {
+      body: { text },
+    });
+    if (error) throw error;
+    return data;
+  } catch (err) {
+    console.error("TTS API Error:", err);
+    return null;
   }
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(String(text));
-  utterance.lang = options.lang || 'id-ID';
-  utterance.rate = options.rate || 1;
-  window.speechSynthesis.speak(utterance);
-  return { success: true };
 };
