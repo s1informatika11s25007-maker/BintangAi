@@ -5,7 +5,7 @@ import { login } from '@/features/auth/api/sessionApi';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { useAccessibilityStore } from '@/features/accessibility/store/accessibilityStore';
-import { HiMail, HiLockClosed, HiEye, HiEyeOff, HiArrowRight, HiSparkles, HiChevronDown, HiFingerPrint, HiLightningBolt } from 'react-icons/hi';
+import { HiMail, HiLockClosed, HiEye, HiEyeOff, HiArrowRight, HiSparkles, HiChevronDown, HiFingerPrint, HiLightningBolt, HiArrowLeft } from 'react-icons/hi';
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
@@ -218,6 +218,14 @@ const Login = () => {
       {/* Right Section - Login Form */}
       <div className="w-full lg:w-[55%] h-full flex flex-col justify-center items-center p-6 md:p-10 lg:p-12 overflow-y-auto relative">
         <div className="w-full max-w-[420px] my-auto">
+          <motion.button
+            whileHover={{ x: -4 }}
+            onClick={() => navigate('/')}
+            className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold text-xs mb-4 transition-colors w-fit"
+          >
+            <HiArrowLeft /> Kembali ke Beranda
+          </motion.button>
+
           <motion.div
             variants={containerVariants}
             initial="hidden"

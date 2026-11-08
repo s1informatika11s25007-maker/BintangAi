@@ -303,6 +303,12 @@ const Auth = () => {
       {/* Right Content */}
       <div className="w-full lg:w-1/2 h-full flex flex-col justify-center items-center p-6 md:p-10 lg:p-12 overflow-y-auto bg-slate-50">
         <div className="w-full max-w-md my-auto">
+          <button
+            onClick={() => navigate('/')}
+            className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold text-xs mb-4 transition-colors w-fit"
+          >
+            ← Kembali ke Beranda
+          </button>
           <div className="mb-6 text-center lg:text-left">
             <h1 className="text-3xl lg:text-4xl font-black text-slate-900 tracking-tight mb-1.5">
               {isLogin ? 'Selamat Datang Kembali' : 'Bergabung Bersama Kami'}
