@@ -37,6 +37,9 @@ const TeacherDashboard = () => {
   const [deleteLoading, setDeleteLoading] = useState(null);
   const [xpModal, setXpModal] = useState({ show: false, student: null, amount: 10 });
   const [showOnlineModal, setShowOnlineModal] = useState(false);
+  const [showGradeModal, setShowGradeModal] = useState(false);
+  const [showPendingModal, setShowPendingModal] = useState(false);
+  const [showAttentionModal, setShowAttentionModal] = useState(false);
   const [onlineSearchQuery, setOnlineSearchQuery] = useState('');
   const [toast, setToast] = useState(null);
 
@@ -464,15 +467,20 @@ const TeacherDashboard = () => {
                 {/* STATS GRID */}
                 <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                    {[
-                     { id: 'siswa_aktif', label: 'Siswa Online', value: stats.activeToday, icon: <HiUsers />, color: 'text-emerald-500', bg: 'bg-emerald-50', clickable: true },
-                     { id: 'rata_nilai', label: 'Rata Nilai', value: stats.avgScore, icon: <HiChartBar />, color: 'text-indigo-500', bg: 'bg-indigo-50' },
-                     { id: 'tugas_pending', label: 'Tugas Pending', value: stats.tugasPending, icon: <HiBell />, color: 'text-amber-500', bg: 'bg-amber-50' },
-                     { id: 'butuh_atensi', label: 'Butuh Atensi', value: stats.inactive3Days, icon: <HiExclamation />, color: 'text-rose-500', bg: 'bg-rose-50' },
+                     { id: 'siswa_aktif', label: 'Siswa Online', value: stats.activeToday, icon: <HiUsers />, color: 'text-emerald-500', bg: 'bg-emerald-50', hoverBorder: 'hover:border-emerald-300' },
+                     { id: 'rata_nilai', label: 'Rata Nilai', value: stats.avgScore, icon: <HiChartBar />, color: 'text-indigo-500', bg: 'bg-indigo-50', hoverBorder: 'hover:border-indigo-300' },
+                     { id: 'tugas_pending', label: 'Tugas Pending', value: stats.tugasPending, icon: <HiBell />, color: 'text-amber-500', bg: 'bg-amber-50', hoverBorder: 'hover:border-amber-300' },
+                     { id: 'butuh_atensi', label: 'Butuh Atensi', value: stats.inactive3Days, icon: <HiExclamation />, color: 'text-rose-500', bg: 'bg-rose-50', hoverBorder: 'hover:border-rose-300' },
                    ].map((s, i) => (
                      <div
                         key={i}
-                        onClick={() => s.id === 'siswa_aktif' && setShowOnlineModal(true)}
-                        className={`p-8 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-300 ${s.clickable ? 'cursor-pointer hover:border-emerald-300' : ''}`}
+                        onClick={() => {
+                          if (s.id === 'siswa_aktif') setShowOnlineModal(true);
+                          else if (s.id === 'rata_nilai') setShowGradeModal(true);
+                          else if (s.id === 'tugas_pending') setShowPendingModal(true);
+                          else if (s.id === 'butuh_atensi') setShowAttentionModal(true);
+                        }}
+                        className={`p-8 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer ${s.hoverBorder}`}
                      >
                         <div className="flex items-center justify-between mb-6">
                           <div className={`w-12 h-12 ${s.bg} ${s.color} rounded-2xl flex items-center justify-center text-xl shadow-sm`}>
@@ -485,7 +493,7 @@ const TeacherDashboard = () => {
                         <p className="text-4xl font-black text-slate-900 mb-1 tracking-tight">{s.value}</p>
                         <p className="font-bold text-xs text-slate-400 flex items-center justify-between">
                           <span>{s.label}</span>
-                          {s.clickable && <HiChevronRight className="text-emerald-500 text-base" />}
+                          <HiChevronRight className={`${s.color} text-base`} />
                         </p>
                      </div>
                    ))}
@@ -1141,6 +1149,323 @@ const TeacherDashboard = () => {
                   <span>Total Siswa Online: {students.filter(s => s.is_currently_online).length}</span>
                   <button
                     onClick={() => setShowOnlineModal(false)}
+                    className="px-5 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all"
+                  >
+                    Tutup
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Rata Nilai Modal */}
+        <AnimatePresence>
+          {showGradeModal && (
+            <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 md:p-8">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowGradeModal(false)}
+                className="absolute inset-0 bg-slate-900/80 backdrop-blur-md"
+              />
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                className="relative bg-white w-full max-w-4xl max-h-[85vh] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col border border-slate-100"
+              >
+                <div className="p-6 md:p-8 bg-slate-900 text-white flex justify-between items-center shrink-0">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-indigo-500/20 text-indigo-400 rounded-2xl flex items-center justify-center text-2xl font-black border border-indigo-500/20">
+                      <HiChartBar />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-black tracking-tight">Tabel Rata-Rata Nilai Siswa</h3>
+                      <p className="text-xs text-slate-400 font-bold mt-0.5">
+                        Rincian rata-rata nilai kuis per siswa di kelas Anda
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowGradeModal(false)}
+                    className="p-2.5 text-slate-400 hover:text-white rounded-xl hover:bg-white/10 transition-all"
+                  >
+                    <HiX className="text-xl" />
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="border-b border-slate-100 text-[10px] font-black uppercase tracking-wider text-slate-400">
+                        <th className="pb-3 pl-4">Nama Siswa</th>
+                        <th className="pb-3 text-center">Disabilitas</th>
+                        <th className="pb-3 text-center">Kuis Selesai</th>
+                        <th className="pb-3 text-center">Rata-Rata Nilai</th>
+                        <th className="pb-3 pr-4 text-right">Predikat</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {students.map((s) => {
+                        const subs = s.submissions || [];
+                        const avg = subs.length > 0 ? (subs.reduce((acc, c) => acc + (c.total_score || 0), 0) / subs.length).toFixed(1) : 0;
+                        return (
+                          <tr key={s.id} className="hover:bg-slate-50/80 transition-colors text-xs font-bold text-slate-800">
+                            <td className="py-4 pl-4 flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white font-black flex items-center justify-center text-xs shadow-sm">
+                                {s.full_name?.charAt(0)}
+                              </div>
+                              <span>{s.full_name}</span>
+                            </td>
+                            <td className="py-4 text-center">
+                              <span className="px-2.5 py-1 bg-slate-100 text-slate-600 text-[10px] font-bold rounded-lg border border-slate-200">
+                                {s.disability_type || 'Umum'}
+                              </span>
+                            </td>
+                            <td className="py-4 text-center text-slate-500 font-bold">
+                              {subs.length} Kuis
+                            </td>
+                            <td className="py-4 text-center font-black text-indigo-600 text-sm">
+                              {avg}
+                            </td>
+                            <td className="py-4 pr-4 text-right">
+                              <span className={`inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase ${
+                                Number(avg) >= 80 ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                                Number(avg) >= 60 ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' :
+                                'bg-rose-50 text-rose-600 border border-rose-100'
+                              }`}>
+                                {Number(avg) >= 80 ? 'Sangat Baik' : Number(avg) >= 60 ? 'Baik' : 'Perlu Bimbingan'}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+
+                  {students.length === 0 && (
+                    <div className="py-16 text-center text-slate-400 font-bold text-xs">
+                      Belum ada data nilai siswa.
+                    </div>
+                  )}
+                </div>
+
+                <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center text-xs font-bold text-slate-500 shrink-0">
+                  <span>Rata-Rata Kelas: {stats.avgScore}</span>
+                  <button
+                    onClick={() => setShowGradeModal(false)}
+                    className="px-5 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all"
+                  >
+                    Tutup
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Tugas Pending Modal */}
+        <AnimatePresence>
+          {showPendingModal && (
+            <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 md:p-8">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowPendingModal(false)}
+                className="absolute inset-0 bg-slate-900/80 backdrop-blur-md"
+              />
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                className="relative bg-white w-full max-w-4xl max-h-[85vh] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col border border-slate-100"
+              >
+                <div className="p-6 md:p-8 bg-slate-900 text-white flex justify-between items-center shrink-0">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-amber-500/20 text-amber-400 rounded-2xl flex items-center justify-center text-2xl font-black border border-amber-500/20">
+                      <HiBell />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-black tracking-tight">Tabel Tugas Pending</h3>
+                      <p className="text-xs text-slate-400 font-bold mt-0.5">
+                        Daftar pengumpulan kuis siswa yang membutuhkan review
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowPendingModal(false)}
+                    className="p-2.5 text-slate-400 hover:text-white rounded-xl hover:bg-white/10 transition-all"
+                  >
+                    <HiX className="text-xl" />
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="border-b border-slate-100 text-[10px] font-black uppercase tracking-wider text-slate-400">
+                        <th className="pb-3 pl-4">Nama Siswa</th>
+                        <th className="pb-3">Judul QuizKu</th>
+                        <th className="pb-3 text-center">Waktu Kumpul</th>
+                        <th className="pb-3 text-center">Skor</th>
+                        <th className="pb-3 pr-4 text-right">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {recentSubmissions.map((sub) => (
+                        <tr key={sub.id} className="hover:bg-slate-50/80 transition-colors text-xs font-bold text-slate-800">
+                          <td className="py-4 pl-4 flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-amber-500 text-white font-black flex items-center justify-center text-xs shadow-sm">
+                              {sub.profiles?.full_name?.charAt(0)}
+                            </div>
+                            <span>{sub.profiles?.full_name}</span>
+                          </td>
+                          <td className="py-4 text-slate-600 font-medium">
+                            {sub.assignments?.title || 'QuizKu'}
+                          </td>
+                          <td className="py-4 text-center text-slate-500 text-xs">
+                            {new Date(sub.submitted_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                          </td>
+                          <td className="py-4 text-center font-black text-indigo-600">
+                            {sub.total_score || 0}
+                          </td>
+                          <td className="py-4 pr-4 text-right">
+                            <span className="inline-flex px-3 py-1 bg-amber-50 text-amber-600 text-[10px] font-black rounded-full border border-amber-100 uppercase">
+                              {sub.status === 'graded' ? 'Selesai Evaluasi' : 'Menunggu Review'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {recentSubmissions.length === 0 && (
+                    <div className="py-16 text-center text-slate-400 font-bold text-xs">
+                      Tidak ada tugas pending saat ini.
+                    </div>
+                  )}
+                </div>
+
+                <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center text-xs font-bold text-slate-500 shrink-0">
+                  <span>Total Tugas Pending: {stats.tugasPending}</span>
+                  <button
+                    onClick={() => setShowPendingModal(false)}
+                    className="px-5 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all"
+                  >
+                    Tutup
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Butuh Atensi Modal */}
+        <AnimatePresence>
+          {showAttentionModal && (
+            <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 md:p-8">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowAttentionModal(false)}
+                className="absolute inset-0 bg-slate-900/80 backdrop-blur-md"
+              />
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                className="relative bg-white w-full max-w-4xl max-h-[85vh] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col border border-slate-100"
+              >
+                <div className="p-6 md:p-8 bg-slate-900 text-white flex justify-between items-center shrink-0">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-rose-500/20 text-rose-400 rounded-2xl flex items-center justify-center text-2xl font-black border border-rose-500/20">
+                      <HiExclamation />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-black tracking-tight">Tabel Siswa Butuh Atensi</h3>
+                      <p className="text-xs text-slate-400 font-bold mt-0.5">
+                        Daftar siswa yang memerlukan pendampingan & perhatian khusus
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowAttentionModal(false)}
+                    className="p-2.5 text-slate-400 hover:text-white rounded-xl hover:bg-white/10 transition-all"
+                  >
+                    <HiX className="text-xl" />
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="border-b border-slate-100 text-[10px] font-black uppercase tracking-wider text-slate-400">
+                        <th className="pb-3 pl-4">Nama Siswa</th>
+                        <th className="pb-3 text-center">Disabilitas</th>
+                        <th className="pb-3 text-center">Terakhir Aktif</th>
+                        <th className="pb-3 pr-4 text-right">Catatan Atensi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {students.map((s) => {
+                        const threeDaysAgo = new Date();
+                        threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+                        const isInactive = s.last_active ? new Date(s.last_active) < threeDaysAgo : true;
+                        const subs = s.submissions || [];
+                        const avg = subs.length > 0 ? (subs.reduce((acc, c) => acc + (c.total_score || 0), 0) / subs.length) : 0;
+                        const isLowGrade = subs.length > 0 && avg < 60;
+
+                        if (!isInactive && !isLowGrade) return null;
+
+                        return (
+                          <tr key={s.id} className="hover:bg-slate-50/80 transition-colors text-xs font-bold text-slate-800">
+                            <td className="py-4 pl-4 flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-xl bg-rose-500 text-white font-black flex items-center justify-center text-xs shadow-sm">
+                                {s.full_name?.charAt(0)}
+                              </div>
+                              <span>{s.full_name}</span>
+                            </td>
+                            <td className="py-4 text-center">
+                              <span className="px-2.5 py-1 bg-slate-100 text-slate-600 text-[10px] font-bold rounded-lg border border-slate-200">
+                                {s.disability_type || 'Umum'}
+                              </span>
+                            </td>
+                            <td className="py-4 text-center text-slate-500 text-xs">
+                              {s.last_active ? new Date(s.last_active).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : 'Belum Pernah'}
+                            </td>
+                            <td className="py-4 pr-4 text-right">
+                              <span className="inline-flex px-3 py-1 bg-rose-50 text-rose-600 text-[10px] font-black rounded-full border border-rose-100">
+                                {isInactive ? 'Inaktif > 3 Hari' : 'Rata Nilai < 60'}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+
+                  {students.filter(s => {
+                    const threeDaysAgo = new Date();
+                    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+                    const isInactive = s.last_active ? new Date(s.last_active) < threeDaysAgo : true;
+                    const subs = s.submissions || [];
+                    const avg = subs.length > 0 ? (subs.reduce((acc, c) => acc + (c.total_score || 0), 0) / subs.length) : 0;
+                    return isInactive || (subs.length > 0 && avg < 60);
+                  }).length === 0 && (
+                    <div className="py-16 text-center text-slate-400 font-bold text-xs">
+                      Semua siswa aktif dan berada dalam kondisi baik.
+                    </div>
+                  )}
+                </div>
+
+                <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center text-xs font-bold text-slate-500 shrink-0">
+                  <span>Total Butuh Atensi: {stats.inactive3Days} Siswa</span>
+                  <button
+                    onClick={() => setShowAttentionModal(false)}
                     className="px-5 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all"
                   >
                     Tutup
