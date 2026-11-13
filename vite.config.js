@@ -58,10 +58,10 @@ export default defineConfig({
       '.vusercontent.net',
       '.v0.app'
     ],
-    hmr: {
+    hmr: process.env.VITE_HMR_WSS === 'true' ? {
       protocol: 'wss',
       clientPort: 443
-    },
+    } : true,
     proxy: {
       '/hf-api': {
         target: 'https://router.huggingface.co',
