@@ -145,8 +145,7 @@ const TeacherDashboard = () => {
         .eq('role', 'siswa')
         .eq('class_code', profile?.class_code);
 
-      const today = new Date().toISOString().split('T')[0];
-      const activeToday = classStudents?.filter(s => s.last_active === today).length || 0;
+      const activeToday = classStudents?.filter(s => s.is_online === true).length || 0;
 
       const threeDaysAgo = new Date();
       threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
