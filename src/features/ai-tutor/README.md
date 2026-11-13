@@ -1,6 +1,6 @@
 # AI Tutor Feature
 
-Fitur ini menangani komunikasi dengan AI (Groq/Llama) untuk membantu siswa belajar.
+Fitur ini menangani komunikasi dengan LLM Model (LLM / Llama) untuk membantu siswa belajar.
 
 ## Struktur
 - `api/`: Endpoint untuk fetch ke Supabase Edge Functions.
