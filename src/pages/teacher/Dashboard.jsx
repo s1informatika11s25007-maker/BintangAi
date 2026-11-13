@@ -40,6 +40,8 @@ const TeacherDashboard = () => {
   const [showGradeModal, setShowGradeModal] = useState(false);
   const [showPendingModal, setShowPendingModal] = useState(false);
   const [showAttentionModal, setShowAttentionModal] = useState(false);
+  const [chatModal, setChatModal] = useState({ show: false, student: null, text: '' });
+  const [sendingMsg, setSendingMsg] = useState(false);
   const [onlineSearchQuery, setOnlineSearchQuery] = useState('');
   const [toast, setToast] = useState(null);
 
@@ -329,6 +331,68 @@ const TeacherDashboard = () => {
       showToast('Gagal menghapus QuizKu: ' + error.message, 'error');
     } finally {
       setDeleteLoading(null);
+    }
+  };
+
+  const handleForceLogoutStudent = async (student) => {
+    if (!student?.id) return;
+    try {
+      await supabase.from('profiles').update({
+        is_online: false,
+        last_active_at: new Date().toISOString()
+      }).eq('id', student.id);
+
+      setStudents(prev => prev.map(s => s.id === student.id ? { ...s, is_currently_online: false, is_online: false, status: 'offline' } : s));
+      showToast(`Siswa ${student.full_name} berhasil dikeluarkan (logout).`);
+    } catch (err) {
+      showToast('Gagal mengeluarkan siswa: ' + err.message, 'error');
+    }
+  };
+
+  const handleSendMessageToStudent = async () => {
+    if (!chatModal.student?.id || !chatModal.text.trim() || sendingMsg) return;
+    setSendingMsg(true);
+    try {
+      const studentId = chatModal.student.id;
+      let { data: conv } = await supabase
+        .from('direct_conversations')
+        .select('id')
+        .eq('teacher_id', profile.id)
+        .eq('student_id', studentId)
+        .maybeSingle();
+
+      if (!conv) {
+        const { data: newConv, error: convErr } = await supabase
+          .from('direct_conversations')
+          .insert({
+            teacher_id: profile.id,
+            student_id: studentId,
+            participant_one: profile.id,
+            participant_two: studentId
+          })
+          .select('id')
+          .single();
+
+        if (convErr) throw convErr;
+        conv = newConv;
+      }
+
+      const { error: msgErr } = await supabase.from('direct_messages').insert({
+        conversation_id: conv.id,
+        sender_id: profile.id,
+        sender_role: 'guru',
+        content: chatModal.text.trim(),
+        is_read: false
+      });
+
+      if (msgErr) throw msgErr;
+
+      showToast(`Pesan terkirim ke ${chatModal.student.full_name}`);
+      setChatModal({ show: false, student: null, text: '' });
+    } catch (err) {
+      showToast('Gagal mengirim pesan: ' + err.message, 'error');
+    } finally {
+      setSendingMsg(false);
     }
   };
 
@@ -1101,7 +1165,8 @@ const TeacherDashboard = () => {
                         <th className="pb-3 text-center">Disabilitas</th>
                         <th className="pb-3 text-center">Kode Kelas</th>
                         <th className="pb-3 text-center">XP</th>
-                        <th className="pb-3 pr-4 text-right">Status</th>
+                        <th className="pb-3 text-center">Status</th>
+                        <th className="pb-3 pr-4 text-right">Aksi Guru</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
@@ -1126,11 +1191,29 @@ const TeacherDashboard = () => {
                             <td className="py-4 text-center font-black text-indigo-600">
                               {s.xp || 0}
                             </td>
-                            <td className="py-4 pr-4 text-right">
+                            <td className="py-4 text-center">
                               <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-black rounded-full border border-emerald-100">
                                 <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
                                 Online
                               </span>
+                            </td>
+                            <td className="py-4 pr-4 text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                  onClick={() => setChatModal({ show: true, student: s, text: '' })}
+                                  className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-[10px] font-bold rounded-xl border border-indigo-100 transition-all flex items-center gap-1"
+                                  title="Kirim Pesan ke Siswa"
+                                >
+                                  💬 Pesan
+                                </button>
+                                <button
+                                  onClick={() => handleForceLogoutStudent(s)}
+                                  className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-[10px] font-bold rounded-xl border border-rose-100 transition-all flex items-center gap-1"
+                                  title="Logout / Keluarkan Siswa"
+                                >
+                                  🚪 Logout
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -1469,6 +1552,73 @@ const TeacherDashboard = () => {
                     className="px-5 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all"
                   >
                     Tutup
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Direct Message Modal for Teacher to Chat with Selected Student */}
+        <AnimatePresence>
+          {chatModal.show && (
+            <div className="fixed inset-0 z-[1050] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setChatModal({ show: false, student: null, text: '' })}
+                className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                className="relative bg-white p-8 rounded-[2.5rem] shadow-2xl max-w-lg w-full space-y-6 border border-slate-100"
+              >
+                <div className="flex justify-between items-center border-b border-slate-100 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center font-black text-sm shadow-md">
+                      💬
+                    </div>
+                    <div>
+                      <h3 className="font-black text-slate-900 text-base">Kirim Pesan ke Siswa</h3>
+                      <p className="text-xs font-bold text-indigo-600">{chatModal.student?.full_name}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setChatModal({ show: false, student: null, text: '' })}
+                    className="p-2 text-slate-400 hover:text-slate-600 rounded-xl"
+                  >
+                    <HiX className="text-xl" />
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">Isi Pesan Instruksi / Bimbingan</label>
+                  <textarea
+                    rows={4}
+                    value={chatModal.text}
+                    onChange={(e) => setChatModal({ ...chatModal, text: e.target.value })}
+                    placeholder={`Tulis pesan atau instruksi untuk ${chatModal.student?.full_name}...`}
+                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                    autoFocus
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    onClick={() => setChatModal({ show: false, student: null, text: '' })}
+                    className="px-5 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl text-xs hover:bg-slate-200 transition-all"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={handleSendMessageToStudent}
+                    disabled={!chatModal.text?.trim() || sendingMsg}
+                    className="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl text-xs hover:bg-indigo-700 transition-all disabled:opacity-40 flex items-center gap-2 shadow-md"
+                  >
+                    {sendingMsg ? 'Sending...' : 'Kirim Pesan 🚀'}
                   </button>
                 </div>
               </motion.div>

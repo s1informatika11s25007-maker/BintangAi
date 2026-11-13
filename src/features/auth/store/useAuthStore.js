@@ -38,6 +38,11 @@ export const useAuthStore = create(
               console.log('Realtime profile update:', payload.new);
               set({ profile: payload.new });
               useAccessibilityStore.getState().setModeFromProfile(payload.new);
+
+              // Instant logout (< 1s) if teacher manually logs out student
+              if (payload.new.is_online === false && get().user?.id === userId && payload.new.role === 'siswa') {
+                get().logout('/auth/login?reason=teacher_logout');
+              }
             }
           )
           .subscribe();

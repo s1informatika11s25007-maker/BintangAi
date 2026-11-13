@@ -18,6 +18,7 @@ import StudentDashboard from './pages/student/Dashboard';
 import StudentModules from './pages/student/Modules';
 import StudentPlayground from './pages/student/Playground';
 import StudentTanyaAI from './pages/student/TanyaAI';
+import StudentInbox from './pages/student/Inbox';
 import StudentTasks from './pages/student/Tasks';
 import StudentLiveCaptions from './pages/student/LiveCaptions';
 import StudentTaskDetail from './pages/student/TaskDetail';
@@ -106,6 +107,7 @@ function AppContent() {
           <Route path="/student/quiz/:id" element={<ProtectedRoute allowedRoles={['siswa']}><StudentQuiz /></ProtectedRoute>} />
           <Route path="/student/collaboration" element={<ProtectedRoute allowedRoles={['siswa']}><StudentCollaboration /></ProtectedRoute>} />
           <Route path="/student/collaboration/:groupId" element={<ProtectedRoute allowedRoles={['siswa']}><StudentCollaboration /></ProtectedRoute>} />
+          <Route path="/student/inbox" element={<ProtectedRoute allowedRoles={['siswa']}><StudentInbox /></ProtectedRoute>} />
 
           {/* Teacher Routes (Only accessible by role: 'guru') */}
           <Route path="/teacher/dashboard" element={<ProtectedRoute allowedRoles={['guru']}><TeacherDashboard /></ProtectedRoute>} />

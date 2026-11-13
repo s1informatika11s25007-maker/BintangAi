@@ -38,7 +38,12 @@ const Login = () => {
     if (window.location.search.includes('reason=inactivity')) {
       setMessage({
         type: 'error',
-        text: 'Sesi Anda telah berakhir karena tidak ada aktivitas selama 10 menit. Silakan masuk kembali.'
+        text: 'Sesi Anda telah berakhir karena tidak ada aktivitas selama 15 menit. Silakan masuk kembali.'
+      });
+    } else if (window.location.search.includes('reason=teacher_logout')) {
+      setMessage({
+        type: 'error',
+        text: 'Sesi Anda telah dikeluarkannya (logout) oleh Guru. Silakan masuk kembali.'
       });
     }
 
