@@ -41,7 +41,7 @@ const Login = () => {
         const { data, error } = await supabase
           .from('profiles')
           .select('id, full_name, email, role, disability_type, student_password_hash')
-          .or('is_demo_account.eq.true,role.in.(guru,ortu,siswa)')
+          .eq('is_demo_account', true)
           .not('email', 'is', null);
 
         if (error) throw error;
