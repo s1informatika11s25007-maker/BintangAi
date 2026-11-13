@@ -1064,7 +1064,7 @@ const TeacherDashboard = () => {
                       </div>
                       <h3 className="text-2xl font-black tracking-tight">Daftar Siswa Online</h3>
                       <p className="text-xs text-slate-300 mt-1 font-medium">
-                        Siswa yang telah login dan terhubung aktif. (Selesai otomatis / Auto-logout jika tidak ada aktivitas selama 10 menit).
+                        Siswa yang sedang terhubung aktif (Terdeteksi &lt;1 detik secara otomatis). Auto-logout jika tidak ada aktivitas selama 15 menit.
                       </p>
                     </div>
                   </div>
@@ -1076,7 +1076,7 @@ const TeacherDashboard = () => {
                   </button>
                 </div>
 
-                {/* Filter & Search Bar */}
+                {/* Filter & Search Bar - Automatic Real-time (No Manual Refresh Needed) */}
                 <div className="p-6 bg-slate-50 border-b border-slate-100 flex items-center gap-4 shrink-0">
                   <div className="flex-1 relative">
                     <HiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg" />
@@ -1088,13 +1088,9 @@ const TeacherDashboard = () => {
                       className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
-                  <button
-                    onClick={fetchStudents}
-                    className="px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-2xl flex items-center gap-2 transition-all shadow-md active:scale-95"
-                  >
-                    <HiRefresh className="text-base" />
-                    <span className="hidden sm:inline">Refresh Data</span>
-                  </button>
+                  <span className="px-3.5 py-2.5 bg-emerald-100/90 text-emerald-800 text-[10px] font-black uppercase rounded-2xl border border-emerald-200 flex items-center gap-1.5 whitespace-nowrap shadow-sm">
+                    <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" /> Live Real-Time (&lt;1 dtk)
+                  </span>
                 </div>
 
                 {/* Students List Container */}

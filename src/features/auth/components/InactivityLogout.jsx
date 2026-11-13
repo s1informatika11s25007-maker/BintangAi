@@ -10,13 +10,14 @@ const InactivityLogout = ({ children }) => {
   const cameraActiveRef = useRef(false);
   const lastActivityRef = useRef(Date.now());
 
-  // 10 minutes = 600.000 ms
-  const INACTIVITY_LIMIT = 10 * 60 * 1000;
+  // 15 minutes platform standard idle limit = 900.000 ms
+  const INACTIVITY_LIMIT = 15 * 60 * 1000;
 
   const updateOnlineStatus = useCallback(async (onlineStatus = true) => {
     if (!user?.id) return;
     try {
       const todayDate = new Date().toISOString().split('T')[0];
+      // Single-row lightweight update on public.profiles - 0% database bloat
       await supabase.from('profiles').update({
         is_online: onlineStatus,
         last_active_at: new Date().toISOString(),
@@ -29,7 +30,7 @@ const InactivityLogout = ({ children }) => {
 
   const handleAutoLogout = useCallback(async () => {
     try {
-      console.log('User inactive for 10 minutes. Logging out...');
+      console.log('User inactive for 15 minutes. Logging out automatically...');
       await updateOnlineStatus(false);
       await logout('/auth/login?reason=inactivity');
     } catch (error) {
@@ -54,13 +55,13 @@ const InactivityLogout = ({ children }) => {
   useEffect(() => {
     if (!user?.id) return;
 
-    // Set online on mount & heartbeat every 30s
+    // Set online on mount & heartbeat every 60s
     updateOnlineStatus(true);
     const heartbeatInterval = setInterval(() => {
       if (Date.now() - lastActivityRef.current < INACTIVITY_LIMIT) {
         updateOnlineStatus(true);
       }
-    }, 30000);
+    }, 60000);
 
     const activityEvents = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
 
