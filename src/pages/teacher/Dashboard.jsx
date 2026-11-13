@@ -472,20 +472,18 @@ const TeacherDashboard = () => {
                      <div
                         key={i}
                         onClick={() => s.id === 'siswa_aktif' && setShowOnlineModal(true)}
-                        className={`p-10 bg-white rounded-[3rem] border border-slate-50 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-500 ${s.clickable ? 'cursor-pointer hover:border-emerald-300' : ''}`}
+                        className={`p-8 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-300 ${s.clickable ? 'cursor-pointer hover:border-emerald-300' : ''}`}
                      >
-                        <div className="flex items-center justify-between mb-8">
-                          <div className={`w-14 h-14 ${s.bg} ${s.color} rounded-2xl flex items-center justify-center text-2xl shadow-sm`}>
+                        <div className="flex items-center justify-between mb-6">
+                          <div className={`w-12 h-12 ${s.bg} ${s.color} rounded-2xl flex items-center justify-center text-xl shadow-sm`}>
                             {s.icon}
                           </div>
                           {s.id === 'siswa_aktif' && (
-                            <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase rounded-full tracking-wider flex items-center gap-1.5 shadow-sm">
-                              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" /> Live Online
-                            </span>
+                            <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse" title="Online" />
                           )}
                         </div>
-                        <p className="text-5xl font-black text-slate-900 mb-2 tracking-tighter">{s.value}</p>
-                        <p className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400 flex items-center justify-between">
+                        <p className="text-4xl font-black text-slate-900 mb-1 tracking-tight">{s.value}</p>
+                        <p className="font-bold text-xs text-slate-400 flex items-center justify-between">
                           <span>{s.label}</span>
                           {s.clickable && <HiChevronRight className="text-emerald-500 text-base" />}
                         </p>
@@ -1043,115 +1041,109 @@ const TeacherDashboard = () => {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setShowOnlineModal(false)}
-                className="absolute inset-0 bg-slate-900/80 backdrop-blur-xl"
+                className="absolute inset-0 bg-slate-900/80 backdrop-blur-md"
               />
               <motion.div
-                initial={{ scale: 0.95, opacity: 0, y: 30 }}
+                initial={{ scale: 0.95, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.95, opacity: 0, y: 30 }}
-                className="relative bg-white w-full max-w-4xl max-h-[85vh] rounded-[3.5rem] shadow-2xl overflow-hidden flex flex-col border border-slate-100"
+                exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                className="relative bg-white w-full max-w-4xl max-h-[85vh] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col border border-slate-100"
               >
                 {/* Modal Header */}
-                <div className="p-8 md:p-10 bg-gradient-to-r from-emerald-900 to-slate-900 text-white flex justify-between items-center shrink-0">
+                <div className="p-6 md:p-8 bg-slate-900 text-white flex justify-between items-center shrink-0">
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center text-3xl font-black border border-emerald-500/30">
+                    <div className="w-12 h-12 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center text-2xl font-black border border-emerald-500/20">
                       <HiUsers />
                     </div>
                     <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-300">Real-Time Monitor</span>
-                      </div>
-                      <h3 className="text-2xl font-black tracking-tight">Daftar Siswa Online</h3>
-                      <p className="text-xs text-slate-300 mt-1 font-medium">
-                        Siswa yang sedang terhubung aktif (Terdeteksi &lt;1 detik secara otomatis). Auto-logout jika tidak ada aktivitas selama 15 menit.
+                      <h3 className="text-xl font-black tracking-tight">Daftar Siswa Online</h3>
+                      <p className="text-xs text-slate-400 font-bold mt-0.5">
+                        Siswa terhubung aktif di kelas Anda saat ini
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={() => setShowOnlineModal(false)}
-                    className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all"
+                    className="p-2.5 text-slate-400 hover:text-white rounded-xl hover:bg-white/10 transition-all"
                   >
-                    <HiX className="text-2xl" />
+                    <HiX className="text-xl" />
                   </button>
                 </div>
 
-                {/* Filter & Search Bar - Automatic Real-time (No Manual Refresh Needed) */}
-                <div className="p-6 bg-slate-50 border-b border-slate-100 flex items-center gap-4 shrink-0">
-                  <div className="flex-1 relative">
-                    <HiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg" />
+                {/* Filter & Search Bar */}
+                <div className="p-4 md:p-5 bg-slate-50 border-b border-slate-100 shrink-0">
+                  <div className="relative">
+                    <HiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-base" />
                     <input
                       type="text"
-                      placeholder="Cari nama siswa online..."
+                      placeholder="Cari nama siswa..."
                       value={onlineSearchQuery}
                       onChange={(e) => setOnlineSearchQuery(e.target.value)}
-                      className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
-                  <span className="px-3.5 py-2.5 bg-emerald-100/90 text-emerald-800 text-[10px] font-black uppercase rounded-2xl border border-emerald-200 flex items-center gap-1.5 whitespace-nowrap shadow-sm">
-                    <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" /> Live Real-Time (&lt;1 dtk)
-                  </span>
                 </div>
 
-                {/* Students List Container */}
-                <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-3 custom-scrollbar">
-                  {students
-                    .filter(s => s.is_currently_online && s.full_name?.toLowerCase().includes(onlineSearchQuery.toLowerCase()))
-                    .map((s) => (
-                      <div
-                        key={s.id}
-                        className="p-5 bg-slate-50/70 hover:bg-emerald-50/40 border border-slate-100 rounded-2xl flex items-center justify-between transition-all"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white font-black text-lg flex items-center justify-center shadow-md">
-                            {s.full_name?.charAt(0)}
-                          </div>
-                          <div>
-                            <h4 className="font-black text-slate-900 text-sm">{s.full_name}</h4>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="px-2.5 py-0.5 bg-white text-slate-500 text-[9px] font-black uppercase tracking-wider rounded-md border border-slate-200">
+                {/* Clean Neat Table */}
+                <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="border-b border-slate-100 text-[10px] font-black uppercase tracking-wider text-slate-400">
+                        <th className="pb-3 pl-4">Nama Siswa</th>
+                        <th className="pb-3 text-center">Disabilitas</th>
+                        <th className="pb-3 text-center">Kode Kelas</th>
+                        <th className="pb-3 text-center">XP</th>
+                        <th className="pb-3 pr-4 text-right">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {students
+                        .filter(s => s.is_currently_online && s.full_name?.toLowerCase().includes(onlineSearchQuery.toLowerCase()))
+                        .map((s) => (
+                          <tr key={s.id} className="hover:bg-slate-50/80 transition-colors text-xs font-bold text-slate-800">
+                            <td className="py-4 pl-4 flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white font-black flex items-center justify-center text-xs shadow-sm">
+                                {s.full_name?.charAt(0)}
+                              </div>
+                              <span>{s.full_name}</span>
+                            </td>
+                            <td className="py-4 text-center">
+                              <span className="px-2.5 py-1 bg-slate-100 text-slate-600 text-[10px] font-bold rounded-lg border border-slate-200">
                                 {s.disability_type || 'Umum'}
                               </span>
-                              <span className="text-[10px] text-slate-400 font-bold uppercase">
-                                Kode: {s.class_code || '-'}
+                            </td>
+                            <td className="py-4 text-center text-slate-500 text-xs">
+                              {s.class_code || '-'}
+                            </td>
+                            <td className="py-4 text-center font-black text-indigo-600">
+                              {s.xp || 0}
+                            </td>
+                            <td className="py-4 pr-4 text-right">
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-black rounded-full border border-emerald-100">
+                                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                                Online
                               </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-6">
-                          <div className="text-right hidden sm:block">
-                            <span className="text-sm font-black text-indigo-600 block">{s.xp || 0} XP</span>
-                            <span className="text-[9px] text-slate-400 font-bold uppercase">Tingkat {s.class_level || 'SD'}</span>
-                          </div>
-                          <span className="px-3.5 py-1.5 bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase rounded-full tracking-wider flex items-center gap-1.5 shadow-sm">
-                            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" /> Terhubung
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
 
                   {students.filter(s => s.is_currently_online).length === 0 && (
-                    <div className="py-16 text-center space-y-3">
-                      <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center text-3xl mx-auto">
-                        <HiUsers />
-                      </div>
-                      <h4 className="text-base font-black text-slate-700 uppercase tracking-tight">Tidak Ada Siswa Online</h4>
-                      <p className="text-xs text-slate-400 font-medium max-w-sm mx-auto">
-                        Belum ada siswa yang sedang terhubung aktif di kelas Anda saat ini. Siswa otomatis dikeluarkannya jika tidak ada aktivitas selama 10 menit.
-                      </p>
+                    <div className="py-16 text-center text-slate-400 font-bold text-xs">
+                      Tidak ada siswa yang sedang online saat ini.
                     </div>
                   )}
                 </div>
 
-                {/* Modal Footer */}
-                <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-between items-center text-xs font-bold text-slate-400 shrink-0">
-                  <span>Total Online: {students.filter(s => s.is_currently_online).length} Siswa</span>
+                {/* Clean Footer */}
+                <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center text-xs font-bold text-slate-500 shrink-0">
+                  <span>Total Siswa Online: {students.filter(s => s.is_currently_online).length}</span>
                   <button
                     onClick={() => setShowOnlineModal(false)}
-                    className="px-6 py-3 bg-slate-900 text-white rounded-xl text-xs uppercase font-black tracking-widest hover:bg-emerald-600 transition-all shadow-md"
+                    className="px-5 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all"
                   >
-                    Tutup Monitor
+                    Tutup
                   </button>
                 </div>
               </motion.div>
