@@ -96,6 +96,17 @@ export const useAuthStore = create(
           if (profileError) throw profileError;
 
           if (profileData) {
+            // Guarantee online status is set to true on profile fetch & session restore
+            try {
+              const todayDate = new Date().toISOString().split('T')[0];
+              await supabase.from('profiles').update({
+                is_online: true,
+                last_active_at: new Date().toISOString(),
+                last_active: todayDate
+              }).eq('id', userId);
+              profileData.is_online = true;
+            } catch (e) {}
+
             get().subscribeToProfile(userId);
             useAccessibilityStore.getState().setModeFromProfile(profileData);
             set({ profile: profileData, loading: false });

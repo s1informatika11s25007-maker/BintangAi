@@ -196,11 +196,12 @@ const TeacherDashboard = () => {
       if (error) throw error;
 
       const now = new Date();
-      const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000);
+      const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
 
       const processedStudents = data.map(s => {
         const completed = s.submissions?.length || 0;
-        const isCurrentlyOnline = s.is_online === true;
+        const lastActiveTime = s.last_active_at ? new Date(s.last_active_at) : null;
+        const isCurrentlyOnline = s.is_online === true || (s.is_online !== false && lastActiveTime && lastActiveTime >= fiveMinutesAgo);
         return {
           ...s,
           completed,
