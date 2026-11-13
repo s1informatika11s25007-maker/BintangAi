@@ -103,30 +103,26 @@ const InactivityLogout = ({ children }) => {
       }
     });
 
-    const handleUnload = () => {
+    const handleUnload = async () => {
       if (user?.id) {
         try {
-          const body = JSON.stringify({ is_online: false, last_active_at: new Date().toISOString() });
-          const endpoint = `${import.meta.env.VITE_SUPABASE_URL || 'https://qepfuqlnkofzfhfzahpr.supabase.co'}/rest/v1/profiles?id=eq.${user.id}`;
+          const { data: { session } } = await supabase.auth.getSession();
+          const token = session?.access_token;
+          if (token) {
+            const body = JSON.stringify({ is_online: false, last_active_at: new Date().toISOString() });
+            const endpoint = `${import.meta.env.VITE_SUPABASE_URL || 'https://qepfuqlnkofzfhfzahpr.supabase.co'}/rest/v1/profiles?id=eq.${user.id}`;
 
-          if (navigator.sendBeacon) {
-            const blob = new Blob([body], { type: 'application/json' });
-            const headers = {
-              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || ''
-            };
-            navigator.sendBeacon(endpoint, blob);
+            fetch(endpoint, {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+                'Authorization': `Bearer ${token}`
+              },
+              body,
+              keepalive: true
+            }).catch(() => {});
           }
-
-          fetch(endpoint, {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
-              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || ''}`
-            },
-            body,
-            keepalive: true
-          }).catch(() => {});
         } catch (e) {}
       }
     };

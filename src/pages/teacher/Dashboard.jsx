@@ -213,27 +213,13 @@ const TeacherDashboard = () => {
 
       const now = new Date();
       const onlineCutoff = new Date(now.getTime() - 5 * 60 * 1000);
-      const deadSessionCutoff = new Date(now.getTime() - 15 * 60 * 1000);
-
-      // Only purge dead entries in database where is_online = true but user hasn't sent heartbeat in > 15 mins
-      const deadStudentIds = (data || [])
-        .filter(s => s.is_online === true && (!s.last_active_at || new Date(s.last_active_at) < deadSessionCutoff))
-        .map(s => s.id);
-
-      if (deadStudentIds.length > 0) {
-        supabase
-          .from('profiles')
-          .update({ is_online: false })
-          .in('id', deadStudentIds)
-          .then(() => {});
-      }
 
       const processedStudents = (data || []).map(s => {
         const completed = s.submissions?.length || 0;
         const lastActiveTime = s.last_active_at ? new Date(s.last_active_at) : null;
 
         // Accurate & fresh online status: is_online MUST be true AND last_active_at MUST be within 5-minute cutoff
-        const isCurrentlyOnline = s.is_online === true && !deadStudentIds.includes(s.id) && !!(lastActiveTime && lastActiveTime >= onlineCutoff);
+        const isCurrentlyOnline = s.is_online === true && !!(lastActiveTime && lastActiveTime >= onlineCutoff);
 
         return {
           ...s,
