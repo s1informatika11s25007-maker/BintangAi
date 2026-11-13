@@ -1,5 +1,3 @@
-// hooks/useAI.js
-
 import { useState, useCallback } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
 
@@ -8,7 +6,6 @@ export const useAI = () => {
   const [error, setError] = useState(null);
 
   const askTutor = async (query, studentId, weakTopics = [], options = {}) => {
-    // Validasi input
     if (!query || query.trim() === '') {
       return {
         answer: "Apa yang ingin Adik tanyakan ke Kak Bintang? 😊",
@@ -21,7 +18,7 @@ export const useAI = () => {
     setError(null);
 
     try {
-      // Get student profile
+      // Get student profile with accurate class_level & disability_type
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('full_name, class_level, disability_type')
@@ -33,12 +30,22 @@ export const useAI = () => {
       }
 
       const nama = profileData?.full_name?.split(' ')[0] || "Teman";
-      const kelas = parseInt(profileData?.class_level || "4", 10);
+      const rawClass = profileData?.class_level || "4 SD";
+      const parsedClass = parseInt(rawClass.replace(/\D/g, '') || "4", 10);
+      const kelas = Math.max(1, Math.min(6, parsedClass));
 
-      // Ambil API Key dari environment, gunakan fallback 'christian' agar tetap terhubung
+      // 🎯 DYNAMIC GRADE TIER PROMPT (Kelas 1-2 vs 3-4 vs 5-6 SD)
+      let gradeTierPrompt = '';
+      if (kelas <= 2) {
+        gradeTierPrompt = "Tingkat Kelas 1-2 SD: Gunakan kalimat sangat pendek, kata-kata sederhana, gambar/contoh konkret, instruksi 1 langkah, dan analogi benda nyata.";
+      } else if (kelas === 3 || kelas === 4) {
+        gradeTierPrompt = "Tingkat Kelas 3-4 SD: Gunakan kalimat sederhana, petunjuk bertahap, contoh kejadian sehari-hari, dan latihan mencocokkan.";
+      } else {
+        gradeTierPrompt = "Tingkat Kelas 5-6 SD: Gunakan kalimat lebih terstruktur, penalaran bertahap, contoh soal cerita, diskusi sederhana, dan analisis masalah sehari-hari.";
+      }
+
       const apiKey = import.meta.env.VITE_CUSTOM_AI_TUTOR_KEY || "christian";
 
-      // Filter history agar valid dan tidak kosong
       const formattedHistory = (options.history || [])
         .filter(h => h.content && h.content.trim() !== '')
         .map(h => ({
@@ -52,6 +59,7 @@ export const useAI = () => {
           student_id: studentId,
           nama: nama,
           kelas: kelas,
+          grade_tier_prompt: gradeTierPrompt,
           disability_type: profileData?.disability_type || "umum",
           history: formattedHistory,
           weak_topics: Array.isArray(weakTopics) ? weakTopics : [],

@@ -3,10 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { useAI } from '@/features/ai-tutor/hooks/useAI';
 import { useAccessibility } from '@/features/accessibility/hooks/useAccessibility';
+import { useVoice } from '@/features/accessibility/hooks/useVoice';
 import StudentSidebar from '@/components/layout/StudentSidebar';
+import VoiceSettingsPanel from '@/features/accessibility/components/VoiceSettingsPanel';
 import {
   HiPaperAirplane, HiSparkles, HiTrash, HiPlus,
-  HiDotsVertical, HiUser, HiChatAlt2, HiChevronLeft
+  HiDotsVertical, HiUser, HiChatAlt2, HiChevronLeft,
+  HiVolumeUp, HiX
 } from 'react-icons/hi';
 import { useNavigate } from 'react-router-dom';
 
@@ -14,9 +17,11 @@ const TanyaAI = () => {
   const { profile } = useAuthStore();
   const { askTutor, loading } = useAI();
   const { isDeaf, isMute } = useAccessibility();
+  const { speak, isSpeaking, stopSpeaking } = useVoice();
   const navigate = useNavigate();
 
   const [input, setInput] = useState('');
+  const [showVoiceSettingsModal, setShowVoiceSettingsModal] = useState(false);
   const [messages, setMessages] = useState([
     {
       role: 'ai',
@@ -49,7 +54,7 @@ const TanyaAI = () => {
     }]);
 
     try {
-      const response = await askTutor(userMessage, profile.id, [], {
+      const response = await askTutor(userMessage, profile?.id, [], {
         history: messages.map(m => ({ role: m.role, content: m.content }))
       });
 
@@ -59,23 +64,31 @@ const TanyaAI = () => {
           content: response.answer,
           timestamp: new Date()
         }]);
+
+        // Speak response out loud using user's voice speed, volume, and voice selection
+        speak(response.answer);
       } else {
+        const errorMsg = "Maaf, ada kendala koneksi. Coba lagi ya!";
         setMessages(prev => [...prev, {
           role: 'ai',
-          content: "Maaf, ada kendala koneksi. Coba lagi ya!",
+          content: errorMsg,
           timestamp: new Date()
         }]);
+        speak(errorMsg);
       }
     } catch (err) {
+      const failMsg = "Waduh, Kak Bintang lagi istirahat. Nanti tanya lagi ya!";
       setMessages(prev => [...prev, {
         role: 'ai',
-        content: "Waduh, Kak Bintang lagi istirahat. Nanti tanya lagi ya!",
+        content: failMsg,
         timestamp: new Date()
       }]);
+      speak(failMsg);
     }
   };
 
   const clearChat = () => {
+    stopSpeaking();
     setMessages([
       {
         role: 'ai',
@@ -116,6 +129,16 @@ const TanyaAI = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Quick Voice Settings Button */}
+            <button
+              onClick={() => setShowVoiceSettingsModal(true)}
+              className="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all shadow-sm border border-indigo-100"
+              title="Pengaturan Suara"
+            >
+              <HiVolumeUp className="text-base text-indigo-600" />
+              <span className="hidden sm:inline">Pengaturan Suara</span>
+            </button>
+
             <button
               onClick={clearChat}
               className="p-3 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
@@ -166,8 +189,19 @@ const TanyaAI = () => {
                   </p>
                   <div className={`
                     flex items-center gap-2 mt-3
-                    ${msg.role === 'user' ? 'justify-end' : 'justify-start'}
+                    ${msg.role === 'user' ? 'justify-end' : 'justify-between'}
                   `}>
+                    {msg.role === 'ai' && (
+                      <button
+                        onClick={() => speak(msg.content, 1.0, true)}
+                        className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded-lg flex items-center gap-1 transition-all border border-indigo-100"
+                        title="Dengarkan / Ulangi Suara"
+                      >
+                        <HiVolumeUp className="text-xs text-indigo-600" />
+                        <span>Dengarkan / Ulangi</span>
+                      </button>
+                    )}
+
                     <span className={`
                       text-[9px] md:text-[10px] font-black uppercase tracking-[0.15em] opacity-40
                       ${msg.role === 'user' ? 'text-indigo-100' : 'text-slate-400'}
@@ -279,6 +313,42 @@ const TanyaAI = () => {
             BintangAi dapat membuat kesalahan.
           </p>
         </motion.div>
+
+        {/* VOICE SETTINGS MODAL */}
+        <AnimatePresence>
+          {showVoiceSettingsModal && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100 max-h-[90vh] flex flex-col"
+              >
+                <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-xl shadow-md">
+                      <HiVolumeUp />
+                    </div>
+                    <div>
+                      <h3 className="font-black text-slate-800 text-base">Pengaturan Suara Kak Bintang</h3>
+                      <p className="text-xs font-medium text-slate-500">Sesuaikan kecepatan, volume & pengulangan suara</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowVoiceSettingsModal(false)}
+                    className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-200/50 transition-all"
+                  >
+                    <HiX className="text-xl" />
+                  </button>
+                </div>
+
+                <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+                  <VoiceSettingsPanel compact={false} />
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
 
       </main>
 

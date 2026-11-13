@@ -72,7 +72,7 @@ export const saveUserPreferences = async (userId, preferences) => {
 };
 
 /**
- * Chat dengan Kak BintangAi - SMART with Dialect Level
+ * Chat dengan Kak BintangAi - SMART with Grade Level Personalization (Kelas 1 - 6 SD)
  */
 export const askTutorApi = async (
   query,
@@ -120,28 +120,40 @@ export const askTutorApi = async (
   let languageToUse = manualPrefs?.language || userSelectedLanguage || 'auto';
   const isFirstMessage = chatHistory.length === 0;
 
-  if (isFirstMessage && !languageConfirmed && languageToUse === 'auto') {
-    // Biarkan backend auto-detect
-  }
-
   const finalDialectLevel = manualPrefs?.dialect_level || userDialectLevel;
 
   const apiKey = import.meta.env.VITE_CUSTOM_AI_TUTOR_KEY;
 
+  // 🎯 FETCH AKURAT MODEL DENGAN TINGKAT KELAS SISWA SEBENARNYA DARI DATABASE
   const { data: profileData } = await supabase
     .from('profiles')
-    .select('full_name')
+    .select('full_name, class_level, disability_type')
     .eq('id', studentId)
     .single();
 
   const nama = profileData?.full_name?.split(' ')[0] || "Teman";
+  const rawClass = profileData?.class_level || "4 SD";
+  const parsedClass = parseInt(rawClass.replace(/\D/g, '') || "4", 10);
+  const kelas = Math.max(1, Math.min(6, parsedClass));
+
+  // 🎯 RANCANGAN LENGKAP PERSONALISASI BERDASARKAN TINGKAT KELAS SD
+  let gradeTierPrompt = '';
+  if (kelas <= 2) {
+    gradeTierPrompt = "Tingkat Kelas 1-2 SD: Gunakan kalimat sangat pendek, kata-kata sederhana, gambar/contoh konkret, instruksi 1 langkah, dan analogi benda nyata.";
+  } else if (kelas === 3 || kelas === 4) {
+    gradeTierPrompt = "Tingkat Kelas 3-4 SD: Gunakan kalimat sederhana, petunjuk bertahap, contoh kejadian sehari-hari, dan latihan mencocokkan.";
+  } else {
+    gradeTierPrompt = "Tingkat Kelas 5-6 SD: Gunakan kalimat lebih terstruktur, penalaran bertahap, contoh soal cerita, diskusi sederhana, dan analisis masalah sehari-hari.";
+  }
 
   const { data, error } = await supabase.functions.invoke('ai-tutor', {
     body: {
       message: query,
       student_id: studentId,
       nama: nama,
-      kelas: 4,
+      kelas: kelas,
+      disability_type: profileData?.disability_type || "umum",
+      grade_tier_prompt: gradeTierPrompt,
       language: languageToUse,
       dialect_level: finalDialectLevel,
       is_first_message: isFirstMessage && !languageConfirmed,
@@ -175,5 +187,4 @@ export const askTutorApi = async (
   };
 };
 
-// Alias for compatibility if needed
 export const askTutorSmart = askTutorApi;

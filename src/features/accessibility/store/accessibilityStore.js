@@ -7,8 +7,14 @@ export const useAccessibilityStore = create(
       mode: null, // 'tunanetra', 'tunarungu', 'tunawicara'
       isVoiceActive: false,
       isSubtitleActive: false,
+      isLiveCaptionActive: false,
       isGestureActive: false,
       profile: null,
+
+      // Caption customization settings for Tunarungu (Deaf) students
+      captionFontSize: 'medium', // 'small', 'medium', 'large', 'xlarge'
+      captionBgColor: 'dark',     // 'dark', 'black', 'indigo', 'amber'
+      captionPosition: 'top',    // 'top', 'bottom'
 
       setModeFromProfile: (profile) => {
         if (!profile) {
@@ -20,12 +26,21 @@ export const useAccessibilityStore = create(
         set({
           mode,
           isVoiceActive: mode === 'tunanetra',
-          isSubtitleActive: mode === 'tunawicara', // Tunawicara uses subtitles for gesture feedback
+          isSubtitleActive: mode === 'tunarungu' || mode === 'tunawicara', // 🎯 FIX: Active for tunarungu & tunawicara
+          isLiveCaptionActive: mode === 'tunarungu',                        // 🎯 Active for tunarungu
           isGestureActive: mode === 'tunawicara',
           profile
         });
 
         get().reapplyMode();
+      },
+
+      setCaptionSettings: (settings) => {
+        set((state) => ({
+          captionFontSize: settings.fontSize || state.captionFontSize,
+          captionBgColor: settings.bgColor || state.captionBgColor,
+          captionPosition: settings.position || state.captionPosition
+        }));
       },
 
       // Reapply mode on page load and route changes
@@ -36,7 +51,7 @@ export const useAccessibilityStore = create(
         if (mode && !forceOff) {
           root.setAttribute('data-disability', mode);
 
-          // Clear existing classes
+          // Clear existing classes and add current mode class
           root.classList.remove('blind-mode', 'deaf-mode', 'mute-mode');
           root.classList.add(`${mode}-mode`);
 
@@ -48,17 +63,19 @@ export const useAccessibilityStore = create(
             root.style.fontSize = '100%';
           }
 
-          // Save simple key for main.jsx early access
           localStorage.setItem('bintangai-mode-simple', mode);
         } else {
-          // Clear visuals if no mode or forced off
+          // Clear all accessibility visual effects & audio when forceOff is true (Landing/Login/Register)
           root.setAttribute('data-disability', 'none');
           root.classList.remove('blind-mode', 'deaf-mode', 'mute-mode');
           root.style.fontSize = '100%';
-          if (forceOff) {
-             // Keep mode in state but disable visuals for landing/auth
-          } else {
-             localStorage.removeItem('bintangai-mode-simple');
+
+          if (typeof window !== 'undefined' && window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+          }
+
+          if (!forceOff) {
+            localStorage.removeItem('bintangai-mode-simple');
           }
         }
       },
@@ -70,18 +87,31 @@ export const useAccessibilityStore = create(
         root.style.fontSize = '100%';
         localStorage.removeItem('bintangai-mode-simple');
 
+        if (typeof window !== 'undefined' && window.speechSynthesis) {
+          window.speechSynthesis.cancel();
+        }
+
         set({
           mode: null,
           isVoiceActive: false,
           isSubtitleActive: false,
+          isLiveCaptionActive: false,
           isGestureActive: false,
-          profile: null
+          profile: null,
+          captionFontSize: 'medium',
+          captionBgColor: 'dark',
+          captionPosition: 'top'
         });
       }
     }),
     {
       name: 'bintangai-accessibility',
-      partialize: (state) => ({ mode: state.mode })
+      partialize: (state) => ({
+        mode: state.mode,
+        captionFontSize: state.captionFontSize,
+        captionBgColor: state.captionBgColor,
+        captionPosition: state.captionPosition
+      })
     }
   )
 );

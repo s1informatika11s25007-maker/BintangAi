@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAccessibilityStore } from '../store/accessibilityStore';
+import { useVoiceStore } from '../store/voiceStore';
 import { useSubtitle } from '../components/Subtitles';
 
 let sharedRecognition = null;
@@ -20,20 +21,31 @@ export function useGlobalVoiceNav() {
   const [aiTranscript, setAiTranscript] = useState('');
   const aiRecognitionRef = useRef(null);
 
-  const speak = useCallback((text, rate = 1.0) => {
+  const speak = useCallback((text, rateMultiplier = 1.0) => {
     if (!text || !isBlind) return;
     try {
       synthRef.current.cancel();
+      const { voiceSpeed, voiceVolume, selectedVoiceURI, setLastSpokenText } = useVoiceStore.getState();
       const utt = new SpeechSynthesisUtterance(text);
       const voices = synthRef.current.getVoices();
-      const idVoice = voices.find(v => v.lang.includes('id-ID')) || voices[0];
-      if (idVoice) utt.voice = idVoice;
+
+      let chosenVoice = null;
+      if (selectedVoiceURI) {
+        chosenVoice = voices.find(v => v.voiceURI === selectedVoiceURI || v.name === selectedVoiceURI);
+      }
+      if (!chosenVoice) {
+        chosenVoice = voices.find(v => v.lang.startsWith('id') || v.lang.includes('ID') || (v.name && v.name.toLowerCase().includes('indonesia')));
+      }
+      if (chosenVoice) utt.voice = chosenVoice;
+
       utt.lang = 'id-ID';
-      utt.rate = rate;
+      utt.rate = Math.max(0.5, Math.min(2.0, (voiceSpeed || 1.0) * rateMultiplier));
+      utt.volume = Math.max(0.0, Math.min(1.0, voiceVolume ?? 1.0));
       utt.pitch = 1.0;
-      utt.volume = 1.0;
+
       synthRef.current.speak(utt);
       lastSpokenRef.current = text;
+      setLastSpokenText(text);
     } catch (e) {
       console.error('speak error:', e);
     }
@@ -117,12 +129,65 @@ export function useGlobalVoiceNav() {
     setAiListening(false);
   }, []);
 
+  const readPageContent = useCallback(() => {
+    const mainText = document.querySelector('main')?.innerText || '';
+    if (!mainText.trim()) {
+      speak('Halaman ini belum memiliki konten teks.');
+      return;
+    }
+    speak(`Membacakan konten halaman: ${mainText.slice(0, 1000)}`);
+  }, [speak]);
+
+  // Voice Command Processing for Siswa Tunanetra
   const processCommand = useCallback((transcript) => {
     const t = transcript.toLowerCase().trim();
-    if (t.includes('kembali')) { navigate(-1); speak('Kembali'); return; }
-    if (t.includes('beranda')) { navigate('/student/dashboard'); speak('Beranda'); return; }
-    if (t.includes('baca halaman')) { readPageContent(); return; }
-  }, [navigate, speak]);
+    if (!t) return;
+
+    // Navigation Commands
+    if (t.includes('kembali')) { navigate(-1); speak('Kembali ke halaman sebelumnya'); return; }
+    if (t.includes('beranda') || t.includes('dashboard')) { navigate('/student/dashboard'); speak('Membuka Beranda Utama'); return; }
+    if (t.includes('tugas') || t.includes('kuis')) { navigate('/student/tasks'); speak('Membuka Halaman Quiz dan Tugas'); return; }
+    if (t.includes('materi') || t.includes('modul')) { navigate('/student/modules'); speak('Membuka Halaman Materi Belajar'); return; }
+    if (t.includes('tanya') || t.includes('playground') || t.includes('obrol')) { navigate('/student/playground'); speak('Membuka Halaman Tanya Kak Bintang'); return; }
+    if (t.includes('profil') || t.includes('pengaturan')) { navigate('/profile'); speak('Membuka Pengaturan Suara dan Profil'); return; }
+
+    // Page Reader & Sound Controls for Tunanetra
+    if (t.includes('baca halaman') || t.includes('baca isi') || t.includes('baca teks')) { readPageContent(); return; }
+
+    if (t.includes('ulangi') || t.includes('baca lagi')) {
+      const lastText = useVoiceStore.getState().lastSpokenText;
+      if (lastText) {
+        speak(lastText, 1.0, true);
+      } else {
+        speak('Belum ada panduan suara yang dapat diulangi.');
+      }
+      return;
+    }
+
+    if (t.includes('suara lambat') || t.includes('kecepatan lambat')) {
+      useVoiceStore.getState().setVoiceSpeed(0.8);
+      speak('Kecepatan suara diubah ke 0.8 kali, ideal untuk siswa Sekolah Dasar.', 1.0, true);
+      return;
+    }
+
+    if (t.includes('suara normal') || t.includes('kecepatan normal')) {
+      useVoiceStore.getState().setVoiceSpeed(1.0);
+      speak('Kecepatan suara diubah ke normal 1.0 kali.', 1.0, true);
+      return;
+    }
+
+    if (t.includes('volume keras') || t.includes('volume 100')) {
+      useVoiceStore.getState().setVoiceVolume(1.0);
+      speak('Volume suara diatur penuh 100 persen.', 1.0, true);
+      return;
+    }
+
+    if (t.includes('volume pelan') || t.includes('volume 50')) {
+      useVoiceStore.getState().setVoiceVolume(0.5);
+      speak('Volume suara diatur ke 50 persen.', 1.0, true);
+      return;
+    }
+  }, [navigate, speak, readPageContent]);
 
   const startGlobalListening = useCallback(() => {
     if (!isBlind || !isVoiceActive || activeRef.current || aiListening) return;
@@ -168,11 +233,6 @@ export function useGlobalVoiceNav() {
       try { sharedRecognition.stop(); isRecognitionActive = false; } catch (e) {}
     }
   }, []);
-
-  const readPageContent = useCallback(() => {
-    const mainText = document.querySelector('main')?.innerText || '';
-    speak(mainText.slice(0, 1000));
-  }, [speak]);
 
   useEffect(() => {
     if (isBlind && isVoiceActive) {

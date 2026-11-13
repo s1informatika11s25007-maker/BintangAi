@@ -8,11 +8,12 @@ import { supabase } from '@/lib/supabaseClient';
 import { useSubtitle } from '@/features/accessibility/components/Subtitles';
 import { useAccessibility } from '@/features/accessibility/hooks/useAccessibility';
 import StudentSidebar from '@/components/layout/StudentSidebar';
+import KamusIsyaratModal from '@/features/accessibility/components/KamusIsyaratModal';
 import { useAI } from '@/features/ai-tutor';
 import {
   HiFire, HiLightningBolt, HiStar, HiChevronRight,
   HiAcademicCap, HiCube, HiChatAlt2, HiVariable,
-  HiEye, HiSpeakerphone, HiHeart, HiCollection, HiUsers
+  HiEye, HiSpeakerphone, HiHeart, HiCollection, HiUsers, HiBookOpen
 } from 'react-icons/hi';
 
 const StudentDashboard = () => {
@@ -30,6 +31,7 @@ const StudentDashboard = () => {
   const [greeting, setGreeting] = useState('');
   const [avatarState, setAvatarState] = useState('idle');
   const [showConfetti, setShowConfetti] = useState(false);
+  const [isKamusOpen, setIsKamusOpen] = useState(false);
   const hasAnnouncedRef = useRef(false);
 
   useEffect(() => {
@@ -130,10 +132,6 @@ const StudentDashboard = () => {
     }
   };
 
-  // ---------------------------------------------------------
-  // MOBILE (ANDROID) & ACCESSIBILITY Logic
-  // ---------------------------------------------------------
-
   return (
     <div className={`min-h-screen flex font-sans relative ${isBlind ? 'bg-[#0F172A] text-white' : 'bg-[#F8FAFC] text-slate-800'}`}>
       <ConfettiEffect active={showConfetti} />
@@ -141,7 +139,7 @@ const StudentDashboard = () => {
 
       <main className="flex-1 w-full overflow-y-auto no-scrollbar relative z-10 pb-24 lg:pb-8">
 
-        {/* TOP STATUS BAR - Ultra Responsive */}
+        {/* TOP STATUS BAR */}
         <header className={`sticky top-0 z-[50] px-6 py-5 md:px-12 md:py-8 backdrop-blur-xl border-b ${isBlind ? 'bg-indigo-950/80 border-white/10' : 'bg-white/80 border-slate-100'} flex items-center justify-between`}>
           <div className="flex items-center gap-4 md:gap-6">
             <motion.div
@@ -164,19 +162,31 @@ const StudentDashboard = () => {
             </div>
           </div>
 
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            className={`flex items-center gap-3 ${isBlind ? 'bg-white/10 border-white/20' : 'bg-white border-slate-50 shadow-xl shadow-indigo-100/20'} px-5 py-3 rounded-2xl border`}
-          >
-            <HiStar className="text-amber-400 text-xl md:text-2xl animate-pulse" />
-            <div className="text-right">
-              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Bintang</p>
-              <p className={`text-sm md:text-lg font-black leading-none mt-1`}>{profile?.xp || 0}</p>
-            </div>
-          </motion.div>
+          <div className="flex items-center gap-3">
+            {/* Kamus Bahasa Isyarat Button for Tunarungu / All Students */}
+            <button
+              onClick={() => setIsKamusOpen(true)}
+              className="px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-2xl border border-indigo-100 flex items-center gap-2 transition-all shadow-sm"
+              title="Kamus Istilah & Bahasa Isyarat SD"
+            >
+              <span className="text-base">🤟</span>
+              <span className="hidden sm:inline">Kamus Isyarat SD</span>
+            </button>
+
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              className={`flex items-center gap-3 ${isBlind ? 'bg-white/10 border-white/20' : 'bg-white border-slate-50 shadow-xl shadow-indigo-100/20'} px-5 py-3 rounded-2xl border`}
+            >
+              <HiStar className="text-amber-400 text-xl md:text-2xl animate-pulse" />
+              <div className="text-right">
+                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Bintang</p>
+                <p className={`text-sm md:text-lg font-black leading-none mt-1`}>{profile?.xp || 0}</p>
+              </div>
+            </motion.div>
+          </div>
         </header>
 
-        {/* CONTENT GRID - Mobile First Stacking */}
+        {/* CONTENT GRID */}
         <div className="p-6 md:p-12 lg:p-16 max-w-7xl mx-auto">
           <motion.div
             variants={containerVariants}
@@ -225,7 +235,7 @@ const StudentDashboard = () => {
               </div>
             </motion.section>
 
-            {/* QUICK ACTIONS - Specialized for Roles */}
+            {/* QUICK ACTIONS */}
             <motion.section variants={itemVariants} className="lg:col-span-4 grid grid-cols-2 gap-4">
                <button
                 onClick={() => navigate('/student/tasks')}
@@ -355,6 +365,9 @@ const StudentDashboard = () => {
 
           </motion.div>
         </div>
+
+        {/* KAMUS ISTILAH ISYARAT MODAL */}
+        <KamusIsyaratModal isOpen={isKamusOpen} onClose={() => setIsKamusOpen(false)} />
       </main>
 
       <style>{`

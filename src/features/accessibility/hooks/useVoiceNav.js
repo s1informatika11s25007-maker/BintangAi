@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAccessibilityStore } from '@/features/accessibility/store/accessibilityStore';
+import { useVoiceStore } from '@/features/accessibility/store/voiceStore';
 import { useSubtitle } from '@/features/accessibility/components/Subtitles';
 
 let sharedRecognition = null;
@@ -19,18 +20,29 @@ export function useVoiceNav() {
   const [aiTranscript, setAiTranscript] = useState('');
   const aiRecognitionRef = useRef(null);
 
-  const speak = useCallback((text, rate = 1.0) => {
+  const speak = useCallback((text, rateMultiplier = 1.0) => {
     if (!text || !isBlind) return;
     try {
       synthRef.current.cancel();
+      const { voiceSpeed, voiceVolume, selectedVoiceURI, setLastSpokenText } = useVoiceStore.getState();
       const utt = new SpeechSynthesisUtterance(text);
       const voices = synthRef.current.getVoices();
-      const idVoice = voices.find(v => v.lang.includes('id-ID')) || voices[0];
-      if (idVoice) utt.voice = idVoice;
+
+      let chosenVoice = null;
+      if (selectedVoiceURI) {
+        chosenVoice = voices.find(v => v.voiceURI === selectedVoiceURI || v.name === selectedVoiceURI);
+      }
+      if (!chosenVoice) {
+        chosenVoice = voices.find(v => v.lang.startsWith('id') || v.lang.includes('ID') || (v.name && v.name.toLowerCase().includes('indonesia')));
+      }
+      if (chosenVoice) utt.voice = chosenVoice;
+
       utt.lang = 'id-ID';
-      utt.rate = rate;
+      utt.rate = Math.max(0.5, Math.min(2.0, (voiceSpeed || 1.0) * rateMultiplier));
+      utt.volume = Math.max(0.0, Math.min(1.0, voiceVolume ?? 1.0));
       synthRef.current.speak(utt);
       lastSpokenRef.current = text;
+      setLastSpokenText(text);
     } catch (e) {
       console.error('speak error:', e);
     }

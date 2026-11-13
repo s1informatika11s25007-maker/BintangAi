@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAccessibility } from '../hooks/useAccessibility';
 
@@ -26,21 +27,27 @@ const TYPE_STYLES = {
 
 const Subtitles = () => {
   const { isSubtitleActive } = useAccessibility();
+  const location = useLocation();
   const [entries, setEntries] = useState([]);
   const idRef = useRef(0);
   const flashRef = useRef(null);
 
+  const isPublicPage = useMemo(() => {
+    if (!location?.pathname) return false;
+    if (location.pathname === '/') return true;
+    const publicPaths = ['/auth', '/login', '/register'];
+    return publicPaths.some(path => location.pathname.startsWith(path));
+  }, [location?.pathname]);
+
   useEffect(() => {
-    if (!isSubtitleActive) return;
+    if (!isSubtitleActive || isPublicPage) return;
 
     const handler = (text, type) => {
       const id = ++idRef.current;
       if (!text) return;
 
-      // Keep only 1 message at a time to reduce clutter
       setEntries([{ id, text, type }]);
 
-      // Visual flash for alerts
       if (type === 'warning' || type === 'error') {
         if (flashRef.current) {
           flashRef.current.style.opacity = '0.3';
@@ -50,7 +57,6 @@ const Subtitles = () => {
         }
       }
 
-      // Dynamic duration based on text length
       const duration = Math.max(3000, text.length * 80);
       setTimeout(() => {
         setEntries(prev => prev.filter(e => e.id !== id));
@@ -61,19 +67,17 @@ const Subtitles = () => {
     return () => {
       subtitleListeners = subtitleListeners.filter(fn => fn !== handler);
     };
-  }, [isSubtitleActive]);
+  }, [isSubtitleActive, isPublicPage]);
 
-  if (!isSubtitleActive) return null;
+  if (!isSubtitleActive || isPublicPage) return null;
 
   return (
     <>
-      {/* Alert Flash Layer */}
       <div
         ref={flashRef}
         className="fixed inset-0 pointer-events-none z-[999] transition-opacity duration-300 opacity-0 bg-rose-600"
       />
 
-      {/* REFINED SUBTITLE HUD - TOP POSITIONED */}
       <div className="fixed top-6 left-0 right-0 z-[1000] flex flex-col items-center p-4 pointer-events-none">
         <AnimatePresence mode="wait">
           {entries.map(e => (

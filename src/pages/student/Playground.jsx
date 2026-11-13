@@ -7,20 +7,22 @@ import StudentSidebar from '@/components/layout/StudentSidebar';
 import { useAccessibility } from '@/features/accessibility/hooks/useAccessibility';
 import { useVoice } from '@/features/accessibility/hooks/useVoice';
 import { useAudioRecorder } from '@/features/accessibility/hooks/useAudioRecorder';
-import { HiMicrophone, HiX } from 'react-icons/hi';
+import VoiceSettingsPanel from '@/features/accessibility/components/VoiceSettingsPanel';
+import { HiMicrophone, HiX, HiVolumeUp, HiRefresh } from 'react-icons/hi';
 import { useNavigate } from 'react-router-dom';
 
 const Playground = () => {
   const { profile } = useAuthStore();
   const { smartVoiceAssistant } = useAI();
   const { isBlind } = useAccessibility();
-  const { speak, stopSpeaking } = useVoice();
+  const { speak, stopSpeaking, replayLastSpoken, lastSpokenText } = useVoice();
   const { isRecording, startRecording, stopRecording, audioBlob } = useAudioRecorder();
   const navigate = useNavigate();
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [isPreparing, setIsPreparing] = useState(false);
   const [initialized, setInitialized] = useState(false);
+  const [showVoiceModal, setShowVoiceModal] = useState(false);
   const timerRef = useRef(null);
 
   const studentName = profile?.full_name?.split(' ')[0] || "Teman";
@@ -64,7 +66,6 @@ const Playground = () => {
   }, [audioBlob, handleVoiceProcess]);
 
   const toggleMic = useCallback(() => {
-    // Lock interaction during processing or preparation to avoid double triggers
     if (isProcessing || isPreparing) return;
 
     if (isRecording) {
@@ -95,8 +96,37 @@ const Playground = () => {
   }, [toggleMic]);
 
   return (
-    <div className="h-[100dvh] w-full bg-[#020617] flex font-sans overflow-hidden touch-none select-none">
+    <div className="h-[100dvh] w-full bg-[#020617] flex font-sans overflow-hidden touch-none select-none relative">
       <StudentSidebar />
+
+      {/* Quick Sound Control Buttons overlay on Playground */}
+      <div className="absolute top-6 right-6 z-50 flex items-center gap-3">
+        {lastSpokenText && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              replayLastSpoken();
+            }}
+            className="p-3 bg-white/10 hover:bg-white/20 backdrop-blur border border-white/20 text-white rounded-2xl flex items-center gap-2 text-xs font-bold transition-all"
+            title="Ulangi Suara Terakhir"
+          >
+            <HiRefresh className="text-base" />
+            <span className="hidden sm:inline">Ulangi Suara</span>
+          </button>
+        )}
+
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowVoiceModal(true);
+          }}
+          className="p-3 bg-indigo-600/80 hover:bg-indigo-600 backdrop-blur border border-indigo-400/30 text-white rounded-2xl flex items-center gap-2 text-xs font-bold transition-all shadow-lg"
+          title="Pengaturan Suara"
+        >
+          <HiVolumeUp className="text-lg" />
+          <span className="hidden sm:inline">Pengaturan Suara</span>
+        </button>
+      </div>
 
       <main
         className="flex-1 flex flex-col items-center justify-center relative cursor-pointer"
@@ -206,6 +236,49 @@ const Playground = () => {
         </motion.div>
 
       </main>
+
+      {/* VOICE SETTINGS MODAL */}
+      <AnimatePresence>
+        {showVoiceModal && (
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowVoiceModal(false);
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white text-slate-800 w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100 max-h-[90vh] flex flex-col"
+            >
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-xl shadow-md">
+                    <HiVolumeUp />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-slate-800 text-base">Pengaturan Suara Kak Bintang</h3>
+                    <p className="text-xs font-medium text-slate-500">Sesuaikan kecepatan, volume & pengulangan suara</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowVoiceModal(false)}
+                  className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-200/50 transition-all"
+                >
+                  <HiX className="text-xl" />
+                </button>
+              </div>
+
+              <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+                <VoiceSettingsPanel compact={false} />
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <style>{`
         @media (max-width: 768px) {

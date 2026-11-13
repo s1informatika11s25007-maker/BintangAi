@@ -16,13 +16,11 @@ const InactivityLogout = ({ children }) => {
   const handleAutoLogout = useCallback(async () => {
     try {
       console.log('User inactive for 10 minutes. Logging out...');
-      await supabase.auth.signOut();
-      logout();
-      navigate('/auth');
+      await logout('/auth/login');
     } catch (error) {
       console.error('Auto-logout failed:', error);
     }
-  }, [logout, navigate]);
+  }, [logout]);
 
   const resetTimer = useCallback((force = false) => {
     // Throttling: Avoid unnecessary processing on every mouse move

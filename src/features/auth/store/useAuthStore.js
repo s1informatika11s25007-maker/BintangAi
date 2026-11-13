@@ -1,7 +1,7 @@
-import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
-import { supabase } from '@/lib/supabaseClient'
-import { useAccessibilityStore } from '@/features/accessibility/store/accessibilityStore'
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { supabase } from '@/lib/supabaseClient';
+import { useAccessibilityStore } from '@/features/accessibility/store/accessibilityStore';
 
 export const useAuthStore = create(
   persist(
@@ -9,6 +9,7 @@ export const useAuthStore = create(
       user: null,
       profile: null,
       loading: true,
+      isLoggingOut: false,
       subscription: null,
 
       setUser: (user) => set({ user }),
@@ -18,7 +19,6 @@ export const useAuthStore = create(
       subscribeToProfile: (userId) => {
         if (!userId) return;
 
-        // Hapus subscription lama jika ada
         const existingSub = get().subscription;
         if (existingSub) {
           supabase.removeChannel(existingSub);
@@ -37,7 +37,6 @@ export const useAuthStore = create(
             (payload) => {
               console.log('Realtime profile update:', payload.new);
               set({ profile: payload.new });
-              // Update accessibility mode if profile changed
               useAccessibilityStore.getState().setModeFromProfile(payload.new);
             }
           )
@@ -54,9 +53,33 @@ export const useAuthStore = create(
         }
       },
 
-      fetchProfile: async (userId) => {
-        if (!userId) return null;
+      // Verification of session and role accuracy on initialization
+      initializeAuth: async () => {
         set({ loading: true });
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            set({ user: session.user });
+            await get().fetchProfile(session.user.id);
+          } else {
+            const persistedUser = get().user;
+            if (persistedUser?.id) {
+              await get().fetchProfile(persistedUser.id);
+            } else {
+              set({ user: null, profile: null, loading: false });
+            }
+          }
+        } catch (error) {
+          console.error("Auth init error:", error);
+          set({ loading: false });
+        }
+      },
+
+      fetchProfile: async (userId) => {
+        if (!userId) {
+          set({ loading: false });
+          return null;
+        }
 
         try {
           const { data: profileData, error: profileError } = await supabase
@@ -68,12 +91,8 @@ export const useAuthStore = create(
           if (profileError) throw profileError;
 
           if (profileData) {
-            // Jalankan subscription realtime setelah profile ditemukan
             get().subscribeToProfile(userId);
-
-            // Sync accessibility store
             useAccessibilityStore.getState().setModeFromProfile(profileData);
-
             set({ profile: profileData, loading: false });
             return profileData;
           }
@@ -86,31 +105,70 @@ export const useAuthStore = create(
       },
 
       updateXP: async (xpGained) => {
-        const { profile } = get()
+        const { profile } = get();
         if (profile) {
-          const { data, error } = await supabase.rpc('increment_xp', {
+          const { error } = await supabase.rpc('increment_xp', {
             user_id: profile.id,
             amount: xpGained
           });
 
           if (error) {
-            // Fallback manual jika RPC belum ada
             const newXP = Number(profile.xp || 0) + Number(xpGained);
             await supabase.from('profiles').update({ xp: newXP }).eq('id', profile.id);
           }
         }
       },
 
-      logout: async () => {
-        get().unsubscribeFromProfile();
+      /**
+       * 🛡️ COMPLETE LOGOUT, CACHE CLEAR & REDIRECT TO LOGIN PAGE ('/auth/login')
+       * Shows pure circular loading spinner without text, cancels speech, clears all DOM mode classes, deletes all localStorage & sessionStorage caches, and hard refreshes to login page.
+       */
+      logout: async (targetUrl = '/auth/login') => {
+        set({ isLoggingOut: true, loading: true });
 
-        // RESET ACCESSIBILITY BEFORE LOGOUT
-        useAccessibilityStore.getState().reset();
+        // 1. Immediately cancel any speech synthesis
+        if (typeof window !== 'undefined' && window.speechSynthesis) {
+          window.speechSynthesis.cancel();
+        }
 
-        await supabase.auth.signOut()
-        // Clear storage manually if needed to prevent invalid refresh token on next boot
-        localStorage.removeItem('bintangai-auth-storage');
-        set({ user: null, profile: null })
+        // 2. Reset DOM root attributes & mode classes
+        if (typeof document !== 'undefined') {
+          const root = document.documentElement;
+          root.setAttribute('data-disability', 'none');
+          root.classList.remove('blind-mode', 'deaf-mode', 'mute-mode');
+          root.style.fontSize = '100%';
+        }
+
+        // 3. Reset Accessibility Store
+        try {
+          useAccessibilityStore.getState().reset();
+        } catch (e) {}
+
+        // 4. Sign out from Supabase Auth
+        try {
+          await supabase.auth.signOut();
+        } catch (e) {}
+
+        // 5. Delete ALL cache keys from localStorage and sessionStorage
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.clear();
+            sessionStorage.clear();
+          } catch (e) {}
+        }
+
+        try {
+          get().unsubscribeFromProfile();
+        } catch (e) {}
+
+        set({ user: null, profile: null, loading: false });
+
+        // 6. Hard redirect to login page ('/auth/login') cleanly
+        setTimeout(() => {
+          if (typeof window !== 'undefined') {
+            window.location.href = targetUrl || '/auth/login';
+          }
+        }, 400);
       }
     }),
     {
@@ -118,4 +176,4 @@ export const useAuthStore = create(
       partialize: (state) => ({ user: state.user, profile: state.profile }),
     }
   )
-)
+);

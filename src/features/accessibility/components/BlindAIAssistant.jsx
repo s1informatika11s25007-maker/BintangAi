@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useVoice } from '../hooks/useVoice';
 import { useAccessibility } from '../hooks/useAccessibility';
@@ -22,6 +22,13 @@ const BlindAIAssistant = () => {
   const lastProcessedBlobRef = useRef(null);
   const lastTranscriptRef = useRef("");
 
+  const isPublicPage = useMemo(() => {
+    if (!location?.pathname) return false;
+    if (location.pathname === '/') return true;
+    const publicPaths = ['/auth', '/login', '/register'];
+    return publicPaths.some(path => location.pathname.startsWith(path));
+  }, [location?.pathname]);
+
   const isPlaygroundPage = location.pathname.includes('/student/playground');
 
   const navMap = {
@@ -41,15 +48,13 @@ const BlindAIAssistant = () => {
 
     const headings = Array.from(main.querySelectorAll('h1, h2, h3')).map(h => h.innerText).join(', ');
 
-    // Find list items (like modules or tasks) using generic selectors
-    // We look for anything that looks like a title or clickable item
     const listItems = Array.from(main.querySelectorAll('[data-gesture-item="true"], h3, button, a'))
       .map(el => ({
         text: (el.innerText || el.getAttribute('aria-label') || "").trim(),
         id: el.id || el.getAttribute('data-id')
       }))
       .filter(item => item.text.length > 2 && item.text.length < 100)
-      .slice(0, 50) // Capture more items for search
+      .slice(0, 50)
       .map(item => item.text)
       .join('|');
 
@@ -69,7 +74,6 @@ const BlindAIAssistant = () => {
         if (!actionData) break;
         const query = actionData.toLowerCase();
 
-        // Strategy 1: Find by exact text or partial match in clickable elements
         const elements = Array.from(document.querySelectorAll('button, a, [role="button"], [data-gesture-item="true"], h3'));
 
         let targetElement = elements.find(el => {
@@ -77,7 +81,6 @@ const BlindAIAssistant = () => {
           return text === query || (text.length > 3 && text.includes(query));
         });
 
-        // Strategy 2: If found a heading (h3), try to find a link/button inside or near it
         if (targetElement && targetElement.tagName === 'H3') {
            const parentLink = targetElement.closest('a') || targetElement.closest('button');
            if (parentLink) targetElement = parentLink;
@@ -130,7 +133,6 @@ const BlindAIAssistant = () => {
         setAiResponse(response.answer);
         speak(response.answer);
 
-        // DELAYED ACTION FOR BETTER UX
         setTimeout(() => {
           let actionSuccess = false;
 
@@ -146,7 +148,6 @@ const BlindAIAssistant = () => {
             }
           }
 
-          // Cleanup display after action
           setTimeout(() => {
              setIsProcessing(false);
              setLiveTranscript("");
@@ -191,7 +192,7 @@ const BlindAIAssistant = () => {
   }, [isRecording, isProcessing, startRecording, stopRecording, startListening, stopListening, speak, stopSpeaking]);
 
   useEffect(() => {
-    if (!isBlind) return;
+    if (!isBlind || isPublicPage) return;
     const handleKeyDown = (e) => {
       if (e.code === 'Space' && e.target === document.body) {
         e.preventDefault();
@@ -200,13 +201,12 @@ const BlindAIAssistant = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isBlind, handleMicClick]);
+  }, [isBlind, isPublicPage, handleMicClick]);
 
-  if (!isBlind || !profile || isPlaygroundPage) return null;
+  if (!isBlind || !profile || isPlaygroundPage || isPublicPage) return null;
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-[500] flex flex-col items-center pointer-events-none pb-6 md:pb-12">
-      {/* PROFESSIONAL SUBTITLES & FEEDBACK */}
       <AnimatePresence>
         {(isRecording || isProcessing || aiResponse) && (
           <motion.div
@@ -215,7 +215,6 @@ const BlindAIAssistant = () => {
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             className="w-[90%] max-w-2xl bg-slate-900/90 backdrop-blur-2xl border border-white/10 p-6 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col gap-4 pointer-events-auto mb-6"
           >
-            {/* Visualizer */}
             <div className="flex justify-center gap-1.5 h-8 items-center">
               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(i => (
                 <motion.div
@@ -235,7 +234,6 @@ const BlindAIAssistant = () => {
             </div>
 
             <div className="space-y-3">
-               {/* User Transcript Subtitle */}
               {liveTranscript && (
                 <motion.div
                   initial={{ opacity: 0 }}
@@ -251,7 +249,6 @@ const BlindAIAssistant = () => {
                 </motion.div>
               )}
 
-              {/* AI Response Subtitle */}
               {aiResponse && (
                 <motion.div
                   initial={{ opacity: 0, x: -10 }}
@@ -277,7 +274,6 @@ const BlindAIAssistant = () => {
         )}
       </AnimatePresence>
 
-      {/* FLOATING ACTION BUTTON */}
       <div className="relative pointer-events-auto">
         <motion.button
           whileHover={{ scale: 1.05 }}

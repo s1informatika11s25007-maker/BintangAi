@@ -1,11 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { login } from '@/features/auth/api/sessionApi';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { useAccessibilityStore } from '@/features/accessibility/store/accessibilityStore';
-import { HiMail, HiLockClosed, HiEye, HiEyeOff, HiArrowRight, HiSparkles, HiChevronDown, HiFingerPrint, HiLightningBolt, HiArrowLeft } from 'react-icons/hi';
+import {
+  HiArrowLeft,
+  HiArrowRight,
+  HiChevronDown,
+  HiEye,
+  HiEyeOff,
+  HiFingerPrint,
+  HiLightningBolt,
+  HiLockClosed,
+  HiMail,
+  HiSparkles,
+} from 'react-icons/hi';
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
@@ -22,6 +33,8 @@ const Login = () => {
   const { setModeFromProfile } = useAccessibilityStore();
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchDemoAccounts = async () => {
       setLoadingDemo(true);
       try {
@@ -32,392 +45,374 @@ const Login = () => {
           .not('email', 'is', null);
 
         if (error) throw error;
+        if (!isMounted || !data?.length) return;
 
-        if (data && data.length > 0) {
-          const accountsMap = {};
+        const accountsMap = {};
+        data.forEach((profile) => {
+          let key = profile.role;
+          if (profile.role === 'siswa' && profile.disability_type) {
+            key = profile.disability_type;
+          }
 
-          data.forEach(p => {
-            let key = p.role;
-            if (p.role === 'siswa' && p.disability_type) {
-              key = p.disability_type;
+          if (!accountsMap[key]) {
+            let label = profile.role === 'guru'
+              ? 'Guru'
+              : profile.role === 'ortu'
+                ? 'Orang Tua'
+                : `Siswa (${profile.disability_type || 'Umum'})`;
+            let icon = '👨‍🏫';
+            let color = 'blue';
+
+            if (profile.role === 'guru') {
+              label = 'Guru';
+              icon = '👨‍🏫';
+              color = 'blue';
+            } else if (profile.role === 'ortu') {
+              label = 'Orang Tua';
+              icon = '👪';
+              color = 'sky';
+            } else if (profile.disability_type === 'tunanetra') {
+              label = 'Tunanetra';
+              icon = '🦯';
+              color = 'violet';
+            } else if (profile.disability_type === 'tunarungu') {
+              label = 'Tunarungu';
+              icon = '🤟';
+              color = 'cyan';
+            } else if (profile.disability_type === 'tunawicara') {
+              label = 'Tunawicara';
+              icon = '💬';
+              color = 'indigo';
             }
 
-            if (!accountsMap[key]) {
-              let label = p.role === 'guru' ? 'Guru' : p.role === 'ortu' ? 'Orang Tua' : `Siswa (${p.disability_type || 'Umum'})`;
-              let icon = '👨‍🏫';
-              let color = 'indigo';
+            accountsMap[key] = {
+              label,
+              email: profile.email,
+              pass: profile.student_password_hash || 'demo123456',
+              icon,
+              color,
+              full_name: profile.full_name,
+            };
+          }
+        });
 
-              if (p.role === 'guru') {
-                label = 'Guru'; icon = '👨‍🏫'; color = 'indigo';
-              } else if (p.role === 'ortu') {
-                label = 'Orang Tua'; icon = '👪'; color = 'rose';
-              } else if (p.disability_type === 'tunanetra') {
-                label = 'Tunanetra'; icon = '🦯'; color = 'purple';
-              } else if (p.disability_type === 'tunarungu') {
-                label = 'Tunarungu'; icon = '🤟'; color = 'orange';
-              } else if (p.disability_type === 'tunawicara') {
-                label = 'Tunawicara'; icon = '🗣️'; color = 'emerald';
-              }
+        const desiredOrder = ['guru', 'tunanetra', 'tunarungu', 'tunawicara', 'ortu'];
+        const orderedAccounts = desiredOrder
+          .filter((key) => accountsMap[key])
+          .map((key) => accountsMap[key]);
 
-              accountsMap[key] = {
-                label,
-                email: p.email,
-                pass: p.student_password_hash || 'demo123456',
-                icon,
-                color,
-                full_name: p.full_name
-              };
-            }
-          });
+        Object.keys(accountsMap).forEach((key) => {
+          if (!desiredOrder.includes(key)) orderedAccounts.push(accountsMap[key]);
+        });
 
-          const desiredOrder = ['guru', 'tunanetra', 'tunarungu', 'tunawicara', 'ortu'];
-          const orderedAccounts = [];
-          desiredOrder.forEach(k => {
-            if (accountsMap[k]) orderedAccounts.push(accountsMap[k]);
-          });
-
-          Object.keys(accountsMap).forEach(k => {
-            if (!desiredOrder.includes(k)) orderedAccounts.push(accountsMap[k]);
-          });
-
-          setDemoAccounts(orderedAccounts);
-        }
-      } catch (err) {
-        console.error("Gagal memuat akun demo dari database:", err);
+        if (isMounted) setDemoAccounts(orderedAccounts);
+      } catch (error) {
+        console.error('Gagal memuat akun demo dari database:', error);
       } finally {
-        setLoadingDemo(false);
+        if (isMounted) setLoadingDemo(false);
       }
     };
 
     fetchDemoAccounts();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  const fillDemoAccount = (acc) => {
-    setEmail(acc.email);
-    setPassword(acc.pass);
-    setMessage({ type: 'success', text: `Akun Demo (${acc.label} - ${acc.full_name}) terpilih! Klik Masuk Sekarang.` });
+  const fillDemoAccount = (account) => {
+    setEmail(account.email || '');
+    setPassword(account.pass || '');
+    setMessage({
+      type: 'success',
+      text: `Akun demo ${account.label}${account.full_name ? ` – ${account.full_name}` : ''} dipilih. Klik Masuk untuk melanjutkan.`,
+    });
   };
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const handleLogin = async (event) => {
+    event.preventDefault();
     setLoading(true);
     setMessage(null);
 
     try {
-      const data = await login(email, password);
+      const data = await login(email.trim(), password);
       setUser(data.user);
 
       const profileData = await fetchProfile(data.user.id);
-      if (profileData) {
-        setModeFromProfile(profileData);
-
-        const targetPath = profileData.role === 'guru' ? '/teacher/dashboard' :
-                           profileData.role === 'ortu' ? '/parent/dashboard' :
-                           '/student/dashboard';
-        navigate(targetPath);
+      if (!profileData) {
+        throw new Error('Profil pengguna belum ditemukan. Silakan hubungi administrator.');
       }
+
+      setModeFromProfile(profileData);
+      const targetPath = profileData.role === 'guru'
+        ? '/teacher/dashboard'
+        : profileData.role === 'ortu'
+          ? '/parent/dashboard'
+          : '/student/dashboard';
+
+      navigate(targetPath);
     } catch (error) {
-      setMessage({ type: 'error', text: error.message });
+      setMessage({ type: 'error', text: error?.message || 'Login gagal. Periksa email dan kata sandi Anda.' });
     } finally {
       setLoading(false);
     }
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1, delayChildren: 0.2 }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 15, opacity: 0 },
-    visible: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 100 } }
+  const colorDot = {
+    blue: 'bg-blue-500',
+    sky: 'bg-sky-500',
+    violet: 'bg-violet-500',
+    cyan: 'bg-cyan-500',
+    indigo: 'bg-indigo-500',
   };
 
   return (
-    <div className="h-[100dvh] w-screen flex font-sans bg-slate-50 selection:bg-indigo-100 overflow-hidden">
-      {/* Left Section - Hero Visual */}
-      <div className="hidden lg:flex lg:w-[45%] h-full relative overflow-hidden bg-indigo-950 flex-col justify-between">
+    <main className="min-h-screen w-full flex flex-col lg:flex-row bg-[#F4F8FF] font-sans text-slate-900 selection:bg-blue-100 selection:text-blue-900">
+      {/* Panel foto kiri dipertahankan dan tetap tampil sebagai banner pada layar kecil. */}
+      <aside className="relative isolate flex min-h-[260px] w-full flex-col justify-between overflow-hidden bg-blue-950 px-6 py-7 text-white sm:min-h-[300px] lg:min-h-screen lg:w-[43%] lg:px-12 lg:py-10">
         <motion.div
-          initial={{ scale: 1.1, opacity: 0 }}
-          animate={{ scale: 1, opacity: 0.85 }}
-          transition={{ duration: 1.5 }}
-          className="absolute inset-0 z-0"
-          style={{
-            backgroundImage: 'url("https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80")',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }}
+          initial={{ scale: 1.08, opacity: 0.45 }}
+          animate={{ scale: 1, opacity: 0.72 }}
+          transition={{ duration: 1.2 }}
+          className="absolute inset-0 -z-20 bg-cover bg-center"
+          style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80")' }}
+          aria-hidden="true"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-indigo-950/85 via-indigo-900/25 to-indigo-950/50 z-10" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-br from-[#08275A]/95 via-[#0B438A]/75 to-[#1677C8]/70" />
+        <div className="pointer-events-none absolute -bottom-24 -left-20 -z-10 h-72 w-72 rounded-full bg-sky-300/20 blur-3xl" />
+        <div className="pointer-events-none absolute right-[-5rem] top-1/3 -z-10 h-80 w-80 rounded-full bg-blue-300/20 blur-3xl" />
 
-        <div className="relative z-20 w-full h-full flex flex-col justify-between p-8 lg:p-12">
-          {/* Top Section - Brand + Main Text */}
-          <div className="space-y-6">
-            <motion.div
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              className="flex items-center gap-3 cursor-pointer group w-fit"
-              onClick={() => navigate('/')}
-            >
-              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform duration-300">
-                <span className="text-indigo-600 font-black text-xl">B</span>
-              </div>
-              <span className="text-xl font-black tracking-tight text-white drop-shadow-md">
-                Bintang<span className="text-indigo-400">Ai</span>
-              </span>
-            </motion.div>
+        <motion.button
+          type="button"
+          initial={{ y: -12, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          onClick={() => navigate('/')}
+          className="flex w-fit items-center gap-3 rounded-2xl text-left focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-200/70"
+          aria-label="Kembali ke halaman utama BintangAi"
+        >
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-xl font-black text-blue-700 shadow-lg shadow-blue-950/20">B</span>
+          <span className="text-xl font-black tracking-tight">Bintang<span className="text-sky-200">Ai</span></span>
+        </motion.button>
 
-            <div className="max-w-md space-y-3">
-              <motion.div
-                initial={{ y: 15, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-900/80 backdrop-blur-md border border-white/20 text-indigo-100 text-[11px] font-bold uppercase tracking-widest shadow-md"
-              >
-                <HiLightningBolt className="text-indigo-400 animate-pulse" />
-                Platform Belajar Masa Depan
-              </motion.div>
-              <motion.h2
-                initial={{ y: 15, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="text-3xl lg:text-4xl font-extrabold text-white leading-tight drop-shadow-lg"
-              >
-                Wujudkan Impian Tanpa <span className="text-indigo-400 underline decoration-indigo-400/30 underline-offset-8">Batasan</span>.
-              </motion.h2>
-              <motion.p
-                initial={{ y: 15, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="text-sm lg:text-base text-indigo-100/90 font-medium leading-relaxed drop-shadow"
-              >
-                Platform inklusif yang dirancang untuk membantu setiap individu bersinar sesuai dengan keunikannya.
-              </motion.p>
-            </div>
+        <div className="relative my-8 max-w-xl space-y-5 lg:my-0 lg:space-y-6">
+          <motion.div
+            initial={{ y: 14, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.15 }}
+            className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-blue-50 backdrop-blur-md sm:text-xs"
+          >
+            <HiLightningBolt className="text-sky-200" /> Ruang Belajar Inklusif
+          </motion.div>
+          <motion.h1
+            initial={{ y: 18, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.25 }}
+            className="max-w-lg text-3xl font-black leading-tight tracking-tight sm:text-4xl lg:text-5xl"
+          >
+            Selamat datang kembali, <span className="text-sky-200">Bintang!</span>
+          </motion.h1>
+          <motion.p
+            initial={{ y: 18, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.35 }}
+            className="max-w-md text-sm font-medium leading-7 text-blue-50/90 sm:text-base"
+          >
+            Lanjutkan perjalanan belajar yang lebih mandiri bersama Kak Bintang. Setiap anak punya cara belajar dan kesempatan untuk bersinar.
+          </motion.p>
+          <div className="flex flex-wrap gap-2 pt-1 text-xs font-semibold text-white/90">
+            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-2 backdrop-blur">Kelas 1–6 SD</span>
+            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-2 backdrop-blur">Belajar di rumah</span>
+            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-2 backdrop-blur">Aksesibel</span>
+          </div>
+        </div>
+
+        <div className="relative hidden items-center justify-between border-t border-white/20 pt-5 text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-100/75 lg:flex">
+          <span>© 2026 BintangAi</span>
+          <span className="flex items-center gap-2"><HiSparkles className="text-sky-200" /> Belajar tanpa hambatan</span>
+        </div>
+      </aside>
+
+      {/* Panel formulir - Edge-to-edge full width & full height sampai ujung atas, kanan, dan bawah */}
+      <section className="relative flex flex-1 flex-col justify-center overflow-y-auto bg-white px-6 py-8 sm:px-10 md:px-14 lg:h-full lg:px-16 lg:py-12">
+        <div className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-sky-100/60 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-28 left-0 h-80 w-80 rounded-full bg-blue-100/50 blur-3xl" />
+
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
+          className="relative z-10 w-full max-w-2xl mx-auto my-auto space-y-6"
+        >
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="mb-7 inline-flex items-center gap-2 rounded-lg text-xs font-bold text-slate-500 transition hover:text-blue-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100"
+          >
+            <HiArrowLeft /> Kembali ke beranda
+          </button>
+
+          <div className="mb-7 space-y-2">
+            <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-blue-600">Masuk ke akun</p>
+            <h2 className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">Halo, <span className="text-blue-700">Bintang!</span></h2>
+            <p className="text-sm leading-6 text-slate-500">Masuk untuk melanjutkan materi, latihan, dan aktivitas belajarmu.</p>
           </div>
 
-          {/* Bottom Footer */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
-            className="text-[10px] font-bold uppercase tracking-widest text-indigo-200/70 drop-shadow pt-4"
-          >
-            © 2026 BINTANGAI DIGITAL ECOSYSTEM
-          </motion.div>
-        </div>
-
-        {/* Decorative Circles */}
-        <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-1/2 -right-20 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
-      </div>
-
-      {/* Right Section - Login Form */}
-      <div className="w-full lg:w-[55%] h-full flex flex-col justify-center items-center p-6 md:p-10 lg:p-12 overflow-y-auto relative">
-        <div className="w-full max-w-[420px] my-auto">
-          <motion.button
-            whileHover={{ x: -4 }}
-            onClick={() => navigate('/')}
-            className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold text-xs mb-4 transition-colors w-fit"
-          >
-            <HiArrowLeft /> Kembali ke Beranda
-          </motion.button>
-
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="space-y-6"
-          >
-            <div className="space-y-1.5">
-              <motion.h1 variants={itemVariants} className="text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">
-                Selamat Datang <span className="text-indigo-600">Kembali</span>
-              </motion.h1>
-              <motion.p variants={itemVariants} className="text-slate-500 text-sm font-medium">
-                Silakan masuk untuk mengakses dashboard belajar Anda
-              </motion.p>
+          {(demoAccounts.length > 0 || loadingDemo) && (
+            <div className="relative z-20 mb-6 space-y-3">
+              <div className="flex items-center gap-3">
+                <span className="whitespace-nowrap text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">Akses akun demo</span>
+                <span className="h-px flex-1 bg-blue-100" />
+              </div>
+              <div className="relative">
+                <button
+                  type="button"
+                  aria-expanded={isDemoOpen}
+                  aria-controls="demo-account-menu"
+                  onClick={() => setIsDemoOpen((open) => !open)}
+                  disabled={loadingDemo || demoAccounts.length === 0}
+                  className="flex min-h-12 w-full items-center justify-between gap-3 rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-3 text-left text-sm font-bold text-blue-900 transition hover:border-blue-300 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100 disabled:cursor-wait disabled:opacity-70"
+                >
+                  <span className="flex items-center gap-3"><HiFingerPrint className="text-xl text-blue-600" />{loadingDemo ? 'Memuat akun demo…' : 'Pilih akun demo'}</span>
+                  <HiChevronDown className={`shrink-0 text-blue-500 transition-transform ${isDemoOpen ? 'rotate-180' : ''}`} />
+                </button>
+                <AnimatePresence>
+                  {isDemoOpen && demoAccounts.length > 0 && (
+                    <>
+                      <button
+                        type="button"
+                        aria-label="Tutup daftar akun demo"
+                        onClick={() => setIsDemoOpen(false)}
+                        className="fixed inset-0 z-30 cursor-default"
+                      />
+                      <motion.div
+                        id="demo-account-menu"
+                        initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 5, scale: 1 }}
+                        exit={{ opacity: 0, y: 5, scale: 0.98 }}
+                        className="absolute left-0 right-0 top-full z-40 max-h-64 space-y-1 overflow-y-auto rounded-2xl border border-blue-100 bg-white p-2 shadow-2xl shadow-blue-900/10"
+                      >
+                        {demoAccounts.map((account) => (
+                          <button
+                            type="button"
+                            key={account.email || account.label}
+                            onClick={() => {
+                              fillDemoAccount(account);
+                              setIsDemoOpen(false);
+                            }}
+                            className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
+                          >
+                            <span className="flex min-w-0 items-center gap-3">
+                              <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${colorDot[account.color] || 'bg-blue-500'}`} />
+                              <span className="min-w-0">
+                                <span className="block text-sm font-bold text-slate-800">{account.icon} {account.label}</span>
+                                <span className="block truncate text-xs text-slate-500">{account.full_name || account.email}</span>
+                              </span>
+                            </span>
+                            <HiArrowRight className="shrink-0 text-blue-400" />
+                          </button>
+                        ))}
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
+          )}
 
-            {/* Quick Access Demo - Dynamic Database Accounts */}
-            {demoAccounts.length > 0 && (
-              <motion.div variants={itemVariants} className="space-y-3 relative z-20">
-                <div className="flex items-center gap-3">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Akses Demo (Database)</span>
-                  <div className="flex-1 h-px bg-slate-200" />
-                </div>
-
-                <div className="relative">
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                    onClick={() => setIsDemoOpen(!isDemoOpen)}
-                    className="w-full h-12 px-5 rounded-2xl bg-white border-2 border-slate-100 flex items-center justify-between group hover:border-indigo-600 hover:shadow-lg hover:shadow-indigo-50 transition-all text-sm"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center">
-                        <HiFingerPrint className="text-indigo-600 group-hover:animate-pulse" />
-                      </div>
-                      <span className="font-bold text-slate-700">Pilih Akun Demo dari Database</span>
-                    </div>
-                    <motion.div
-                      animate={{ rotate: isDemoOpen ? 180 : 0 }}
-                      className="text-slate-400 group-hover:text-indigo-600"
-                    >
-                      <HiChevronDown size={20} />
-                    </motion.div>
-                  </motion.button>
-
-                  <AnimatePresence>
-                    {isDemoOpen && (
-                      <>
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          className="fixed inset-0 z-30"
-                          onClick={() => setIsDemoOpen(false)}
-                        />
-                        <motion.div
-                          initial={{ opacity: 0, y: 10, scale: 0.98 }}
-                          animate={{ opacity: 1, y: 6, scale: 1 }}
-                          exit={{ opacity: 0, y: 10, scale: 0.98 }}
-                          className="absolute top-full left-0 right-0 bg-white border border-slate-100 rounded-2xl shadow-2xl shadow-indigo-100/50 overflow-hidden z-40 p-2 space-y-1 max-h-[260px] overflow-y-auto"
-                        >
-                          {demoAccounts.map((acc) => (
-                            <motion.button
-                              key={acc.email}
-                              whileHover={{ x: 4, backgroundColor: "rgb(245 243 255)" }}
-                              onClick={() => {
-                                fillDemoAccount(acc);
-                                setIsDemoOpen(false);
-                              }}
-                              className="w-full text-left px-3.5 py-2.5 rounded-xl transition-all flex items-center justify-between group"
-                            >
-                              <div className="flex items-center gap-2.5">
-                                <div className={`w-2 h-2 rounded-full transition-transform group-hover:scale-150 ${
-                                  acc.color === 'indigo' ? 'bg-indigo-500' :
-                                  acc.color === 'purple' ? 'bg-purple-500' :
-                                  acc.color === 'orange' ? 'bg-orange-500' :
-                                  acc.color === 'emerald' ? 'bg-emerald-500' :
-                                  'bg-rose-500'
-                                }`} />
-                                <div>
-                                  <p className="font-bold text-slate-700 group-hover:text-indigo-600 text-xs leading-tight">
-                                    {acc.label}
-                                  </p>
-                                  <p className="text-[10px] text-slate-400 font-medium">
-                                    {acc.full_name} ({acc.email})
-                                  </p>
-                                </div>
-                              </div>
-                              <HiArrowRight className="text-slate-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 -translate-x-1 transition-all" size={14} />
-                            </motion.button>
-                          ))}
-                        </motion.div>
-                      </>
-                    )}
-                  </AnimatePresence>
-                </div>
+          <AnimatePresence mode="wait">
+            {message && (
+              <motion.div
+                key={`${message.type}-${message.text}`}
+                initial={{ opacity: 0, y: -7 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -7 }}
+                role={message.type === 'error' ? 'alert' : 'status'}
+                className={`mb-5 flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold leading-5 ${
+                  message.type === 'success'
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                    : 'border-rose-200 bg-rose-50 text-rose-700'
+                }`}
+              >
+                <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${message.type === 'success' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                <span>{message.text}</span>
               </motion.div>
             )}
+          </AnimatePresence>
 
-            <AnimatePresence mode="wait">
-              {message && (
-                <motion.div
-                  initial={{ opacity: 0, y: -8, height: 0 }}
-                  animate={{ opacity: 1, y: 0, height: 'auto' }}
-                  exit={{ opacity: 0, y: -8, height: 0 }}
-                  className={`p-3.5 rounded-xl text-xs font-bold flex items-center gap-2.5 ${
-                    message.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-rose-50 text-rose-700 border border-rose-100'
-                  }`}
+          <form onSubmit={handleLogin} className="space-y-5">
+            <div className="space-y-2">
+              <label htmlFor="login-email" className="text-sm font-bold text-slate-700">Alamat email</label>
+              <div className="group relative">
+                <HiMail className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg text-slate-400 transition group-focus-within:text-blue-600" />
+                <input
+                  id="login-email"
+                  type="email"
+                  name="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="nama@email.com"
+                  className="min-h-14 w-full rounded-2xl border border-slate-200 bg-slate-50/70 pl-12 pr-4 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-blue-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <label htmlFor="login-password" className="text-sm font-bold text-slate-700">Kata sandi</label>
+                <span className="text-xs font-medium text-slate-400">Gunakan kata sandi akun Anda</span>
+              </div>
+              <div className="group relative">
+                <HiLockClosed className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg text-slate-400 transition group-focus-within:text-blue-600" />
+                <input
+                  id="login-password"
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  autoComplete="current-password"
+                  required
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="Masukkan kata sandi"
+                  className="min-h-14 w-full rounded-2xl border border-slate-200 bg-slate-50/70 pl-12 pr-12 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-blue-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((visible) => !visible)}
+                  aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-2 text-slate-400 transition hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
                 >
-                  <div className={`w-2 h-2 rounded-full ${message.type === 'success' ? 'bg-emerald-500' : 'bg-rose-500'} animate-pulse`} />
-                  {message.text}
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  {showPassword ? <HiEyeOff size={19} /> : <HiEye size={19} />}
+                </button>
+              </div>
+            </div>
 
-            <motion.form
-              variants={itemVariants}
-              onSubmit={handleLogin}
-              className="space-y-4"
+            <button
+              type="submit"
+              disabled={loading}
+              className="group flex min-h-14 w-full items-center justify-center gap-3 rounded-2xl bg-blue-700 px-6 py-4 text-sm font-extrabold text-white shadow-lg shadow-blue-700/20 transition hover:-translate-y-0.5 hover:bg-blue-800 hover:shadow-xl hover:shadow-blue-700/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-200 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
             >
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider ml-1">Alamat Email</label>
-                <div className="relative group">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
-                    <HiMail size={18} />
-                  </div>
-                  <input
-                    type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-11 pr-5 py-3.5 rounded-2xl bg-white border-2 border-slate-100 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 outline-none font-semibold text-sm transition-all text-slate-900 placeholder:text-slate-400"
-                    placeholder="nama@email.com"
-                  />
-                </div>
-              </div>
+              {loading ? (
+                <><span className="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" />Memproses…</>
+              ) : (
+                <>Masuk ke BintangAi <HiArrowRight className="text-lg transition-transform group-hover:translate-x-1" /></>
+              )}
+            </button>
+          </form>
 
-              <div className="space-y-1.5">
-                <div className="flex justify-between items-center ml-1">
-                  <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Kata Sandi</label>
-                  <button type="button" className="text-[10px] font-bold text-indigo-600 hover:underline">Lupa Sandi?</button>
-                </div>
-                <div className="relative group">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
-                    <HiLockClosed size={18} />
-                  </div>
-                  <input
-                    type={showPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-11 pr-12 py-3.5 rounded-2xl bg-white border-2 border-slate-100 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 outline-none font-semibold text-sm transition-all text-slate-900 placeholder:text-slate-400"
-                    placeholder="••••••••"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors p-1"
-                  >
-                    {showPassword ? <HiEyeOff size={18} /> : <HiEye size={18} />}
-                  </button>
-                </div>
-              </div>
-
-              <motion.button
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.98 }}
-                disabled={loading}
-                type="submit"
-                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-2xl shadow-lg shadow-indigo-200 transition-all flex items-center justify-center gap-2 group disabled:opacity-70 mt-2"
-              >
-                {loading ? (
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <>
-                    Masuk Sekarang
-                    <HiArrowRight className="group-hover:translate-x-1 transition-transform" size={16} />
-                  </>
-                )}
-              </motion.button>
-            </motion.form>
-
-            <motion.div variants={itemVariants} className="pt-4 border-t border-slate-100 text-center">
-              <p className="text-slate-500 text-xs font-medium mb-2">Baru di BintangAi?</p>
-              <button
-                onClick={() => navigate('/auth/register')}
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-xl border-2 border-slate-100 hover:border-indigo-600 hover:text-indigo-600 font-bold text-xs transition-all text-slate-700"
-              >
-                Buat Akun Baru
-              </button>
-            </motion.div>
-          </motion.div>
-        </div>
-
-        {/* Subtle decorative background for form */}
-        <div className="absolute top-0 right-0 -z-10 w-64 h-64 bg-indigo-50 rounded-full blur-3xl opacity-50 pointer-events-none" />
-      </div>
-    </div>
+          <div className="mt-7 border-t border-blue-50 pt-6 text-center">
+            <p className="text-sm text-slate-500">Belum memiliki akun?</p>
+            <button
+              type="button"
+              onClick={() => navigate('/auth/register')}
+              className="mt-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-extrabold text-blue-700 transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100"
+            >
+              Daftar sekarang <HiArrowRight />
+            </button>
+          </div>
+          <p className="mt-5 text-center text-[11px] leading-5 text-slate-400">BintangAi · Belajar lebih mandiri, dengan cara yang sesuai untukmu.</p>
+        </motion.div>
+      </section>
+    </main>
   );
 };
 

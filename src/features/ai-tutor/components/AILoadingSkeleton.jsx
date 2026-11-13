@@ -5,9 +5,7 @@ const AILoadingSkeleton = () => {
   return (
     <div className="space-y-4 p-6 bg-white rounded-3xl border border-purple-100 shadow-sm">
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-8 h-8 rounded-full bg-purple-100 animate-pulse flex items-center justify-center">
-          <span className="text-purple-600 text-xs">AI</span>
-        </div>
+        <div className="w-6 h-6 border-2 border-purple-200 border-t-purple-600 rounded-full animate-spin shrink-0" />
         <div className="h-4 w-32 bg-slate-100 rounded-full animate-pulse" />
       </div>
 

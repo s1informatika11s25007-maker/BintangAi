@@ -11,13 +11,15 @@ const GlobalGestureCamera = () => {
   const navigate = useNavigate();
   const { isMute } = useAccessibility();
   const { showSubtitle } = useSubtitle();
-  const { logout } = useAuthStore();
+  const { profile, logout } = useAuthStore();
 
   const [menuActive, setMenuActive] = useState(false);
   const path = location.pathname;
 
-  // Camera always enabled for Tunawicara mode
-  const isEnabled = isMute;
+  const isPublicPage = path === '/' || path.startsWith('/auth') || path === '/login' || path === '/register';
+
+  // Camera enabled ONLY for Tunawicara mode on logged-in student pages
+  const isEnabled = isMute && !!profile && !isPublicPage;
 
   const lastProcessedFinger = useRef(-1);
   const cooldownRef = useRef(false);
@@ -25,25 +27,17 @@ const GlobalGestureCamera = () => {
   const { videoRef, canvasRef, isActive, handDetected, totalFingers } = useGestureControl({
     enabled: isEnabled,
     onScroll: (dir) => {
-      if ((path === '/student/dashboard' || path === '/') && !menuActive) {
+      if (path === '/student/dashboard' && !menuActive) {
         window.scrollBy({ top: dir === 'down' ? 250 : -250, behavior: 'smooth' });
       }
     }
   });
 
-  // Determine page context
-  const isLandingPage = path === '/';
-  const isAuthPage = path === '/auth';
-  const isTaskDetail = path.includes('/student/task/');
-  const isTasksList = path === '/student/tasks';
-  const isModulesList = path === '/student/modules';
   const isProfilePage = path === '/profile';
-
-  // Auth specific state detected from DOM
-  const [isLoginMode, setIsLoginMode] = useState(true);
   const [isModuleSelected, setIsModuleSelected] = useState(false);
 
   useEffect(() => {
+    if (!isEnabled) return;
     const checkModule = () => {
       const el = document.querySelector('[data-module-selected="true"]');
       setIsModuleSelected(!!el);
@@ -52,55 +46,17 @@ const GlobalGestureCamera = () => {
     const observer = new MutationObserver(checkModule);
     observer.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['data-module-selected'] });
     return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (isAuthPage) {
-      const checkMode = () => {
-        const submitBtn = document.querySelector('button[type="submit"]');
-        if (submitBtn) setIsLoginMode(submitBtn.textContent.includes('Masuk'));
-      };
-      checkMode();
-      const observer = new MutationObserver(checkMode);
-      observer.observe(document.body, { childList: true, subtree: true });
-      return () => observer.disconnect();
-    }
-  }, [isAuthPage]);
+  }, [isEnabled]);
 
   useEffect(() => {
     if (!isEnabled || totalFingers === 0 || cooldownRef.current) return;
 
-    // Logic: If finger changed or it's a new gesture
     if (totalFingers === lastProcessedFinger.current) return;
     lastProcessedFinger.current = totalFingers;
 
-    // --- LANDING PAGE LOGIC ---
-    if (isLandingPage) {
-      if (totalFingers === 2) { navigate('/auth'); triggerCooldown(); return; }
-      if (totalFingers === 5) { navigate('/auth'); triggerCooldown(); return; }
-    }
-
-    // --- LOGIN / REGISTER LOGIC ---
-    if (isAuthPage) {
-      if (totalFingers === 1) { navigate('/'); triggerCooldown(); return; }
-      if (totalFingers === 2) {
-        const toggleBtn = document.querySelector('button.text-indigo-600');
-        if (toggleBtn) toggleBtn.click();
-        triggerCooldown();
-        return;
-      }
-      if (totalFingers === 5) {
-        const submitBtn = document.querySelector('button[type="submit"]');
-        if (submitBtn) submitBtn.click();
-        triggerCooldown();
-        return;
-      }
-    }
-
-    // --- LOGGED IN PAGES LOGIC ---
     const isLoggedInPage = path.startsWith('/student/') || path === '/profile';
 
-    // TRIGGER MENU (10 Jari) - Only works if not currently in a specific task to avoid distraction
+    // TRIGGER MENU (10 Jari)
     if (totalFingers >= 9 && isLoggedInPage) {
       setMenuActive(!menuActive);
       showSubtitle(menuActive ? '🏠 Menu Navigasi Ditutup' : '🔓 Menu Navigasi Terbuka', 'info');
@@ -126,17 +82,14 @@ const GlobalGestureCamera = () => {
       return;
     }
 
-    // --- PAGE SPECIFIC INTERACTIVE ITEMS ---
-    // This logic takes precedence when menu is NOT active
+    // PAGE SPECIFIC INTERACTIVE ITEMS
     const interactivePaths = ['/student/tasks', '/student/modules', '/student/task/', '/student/collaboration'];
     if (interactivePaths.some(p => path.includes(p))) {
 
-      const isModuleSelected = !!document.querySelector('[data-module-selected="true"]');
+      const isModSel = !!document.querySelector('[data-module-selected="true"]');
 
-      // Dispatch event for components that want to handle gestures themselves (like PDF scrolling)
       window.dispatchEvent(new CustomEvent('gesture-detected', { detail: { fingers: totalFingers } }));
 
-      // 1. Pagination for lists (6 and 7 fingers)
       if (totalFingers === 6) {
         const nextBtn = document.querySelector('[data-gesture-next="true"]');
         if (nextBtn) { nextBtn.click(); triggerCooldown(); return; }
@@ -146,20 +99,17 @@ const GlobalGestureCamera = () => {
         if (prevBtn) { prevBtn.click(); triggerCooldown(); return; }
       }
 
-      // 2. Select Items (1-5 fingers) - Disabled if module is selected to allow scrolling gestures
-      if (!isModuleSelected && totalFingers >= 1 && totalFingers <= 5) {
+      if (!isModSel && totalFingers >= 1 && totalFingers <= 5) {
         const items = [...document.querySelectorAll('[data-gesture-item="true"]')];
         if (items.length >= totalFingers) {
           const target = items[totalFingers - 1];
 
-          // Robust focus
           target.focus();
           target.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
           target.style.transform = 'scale(0.92) translateY(4px)';
           target.style.boxShadow = '0 0 50px rgba(79, 70, 229, 0.8)';
 
           setTimeout(() => {
-            // Multi-event robust trigger
             target.click();
             const clickEvent = new MouseEvent('click', {
               view: window,
@@ -182,22 +132,21 @@ const GlobalGestureCamera = () => {
     // PROFILE LOGOUT (2 Jari)
     if (isProfilePage && totalFingers === 2) {
       showSubtitle('👋 Melakukan Logout...', 'info');
-      setTimeout(() => { logout(); navigate('/auth'); }, 1000);
+      setTimeout(() => { logout('/auth/login'); }, 600);
       triggerCooldown();
       return;
     }
 
-  }, [totalFingers, menuActive, path, isEnabled, isProfilePage, logout, navigate, isLandingPage, isAuthPage, isLoginMode]);
+  }, [totalFingers, menuActive, path, isEnabled, isProfilePage, logout, navigate]);
 
   const triggerCooldown = () => {
     cooldownRef.current = true;
     setTimeout(() => {
       cooldownRef.current = false;
-      lastProcessedFinger.current = -1; // Reset to allow same finger after cooldown
-    }, 1000); // Reduced to 1s for better responsiveness
+      lastProcessedFinger.current = -1;
+    }, 1000);
   };
 
-  // Auto-close menu and reset detection when path changes
   useEffect(() => {
     setMenuActive(false);
     lastProcessedFinger.current = -1;
@@ -215,9 +164,9 @@ const GlobalGestureCamera = () => {
       totalFingers={totalFingers}
       menuActive={menuActive}
       isProfilePage={isProfilePage}
-      isLandingPage={isLandingPage}
-      isAuthPage={isAuthPage}
-      isLoginMode={isLoginMode}
+      isLandingPage={false}
+      isAuthPage={false}
+      isLoginMode={false}
       isModuleSelected={isModuleSelected}
     />
   );

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAccessibility } from '../hooks/useAccessibility';
 import { useVoice } from '../hooks/useVoice';
@@ -13,40 +13,49 @@ const AccessibilityProvider = ({ children }) => {
   const lastPathname = useRef(location.pathname);
   const welcomeAnnounced = useRef(false);
 
-  // Global guidance for blind users when switching pages
+  const isPublicPage = useMemo(() => {
+    if (!location?.pathname) return false;
+    if (location.pathname === '/') return true;
+    const publicPaths = ['/auth', '/login', '/register'];
+    return publicPaths.some(path => location.pathname.startsWith(path));
+  }, [location?.pathname]);
+
+  // Global guidance for blind students (Siswa Tunanetra) when switching pages
   useEffect(() => {
-    // Sound removed for student and parent roles as requested
-    if (!isBlind || !profile || profile.role === 'siswa' || profile.role === 'ortu') return;
+    // Silence and stop speech on public pages or unauthenticated state
+    if (isPublicPage || !isBlind || !profile) {
+      if (isPublicPage && typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+      return;
+    }
 
     let justWelcomed = false;
     // Handle welcome message once after login
     if (!welcomeAnnounced.current && (location.pathname.startsWith('/student') || location.pathname === '/profile')) {
       const name = profile.full_name?.split(' ')[0] || 'Teman';
 
-      if (isBlind) {
-        const hr = new Date().getHours();
-        const timeGreeting = hr < 12 ? 'Selamat Pagi' : hr < 18 ? 'Selamat Siang' : 'Selamat Malam';
-        speak(`${timeGreeting}, ${name}. Nay, asisten pintar kamu, sudah aktif. Gunakan tombol Tab untuk berpindah menu, atau tekan Spasi untuk berbicara dengan Nay kapan saja.`, 1.1, true);
-      }
+      const hr = new Date().getHours();
+      const timeGreeting = hr < 12 ? 'Selamat Pagi' : hr < 18 ? 'Selamat Siang' : 'Selamat Malam';
+      speak(`${timeGreeting}, ${name}. Nay, asisten pintar kamu, sudah aktif. Gunakan tombol Tab untuk berpindah menu, atau tekan Spasi untuk berbicara dengan Nay kapan saja.`, 1.0, true);
 
       welcomeAnnounced.current = true;
       justWelcomed = true;
     }
 
-    // Handle page transitions with professional guidance
+    // Handle page transitions with friendly guidance for SD students
     if (lastPathname.current !== location.pathname) {
       const { name, guide } = getPageInfo(location.pathname);
 
-      // Jika baru saja welcome, atau jika ke dashboard, jangan sapa di sini agar tidak tumpang tindih
       if (justWelcomed || location.pathname === '/student/dashboard') {
         lastPathname.current = location.pathname;
         return;
       }
 
-      speak(`Membuka ${name}. ${guide}`, 1.1, true);
+      speak(`Membuka ${name}. ${guide}`, 1.0, true);
       lastPathname.current = location.pathname;
     }
-  }, [location.pathname, isBlind, profile, speak]);
+  }, [location.pathname, isPublicPage, isBlind, profile, speak]);
 
   const getPageInfo = (path) => {
     if (path === '/student/dashboard') return {
@@ -59,7 +68,7 @@ const AccessibilityProvider = ({ children }) => {
     };
     if (path === '/student/modules') return {
         name: 'Halaman Materi Belajar',
-        guide: 'Pilih materi di daftar sebelah kiri. Setelah terbuka, kamu bisa minta saya meringkaskan materi atau membacakannya untukmu.'
+        guide: 'Pilih materi di daftar sebelah kiri. Setelah terbuka, kamu bisa mendengarkan pembacaan materi otomatis dan penjelasan Kak Bintang.'
     };
     if (path === '/student/playground') return {
         name: 'Halaman Tanya Kak Bintang',
@@ -71,50 +80,57 @@ const AccessibilityProvider = ({ children }) => {
     };
     if (path === '/profile') return {
         name: 'Halaman Profil Saya',
-        guide: 'Informasi akun dan pengaturan aksesibilitas kamu.'
+        guide: 'Informasi akun dan pengaturan aksesibilitas suara kamu.'
     };
     return { name: 'Halaman Baru', guide: '' };
   };
 
-  // Global focus and hover listener for blind users
+  // Global focus, hover, and W3C Image/Diagram listener for Siswa Tunanetra
   useEffect(() => {
-    // Sound removed for student and parent roles as requested
-    if (!isBlind || profile?.role === 'siswa' || profile?.role === 'ortu') return;
+    if (isPublicPage || !isBlind || !profile) return;
 
     let lastFocusedElement = null;
     let lastSpokenText = '';
     let lastSpokenTime = 0;
 
     const handleAccessibilityFeedback = (e) => {
-      // Pastikan target adalah elemen DOM yang valid sebelum memanggil closest
       if (!e.target || typeof e.target.closest !== 'function') return;
 
-      // Mencari elemen interaktif terdekat
-      const target = e.target.closest('button, a, input, [role="button"], .clickable-item, [aria-label], select, textarea');
+      // 🎯 W3C DESKRIPSI GAMBAR DAN DIAGRAM (Alt Text & Diagram Reader)
+      const imgTarget = e.target.closest('img, svg, figure, [data-description], [alt]');
+      if (imgTarget && !e.target.closest('button, a')) {
+        const alt = imgTarget.getAttribute('alt') || imgTarget.getAttribute('data-description') || imgTarget.getAttribute('aria-label') || imgTarget.getAttribute('title') || '';
+        if (alt.trim()) {
+          const now = Date.now();
+          if (imgTarget === lastFocusedElement && alt === lastSpokenText && now - lastSpokenTime < 1000) return;
+          lastFocusedElement = imgTarget;
+          lastSpokenText = alt;
+          lastSpokenTime = now;
+          speak(`Deskripsi Gambar atau Diagram: ${alt.trim()}`, 1.0, true);
+          return;
+        }
+      }
+
+      // Search for nearest interactive element
+      const target = e.target.closest('button, a, input, [role="button"], .clickable-item, [aria-label], select, textarea, h1, h2, h3, [tabindex]');
       if (!target) return;
 
-      // Ambil teks dari aria-label atau innerText
       let text = target.getAttribute('aria-label') || target.innerText || target.placeholder || target.getAttribute('title') || '';
-
-      // Bersihkan teks
       text = text.replace(/\n/g, ' ').trim();
 
       if (!text) return;
 
-      // Debounce dan cegah pengulangan jika fokus belum berpindah secara fisik
       const now = Date.now();
-      if (target === lastFocusedElement && text === lastSpokenText && now - lastSpokenTime < 1000) return;
+      if (target === lastFocusedElement && text === lastSpokenText && now - lastSpokenTime < 800) return;
 
       lastFocusedElement = target;
       lastSpokenText = text;
       lastSpokenTime = now;
 
-      // Menentukan jenis elemen untuk panduan suara
       const tag = target.tagName.toLowerCase();
       const role = target.getAttribute('role');
       let typePrefix = '';
 
-      // Normalisasi sebutan untuk Beranda/Home
       let spokenText = text;
       if (text.toLowerCase() === 'beranda' || text.toLowerCase() === 'home') {
         spokenText = 'Beranda Utama';
@@ -128,8 +144,8 @@ const AccessibilityProvider = ({ children }) => {
       else if ((tag === 'input' || tag === 'textarea') && !hasPrefix('Kolom isian')) typePrefix = 'Kolom isian ';
       else if (tag === 'select' && !hasPrefix('Pilihan')) typePrefix = 'Pilihan ';
 
-      // Gunakan force=true agar responsif saat pindah-pindah cepat
-      speak(`${typePrefix}${spokenText}`, 1.3, true);
+      // Speak with user-configured voice settings
+      speak(`${typePrefix}${spokenText}`, 1.0, true);
     };
 
     window.addEventListener('focus', handleAccessibilityFeedback, true);
@@ -139,7 +155,7 @@ const AccessibilityProvider = ({ children }) => {
       window.removeEventListener('focus', handleAccessibilityFeedback, true);
       window.removeEventListener('mouseenter', handleAccessibilityFeedback, true);
     };
-  }, [isBlind, speak]);
+  }, [isPublicPage, isBlind, profile, speak]);
 
   return <>{children}</>;
 };

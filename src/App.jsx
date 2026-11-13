@@ -1,11 +1,15 @@
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { InactivityLogout } from './features/auth';
+import { useAuthStore } from './features/auth/store/useAuthStore';
 import { Subtitles, GlobalGestureCamera, BlindAIAssistant, AccessibilityProvider, useAccessibilityStore } from './features/accessibility';
+import MataPintarGlobalCaption from './features/accessibility/components/MataPintarGlobalCaption';
 import { useAI } from './features/ai-tutor';
 import { useNotification } from './hooks/useNotification';
 import NotificationContainer from './components/feedback/NotificationContainer';
 import AppLayout from './components/layout/AppLayout';
+import { ProtectedRoute, PublicOnlyRoute } from './components/layout/ProtectedRoute';
+
 import LandingPage from './pages/landing/LandingPage';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -32,12 +36,16 @@ function AppContent() {
   const location = useLocation();
   const { pingSupabase, pingAI } = useAI();
   const { showToast } = useNotification();
+  const { initializeAuth, isLoggingOut } = useAuthStore();
 
-  // 🛡️ GLOBAL ALERT HIJACKING
-  // Memastikan tidak ada satupun 'alert()' browser yang muncul di seluruh project
+  // Initialize and verify authentication on app boot
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
+
+  // Global Alert Hijacking
   useEffect(() => {
     window.alert = (message) => {
-      // Jika pesan mengandung kata berhasil, gunakan type success
       const isSuccess = /berhasil|success|✅/i.test(message);
       showToast(message, isSuccess ? 'success' : 'error');
       console.log("Alert Hijacked:", message);
@@ -60,37 +68,58 @@ function AppContent() {
     return () => clearInterval(interval);
   }, [pingSupabase, pingAI]);
 
+  // Full-screen pure circular loading spinner during logout (NO TEXT)
+  if (isLoggingOut) {
+    return (
+      <div className="fixed inset-0 z-[99999] bg-white flex items-center justify-center font-sans">
+        <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <AccessibilityProvider>
       <NotificationContainer />
       <Subtitles />
+      <MataPintarGlobalCaption />
       <BlindAIAssistant />
       <GlobalGestureCamera />
       <AppLayout>
         <Routes>
+          {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/auth" element={<Navigate to="/auth/login" replace />} />
-          <Route path="/auth/login" element={<Login />} />
-          <Route path="/auth/register" element={<Register />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/student/dashboard" element={<StudentDashboard />} />
-          <Route path="/student/live-captions" element={<StudentLiveCaptions />} />
-          <Route path="/student/modules" element={<StudentModules />} />
-          <Route path="/student/playground" element={<StudentPlayground />} />
-          <Route path="/student/tanya-ai" element={<StudentTanyaAI />} />
-          <Route path="/student/tasks" element={<StudentTasks />} />
-          <Route path="/student/task/:id" element={<StudentTaskDetail />} />
-          <Route path="/student/quiz/:id" element={<StudentQuiz />} />
-          <Route path="/student/collaboration" element={<StudentCollaboration />} />
-          <Route path="/student/collaboration/:groupId" element={<StudentCollaboration />} />
-          <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
-          <Route path="/teacher/upload" element={<TeacherUploadModule />} />
-          <Route path="/teacher/create-task" element={<TeacherCreateTask />} />
-          <Route path="/teacher/chat" element={<TeacherChat />} />
-          <Route path="/teacher/collaboration" element={<TeacherCollaboration />} />
-          <Route path="/teacher/collaboration/:groupId" element={<TeacherCollaboration />} />
-          <Route path="/parent/dashboard" element={<ParentDashboard />} />
-          <Route path="/parent/chat" element={<ParentChat />} />
+          <Route path="/auth/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
+          <Route path="/auth/register" element={<PublicOnlyRoute><Register /></PublicOnlyRoute>} />
+
+          {/* Profile Route (Accessible by all logged in roles) */}
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+
+          {/* Siswa Routes (Only accessible by role: 'siswa') */}
+          <Route path="/student/dashboard" element={<ProtectedRoute allowedRoles={['siswa']}><StudentDashboard /></ProtectedRoute>} />
+          <Route path="/student/live-captions" element={<ProtectedRoute allowedRoles={['siswa']}><StudentLiveCaptions /></ProtectedRoute>} />
+          <Route path="/student/modules" element={<ProtectedRoute allowedRoles={['siswa']}><StudentModules /></ProtectedRoute>} />
+          <Route path="/student/playground" element={<ProtectedRoute allowedRoles={['siswa']}><StudentPlayground /></ProtectedRoute>} />
+          <Route path="/student/tanya-ai" element={<ProtectedRoute allowedRoles={['siswa']}><StudentTanyaAI /></ProtectedRoute>} />
+          <Route path="/student/tasks" element={<ProtectedRoute allowedRoles={['siswa']}><StudentTasks /></ProtectedRoute>} />
+          <Route path="/student/task/:id" element={<ProtectedRoute allowedRoles={['siswa']}><StudentTaskDetail /></ProtectedRoute>} />
+          <Route path="/student/quiz/:id" element={<ProtectedRoute allowedRoles={['siswa']}><StudentQuiz /></ProtectedRoute>} />
+          <Route path="/student/collaboration" element={<ProtectedRoute allowedRoles={['siswa']}><StudentCollaboration /></ProtectedRoute>} />
+          <Route path="/student/collaboration/:groupId" element={<ProtectedRoute allowedRoles={['siswa']}><StudentCollaboration /></ProtectedRoute>} />
+
+          {/* Teacher Routes (Only accessible by role: 'guru') */}
+          <Route path="/teacher/dashboard" element={<ProtectedRoute allowedRoles={['guru']}><TeacherDashboard /></ProtectedRoute>} />
+          <Route path="/teacher/upload" element={<ProtectedRoute allowedRoles={['guru']}><TeacherUploadModule /></ProtectedRoute>} />
+          <Route path="/teacher/create-task" element={<ProtectedRoute allowedRoles={['guru']}><TeacherCreateTask /></ProtectedRoute>} />
+          <Route path="/teacher/chat" element={<ProtectedRoute allowedRoles={['guru']}><TeacherChat /></ProtectedRoute>} />
+          <Route path="/teacher/collaboration" element={<ProtectedRoute allowedRoles={['guru']}><TeacherCollaboration /></ProtectedRoute>} />
+          <Route path="/teacher/collaboration/:groupId" element={<ProtectedRoute allowedRoles={['guru']}><TeacherCollaboration /></ProtectedRoute>} />
+
+          {/* Parent Routes (Only accessible by role: 'ortu') */}
+          <Route path="/parent/dashboard" element={<ProtectedRoute allowedRoles={['ortu']}><ParentDashboard /></ProtectedRoute>} />
+          <Route path="/parent/chat" element={<ProtectedRoute allowedRoles={['ortu']}><ParentChat /></ProtectedRoute>} />
+
+          {/* Fallback Route */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AppLayout>

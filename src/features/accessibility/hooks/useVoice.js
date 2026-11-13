@@ -1,26 +1,63 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useVoiceStore } from '../store/voiceStore';
 
 // Singleton instance for Speech Recognition
 let sharedRecognition = null;
 
 export function useVoice() {
-  const [isListening, setIsListening] = useState(false)
-  const isMounted = useRef(true)
+  const [isListening, setIsListening] = useState(false);
+  const [availableVoices, setAvailableVoices] = useState([]);
+  const isMounted = useRef(true);
   const location = useLocation();
 
+  const {
+    voiceSpeed,
+    voiceVolume,
+    voiceRepeat,
+    selectedVoiceURI,
+    lastSpokenText,
+    setVoiceSpeed,
+    setVoiceVolume,
+    setVoiceRepeat,
+    setSelectedVoiceURI,
+    setLastSpokenText
+  } = useVoiceStore();
+
   const isPublicPage = useMemo(() => {
+    if (!location?.pathname) return false;
     if (location.pathname === '/') return true;
     const publicPaths = ['/auth', '/login', '/register'];
     return publicPaths.some(path => location.pathname.startsWith(path));
-  }, [location.pathname]);
+  }, [location?.pathname]);
+
+  // Load available speech synthesis voices (especially Indonesian voices)
+  const updateVoices = useCallback(() => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      const voices = window.speechSynthesis.getVoices();
+      setAvailableVoices(voices || []);
+    }
+  }, []);
 
   useEffect(() => {
+    isMounted.current = true;
+    updateVoices();
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.onvoiceschanged = updateVoices;
+    }
     return () => {
       isMounted.current = false;
-      // Jangan cancel di sini agar suara navigasi antar halaman tidak terputus
     };
-  }, []);
+  }, [updateVoices]);
+
+  const getIndonesianVoices = useCallback(() => {
+    if (!availableVoices || availableVoices.length === 0) return [];
+    const indonesian = availableVoices.filter(v =>
+      (v.lang && (v.lang.toLowerCase().startsWith('id') || v.lang.toLowerCase().includes('id'))) ||
+      (v.name && (v.name.toLowerCase().includes('indonesia') || v.name.toLowerCase().includes('bahasa')))
+    );
+    return indonesian.length > 0 ? indonesian : availableVoices;
+  }, [availableVoices]);
 
   const playSound = useCallback((type = 'click') => {
     return;
@@ -38,7 +75,6 @@ export function useVoice() {
       sharedRecognition.maxAlternatives = 3;
     }
 
-    // Set config for real-time and continuous capture
     sharedRecognition.continuous = true;
     sharedRecognition.interimResults = true;
 
@@ -68,7 +104,7 @@ export function useVoice() {
     try {
       sharedRecognition.start();
     } catch (e) {
-      // If already started, we just let it be
+      // If already started, let it be
     }
   }, [isPublicPage]);
 
@@ -81,33 +117,84 @@ export function useVoice() {
     }
   }, []);
 
-  const speak = useCallback((text, rate = 1.1, force = false) => {
+  /**
+   * Speak text with configurable voice speed, volume, voice selection, and repeat capability.
+   */
+  const speak = useCallback((text, rateMultiplier = 1.0, force = false, options = {}) => {
     if (!text || !window.speechSynthesis) return;
+
+    if (typeof text === 'string' && text.trim()) {
+      setLastSpokenText(text);
+    }
+
+    const {
+      overrideVoiceURI,
+      overrideSpeed,
+      overrideVolume,
+      overrideRepeat
+    } = options;
+
+    const storeState = useVoiceStore.getState();
+    const currentSpeed = overrideSpeed ?? storeState.voiceSpeed ?? 1.0;
+    const currentVolume = overrideVolume ?? storeState.voiceVolume ?? 1.0;
+    const currentVoiceURI = overrideVoiceURI ?? storeState.selectedVoiceURI ?? '';
+    const currentRepeat = overrideRepeat ?? storeState.voiceRepeat ?? 1;
+
+    // Calculate rate (clamped between 0.5x and 2.0x)
+    const effectiveRate = Math.max(0.5, Math.min(2.0, (currentSpeed * rateMultiplier)));
+    const effectiveVolume = Math.max(0.0, Math.min(1.0, currentVolume));
 
     const performSpeak = () => {
       if (force) {
         window.speechSynthesis.cancel();
       }
 
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'id-ID';
-      utterance.rate = rate;
-      utterance.pitch = 1.0;
-
       const voices = window.speechSynthesis.getVoices();
-      const idVoice = voices.find(v => v.lang.startsWith('id') || v.lang.includes('ID'));
-      if (idVoice) {
-        utterance.voice = idVoice;
+
+      // Find matching voice
+      let selectedVoice = null;
+      if (currentVoiceURI) {
+        selectedVoice = voices.find(v => v.voiceURI === currentVoiceURI || v.name === currentVoiceURI);
       }
 
+      // Fallback to Indonesian voice
+      if (!selectedVoice) {
+        selectedVoice = voices.find(v => v.lang.startsWith('id') || v.lang.includes('ID') || (v.name && v.name.toLowerCase().includes('indonesia')));
+      }
+
+      const speakRound = (remaining) => {
+        if (!isMounted.current || remaining <= 0) return;
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'id-ID';
+        utterance.rate = effectiveRate;
+        utterance.volume = effectiveVolume;
+        utterance.pitch = 1.0;
+
+        if (selectedVoice) {
+          utterance.voice = selectedVoice;
+        }
+
+        utterance.onend = () => {
+          if (remaining > 1 && isMounted.current) {
+            setTimeout(() => speakRound(remaining - 1), 350);
+          }
+        };
+
+        utterance.onerror = (e) => {
+          console.error("SpeechSynthesis error:", e);
+        };
+
+        window.speechSynthesis.speak(utterance);
+      };
+
       if (isMounted.current) {
-        // Berikan sedikit delay jika force=true agar cancel() selesai diproses browser
         if (force) {
           setTimeout(() => {
-            if (isMounted.current) window.speechSynthesis.speak(utterance);
+            if (isMounted.current) speakRound(currentRepeat);
           }, 50);
         } else {
-          window.speechSynthesis.speak(utterance);
+          speakRound(currentRepeat);
         }
       }
     };
@@ -121,21 +208,103 @@ export function useVoice() {
     } else {
       performSpeak();
     }
-  }, []);
+  }, [setLastSpokenText]);
 
   const stopSpeaking = useCallback(() => {
-    if (window.speechSynthesis) {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
   }, []);
 
+  const replayLastSpoken = useCallback(() => {
+    const textToReplay = useVoiceStore.getState().lastSpokenText;
+    if (textToReplay) {
+      speak(textToReplay, 1.0, true);
+    }
+  }, [speak]);
+
+  /**
+   * 🎯 PEMBACA SOAL KUIS OTOMATIS (Sequential Quiz Reader for Tunanetra)
+   */
+  const speakQuestionAndOptions = useCallback(({ questionNumber, questionText, options = [], instructions = '' }) => {
+    let formattedText = `Soal nomor ${questionNumber}. ${questionText}. `;
+
+    if (Array.isArray(options) && options.length > 0) {
+      options.forEach((opt, idx) => {
+        const letter = String.fromCharCode(65 + idx); // A, B, C, D
+        formattedText += `Pilihan ${letter}, ${opt}. `;
+      });
+    }
+
+    if (instructions) {
+      formattedText += `${instructions} `;
+    } else {
+      formattedText += `Silakan pilih jawaban. Kamu bisa menekan tombol A, B, atau C pada keyboard, atau gunakan Tab untuk memilih.`;
+    }
+
+    speak(formattedText, 1.0, true);
+  }, [speak]);
+
+  /**
+   * 🎯 PEMBACA HASIL JAWABAN KUIS (Quiz Result Reader)
+   */
+  const speakQuizResult = useCallback(({ isCorrect, correctLetter, correctText, explanation = '' }) => {
+    let resultSpeech = '';
+    if (isCorrect) {
+      resultSpeech = `Hebat! Jawaban kamu Benar! Pilihan ${correctLetter}, ${correctText} adalah jawaban yang tepat. `;
+    } else {
+      resultSpeech = `Jawaban kurang tepat. Jawaban yang benar adalah Pilihan ${correctLetter}, ${correctText}. `;
+    }
+
+    if (explanation) {
+      resultSpeech += `Penjelasan: ${explanation}`;
+    }
+
+    speak(resultSpeech, 1.0, true);
+  }, [speak]);
+
+  /**
+   * 🎯 W3C DESKRIPSI GAMBAR DAN DIAGRAM (Image & Diagram Alt Text Reader)
+   */
+  const speakImageDescription = useCallback((altText, titleText = '') => {
+    const textToRead = altText || titleText || 'Gambar ilustrasi materi';
+    speak(`Gambar atau Diagram: ${textToRead}`, 1.0, true);
+  }, [speak]);
+
+  const testVoice = useCallback((testVoiceURI, testSpeed, testVolume) => {
+    const sampleText = "Halo! Ini adalah contoh suara Kak Bintang dalam Bahasa Indonesia. Selamat belajar dan tetap semangat ya!";
+    speak(sampleText, 1.0, true, {
+      overrideVoiceURI: testVoiceURI,
+      overrideSpeed: testSpeed,
+      overrideVolume: testVolume,
+      overrideRepeat: 1
+    });
+  }, [speak]);
+
   return {
     isListening,
-    isSpeaking: window.speechSynthesis ? window.speechSynthesis.speaking : false,
+    isSpeaking: typeof window !== 'undefined' && window.speechSynthesis ? window.speechSynthesis.speaking : false,
     speak,
+    stopSpeaking,
+    replayLastSpoken,
+    speakQuestionAndOptions,
+    speakQuizResult,
+    speakImageDescription,
+    testVoice,
+    getIndonesianVoices,
+    availableVoices,
     playSound,
     startListening,
     stopListening,
-    stopSpeaking
-  }
+    // Store settings & state
+    voiceSpeed,
+    setVoiceSpeed,
+    voiceVolume,
+    setVoiceVolume,
+    voiceRepeat,
+    setVoiceRepeat,
+    selectedVoiceURI,
+    setSelectedVoiceURI,
+    lastSpokenText
+  };
 }

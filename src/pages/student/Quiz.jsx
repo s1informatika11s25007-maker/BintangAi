@@ -1,16 +1,17 @@
-// pages/student/Quiz.jsx — UPDATED TO USE FEATURE-BASED API
-import React, { useState, useEffect, useRef } from 'react';
+// pages/student/Quiz.jsx — ACCESSIBLE SEQUENTIAL QUIZ READER FOR TUNANETRA
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import ConfettiEffect from '@/components/feedback/ConfettiEffect';
 import GestureCameraOverlay from '@/features/accessibility/components/GestureCameraOverlay';
-import { useGlobalVoiceNav } from '@/features/accessibility/hooks/useGlobalVoiceNav';
 import { useGestureControl } from '@/features/accessibility/hooks/useGestureControl';
 import { useSubtitle } from '@/features/accessibility/components/Subtitles';
 import { useAccessibility } from '@/features/accessibility/hooks/useAccessibility';
+import { useVoice } from '@/features/accessibility/hooks/useVoice';
 import { submitResultApi } from '@/features/quiz/api/submitResultApi';
+import { HiVolumeUp, HiRefresh } from 'react-icons/hi';
 
 const StudentQuiz = () => {
   const { id } = useParams();
@@ -18,6 +19,7 @@ const StudentQuiz = () => {
   const { profile, updateXP, fetchProfile } = useAuthStore();
   const { showSubtitle } = useSubtitle();
   const { isBlind, isDeaf, isMute } = useAccessibility();
+  const { speak, speakQuestionAndOptions, speakQuizResult, stopSpeaking } = useVoice();
 
   const [quiz, setQuiz] = useState(null);
   const [questions, setQuestions] = useState([]);
@@ -35,16 +37,30 @@ const StudentQuiz = () => {
   const [resultsDetail, setResultsDetail] = useState([]);
 
   const timerRef = useRef(null);
-
   const currentQ = questions[currentIndex];
 
+  // 🎯 PEMBACA SOAL KUIS OTOMATIS UNTUK SISWA TUNANETRA
   useEffect(() => {
-    // Sound removed as requested
-  }, [currentIndex, currentQ, isBlind, finished, alreadyDone, questions.length]);
+    if (isBlind && currentQ && !finished && !alreadyDone && !loading) {
+      speakQuestionAndOptions({
+        questionNumber: currentIndex + 1,
+        questionText: currentQ.text || currentQ.question,
+        options: currentQ.options || []
+      });
+    }
+  }, [currentIndex, currentQ, isBlind, finished, alreadyDone, loading, speakQuestionAndOptions]);
 
+  // 🎯 PEMBACA SKOR AKHIR KUIS UNTUK TUNANETRA
   useEffect(() => {
-    // Sound removed as requested
-  }, [finished, alreadyDone, isBlind, quiz, existingResult, score, questions.length, loading]);
+    if (isBlind && (finished || alreadyDone) && !loading) {
+      const finalData = alreadyDone ? existingResult : { total_score: Math.round((score / (questions.length || 1)) * 100), correct_count: score };
+      const displayScore = finalData?.total_score || 0;
+      const displayCorrect = finalData?.correct_count || score;
+      const totalQ = questions.length || 1;
+
+      speak(`Petualangan Kuis Selesai! Skor akhir kamu adalah ${displayScore}. Kamu berhasil menjawab benar ${displayCorrect} dari ${totalQ} soal. Selamat dan tetap semangat ya!`, 1.0, true);
+    }
+  }, [finished, alreadyDone, isBlind, loading, existingResult, score, questions.length, speak]);
 
   const {
     videoRef, canvasRef, isActive: camActive, gestureLabel, lastGesture, confidence, handDetected
@@ -88,7 +104,6 @@ const StudentQuiz = () => {
   const fetchQuizData = async () => {
     setLoading(true);
     try {
-      // 1. Fetch assignment info first to ensure we have the title even if quiz isn't generated
       const { data: assignment, error: assignError } = await supabase
         .from('assignments')
         .select('title, subject')
@@ -97,11 +112,9 @@ const StudentQuiz = () => {
 
       if (assignError) throw assignError;
 
-      // Initial object to hold title while quiz details load
       const initialQuizState = { assignments: assignment };
       setQuiz(initialQuizState);
 
-      // 2. Fetch the actual quiz questions
       const { data: quizData, error: quizError } = await supabase
         .from('quizzes')
         .select('*')
@@ -113,7 +126,6 @@ const StudentQuiz = () => {
         setQuestions(quizData.questions || []);
       }
 
-      // 3. Check for existing submission
       const { data: sub } = await supabase
         .from('submissions')
         .select('*')
@@ -132,22 +144,34 @@ const StudentQuiz = () => {
     }
   };
 
-  const handleAnswer = (index) => {
-    if (selectedAnswer !== null || finished || alreadyDone) return;
+  const handleAnswer = useCallback((index) => {
+    if (selectedAnswer !== null || finished || alreadyDone || !currentQ) return;
     if (timerRef.current) clearInterval(timerRef.current);
 
     setSelectedAnswer(index);
 
     const correctIdx = currentQ.correctIndex !== undefined ? currentQ.correctIndex : currentQ.correct_answer;
-    const isCorrect = index !== -1 && (
-      index === Number(correctIdx) ||
-      currentQ.options[index] === currentQ.correct_answer
-    );
+
+    let isCorrect = false;
+    let correctOptionIndex = 0;
+
+    if (typeof correctIdx === 'number') {
+      correctOptionIndex = correctIdx;
+      isCorrect = (index === correctIdx);
+    } else if (typeof correctIdx === 'string') {
+      correctOptionIndex = currentQ.options ? currentQ.options.findIndex(o => o === correctIdx) : 0;
+      isCorrect = index !== -1 && (currentQ.options[index] === correctIdx);
+    }
+
+    if (correctOptionIndex < 0) correctOptionIndex = 0;
+
+    const correctLetter = String.fromCharCode(65 + correctOptionIndex);
+    const correctText = currentQ.options ? (currentQ.options[correctOptionIndex] || currentQ.correct_answer) : '';
 
     const resultItem = {
       question: currentQ.text || currentQ.question,
-      userAnswer: index !== -1 ? currentQ.options[index] : 'Waktu Habis',
-      correctAnswer: currentQ.options[Number(correctIdx)] || currentQ.correct_answer,
+      userAnswer: index !== -1 ? (currentQ.options ? currentQ.options[index] : index) : 'Waktu Habis',
+      correctAnswer: correctText,
       isCorrect
     };
 
@@ -161,12 +185,49 @@ const StudentQuiz = () => {
       if (isDeaf) showSubtitle(index === -1 ? '⏰ Waktu Habis!' : '❌ Salah', 'error');
     }
 
+    // 🎯 PEMBACA HASIL JAWABAN UNTUK TUNANETRA
+    if (isBlind) {
+      speakQuizResult({
+        isCorrect,
+        correctLetter,
+        correctText,
+        explanation: currentQ.explanation || ''
+      });
+    }
+
     if (currentIndex < questions.length - 1) {
       setTimeout(() => {
         goNext();
-      }, 1500);
+      }, isBlind ? 4500 : 1800);
     }
-  };
+  }, [selectedAnswer, finished, alreadyDone, currentQ, isDeaf, isBlind, currentIndex, questions.length, showSubtitle, speakQuizResult]);
+
+  // 🎯 KEYBOARD SHORTCUTS KHUSUS TUNANETRA (A, B, C, D atau 1, 2, 3, 4 untuk menjawab)
+  useEffect(() => {
+    if (!isBlind || finished || alreadyDone || !currentQ || selectedAnswer !== null) return;
+
+    const handleKeyDown = (e) => {
+      const key = e.key.toLowerCase();
+      if (key === 'a' || key === '1') {
+        handleAnswer(0);
+      } else if (key === 'b' || key === '2') {
+        if (currentQ.options && currentQ.options.length > 1) handleAnswer(1);
+      } else if (key === 'c' || key === '3') {
+        if (currentQ.options && currentQ.options.length > 2) handleAnswer(2);
+      } else if (key === 'd' || key === '4') {
+        if (currentQ.options && currentQ.options.length > 3) handleAnswer(3);
+      } else if (key === 'r') {
+        speakQuestionAndOptions({
+          questionNumber: currentIndex + 1,
+          questionText: currentQ.text || currentQ.question,
+          options: currentQ.options || []
+        });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isBlind, finished, alreadyDone, currentQ, selectedAnswer, currentIndex, handleAnswer, speakQuestionAndOptions]);
 
   const goNext = () => {
     if (currentIndex < questions.length - 1) {
@@ -182,7 +243,7 @@ const StudentQuiz = () => {
     setIsSubmitting(true);
 
     const xpGained = score * 20;
-    const finalScore = Math.round((score / questions.length) * 100);
+    const finalScore = Math.round((score / (questions.length || 1)) * 100);
     const incorrectCount = questions.length - score;
 
     try {
@@ -225,18 +286,14 @@ const StudentQuiz = () => {
 
   if (isSubmitting) return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 text-center">
-      <div className="relative w-24 h-24 md:w-32 md:h-32 mb-6 md:mb-8">
-        <div className="absolute inset-0 border-4 md:border-8 border-indigo-100 rounded-full"></div>
-        <div className="absolute inset-0 border-4 md:border-8 border-indigo-600 rounded-full border-t-transparent animate-spin"></div>
-        <div className="absolute inset-0 flex items-center justify-center text-3xl md:text-4xl">🚀</div>
-      </div>
+      <div className="w-16 h-16 md:w-20 md:h-20 border-4 md:border-8 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mb-6 md:mb-8" />
       <h2 className="font-black text-slate-900 text-xl md:text-3xl uppercase tracking-wider mb-2">Mengirim Jawaban...</h2>
-      <p className="text-indigo-500 font-bold uppercase tracking-widest animate-bounce text-sm">Tunggu sebentar ya!</p>
+      <p className="text-indigo-500 font-bold uppercase tracking-widest animate-pulse text-sm">Tunggu sebentar ya!</p>
     </div>
   );
 
   if (alreadyDone || finished) {
-    const finalData = alreadyDone ? existingResult : { total_score: Math.round((score / questions.length) * 100), correct_count: score, incorrect_count: questions.length - score, results_detail: resultsDetail };
+    const finalData = alreadyDone ? existingResult : { total_score: Math.round((score / (questions.length || 1)) * 100), correct_count: score, incorrect_count: questions.length - score, results_detail: resultsDetail };
     const displayScore = finalData?.total_score || 0;
     const displayCorrect = finalData?.correct_count || 0;
     const displayIncorrect = finalData?.incorrect_count || 0;
@@ -358,6 +415,22 @@ const StudentQuiz = () => {
         </div>
 
         <div className="flex items-center gap-2 md:gap-5">
+          {/* Re-read question button for blind users */}
+          {isBlind && currentQ && (
+            <button
+              onClick={() => speakQuestionAndOptions({
+                questionNumber: currentIndex + 1,
+                questionText: currentQ.text || currentQ.question,
+                options: currentQ.options || []
+              })}
+              className="px-3 py-2 bg-indigo-600 text-white rounded-xl font-bold text-xs flex items-center gap-1.5 shadow-md hover:bg-indigo-700 transition-all"
+              title="Bacakan Soal & Pilihan"
+            >
+              <HiVolumeUp className="text-base" />
+              <span className="hidden sm:inline">Bacakan Soal</span>
+            </button>
+          )}
+
           <div className={`px-3 md:px-5 py-1.5 md:py-2.5 rounded-xl md:rounded-xl border-2 md:border-2 font-black transition-all ${timeLeft < 10 ? 'bg-rose-50 border-rose-500 text-rose-600 animate-pulse' : 'bg-indigo-50 border-indigo-200 text-indigo-600'}`}>
             <span className="text-lg md:text-2xl tabular-nums">{timeLeft}s</span>
           </div>
@@ -372,11 +445,12 @@ const StudentQuiz = () => {
           <motion.div
             className="h-full bg-indigo-600"
             initial={{ width: 0 }}
-            animate={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
+            animate={{ width: `${((currentIndex + 1) / (questions.length || 1)) * 100}%` }}
             transition={{ type: 'spring', stiffness: 50 }}
           />
         </div>
 
+        {/* Question Box */}
         <AnimatePresence mode="wait">
           <motion.div
             key={currentIndex}
@@ -386,19 +460,43 @@ const StudentQuiz = () => {
             className={`p-6 md:p-8 bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-xl md:shadow-lg border-b-[8px] md:border-b-[8px] border-slate-100 mb-6 md:mb-8 relative overflow-hidden ${isDeaf && selectedAnswer !== null ? (resultsDetail[currentIndex]?.isCorrect ? 'ring-8 ring-emerald-500/20' : 'ring-8 ring-rose-500/20') : ''}`}
           >
             <div className={`absolute top-0 left-0 w-1 md:w-1.5 h-full ${isDeaf && selectedAnswer !== null ? (resultsDetail[currentIndex]?.isCorrect ? 'bg-emerald-500' : 'bg-rose-500') : 'bg-indigo-600'}`}></div>
-            <h2 className="font-black text-slate-800 text-xl md:text-2xl leading-tight">{currentQ?.text || currentQ?.question}</h2>
+
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-black text-indigo-600 uppercase tracking-widest">
+                Soal Nomor {currentIndex + 1} Dari {questions.length}
+              </span>
+              {isBlind && (
+                <button
+                  onClick={() => speakQuestionAndOptions({
+                    questionNumber: currentIndex + 1,
+                    questionText: currentQ?.text || currentQ?.question,
+                    options: currentQ?.options || []
+                  })}
+                  className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl flex items-center gap-1 border border-indigo-100 transition-all"
+                >
+                  <HiVolumeUp className="text-sm" /> Dengarkan Lagi (Spasi/R)
+                </button>
+              )}
+            </div>
+
+            <h2 className="font-black text-slate-800 text-xl md:text-2xl leading-tight">
+              {currentQ?.text || currentQ?.question}
+            </h2>
           </motion.div>
         </AnimatePresence>
 
+        {/* Answer Options */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-5">
-          {currentQ?.options.map((opt, i) => (
+          {currentQ?.options?.map((opt, i) => (
             <motion.button
               key={i}
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => handleAnswer(i)}
               disabled={selectedAnswer !== null}
-              className={`p-5 md:p-6 rounded-2xl md:rounded-[2rem] text-left font-black transition-all flex items-center gap-4 md:gap-5 border-2 md:border-2 border-b-[6px] md:border-b-[6px] ${
+              tabIndex={0}
+              aria-label={`Pilihan ${String.fromCharCode(65 + i)}, ${opt}`}
+              className={`p-5 md:p-6 rounded-2xl md:rounded-[2rem] text-left font-black transition-all flex items-center gap-4 md:gap-5 border-2 md:border-2 border-b-[6px] md:border-b-[6px] outline-none focus:ring-4 focus:ring-indigo-500/30 ${
                 selectedAnswer === i
                   ? (resultsDetail[currentIndex]?.isCorrect
                       ? 'bg-emerald-600 border-emerald-800 text-white shadow-xl -translate-y-1'
@@ -413,6 +511,12 @@ const StudentQuiz = () => {
             </motion.button>
           ))}
         </div>
+
+        {isBlind && (
+          <p className="text-center text-xs font-bold text-slate-400 mt-6 uppercase tracking-wider">
+            💡 Panduan Tunanetra: Tekan tombol A, B, C, atau D pada keyboard untuk memilih jawaban. Tekan R atau Spasi untuk mengulang bacaan soal.
+          </p>
+        )}
 
         {currentIndex === questions.length - 1 && selectedAnswer !== null && (
           <motion.div
@@ -434,7 +538,6 @@ const StudentQuiz = () => {
       </main>
     </div>
   );
-
 };
 
 export default StudentQuiz;

@@ -8,7 +8,11 @@ import StudentSidebar from '@/components/layout/StudentSidebar';
 import ParentSidebar from '@/components/layout/ParentSidebar';
 import { useSubtitle } from '@/features/accessibility/components/Subtitles';
 import { useAccessibility } from '@/features/accessibility/hooks/useAccessibility';
-import { HiUser, HiCog, HiFingerPrint, HiShieldCheck, HiLogout, HiClipboardCopy, HiCheckCircle } from 'react-icons/hi';
+import VoiceSettingsPanel from '@/features/accessibility/components/VoiceSettingsPanel';
+import {
+  HiUser, HiCog, HiFingerPrint, HiShieldCheck,
+  HiLogout, HiClipboardCopy, HiCheckCircle, HiVolumeUp, HiAcademicCap
+} from 'react-icons/hi';
 
 const Profile = () => {
   const { profile, logout, setProfile } = useAuthStore();
@@ -18,11 +22,9 @@ const Profile = () => {
 
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState(
-    profile?.role === 'guru' ? 'identitas' : profile?.role === 'ortu' ? 'link' : 'aksesibilitas'
+    profile?.role === 'guru' ? 'identitas' : profile?.role === 'ortu' ? 'link' : 'pengaturan_suara'
   );
 
-  const [studentIdInput, setStudentIdInput] = useState('');
-  const [studentPassword, setStudentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [message, setMessage] = useState(null);
 
@@ -52,9 +54,26 @@ const Profile = () => {
     localStorage.setItem('accessibility_settings', JSON.stringify(newSettings));
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/auth/login');
+  const handleLogout = async () => {
+    await logout('/auth/login');
+  };
+
+  const handleUpdateClassLevel = async (newLevel) => {
+    if (!profile?.id) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase.from('profiles').update({ class_level: newLevel }).eq('id', profile.id);
+      if (!error) {
+        setProfile({ ...profile, class_level: newLevel });
+        setMessage({ type: 'success', text: `Tingkat kelas berhasil diperbarui ke ${newLevel}!` });
+      } else {
+        throw error;
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Gagal memperbarui kelas: ' + err.message });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleChangePassword = async () => {
@@ -81,6 +100,7 @@ const Profile = () => {
 
   const tabs = {
     siswa: [
+      { id: 'pengaturan_suara', label: 'Pengaturan Suara', icon: <HiVolumeUp /> },
       { id: 'aksesibilitas', label: 'Profil Siswa', icon: <HiUser /> },
       { id: 'pengaturan_akses', label: 'Pengaturan Akses', icon: <HiCog /> },
       { id: 'id_siswa', label: 'ID Belajar', icon: <HiFingerPrint /> },
@@ -88,10 +108,12 @@ const Profile = () => {
     ],
     guru: [
       { id: 'identitas', label: 'Profil Guru', icon: <HiUser /> },
+      { id: 'pengaturan_suara', label: 'Pengaturan Suara', icon: <HiVolumeUp /> },
       { id: 'keamanan', label: 'Keamanan', icon: <HiShieldCheck /> },
     ],
     ortu: [
       { id: 'identitas', label: 'Profil Ortu', icon: <HiUser /> },
+      { id: 'pengaturan_suara', label: 'Pengaturan Suara', icon: <HiVolumeUp /> },
       { id: 'link', label: 'Hubungkan Anak', icon: <HiFingerPrint /> },
       { id: 'keamanan', label: 'Keamanan', icon: <HiShieldCheck /> },
     ]
@@ -103,6 +125,8 @@ const Profile = () => {
     hidden: { opacity: 0, x: 20 },
     visible: { opacity: 1, x: 0, transition: { duration: 0.4 } }
   };
+
+  const classOptions = ["1 SD", "2 SD", "3 SD", "4 SD", "5 SD", "6 SD"];
 
   return (
     <div className="min-h-screen flex font-sans bg-slate-50 relative overflow-hidden">
@@ -167,23 +191,58 @@ const Profile = () => {
                 exit={{ opacity: 0, x: -20 }}
                 className="bg-white p-6 md:p-10 rounded-[2.5rem] shadow-sm border border-slate-100"
               >
+                {activeTab === 'pengaturan_suara' && (
+                  <VoiceSettingsPanel />
+                )}
+
                 {activeTab === 'aksesibilitas' && (
                   <div className="space-y-8">
                     <div className="grid md:grid-cols-2 gap-6">
-                      {[
-                        { label: 'Nama Lengkap', value: profile?.full_name },
-                        { label: 'Sekolah', value: profile?.slb_name || 'Sekolah Umum' },
-                        { label: 'Kelas', value: profile?.class_level || '-' },
-                        { label: 'Disabilitas', value: profile?.disability_type?.toUpperCase() || 'UMUM' },
-                        { label: 'XP Belajar', value: `${profile?.xp || 0} XP`, color: 'text-indigo-600' },
-                      ].map((item, i) => (
-                        <div key={i} className="space-y-2">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{item.label}</label>
-                          <div className={`p-4 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-800 ${item.color || ''}`}>
-                            {item.value}
-                          </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nama Lengkap</label>
+                        <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-800">
+                          {profile?.full_name}
                         </div>
-                      ))}
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Sekolah</label>
+                        <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-800">
+                          {profile?.slb_name || 'Sekolah Umum'}
+                        </div>
+                      </div>
+
+                      {/* Editable Class Level for Personalization */}
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest ml-1 flex items-center gap-1">
+                          <HiAcademicCap /> Tingkat Kelas Pembelajaran (Personalisasi AI)
+                        </label>
+                        <select
+                          value={profile?.class_level || '4 SD'}
+                          onChange={(e) => handleUpdateClassLevel(e.target.value)}
+                          disabled={saving}
+                          className="w-full p-4 bg-indigo-50/60 border-2 border-indigo-100 text-indigo-900 rounded-xl font-black text-sm outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                        >
+                          {classOptions.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                        <p className="text-[10px] text-slate-400 italic ml-1">
+                          * Personalisasi penjelasan Kak Bintang AI akan otomatis menyesuaikan dengan tingkat kelas yang Anda pilih.
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Disabilitas</label>
+                        <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-800">
+                          {profile?.disability_type?.toUpperCase() || 'UMUM'}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 md:col-span-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">XP Belajar</label>
+                        <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl font-bold text-indigo-600 text-lg">
+                          {profile?.xp || 0} XP
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -214,6 +273,11 @@ const Profile = () => {
                         onChange={e => saveAccSettings({...accSettings, fontSize: parseInt(e.target.value)})}
                         className="w-full accent-indigo-600"
                       />
+                    </div>
+
+                    <div className="pt-6 border-t border-slate-100">
+                      <h4 className="font-bold text-slate-800 mb-4">Pengaturan Suara Pembelajaran</h4>
+                      <VoiceSettingsPanel compact={true} />
                     </div>
                   </div>
                 )}
@@ -262,19 +326,48 @@ const Profile = () => {
                 {/* Teacher specific view */}
                 {activeTab === 'identitas' && (
                    <div className="grid md:grid-cols-2 gap-6">
-                      {[
-                        { label: 'Nama Lengkap', value: profile?.full_name },
-                        { label: 'Instansi/Sekolah', value: profile?.slb_name },
-                        { label: 'Mata Pelajaran', value: profile?.subject },
-                        { label: 'Kode Kelas Utama', value: profile?.class_code, color: 'text-indigo-600 font-black' },
-                      ].map((item, i) => (
-                        <div key={i} className="space-y-2">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{item.label}</label>
-                          <div className={`p-4 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-800 ${item.color || ''}`}>
-                            {item.value || '-'}
-                          </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nama Lengkap</label>
+                        <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-800">
+                          {profile?.full_name}
                         </div>
-                      ))}
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Instansi/Sekolah</label>
+                        <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-800">
+                          {profile?.slb_name || '-'}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Mata Pelajaran</label>
+                        <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-800">
+                          {profile?.subject || '-'}
+                        </div>
+                      </div>
+
+                      {/* Editable Class Level for Teacher */}
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest ml-1 flex items-center gap-1">
+                          <HiAcademicCap /> Kelas Diampu
+                        </label>
+                        <select
+                          value={profile?.class_level || '4 SD'}
+                          onChange={(e) => handleUpdateClassLevel(e.target.value)}
+                          disabled={saving}
+                          className="w-full p-4 bg-indigo-50/60 border-2 border-indigo-100 text-indigo-900 rounded-xl font-black text-sm outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                        >
+                          {classOptions.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      </div>
+
+                      <div className="space-y-2 md:col-span-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Kode Kelas Utama</label>
+                        <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-xl font-black text-indigo-600 text-lg">
+                          {profile?.class_code || '-'}
+                        </div>
+                      </div>
                    </div>
                 )}
               </motion.div>
