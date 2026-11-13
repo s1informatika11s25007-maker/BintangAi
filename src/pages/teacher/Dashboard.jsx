@@ -997,10 +997,44 @@ const TeacherDashboard = () => {
           )}
         </AnimatePresence>
 
-        <footer className="shrink-0 py-12 border-t border-slate-100 text-center bg-white/50 backdrop-blur-sm">
-          <p className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-400 opacity-60">
-            Sistem Manajemen Ekosistem BintangAi • © 2026 Inovasi Tanpa Batas
-          </p>
+        <footer className="shrink-0 mt-16 pt-8 pb-10 border-t border-slate-200/80 bg-white/70 backdrop-blur-md rounded-t-[2.5rem] shadow-sm px-6 md:px-12">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-sm shadow-md shadow-indigo-200">
+                B
+              </div>
+              <div>
+                <p className="text-sm font-black tracking-tight text-slate-900">
+                  Bintang<span className="text-indigo-600">Ai</span>
+                </p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  Ekosistem Pembelajaran SD Inklusif
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-2 text-[10px] font-black uppercase tracking-wider text-slate-500">
+              <span className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full border border-indigo-100">
+                📖 Modul SD Kelas 1-6
+              </span>
+              <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100">
+                👁️ Mata Pintar Live
+              </span>
+              <span className="px-3 py-1 bg-purple-50 text-purple-600 rounded-full border border-purple-100">
+                🤖 AI Tutor Kak Bintang
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3 text-right">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-[9px] font-black uppercase tracking-widest border border-emerald-200">
+                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                Sistem Aktif
+              </span>
+              <p className="text-[11px] font-bold text-slate-400">
+                © 2026 BintangAi · Dibuat dengan ❤️ untuk Pendidikan Indonesia
+              </p>
+            </div>
+          </div>
         </footer>
       </main>
 
