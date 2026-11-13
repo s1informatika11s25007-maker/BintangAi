@@ -55,13 +55,13 @@ const InactivityLogout = ({ children }) => {
   useEffect(() => {
     if (!user?.id) return;
 
-    // Set online on mount & heartbeat every 60s
+    // Set online on mount & heartbeat every 30s for max precision
     updateOnlineStatus(true);
     const heartbeatInterval = setInterval(() => {
       if (Date.now() - lastActivityRef.current < INACTIVITY_LIMIT) {
         updateOnlineStatus(true);
       }
-    }, 60000);
+    }, 30000);
 
     const activityEvents = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
 
@@ -88,8 +88,19 @@ const InactivityLogout = ({ children }) => {
     const interval = setInterval(checkCameraActivity, 5000);
 
     const handleEvent = () => resetTimer();
+    const handleFocus = () => {
+      updateOnlineStatus(true);
+      resetTimer(true);
+    };
+
     activityEvents.forEach(event => {
       window.addEventListener(event, handleEvent, { passive: true });
+    });
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        handleFocus();
+      }
     });
 
     const handleUnload = () => {
@@ -97,6 +108,15 @@ const InactivityLogout = ({ children }) => {
         try {
           const body = JSON.stringify({ is_online: false, last_active_at: new Date().toISOString() });
           const endpoint = `${import.meta.env.VITE_SUPABASE_URL || 'https://qepfuqlnkofzfhfzahpr.supabase.co'}/rest/v1/profiles?id=eq.${user.id}`;
+
+          if (navigator.sendBeacon) {
+            const blob = new Blob([body], { type: 'application/json' });
+            const headers = {
+              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+            };
+            navigator.sendBeacon(endpoint, blob);
+          }
+
           fetch(endpoint, {
             method: 'PATCH',
             headers: {

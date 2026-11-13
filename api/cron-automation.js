@@ -32,6 +32,18 @@ export default async function handler(req, res) {
   const WORKER_ID = `vercel-cron-auto-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
   const FACILITY_ID = process.env.FACILITY_ID || process.env.VITE_FACILITY_ID || null;
 
+  // Cleanup stale online sessions in database
+  try {
+    const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000).toISOString();
+    await supabase
+      .from('profiles')
+      .update({ is_online: false })
+      .eq('is_online', true)
+      .lt('last_active_at', threeMinutesAgo);
+  } catch (cleanErr) {
+    console.error("Stale session cleanup error:", cleanErr);
+  }
+
   const executionLog = {
     startedAt: new Date().toISOString(),
     workerJobsProcessed: 0,

@@ -79,9 +79,11 @@ const TeacherDashboard = () => {
     setTimeout(() => setToast(null), 3000);
   };
 
-  // REALTIME SYNC - MONITORING TAB
+  // REALTIME SYNC - MONITORING TAB & AUTOMATIC STALE SESSION PURGE
   useEffect(() => {
     if (!profile?.class_code) return;
+
+    fetchStudents();
 
     const channel = supabase
       .channel('teacher_dashboard_sync')
@@ -95,7 +97,13 @@ const TeacherDashboard = () => {
         },
         (payload) => {
           if (payload.eventType === 'UPDATE' && payload.new) {
-            const isOnline = payload.new.is_online === true;
+            const now = new Date();
+            const onlineCutoff = new Date(now.getTime() - 5 * 60 * 1000);
+            const lastActiveTime = payload.new.last_active_at ? new Date(payload.new.last_active_at) : null;
+
+            // ACCURATE ONLINE CHECK: Must be is_online === true AND last_active_at within 5 minutes
+            const isOnline = payload.new.is_online === true && !!(lastActiveTime && lastActiveTime >= onlineCutoff);
+
             setStudents(prev => {
               const updated = prev.map(s => {
                 if (s.id === payload.new.id) {
@@ -131,7 +139,13 @@ const TeacherDashboard = () => {
       )
       .subscribe();
 
+    // Periodic 15-second polling interval to sync live count
+    const pollInterval = setInterval(() => {
+      fetchStudents();
+    }, 15000);
+
     return () => {
+      clearInterval(pollInterval);
       supabase.removeChannel(channel);
     };
   }, [profile?.class_code]);
@@ -145,7 +159,9 @@ const TeacherDashboard = () => {
         .eq('role', 'siswa')
         .eq('class_code', profile?.class_code);
 
-      const activeToday = classStudents?.filter(s => s.is_online === true).length || 0;
+      const now = new Date();
+      const onlineCutoff = new Date(now.getTime() - 5 * 60 * 1000);
+      const activeToday = classStudents?.filter(s => s.is_online === true && s.last_active_at && new Date(s.last_active_at) >= onlineCutoff).length || 0;
 
       const threeDaysAgo = new Date();
       threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
@@ -196,14 +212,32 @@ const TeacherDashboard = () => {
       if (error) throw error;
 
       const now = new Date();
-      const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
+      const onlineCutoff = new Date(now.getTime() - 5 * 60 * 1000);
+      const deadSessionCutoff = new Date(now.getTime() - 15 * 60 * 1000);
 
-      const processedStudents = data.map(s => {
+      // Only purge dead entries in database where is_online = true but user hasn't sent heartbeat in > 15 mins
+      const deadStudentIds = (data || [])
+        .filter(s => s.is_online === true && (!s.last_active_at || new Date(s.last_active_at) < deadSessionCutoff))
+        .map(s => s.id);
+
+      if (deadStudentIds.length > 0) {
+        supabase
+          .from('profiles')
+          .update({ is_online: false })
+          .in('id', deadStudentIds)
+          .then(() => {});
+      }
+
+      const processedStudents = (data || []).map(s => {
         const completed = s.submissions?.length || 0;
         const lastActiveTime = s.last_active_at ? new Date(s.last_active_at) : null;
-        const isCurrentlyOnline = s.is_online === true || (s.is_online !== false && lastActiveTime && lastActiveTime >= fiveMinutesAgo);
+
+        // Accurate & fresh online status: is_online MUST be true AND last_active_at MUST be within 5-minute cutoff
+        const isCurrentlyOnline = s.is_online === true && !deadStudentIds.includes(s.id) && !!(lastActiveTime && lastActiveTime >= onlineCutoff);
+
         return {
           ...s,
+          is_online: isCurrentlyOnline,
           completed,
           is_currently_online: isCurrentlyOnline,
           status: isCurrentlyOnline ? 'online' : 'offline'
@@ -358,7 +392,7 @@ const TeacherDashboard = () => {
     try {
       await supabase.from('profiles').update({
         is_online: false,
-        last_active_at: new Date().toISOString()
+        last_active_at: new Date(0).toISOString()
       }).eq('id', student.id);
 
       setStudents(prev => prev.map(s => s.id === student.id ? { ...s, is_currently_online: false, is_online: false, status: 'offline' } : s));

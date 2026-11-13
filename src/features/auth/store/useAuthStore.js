@@ -39,8 +39,12 @@ export const useAuthStore = create(
               set({ profile: payload.new });
               useAccessibilityStore.getState().setModeFromProfile(payload.new);
 
-              // Instant logout (< 1s) if teacher manually logs out student
-              if (payload.new.is_online === false && get().user?.id === userId && payload.new.role === 'siswa') {
+              // Instant logout (< 1s) ONLY if teacher explicitly forces logout student (last_active_at set to epoch 1970)
+              const isTeacherForcedLogout = payload.new.is_online === false &&
+                payload.new.last_active_at &&
+                new Date(payload.new.last_active_at).getTime() === 0;
+
+              if (isTeacherForcedLogout && get().user?.id === userId && payload.new.role === 'siswa') {
                 get().logout('/auth/login?reason=teacher_logout');
               }
             }
@@ -143,13 +147,18 @@ export const useAuthStore = create(
         set({ isLoggingOut: true, loading: true });
 
         const currentProfile = get().profile;
-        if (currentProfile?.id) {
+        const currentUser = get().user;
+        const targetUserId = currentProfile?.id || currentUser?.id;
+
+        if (targetUserId) {
           try {
             await supabase.from('profiles').update({
               is_online: false,
               last_active_at: new Date().toISOString()
-            }).eq('id', currentProfile.id);
-          } catch (e) {}
+            }).eq('id', targetUserId);
+          } catch (e) {
+            console.error('Error updating offline status on logout:', e);
+          }
         }
 
         // 1. Immediately cancel any speech synthesis
