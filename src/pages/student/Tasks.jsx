@@ -167,7 +167,7 @@ const StudentTasks = () => {
         {isMute && (
           <div className="bg-indigo-600 text-white py-4 px-10 flex items-center justify-between shrink-0">
              <div className="flex items-center gap-4">
-                <HiSparkles className="animate-pulse" />
+                <HiLightningBolt className="text-amber-400" />
                 <p className="text-[10px] font-black uppercase tracking-[0.2em]">Navigasi Jari Aktif</p>
              </div>
              <div className="flex gap-8">

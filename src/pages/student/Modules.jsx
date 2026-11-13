@@ -528,7 +528,7 @@ const StudentModules = () => {
                     className="h-[60px] shrink-0 bg-indigo-600 text-white px-5 flex items-center justify-between cursor-pointer lg:cursor-default"
                   >
                     <div className="flex items-center gap-3">
-                      <HiSparkles className="text-xl animate-pulse text-indigo-200" />
+                      <HiChatAlt2 className="text-xl text-indigo-200" />
                       <div>
                         <h3 className="font-black text-[10px] uppercase tracking-widest">Tanya Kak Bintang</h3>
                         <p className="text-[8px] font-bold text-indigo-200 uppercase tracking-tighter">Pakar Materi SD</p>

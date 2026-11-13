@@ -192,7 +192,7 @@ export default function KamusIsyaratModal({ isOpen, onClose }) {
                   {/* Sign Language Guide Box */}
                   <div className="p-5 bg-gradient-to-br from-indigo-900 to-purple-950 text-white rounded-2xl shadow-lg space-y-2">
                     <h4 className="text-xs font-black uppercase tracking-widest text-indigo-300 flex items-center gap-2">
-                      <HiSparkles /> Panduan Gerakan Bahasa Isyarat
+                      <HiAcademicCap /> Panduan Gerakan Bahasa Isyarat
                     </h4>
                     <p className="text-sm font-bold leading-relaxed text-indigo-100">
                       {activeTerm.signGuide}

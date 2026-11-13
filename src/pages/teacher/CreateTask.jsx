@@ -290,7 +290,7 @@ const TeacherCreateTask = () => {
               onClick={() => setShowAIModal(true)}
               className="px-8 py-4 bg-white border-2 border-indigo-600 text-indigo-600 font-black text-xs uppercase rounded-2xl hover:bg-indigo-600 hover:text-white transition-all flex items-center gap-3 shadow-sm active:scale-95"
             >
-              <HiSparkles className="text-lg" /> AI Auto Generate
+              <HiLightningBolt className="text-lg text-amber-500" /> Buat Soal Otomatis
             </button>
             <button
               onClick={handleSubmit}

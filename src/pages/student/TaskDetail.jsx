@@ -288,7 +288,7 @@ const StudentTaskDetail = () => {
       {isMute && (
         <div className="fixed bottom-0 inset-x-0 bg-indigo-600 text-white py-3 md:py-4 px-4 md:px-10 flex flex-col md:flex-row items-center justify-between z-[100] shadow-[0_-10px_50px_rgba(79,70,229,0.3)] gap-2 md:gap-0">
            <div className="flex items-center gap-2 md:gap-4">
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-white/20 flex items-center justify-center animate-pulse"><HiSparkles className="text-xs md:text-base" /></div>
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-white/20 flex items-center justify-center animate-pulse"><HiLightningBolt className="text-xs md:text-base text-amber-300" /></div>
               <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em]">Pemandu Jari Aktif</p>
            </div>
            <div className="flex gap-4 md:gap-10">

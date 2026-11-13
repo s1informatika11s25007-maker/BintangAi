@@ -60,7 +60,7 @@ export default function VoiceSettingsPanel({ compact = false }) {
 
       {/* Benefit Banner for Elementary School Students */}
       <div className="p-4 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 rounded-2xl border border-indigo-100 flex items-center gap-3 text-xs font-semibold text-indigo-900">
-        <HiSparkles className="text-indigo-600 text-xl shrink-0 animate-pulse" />
+        <HiVolumeUp className="text-indigo-600 text-xl shrink-0" />
         <span>
           <strong>Manfaat Siswa SD:</strong> Pengaturan kecepatan, volume, dan pengulangan membantu menyesuaikan daya tangkap & konsentrasi mendengar setiap siswa.
         </span>

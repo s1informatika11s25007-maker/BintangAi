@@ -118,7 +118,7 @@ const TanyaAI = () => {
              </button>
              <div className="relative">
                 <div className="w-10 h-10 md:w-12 md:h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-100 ring-2 ring-indigo-50/50">
-                  <HiSparkles className="text-xl md:text-2xl animate-pulse" />
+                  <HiChatAlt2 className="text-xl md:text-2xl" />
                 </div>
                 <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full" />
              </div>
@@ -174,7 +174,7 @@ const TanyaAI = () => {
                     whileHover={{ scale: 1.1, rotate: 10 }}
                     className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white shrink-0 mb-1 hidden md:flex shadow-lg shadow-indigo-100"
                   >
-                    <HiSparkles className="text-xs" />
+                    <HiAcademicCap className="text-sm" />
                   </motion.div>
                 )}
 
@@ -226,7 +226,7 @@ const TanyaAI = () => {
               className="flex justify-start items-center gap-3"
             >
                <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white hidden md:flex animate-bounce">
-                  <HiSparkles className="text-xs" />
+                  <HiAcademicCap className="text-sm" />
                </div>
                <div className="bg-white border border-slate-100 p-4 rounded-[1.5rem] rounded-bl-none shadow-sm flex items-center gap-3">
                   <div className="flex gap-1">

@@ -406,7 +406,7 @@ const TeacherDashboard = () => {
                 onClick={() => navigate('/teacher/create-task')}
                 className="px-8 py-4 bg-indigo-600 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-indigo-100 hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
               >
-                <HiSparkles className="text-lg animate-pulse" /> Buat QuizKu
+                <HiLightningBolt className="text-lg" /> Buat QuizKu
               </button>
             </motion.div>
           </header>
@@ -555,7 +555,7 @@ const TeacherDashboard = () => {
                             <td className="px-10 py-8 text-center">
                                <div className="flex items-center justify-center gap-2">
                                   <span className="text-xl font-black text-indigo-600">{student.xp}</span>
-                                  <HiSparkles className="text-amber-400" />
+                                  <HiStar className="text-amber-400" />
                                </div>
                             </td>
                             <td className="px-10 py-8 text-right">
@@ -706,7 +706,7 @@ const TeacherDashboard = () => {
                                         onClick={() => setXpModal({ show: true, student: sub.profiles, amount: 10 })}
                                         className="px-6 py-3 bg-amber-50 text-amber-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all flex items-center gap-2 ml-auto"
                                       >
-                                        <HiSparkles /> Bonus XP
+                                        <HiStar /> Bonus XP
                                       </button>
                                 </td>
                              </tr>
@@ -879,7 +879,7 @@ const TeacherDashboard = () => {
                               <h4 className="text-xl font-black text-slate-900 uppercase tracking-tighter">Riwayat Chat Lengkap</h4>
                            </div>
                            <div className="flex-1 max-w-xl relative">
-                              <HiSparkles className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400 z-10" />
+                              <HiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400 z-10" />
                               <input
                                  type="text"
                                  placeholder="Cari ribuan riwayat chat berdasarkan topik atau isi pertanyaan..."
