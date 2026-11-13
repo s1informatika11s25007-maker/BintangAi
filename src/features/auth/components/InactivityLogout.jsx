@@ -92,15 +92,40 @@ const InactivityLogout = ({ children }) => {
       window.addEventListener(event, handleEvent, { passive: true });
     });
 
+    const handleUnload = () => {
+      if (user?.id) {
+        try {
+          const body = JSON.stringify({ is_online: false, last_active_at: new Date().toISOString() });
+          const endpoint = `${import.meta.env.VITE_SUPABASE_URL || 'https://qepfuqlnkofzfhfzahpr.supabase.co'}/rest/v1/profiles?id=eq.${user.id}`;
+          fetch(endpoint, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || ''}`
+            },
+            body,
+            keepalive: true
+          }).catch(() => {});
+        } catch (e) {}
+      }
+    };
+
+    window.addEventListener('pagehide', handleUnload);
+    window.addEventListener('beforeunload', handleUnload);
+
     // Inisialisasi awal
     checkCameraActivity();
     resetTimer(true);
 
     return () => {
       clearInterval(interval);
+      clearInterval(heartbeatInterval);
       activityEvents.forEach(event => {
         window.removeEventListener(event, handleEvent);
       });
+      window.removeEventListener('pagehide', handleUnload);
+      window.removeEventListener('beforeunload', handleUnload);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, [user, resetTimer]);

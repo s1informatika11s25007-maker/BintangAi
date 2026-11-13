@@ -93,8 +93,28 @@ const TeacherDashboard = () => {
           table: 'profiles',
           filter: `class_code=eq.${profile.class_code}`
         },
-        () => {
-          fetchStudents();
+        (payload) => {
+          if (payload.eventType === 'UPDATE' && payload.new) {
+            const isOnline = payload.new.is_online === true;
+            setStudents(prev => {
+              const updated = prev.map(s => {
+                if (s.id === payload.new.id) {
+                  return {
+                    ...s,
+                    ...payload.new,
+                    is_currently_online: isOnline,
+                    status: isOnline ? 'online' : 'offline'
+                  };
+                }
+                return s;
+              });
+              const onlineCount = updated.filter(s => s.is_currently_online).length;
+              setStats(p => ({ ...p, activeToday: onlineCount }));
+              return updated;
+            });
+          } else {
+            fetchStudents();
+          }
         }
       )
       .on(
@@ -181,8 +201,7 @@ const TeacherDashboard = () => {
 
       const processedStudents = data.map(s => {
         const completed = s.submissions?.length || 0;
-        const lastActiveTime = s.last_active_at ? new Date(s.last_active_at) : (s.last_active ? new Date(s.last_active) : null);
-        const isCurrentlyOnline = !!(s.is_online || (lastActiveTime && lastActiveTime >= fifteenMinutesAgo));
+        const isCurrentlyOnline = s.is_online === true;
         return {
           ...s,
           completed,
