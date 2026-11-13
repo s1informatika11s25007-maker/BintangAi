@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useSubtitle } from '@/features/accessibility/components/Subtitles';
 import { useAccessibility } from '@/features/accessibility/hooks/useAccessibility';
 import StudentSidebar from '@/components/layout/StudentSidebar';
+import Footer from '@/components/layout/Footer';
 import KamusIsyaratModal from '@/features/accessibility/components/KamusIsyaratModal';
 import { useAI } from '@/features/ai-tutor';
 import {
@@ -364,6 +365,10 @@ const StudentDashboard = () => {
             </div>
 
           </motion.div>
+
+          <div className="mt-16">
+            <Footer />
+          </div>
         </div>
 
         {/* KAMUS ISTILAH ISYARAT MODAL */}

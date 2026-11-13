@@ -761,6 +761,11 @@ const TeacherDashboard = () => {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Unified Professional Footer at the very bottom of content */}
+          <div className="mt-16">
+            <Footer />
+          </div>
         </div>
 
         {/* Professional XP Modal */}
@@ -997,8 +1002,6 @@ const TeacherDashboard = () => {
             </div>
           )}
         </AnimatePresence>
-
-        <Footer />
       </main>
 
       <style>{`
