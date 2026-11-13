@@ -199,10 +199,6 @@ const StudentModules = () => {
       }
     ]);
 
-    if (isDeaf) {
-      globalCaptionBus.emit(`Membuka materi SD: "${m.title}". Mata pelajaran: ${m.subject || 'Umum'}.`, 'Guru', 'speech');
-    }
-
     if (isBlind) {
       speak(`Membuka materi ${m.title}. Pilihan mata pelajaran ${m.subject || 'Umum'}. Menyiapkan pembacaan materi otomatis.`, 1.0, true);
       setTimeout(() => {
@@ -231,10 +227,6 @@ const StudentModules = () => {
     setChatMessages(prev => [...prev, { role: 'user', content: question }]);
     setIsAsking(true);
 
-    if (isDeaf) {
-      globalCaptionBus.emit(question, 'Siswa', 'speech');
-    }
-
     try {
       const result = await askMateriAI(question, selectedModule.id, {
         gradeLevel: profile?.class_level || "SD"
@@ -247,10 +239,6 @@ const StudentModules = () => {
           found: result.found
         }]);
 
-        if (isDeaf) {
-          globalCaptionBus.emit(result.answer, 'Kak Bintang AI', 'speech');
-        }
-
         if (isBlind) {
           speak(result.answer, 1.0, true);
         }
@@ -260,7 +248,6 @@ const StudentModules = () => {
     } catch (err) {
       const errorMsg = "Maaf ya, Kak Bintang lagi gangguan koneksi. Coba lagi!";
       setChatMessages(prev => [...prev, { role: 'ai', content: errorMsg }]);
-      if (isDeaf) globalCaptionBus.emit(errorMsg, 'Kak Bintang AI', 'speech');
       if (isBlind) speak(errorMsg, 1.0, true);
     } finally {
       setIsAsking(false);
@@ -457,11 +444,11 @@ const StudentModules = () => {
                 </div>
               </div>
 
-              <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+              <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden relative">
 
                 {/* PDF & DOKUMEN VIEWER DENGAN DESKRIPSI GAMBAR W3C */}
-                <div className={`flex-1 flex flex-col transition-all duration-500 ${isChatExpanded ? 'h-[30vh] lg:h-full' : 'h-full'}`}>
-                  <div className="flex-1 p-4 overflow-hidden">
+                <div className={`flex-1 min-h-0 flex flex-col transition-all duration-500 ${isChatExpanded ? 'h-[30vh] lg:h-full' : 'h-full'}`}>
+                  <div className="flex-1 min-h-0 p-4 overflow-hidden">
                     <div
                       ref={pdfContainerRef}
                       className="bg-white shadow-2xl border border-slate-200 h-full w-full rounded-2xl lg:rounded-3xl relative overflow-y-auto custom-scrollbar p-6 space-y-6"
@@ -518,7 +505,7 @@ const StudentModules = () => {
 
                 {/* AI CHAT & TANYA MATERI PANEL */}
                 <div className={`
-                  flex flex-col bg-white border-t lg:border-t-0 lg:border-l border-slate-200 transition-all duration-500 z-[105]
+                  flex flex-col min-h-0 bg-white border-t lg:border-t-0 lg:border-l border-slate-200 transition-all duration-500 z-[105]
                   lg:w-[400px] xl:w-[450px]
                   ${isChatExpanded ? 'h-[70vh]' : 'h-[60px]'} lg:h-full
                 `}>
@@ -539,15 +526,15 @@ const StudentModules = () => {
                     </div>
                   </div>
 
-                  <div className={`flex-1 overflow-hidden flex flex-col ${!isChatExpanded && 'hidden lg:flex'}`}>
-                    <div className="flex-1 overflow-y-auto p-5 space-y-6 custom-scrollbar bg-slate-50/50">
+                  <div className={`flex-1 min-h-0 overflow-hidden flex flex-col ${!isChatExpanded && 'hidden lg:flex'}`}>
+                    <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-6 custom-scrollbar bg-slate-50/50">
                       {chatMessages.map((msg, i) => (
                         <motion.div
                           key={i} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
                           className={`flex ${msg.role === 'ai' ? 'justify-start' : 'justify-end'}`}
                         >
                           <div className={`
-                            max-w-[85%] p-4 rounded-2xl font-bold text-xs leading-relaxed shadow-sm
+                            max-w-[88%] p-4 rounded-2xl font-bold text-xs leading-relaxed shadow-sm break-words overflow-hidden
                             ${msg.role === 'ai' ? 'bg-white text-slate-700 border border-slate-100 rounded-tl-none' : 'bg-indigo-600 text-white rounded-tr-none'}
                           `}>
                             {msg.role === 'ai' && (
@@ -555,7 +542,7 @@ const StudentModules = () => {
                                 🤖 [Kak Bintang AI]
                               </span>
                             )}
-                            {msg.content}
+                            <div className="whitespace-pre-wrap break-words leading-relaxed">{msg.content}</div>
                             {msg.role === 'ai' && (
                               <button
                                 onClick={() => speak(msg.content, 1.0, true)}

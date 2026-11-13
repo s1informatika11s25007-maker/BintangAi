@@ -27,6 +27,7 @@ export default function MataPintarGlobalCaption() {
 
   const isDeaf = mode === 'tunarungu' || isLiveCaptionActive;
 
+  const [isMinimized, setIsMinimized] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
   const [isListening, setIsListening] = useState(false);
   const [captions, setCaptions] = useState([]);
@@ -184,6 +185,27 @@ export default function MataPintarGlobalCaption() {
 
   if (!isDeaf || !profile || isPublicPage || isLiveCaptionsPage) return null;
 
+  if (isMinimized) {
+    return (
+      <div
+        className={`fixed left-4 right-4 z-[350] flex flex-col items-end pointer-events-none transition-all duration-500 ${
+          captionPosition === 'bottom' ? 'bottom-4' : 'top-3'
+        }`}
+      >
+        <motion.button
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          onClick={() => setIsMinimized(false)}
+          className="pointer-events-auto px-4 py-2 bg-slate-950/95 border border-white/20 text-emerald-400 font-black text-xs rounded-full shadow-2xl backdrop-blur-2xl flex items-center gap-2 hover:scale-105 active:scale-95 transition-all"
+        >
+          <span className={`w-2 h-2 rounded-full ${isListening ? 'bg-rose-500 animate-ping' : 'bg-emerald-500'}`} />
+          <span>👁️ Mata Pintar - Caption</span>
+          <span className="text-[9px] text-white/70 bg-white/10 px-2 py-0.5 rounded-full uppercase">Perbesar ↗</span>
+        </motion.button>
+      </div>
+    );
+  }
+
   return (
     <>
       {/* 🛡️ UNOBTRUSIVE FLOATING CAPTION DOCK (POINTER EVENTS NONE ON WRAPPER TO NEVER BLOCK MAIN CONTENT/BUTTONS) */}
@@ -238,9 +260,17 @@ export default function MataPintarGlobalCaption() {
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="p-1.5 bg-white/10 hover:bg-white/20 rounded-xl text-xs transition-all text-slate-300"
-                title={isExpanded ? 'Kecilkan' : 'Besarkan'}
+                title={isExpanded ? 'Kecilkan Tampilan' : 'Besarkan Tampilan'}
               >
-                {isExpanded ? <HiMinus /> : <HiChevronDown />}
+                {isExpanded ? <HiChevronUp /> : <HiChevronDown />}
+              </button>
+
+              <button
+                onClick={() => setIsMinimized(true)}
+                className="p-1.5 bg-white/10 hover:bg-white/20 rounded-xl text-xs transition-all text-slate-300"
+                title="Minimize ke Tombol Kecil"
+              >
+                <HiMinus />
               </button>
             </div>
           </div>
