@@ -762,8 +762,8 @@ const TeacherDashboard = () => {
             )}
           </AnimatePresence>
 
-          {/* Unified Professional Footer at the very bottom of content */}
-          <div className="-mx-6 md:-mx-12 lg:-mx-16 mt-16">
+          {/* Unified Professional Footer flushed at the very bottom edge with zero bottom whitespace */}
+          <div className="-mx-6 md:-mx-12 lg:-mx-16 -mb-6 md:-mb-12 lg:-mb-16 mt-16">
             <Footer />
           </div>
         </div>

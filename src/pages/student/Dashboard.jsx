@@ -138,7 +138,7 @@ const StudentDashboard = () => {
       <ConfettiEffect active={showConfetti} />
       <StudentSidebar />
 
-      <main className="flex-1 w-full overflow-y-auto no-scrollbar relative z-10 pb-24 lg:pb-8">
+      <main className="flex-1 w-full overflow-y-auto no-scrollbar relative z-10 pb-0">
 
         {/* TOP STATUS BAR */}
         <header className={`sticky top-0 z-[50] px-6 py-5 md:px-12 md:py-8 backdrop-blur-xl border-b ${isBlind ? 'bg-indigo-950/80 border-white/10' : 'bg-white/80 border-slate-100'} flex items-center justify-between`}>
@@ -366,7 +366,7 @@ const StudentDashboard = () => {
 
           </motion.div>
 
-          <div className="-mx-6 md:-mx-12 lg:-mx-16 mt-16">
+          <div className="-mx-6 md:-mx-12 lg:-mx-16 -mb-6 md:-mb-12 lg:-mb-16 mt-16">
             <Footer />
           </div>
         </div>

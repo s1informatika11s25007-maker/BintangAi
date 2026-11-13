@@ -316,7 +316,7 @@ const ParentDashboard = () => {
                 </div>
               </div>
 
-              <div className="-mx-6 md:-mx-12 mt-16">
+              <div className="-mx-6 md:-mx-12 -mb-6 md:-mb-12 mt-16">
                 <Footer />
               </div>
             </div>
