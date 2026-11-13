@@ -6,6 +6,9 @@ node_modules/
 .env.*
 !.env.example
 
+# Local internal docs
+modellist.md
+
 # OS generated files
 .DS_Store
 .DS_Store?
