@@ -126,6 +126,16 @@ export const useAuthStore = create(
       logout: async (targetUrl = '/auth/login') => {
         set({ isLoggingOut: true, loading: true });
 
+        const currentProfile = get().profile;
+        if (currentProfile?.id) {
+          try {
+            await supabase.from('profiles').update({
+              is_online: false,
+              last_active_at: new Date().toISOString()
+            }).eq('id', currentProfile.id);
+          } catch (e) {}
+        }
+
         // 1. Immediately cancel any speech synthesis
         if (typeof window !== 'undefined' && window.speechSynthesis) {
           window.speechSynthesis.cancel();

@@ -35,6 +35,13 @@ const Login = () => {
   useEffect(() => {
     let isMounted = true;
 
+    if (window.location.search.includes('reason=inactivity')) {
+      setMessage({
+        type: 'error',
+        text: 'Sesi Anda telah berakhir karena tidak ada aktivitas selama 10 menit. Silakan masuk kembali.'
+      });
+    }
+
     const fetchDemoAccounts = async () => {
       setLoadingDemo(true);
       try {
@@ -136,6 +143,13 @@ const Login = () => {
     try {
       const data = await login(email.trim(), password);
       setUser(data.user);
+
+      // Update online status in database
+      await supabase.from('profiles').update({
+        is_online: true,
+        last_active_at: new Date().toISOString(),
+        last_active: new Date().toISOString().split('T')[0]
+      }).eq('id', data.user.id);
 
       const profileData = await fetchProfile(data.user.id);
       if (!profileData) {

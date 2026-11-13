@@ -10,7 +10,7 @@ import {
   HiChartBar, HiUsers, HiBookOpen, HiBell,
   HiAcademicCap, HiChevronRight, HiCheckCircle, HiExclamation,
   HiTrash, HiExternalLink, HiPlus, HiArrowLeft,
-  HiDocumentReport, HiClock, HiLightningBolt, HiSearch
+  HiDocumentReport, HiClock, HiLightningBolt, HiSearch, HiX, HiRefresh
 } from 'react-icons/hi';
 
 const TeacherDashboard = () => {
@@ -36,6 +36,8 @@ const TeacherDashboard = () => {
   const [subLoading, setSubLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(null);
   const [xpModal, setXpModal] = useState({ show: false, student: null, amount: 10 });
+  const [showOnlineModal, setShowOnlineModal] = useState(false);
+  const [onlineSearchQuery, setOnlineSearchQuery] = useState('');
   const [toast, setToast] = useState(null);
 
   // Monitoring & Report State
@@ -169,13 +171,28 @@ const TeacherDashboard = () => {
 
       if (error) throw error;
 
+      const now = new Date();
+      const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000);
+
       const processedStudents = data.map(s => {
         const completed = s.submissions?.length || 0;
-        const status = new Date(s.last_active) >= new Date(new Date().setDate(new Date().getDate() - 1)) ? 'aktif' : 'tidak aktif';
-        return { ...s, completed, status };
+        const lastActiveTime = s.last_active_at ? new Date(s.last_active_at) : (s.last_active ? new Date(s.last_active) : null);
+        const isCurrentlyOnline = !!(s.is_online || (lastActiveTime && lastActiveTime >= fifteenMinutesAgo));
+        return {
+          ...s,
+          completed,
+          is_currently_online: isCurrentlyOnline,
+          status: isCurrentlyOnline ? 'online' : 'offline'
+        };
       });
 
       setStudents(processedStudents);
+
+      const onlineCount = processedStudents.filter(s => s.is_currently_online).length;
+      setStats(prev => ({
+        ...prev,
+        activeToday: onlineCount
+      }));
     } catch (error) {
       console.error("Error fetching students:", error);
     }
@@ -447,17 +464,31 @@ const TeacherDashboard = () => {
                 {/* STATS GRID */}
                 <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                    {[
-                     { label: 'Siswa Aktif', value: stats.activeToday, icon: <HiUsers />, color: 'text-blue-500', bg: 'bg-blue-50' },
-                     { label: 'Rata Nilai', value: stats.avgScore, icon: <HiChartBar />, color: 'text-indigo-500', bg: 'bg-indigo-50' },
-                     { label: 'Tugas Pending', value: stats.tugasPending, icon: <HiBell />, color: 'text-amber-500', bg: 'bg-amber-50' },
-                     { label: 'Butuh Atensi', value: stats.inactive3Days, icon: <HiExclamation />, color: 'text-rose-500', bg: 'bg-rose-50' },
+                     { id: 'siswa_aktif', label: 'Siswa Online', value: stats.activeToday, icon: <HiUsers />, color: 'text-emerald-500', bg: 'bg-emerald-50', clickable: true },
+                     { id: 'rata_nilai', label: 'Rata Nilai', value: stats.avgScore, icon: <HiChartBar />, color: 'text-indigo-500', bg: 'bg-indigo-50' },
+                     { id: 'tugas_pending', label: 'Tugas Pending', value: stats.tugasPending, icon: <HiBell />, color: 'text-amber-500', bg: 'bg-amber-50' },
+                     { id: 'butuh_atensi', label: 'Butuh Atensi', value: stats.inactive3Days, icon: <HiExclamation />, color: 'text-rose-500', bg: 'bg-rose-50' },
                    ].map((s, i) => (
-                     <div key={i} className="p-10 bg-white rounded-[3rem] border border-slate-50 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-500">
-                        <div className={`w-14 h-14 ${s.bg} ${s.color} rounded-2xl flex items-center justify-center text-2xl mb-8 shadow-sm`}>
-                          {s.icon}
+                     <div
+                        key={i}
+                        onClick={() => s.id === 'siswa_aktif' && setShowOnlineModal(true)}
+                        className={`p-10 bg-white rounded-[3rem] border border-slate-50 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-500 ${s.clickable ? 'cursor-pointer hover:border-emerald-300' : ''}`}
+                     >
+                        <div className="flex items-center justify-between mb-8">
+                          <div className={`w-14 h-14 ${s.bg} ${s.color} rounded-2xl flex items-center justify-center text-2xl shadow-sm`}>
+                            {s.icon}
+                          </div>
+                          {s.id === 'siswa_aktif' && (
+                            <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase rounded-full tracking-wider flex items-center gap-1.5 shadow-sm">
+                              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" /> Live Online
+                            </span>
+                          )}
                         </div>
                         <p className="text-5xl font-black text-slate-900 mb-2 tracking-tighter">{s.value}</p>
-                        <p className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400">{s.label}</p>
+                        <p className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-400 flex items-center justify-between">
+                          <span>{s.label}</span>
+                          {s.clickable && <HiChevronRight className="text-emerald-500 text-base" />}
+                        </p>
                      </div>
                    ))}
                 </motion.div>
@@ -999,6 +1030,135 @@ const TeacherDashboard = () => {
                      </button>
                   </div>
                </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Real-time Online Students Modal */}
+        <AnimatePresence>
+          {showOnlineModal && (
+            <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 md:p-8">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowOnlineModal(false)}
+                className="absolute inset-0 bg-slate-900/80 backdrop-blur-xl"
+              />
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0, y: 30 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 30 }}
+                className="relative bg-white w-full max-w-4xl max-h-[85vh] rounded-[3.5rem] shadow-2xl overflow-hidden flex flex-col border border-slate-100"
+              >
+                {/* Modal Header */}
+                <div className="p-8 md:p-10 bg-gradient-to-r from-emerald-900 to-slate-900 text-white flex justify-between items-center shrink-0">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center text-3xl font-black border border-emerald-500/30">
+                      <HiUsers />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-300">Real-Time Monitor</span>
+                      </div>
+                      <h3 className="text-2xl font-black tracking-tight">Daftar Siswa Online</h3>
+                      <p className="text-xs text-slate-300 mt-1 font-medium">
+                        Siswa yang telah login dan terhubung aktif. (Selesai otomatis / Auto-logout jika tidak ada aktivitas selama 10 menit).
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowOnlineModal(false)}
+                    className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all"
+                  >
+                    <HiX className="text-2xl" />
+                  </button>
+                </div>
+
+                {/* Filter & Search Bar */}
+                <div className="p-6 bg-slate-50 border-b border-slate-100 flex items-center gap-4 shrink-0">
+                  <div className="flex-1 relative">
+                    <HiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg" />
+                    <input
+                      type="text"
+                      placeholder="Cari nama siswa online..."
+                      value={onlineSearchQuery}
+                      onChange={(e) => setOnlineSearchQuery(e.target.value)}
+                      className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                  <button
+                    onClick={fetchStudents}
+                    className="px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-2xl flex items-center gap-2 transition-all shadow-md active:scale-95"
+                  >
+                    <HiRefresh className="text-base" />
+                    <span className="hidden sm:inline">Refresh Data</span>
+                  </button>
+                </div>
+
+                {/* Students List Container */}
+                <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-3 custom-scrollbar">
+                  {students
+                    .filter(s => s.is_currently_online && s.full_name?.toLowerCase().includes(onlineSearchQuery.toLowerCase()))
+                    .map((s) => (
+                      <div
+                        key={s.id}
+                        className="p-5 bg-slate-50/70 hover:bg-emerald-50/40 border border-slate-100 rounded-2xl flex items-center justify-between transition-all"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white font-black text-lg flex items-center justify-center shadow-md">
+                            {s.full_name?.charAt(0)}
+                          </div>
+                          <div>
+                            <h4 className="font-black text-slate-900 text-sm">{s.full_name}</h4>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="px-2.5 py-0.5 bg-white text-slate-500 text-[9px] font-black uppercase tracking-wider rounded-md border border-slate-200">
+                                {s.disability_type || 'Umum'}
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-bold uppercase">
+                                Kode: {s.class_code || '-'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-6">
+                          <div className="text-right hidden sm:block">
+                            <span className="text-sm font-black text-indigo-600 block">{s.xp || 0} XP</span>
+                            <span className="text-[9px] text-slate-400 font-bold uppercase">Tingkat {s.class_level || 'SD'}</span>
+                          </div>
+                          <span className="px-3.5 py-1.5 bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase rounded-full tracking-wider flex items-center gap-1.5 shadow-sm">
+                            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" /> Terhubung
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+
+                  {students.filter(s => s.is_currently_online).length === 0 && (
+                    <div className="py-16 text-center space-y-3">
+                      <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center text-3xl mx-auto">
+                        <HiUsers />
+                      </div>
+                      <h4 className="text-base font-black text-slate-700 uppercase tracking-tight">Tidak Ada Siswa Online</h4>
+                      <p className="text-xs text-slate-400 font-medium max-w-sm mx-auto">
+                        Belum ada siswa yang sedang terhubung aktif di kelas Anda saat ini. Siswa otomatis dikeluarkannya jika tidak ada aktivitas selama 10 menit.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Modal Footer */}
+                <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-between items-center text-xs font-bold text-slate-400 shrink-0">
+                  <span>Total Online: {students.filter(s => s.is_currently_online).length} Siswa</span>
+                  <button
+                    onClick={() => setShowOnlineModal(false)}
+                    className="px-6 py-3 bg-slate-900 text-white rounded-xl text-xs uppercase font-black tracking-widest hover:bg-emerald-600 transition-all shadow-md"
+                  >
+                    Tutup Monitor
+                  </button>
+                </div>
+              </motion.div>
             </div>
           )}
         </AnimatePresence>
