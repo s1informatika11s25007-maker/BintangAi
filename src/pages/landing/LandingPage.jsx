@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useReducedMotion, useScroll, useSpring, AnimatePresence } from 'framer-motion';
+import Footer from '@/components/layout/Footer';
 import {
   HiAcademicCap,
   HiArrowRight,
@@ -491,18 +492,7 @@ const LandingPage = () => {
         )}
       </AnimatePresence>
 
-      <footer className="border-t border-blue-100 bg-slate-50 px-5 py-10 sm:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-blue-700 font-black text-white">B</span>
-            <div>
-              <p className="font-extrabold text-slate-900">Bintang<span className="text-blue-700">Ai</span></p>
-              <p className="text-xs text-slate-500">E-learning inklusif untuk belajar di rumah</p>
-            </div>
-          </div>
-          <p className="max-w-xl text-xs leading-5 text-slate-500">© {new Date().getFullYear()} BintangAi. Platform pendukung pembelajaran inklusif. Fitur aksesibilitas digunakan sesuai dukungan perangkat dan browser.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

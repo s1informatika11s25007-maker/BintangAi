@@ -7,6 +7,7 @@ import { useAI } from '@/features/ai-tutor/hooks/useAI';
 import XPBar from '@/features/gamification/components/XPBar';
 import StreakBadge from '@/features/gamification/components/StreakBadge';
 import ParentSidebar from '@/components/layout/ParentSidebar';
+import Footer from '@/components/layout/Footer';
 
 const ParentDashboard = () => {
   const { profile } = useAuthStore();
@@ -315,31 +316,7 @@ const ParentDashboard = () => {
                 </div>
               </div>
 
-              <footer className="mt-16 pt-8 pb-10 border-t border-slate-200/80 bg-white/70 backdrop-blur-md rounded-t-[2.5rem] shadow-sm px-6 md:px-10 flex flex-col md:flex-row items-center justify-between gap-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-xs shadow-md shadow-indigo-100">
-                    B
-                  </div>
-                  <div>
-                    <p className="text-xs font-black tracking-tight text-slate-900">
-                      Bintang<span className="text-indigo-600">Ai</span> · Portal Orang Tua
-                    </p>
-                    <p className="text-[10px] font-bold text-slate-400">
-                      Laporan dibuat otomatis oleh BintangAi untuk {profile?.full_name}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-[9px] font-black uppercase tracking-widest border border-emerald-200">
-                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                    Sistem Aktif
-                  </span>
-                  <p className="text-[11px] font-bold text-slate-400">
-                    © 2026 BintangAi · Dibuat dengan ❤️ untuk Pendidikan Indonesia
-                  </p>
-                </div>
-              </footer>
+              <Footer />
             </div>
           )}
         </div>

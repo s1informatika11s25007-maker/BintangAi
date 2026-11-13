@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
+import Footer from '@/components/layout/Footer';
 
 const Icon = ({ name, className = 'h-6 w-6' }) => {
   const common = {
@@ -200,7 +201,7 @@ const Landing = () => {
         <section className="px-5 pb-20 sm:px-8 md:pb-24"><div className="mx-auto grid max-w-7xl gap-6 overflow-hidden rounded-[2rem] bg-blue-800 p-8 text-white sm:p-10 lg:grid-cols-[1fr_auto] lg:items-center"><div><p className="text-xs font-extrabold uppercase tracking-[0.2em] text-blue-200">Belajar bersama</p><h2 className="mt-3 max-w-2xl text-3xl font-black tracking-tight sm:text-4xl">Anak belajar mandiri. Orang tua dan guru tetap mendampingi.</h2><p className="mt-4 max-w-2xl text-sm leading-7 text-blue-100">Teknologi membantu membuka akses belajar, tetapi perhatian keluarga, arahan guru, dan penyesuaian dengan kebutuhan anak tetap menjadi bagian utama.</p></div><div className="flex flex-col gap-3 sm:flex-row lg:flex-col"><button type="button" onClick={goAuth} className="rounded-xl bg-white px-6 py-3 text-sm font-extrabold text-blue-800 transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/50">Masuk / daftar</button><button type="button" onClick={() => setAboutOpen(true)} className="rounded-xl border border-blue-300 px-6 py-3 text-sm font-bold text-white transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/50">Tentang platform</button></div></div></section>
       </main>
 
-      <footer className="border-t border-blue-100 bg-slate-50 px-5 py-10 sm:px-8"><div className="mx-auto flex max-w-7xl flex-col gap-5 sm:flex-row sm:items-center sm:justify-between"><div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-blue-700 font-black text-white">B</span><div><p className="font-extrabold text-slate-900">Bintang<span className="text-blue-700">Ai</span></p><p className="text-xs text-slate-500">E-learning inklusif untuk belajar di rumah</p></div></div><p className="max-w-xl text-xs leading-5 text-slate-500">© {new Date().getFullYear()} BintangAi. Platform pendukung pembelajaran inklusif. Fitur aksesibilitas digunakan sesuai dukungan perangkat dan browser.</p></div></footer>
+      <Footer />
 
       {aboutOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="about-title">
