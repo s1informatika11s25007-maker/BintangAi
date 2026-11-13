@@ -763,7 +763,7 @@ const TeacherDashboard = () => {
           </AnimatePresence>
 
           {/* Unified Professional Footer at the very bottom of content */}
-          <div className="mt-16">
+          <div className="-mx-6 md:-mx-12 lg:-mx-16 mt-16">
             <Footer />
           </div>
         </div>
