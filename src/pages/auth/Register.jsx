@@ -11,7 +11,6 @@ import {
   HiLink,
   HiLockClosed,
   HiMail,
-  HiSparkles,
   HiUser,
   HiUserGroup,
 } from 'react-icons/hi';
@@ -154,7 +153,7 @@ const Register = () => {
             transition={{ delay: 0.15 }}
             className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-blue-50 backdrop-blur-md sm:text-xs"
           >
-            <HiSparkles className="text-sky-200" /> Mulai perjalanan belajar
+            <HiAcademicCap className="text-sky-200" /> Mulai perjalanan belajar
           </motion.div>
           <motion.h1
             initial={{ y: 18, opacity: 0 }}

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import {
-  HiArrowLeft, HiCloudUpload, HiCheckCircle, HiSparkles,
+  HiArrowLeft, HiCloudUpload, HiCheckCircle,
   HiTag, HiInformationCircle, HiChevronRight, HiEye,
   HiUsers, HiAcademicCap, HiSearch, HiX
 } from 'react-icons/hi';
@@ -114,20 +114,13 @@ const TeacherUploadModule = () => {
     setLoading(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const activeUserId = session?.user?.id || profile?.id;
-
-      if (!activeUserId) {
-        throw new Error("Sesi login Anda telah berakhir. Silakan login kembali.");
-      }
-
       const extractedText = await extractTextFromPdf(file);
 
       const fileExt = file.name.split('.').pop();
-      const fileName = `${activeUserId}-${Date.now()}.${fileExt}`;
+      const fileName = `${profile.id}-${Date.now()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage
         .from('modules')
-        .upload(`public/${fileName}`, file, { upsert: true });
+        .upload(`public/${fileName}`, file);
 
       if (uploadError) throw uploadError;
 
@@ -139,7 +132,7 @@ const TeacherUploadModule = () => {
         title,
         pdf_url: publicUrl,
         content: extractedText,
-        teacher_id: activeUserId,
+        teacher_id: profile.id,
         is_public: isPublic,
         tags: tagArray,
         target_students: selectedStudents.length > 0 ? selectedStudents : [],
@@ -147,24 +140,9 @@ const TeacherUploadModule = () => {
         summary: null
       });
 
-      if (dbError) {
-        if (dbError.message?.includes('row-level security') || dbError.code === '42501') {
-          const { error: retryError } = await supabase.from('modules').insert({
-            title,
-            pdf_url: publicUrl,
-            content: extractedText,
-            teacher_id: profile?.id || activeUserId,
-            is_public: isPublic,
-            tags: tagArray,
-            summary: null
-          });
-          if (retryError) throw retryError;
-        } else {
-          throw dbError;
-        }
-      }
+      if (dbError) throw dbError;
 
-      alert("Modul berhasil dipublikasikan! 🚀");
+      alert("Modul berhasil dipublikasikan secara spesifik! 🚀");
       navigate('/teacher/dashboard');
     } catch (err) {
       console.error("Upload Error:", err);

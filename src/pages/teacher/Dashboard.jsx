@@ -7,9 +7,9 @@ import { useAI } from '@/features/ai-tutor/hooks/useAI';
 import TeacherSidebar from '@/components/layout/TeacherSidebar';
 import {
   HiChartBar, HiUsers, HiBookOpen, HiBell,
-  HiSparkles, HiChevronRight, HiCheckCircle, HiExclamation,
+  HiAcademicCap, HiChevronRight, HiCheckCircle, HiExclamation,
   HiTrash, HiExternalLink, HiPlus, HiArrowLeft,
-  HiDocumentReport, HiClock, HiLightningBolt, HiStar, HiSearch
+  HiDocumentReport, HiClock, HiLightningBolt, HiSearch
 } from 'react-icons/hi';
 
 const TeacherDashboard = () => {
@@ -555,7 +555,7 @@ const TeacherDashboard = () => {
                             <td className="px-10 py-8 text-center">
                                <div className="flex items-center justify-center gap-2">
                                   <span className="text-xl font-black text-indigo-600">{student.xp}</span>
-                                  <HiStar className="text-amber-400" />
+                                  <HiAcademicCap className="text-amber-500" />
                                </div>
                             </td>
                             <td className="px-10 py-8 text-right">
@@ -706,7 +706,7 @@ const TeacherDashboard = () => {
                                         onClick={() => setXpModal({ show: true, student: sub.profiles, amount: 10 })}
                                         className="px-6 py-3 bg-amber-50 text-amber-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all flex items-center gap-2 ml-auto"
                                       >
-                                        <HiStar /> Bonus XP
+                                        <HiAcademicCap /> Bonus XP
                                       </button>
                                 </td>
                              </tr>

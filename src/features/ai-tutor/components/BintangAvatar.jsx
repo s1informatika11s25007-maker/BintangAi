@@ -17,8 +17,8 @@ const BintangAvatar = ({ state = 'idle', size = 'md' }) => {
       {/* Glow Effect */}
       <motion.div
         animate={{
-          scale: state === 'thinking' ? [1, 1.2, 1] : 1,
-          opacity: state === 'thinking' ? [0.2, 0.5, 0.2] : 0.1,
+          scale: state === 'thinking' ? [1, 1.15, 1] : 1,
+          opacity: state === 'thinking' ? [0.2, 0.4, 0.2] : 0.1,
         }}
         transition={{ repeat: Infinity, duration: 2 }}
         className="absolute inset-0 bg-indigo-400 rounded-full blur-2xl"
@@ -27,22 +27,22 @@ const BintangAvatar = ({ state = 'idle', size = 'md' }) => {
       {/* Character Body */}
       <motion.div
         animate={{
-          y: state === 'speaking' ? [0, -8, 0] : [0, -2, 0],
+          y: state === 'speaking' ? [0, -6, 0] : [0, -2, 0],
         }}
         transition={{ repeat: Infinity, duration: 1.5 }}
         className="relative z-10 w-full h-full"
       >
         <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
-            <linearGradient id="starGradient" x1="50" y1="5" x2="50" y2="95" gradientUnits="userSpaceOnUse">
-              <stop stopColor="#6366F1" />
-              <stop offset="1" stopColor="#A855F7" />
+            <linearGradient id="bodyGradient" x1="50" y1="20" x2="50" y2="90" gradientUnits="userSpaceOnUse">
+              <stop stopColor="#4F46E5" />
+              <stop offset="1" stopColor="#6366F1" />
             </linearGradient>
             <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
               <feGaussianBlur in="SourceAlpha" stdDeviation="3" />
               <feOffset dx="0" dy="4" result="offsetblur" />
               <feComponentTransfer>
-                <feFuncA type="linear" slope="0.3" />
+                <feFuncA type="linear" slope="0.25" />
               </feComponentTransfer>
               <feMerge>
                 <feMergeNode />
@@ -51,27 +51,37 @@ const BintangAvatar = ({ state = 'idle', size = 'md' }) => {
             </filter>
           </defs>
 
-          {/* Star Shape */}
-          <motion.path
-            d="M50 5L61.2257 39.1306H97.044L68.0092 60.2388L79.2349 94.3694L50 73.2612L20.7651 94.3694L31.9908 60.2388L2.95601 39.1306H38.7743L50 5Z"
-            fill="url(#starGradient)"
+          {/* Academic Badge Body (Friendly Rounded Shield/Badge) */}
+          <motion.rect
+            x="20" y="25" width="60" height="60" rx="28"
+            fill="url(#bodyGradient)"
             filter="url(#shadow)"
-            initial={{ rotate: 0 }}
             animate={{
-              rotate: state === 'happy' ? [0, 15, -15, 0] : 0,
-              scale: state === 'happy' ? [1, 1.15, 1] : 1
+              scale: state === 'happy' ? [1, 1.08, 1] : 1
             }}
-            transition={{ rotate: { repeat: state === 'happy' ? Infinity : 0, duration: 0.5 } }}
+            transition={{ duration: 0.5 }}
           />
+
+          {/* Academic Cap / Toga Hat on Top */}
+          <path d="M50 12L80 23L50 34L20 23L50 12Z" fill="#1E1B4B" />
+          <path d="M32 28.5V36C32 40 68 40 68 36V28.5" fill="#312E81" />
+          <path d="M74 25V37" stroke="#F59E0B" strokeWidth="2.5" strokeLinecap="round" />
+          <circle cx="74" cy="38" r="2.5" fill="#F59E0B" />
 
           {/* Eyes */}
           <motion.circle
-            cx="35" cy="45" r="4" fill="#1E293B"
-            animate={{ scaleY: state === 'thinking' ? 0.1 : 1 }}
+            cx="38" cy="50" r="4.5" fill="#FFFFFF"
+            animate={{ scaleY: state === 'thinking' ? 0.2 : 1 }}
           />
           <motion.circle
-            cx="65" cy="45" r="4" fill="#1E293B"
-            animate={{ scaleY: state === 'thinking' ? 0.1 : 1 }}
+            cx="38" cy="50" r="2.5" fill="#0F172A"
+          />
+          <motion.circle
+            cx="62" cy="50" r="4.5" fill="#FFFFFF"
+            animate={{ scaleY: state === 'thinking' ? 0.2 : 1 }}
+          />
+          <motion.circle
+            cx="62" cy="50" r="2.5" fill="#0F172A"
           />
 
           {/* Mouth */}
@@ -79,22 +89,22 @@ const BintangAvatar = ({ state = 'idle', size = 'md' }) => {
             {state === 'speaking' ? (
               <motion.path
                 key="speaking"
-                d="M40 65 Q50 75 60 65"
-                stroke="#1E293B" strokeWidth="3" strokeLinecap="round"
-                animate={{ d: ["M40 65 Q50 70 60 65", "M40 65 Q50 85 60 65", "M40 65 Q50 70 60 65"] }}
+                d="M42 66 Q50 76 58 66"
+                stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round"
+                animate={{ d: ["M42 66 Q50 70 58 66", "M42 66 Q50 82 58 66", "M42 66 Q50 70 58 66"] }}
                 transition={{ repeat: Infinity, duration: 0.4 }}
               />
             ) : state === 'happy' ? (
               <motion.path
                 key="happy"
-                d="M30 60 Q50 85 70 60"
-                stroke="#1E293B" strokeWidth="4" strokeLinecap="round"
+                d="M36 62 Q50 80 64 62"
+                stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round"
               />
             ) : (
               <motion.path
                 key="idle"
-                d="M42 65 L58 65"
-                stroke="#1E293B" strokeWidth="3" strokeLinecap="round"
+                d="M43 66 L57 66"
+                stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round"
               />
             )}
           </AnimatePresence>

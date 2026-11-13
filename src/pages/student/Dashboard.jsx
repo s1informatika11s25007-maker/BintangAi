@@ -11,8 +11,8 @@ import StudentSidebar from '@/components/layout/StudentSidebar';
 import KamusIsyaratModal from '@/features/accessibility/components/KamusIsyaratModal';
 import { useAI } from '@/features/ai-tutor';
 import {
-  HiFire, HiLightningBolt, HiStar, HiChevronRight,
-  HiAcademicCap, HiCube, HiChatAlt2, HiVariable,
+  HiFire, HiLightningBolt, HiAcademicCap, HiChevronRight,
+  HiCube, HiChatAlt2, HiVariable,
   HiEye, HiSpeakerphone, HiHeart, HiCollection, HiUsers, HiBookOpen
 } from 'react-icons/hi';
 
@@ -177,9 +177,9 @@ const StudentDashboard = () => {
               whileHover={{ scale: 1.05 }}
               className={`flex items-center gap-3 ${isBlind ? 'bg-white/10 border-white/20' : 'bg-white border-slate-50 shadow-xl shadow-indigo-100/20'} px-5 py-3 rounded-2xl border`}
             >
-              <HiStar className="text-amber-400 text-xl md:text-2xl animate-pulse" />
+              <HiAcademicCap className="text-amber-500 text-xl md:text-2xl" />
               <div className="text-right">
-                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Bintang</p>
+                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Poin XP</p>
                 <p className={`text-sm md:text-lg font-black leading-none mt-1`}>{profile?.xp || 0}</p>
               </div>
             </motion.div>
@@ -350,7 +350,7 @@ const StudentDashboard = () => {
 
                {/* Leaderboard Compact */}
                <motion.section variants={itemVariants} className={`p-8 rounded-[2.5rem] ${isBlind ? 'bg-white/5 border border-white/5 shadow-2xl' : 'bg-slate-900 shadow-xl shadow-slate-200'} text-white`}>
-                  <h4 className="text-xs font-black uppercase tracking-[0.4em] mb-10 text-indigo-400 flex items-center gap-3"><HiStar className="animate-spin-slow" /> Peringkat Kelas</h4>
+                  <h4 className="text-xs font-black uppercase tracking-[0.4em] mb-10 text-indigo-400 flex items-center gap-3"><HiAcademicCap className="text-amber-400" /> Peringkat Kelas</h4>
                   <div className="space-y-5">
                      {leaderboard?.map((s, i) => (
                        <div key={s.id} className={`flex items-center gap-5 p-3 rounded-2xl ${s.id === profile?.id ? 'bg-indigo-600/30 ring-1 ring-indigo-500' : ''}`}>

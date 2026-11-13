@@ -6,7 +6,7 @@ import { StudentSidebar } from '@/components/layout';
 import { useTasks } from '@/features/quiz/hooks/useTasks';
 import { useSubtitle } from '@/features/accessibility/components/Subtitles';
 import { useAccessibility } from '@/features/accessibility/hooks/useAccessibility';
-import { HiChevronLeft, HiChevronRight, HiCollection, HiLightningBolt, HiStar, HiSparkles } from 'react-icons/hi';
+import { HiChevronLeft, HiChevronRight, HiCollection, HiLightningBolt, HiAcademicCap } from 'react-icons/hi';
 
 const StudentTasks = () => {
   const { profile } = useAuthStore();
@@ -136,9 +136,9 @@ const StudentTasks = () => {
                       </div>
 
                       <div className="flex items-center justify-between mt-4 relative z-10">
-                        <div className="flex items-center gap-3 bg-amber-50 px-4 py-2 rounded-2xl border border-amber-100">
-                          <HiStar className="text-amber-500" />
-                          <span className="text-[10px] font-black text-amber-700 uppercase tracking-widest">200 XP</span>
+                        <div className="flex items-center gap-3 bg-indigo-50 px-4 py-2 rounded-2xl border border-indigo-100">
+                          <HiAcademicCap className="text-indigo-600" />
+                          <span className="text-[10px] font-black text-indigo-700 uppercase tracking-widest">200 XP</span>
                         </div>
                         <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center group-hover:bg-indigo-600 group-hover:scale-110 transition-all shadow-xl">
                           <HiChevronRight size={24} />

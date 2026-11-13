@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import TeacherSidebar from '@/components/layout/TeacherSidebar';
-import { HiCheck, HiX, HiUserAdd, HiChatAlt2, HiTrash, HiLockClosed, HiLockOpen, HiUsers, HiUserGroup, HiSparkles, HiSearch, HiBell } from 'react-icons/hi';
+import { HiCheck, HiX, HiUserAdd, HiChatAlt2, HiTrash, HiLockClosed, HiLockOpen, HiUsers, HiUserGroup, HiAcademicCap, HiSearch, HiBell } from 'react-icons/hi';
 
 const TeacherCollaboration = () => {
   const { profile } = useAuthStore();

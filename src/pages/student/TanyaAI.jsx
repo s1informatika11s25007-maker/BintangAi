@@ -7,7 +7,7 @@ import { useVoice } from '@/features/accessibility/hooks/useVoice';
 import StudentSidebar from '@/components/layout/StudentSidebar';
 import VoiceSettingsPanel from '@/features/accessibility/components/VoiceSettingsPanel';
 import {
-  HiPaperAirplane, HiSparkles, HiTrash, HiPlus,
+  HiPaperAirplane, HiAcademicCap, HiTrash, HiPlus,
   HiDotsVertical, HiUser, HiChatAlt2, HiChevronLeft,
   HiVolumeUp, HiX
 } from 'react-icons/hi';

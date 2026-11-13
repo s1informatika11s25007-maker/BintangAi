@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAI } from '@/features/ai-tutor/hooks/useAI';
 import StudentSidebar from '@/components/layout/StudentSidebar';
-import { HiMicrophone, HiStop, HiTrash, HiDocumentText, HiSparkles, HiExclamation } from 'react-icons/hi';
+import { HiMicrophone, HiStop, HiTrash, HiDocumentText, HiExclamation } from 'react-icons/hi';
 
 const LiveCaptions = () => {
   const { transcribeAudio, loading: isTranscribing } = useAI();

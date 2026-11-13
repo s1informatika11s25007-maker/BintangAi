@@ -41,7 +41,7 @@ const featureItems = [
     label: 'Belajar mandiri',
   },
   {
-    icon: 'sparkle',
+    icon: 'cap',
     title: 'AI Tutor Kak Bintang',
     text: 'Pendamping untuk bertanya dan meminta penjelasan materi dengan bahasa yang lebih sederhana.',
     label: 'Pendamping belajar',
@@ -175,7 +175,7 @@ const Landing = () => {
               <div className="relative rounded-[2rem] border border-white bg-white p-4 shadow-2xl shadow-blue-200/70 sm:p-6">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-4"><div className="flex items-center gap-3"><div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-700 font-black text-white">B</div><div><p className="text-sm font-extrabold text-slate-900">Ruang Belajar</p><p className="text-xs text-slate-400">Contoh tampilan BintangAi</p></div></div><span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold text-blue-700">Di rumah</span></div>
                 <div className="mt-5 rounded-2xl bg-gradient-to-r from-blue-700 to-sky-600 p-5 text-white"><p className="text-xs font-semibold text-blue-100">Halo, Bintang!</p><p className="mt-1 text-xl font-black">Ayo lanjut belajar hari ini.</p><p className="mt-2 text-xs leading-5 text-blue-100">Pilih materi, tanyakan hal yang belum dipahami, lalu berlatih.</p></div>
-                <div className="mt-5 grid grid-cols-2 gap-3"><div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4"><Icon name="book" className="h-7 w-7 text-blue-700" /><p className="mt-3 text-sm font-extrabold text-slate-800">Materi belajar</p><p className="mt-1 text-xs text-slate-500">Baca dan pelajari</p></div><div className="rounded-2xl border border-sky-100 bg-sky-50/70 p-4"><Icon name="sparkle" className="h-7 w-7 text-sky-700" /><p className="mt-3 text-sm font-extrabold text-slate-800">Tanya Kak Bintang</p><p className="mt-1 text-xs text-slate-500">Minta penjelasan</p></div></div>
+                <div className="mt-5 grid grid-cols-2 gap-3"><div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4"><Icon name="book" className="h-7 w-7 text-blue-700" /><p className="mt-3 text-sm font-extrabold text-slate-800">Materi belajar</p><p className="mt-1 text-xs text-slate-500">Baca dan pelajari</p></div><div className="rounded-2xl border border-sky-100 bg-sky-50/70 p-4"><Icon name="cap" className="h-7 w-7 text-sky-700" /><p className="mt-3 text-sm font-extrabold text-slate-800">Tanya Kak Bintang</p><p className="mt-1 text-xs text-slate-500">Minta penjelasan</p></div></div>
                 <div className="mt-3 rounded-2xl border border-slate-100 p-4"><div className="flex items-center justify-between"><p className="text-sm font-extrabold text-slate-800">Contoh kegiatan</p><span className="text-[10px] font-bold text-blue-700">Latihan</span></div><div className="mt-3 flex items-center gap-3"><div className="grid h-10 w-10 place-items-center rounded-xl bg-amber-50 text-lg">✏️</div><div className="min-w-0 flex-1"><p className="truncate text-xs font-bold text-slate-700">Matematika – latihan bilangan</p><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full w-2/3 rounded-full bg-blue-600" /></div></div><span className="text-xs font-bold text-slate-500">Contoh</span></div></div>
                 <p className="mt-4 text-center text-[10px] text-slate-400">Ilustrasi antarmuka, bukan data atau progres pengguna sebenarnya.</p>
               </div>

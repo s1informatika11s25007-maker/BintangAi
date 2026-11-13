@@ -6,7 +6,7 @@ import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { useAI } from '@/features/ai-tutor/hooks/useAI';
 import { useNotification } from '@/hooks/useNotification';
 import {
-  HiSparkles, HiUsers, HiAcademicCap, HiSearch,
+  HiAcademicCap, HiUsers, HiSearch,
   HiX, HiChevronLeft, HiPlus, HiSave, HiClipboardList, HiLightningBolt
 } from 'react-icons/hi';
 
@@ -566,7 +566,7 @@ const TeacherCreateTask = () => {
               <div className="flex gap-4 pt-4">
                 <button onClick={() => setShowAIModal(false)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-3xl text-[10px] font-black uppercase hover:bg-slate-100 transition-all">Batal</button>
                 <button onClick={handleGenerateAI} disabled={aiLoading} className="flex-1 py-5 bg-indigo-600 text-white rounded-3xl text-[10px] font-black uppercase shadow-2xl shadow-indigo-100 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3">
-                  {aiLoading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <HiSparkles className="text-xl" />}
+                  {aiLoading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <HiAcademicCap className="text-xl" />}
                   <span>Generate</span>
                 </button>
               </div>

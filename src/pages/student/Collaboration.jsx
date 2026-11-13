@@ -11,7 +11,7 @@ import {
   HiChatAlt2, HiUsers, HiUserGroup, HiLockClosed, HiLockOpen,
   HiPaperAirplane, HiX, HiSearch, HiCheckCircle,
   HiInformationCircle, HiChevronLeft, HiDotsVertical,
-  HiSparkles, HiChatAlt, HiClock, HiCheck
+  HiAcademicCap, HiChatAlt, HiClock, HiCheck
 } from 'react-icons/hi';
 
 const StudentCollaboration = () => {

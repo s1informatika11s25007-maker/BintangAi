@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HiSearch, HiX, HiBookOpen, HiSparkles, HiLightBulb, HiAcademicCap } from 'react-icons/hi';
+import { HiSearch, HiX, HiBookOpen, HiLightBulb, HiAcademicCap } from 'react-icons/hi';
 
 const GLOSSARY_TERMS = [
   {

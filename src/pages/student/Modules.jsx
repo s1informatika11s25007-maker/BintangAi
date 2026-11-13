@@ -11,12 +11,12 @@ import { useVoice } from '@/features/accessibility/hooks/useVoice';
 import { useSubtitle } from '@/features/accessibility/components/Subtitles';
 import { globalCaptionBus } from '@/features/accessibility/components/MataPintarGlobalCaption';
 import {
-  HiBookOpen, HiSearch, HiSparkles, HiChatAlt2,
+  HiBookOpen, HiSearch, HiAcademicCap, HiChatAlt2,
   HiStop, HiSpeakerphone, HiX, HiPaperAirplane,
   HiMenuAlt2, HiOutlineDocumentSearch, HiLightBulb, HiChevronRight,
   HiClipboardList, HiShieldCheck, HiExternalLink, HiChevronDown, HiChevronUp,
   HiChevronLeft, HiVolumeUp, HiPause, HiPlay, HiRefresh,
-  HiChevronDoubleRight, HiChevronDoubleLeft, HiAdjustments, HiAcademicCap
+  HiChevronDoubleRight, HiChevronDoubleLeft, HiAdjustments
 } from 'react-icons/hi';
 
 const StudentModules = () => {

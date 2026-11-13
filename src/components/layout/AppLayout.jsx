@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HiHome, HiBookOpen, HiLightningBolt, HiUserCircle, HiChatAlt2, HiPlusCircle, HiSparkles } from 'react-icons/hi';
+import { HiHome, HiBookOpen, HiLightningBolt, HiUserCircle, HiChatAlt2, HiPlusCircle, HiEye } from 'react-icons/hi';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { useAccessibility } from '@/features/accessibility/hooks/useAccessibility';
 

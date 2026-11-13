@@ -12,7 +12,7 @@ import { useSubtitle } from '@/features/accessibility/components/Subtitles';
 import { useAccessibility } from '@/features/accessibility/hooks/useAccessibility';
 import {
   HiLightningBolt, HiCheckCircle, HiChevronRight,
-  HiClock, HiSparkles, HiInformationCircle, HiChevronLeft
+  HiClock, HiAcademicCap, HiInformationCircle, HiChevronLeft
 } from 'react-icons/hi';
 
 const StudentTaskDetail = () => {

@@ -2,7 +2,7 @@ import React from 'react';
 import { useVoice } from '../hooks/useVoice';
 import {
   HiVolumeUp, HiVolumeOff, HiPlay, HiRefresh,
-  HiAdjustments, HiSparkles, HiCheck, HiAcademicCap
+  HiAdjustments, HiCheck, HiAcademicCap
 } from 'react-icons/hi';
 
 export default function VoiceSettingsPanel({ compact = false }) {

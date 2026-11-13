@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { useAccessibilityStore } from '@/features/accessibility/store/accessibilityStore';
 import {
+  HiAcademicCap,
   HiArrowLeft,
   HiArrowRight,
   HiChevronDown,
@@ -15,7 +16,6 @@ import {
   HiLightningBolt,
   HiLockClosed,
   HiMail,
-  HiSparkles,
 } from 'react-icons/hi';
 
 const Login = () => {
@@ -227,7 +227,7 @@ const Login = () => {
 
         <div className="relative hidden items-center justify-between border-t border-white/20 pt-5 text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-100/75 lg:flex">
           <span>© 2026 BintangAi</span>
-          <span className="flex items-center gap-2"><HiSparkles className="text-sky-200" /> Belajar tanpa hambatan</span>
+          <span className="flex items-center gap-2"><HiAcademicCap className="text-sky-200" /> Belajar tanpa hambatan</span>
         </div>
       </aside>
 
