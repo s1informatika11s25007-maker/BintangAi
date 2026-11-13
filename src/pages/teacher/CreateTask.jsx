@@ -7,7 +7,7 @@ import { useAI } from '@/features/ai-tutor/hooks/useAI';
 import { useNotification } from '@/hooks/useNotification';
 import {
   HiSparkles, HiUsers, HiAcademicCap, HiSearch,
-  HiX, HiChevronLeft, HiPlus, HiSave, HiClipboardList
+  HiX, HiChevronLeft, HiPlus, HiSave, HiClipboardList, HiLightningBolt
 } from 'react-icons/hi';
 
 const generateId = () => {

@@ -9,7 +9,7 @@ import {
   HiChartBar, HiUsers, HiBookOpen, HiBell,
   HiSparkles, HiChevronRight, HiCheckCircle, HiExclamation,
   HiTrash, HiExternalLink, HiPlus, HiArrowLeft,
-  HiDocumentReport, HiClock
+  HiDocumentReport, HiClock, HiLightningBolt, HiStar, HiSearch
 } from 'react-icons/hi';
 
 const TeacherDashboard = () => {
