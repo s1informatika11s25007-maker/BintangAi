@@ -27,7 +27,6 @@ Tanggal: 8 November 2026
 
 ## Hasil pemeriksaan statis
 - Pemeriksaan proyek: dijalankan dengan `node scripts/check-project.js`.
-- Unit test regresi: dijalankan dengan `node --test tests/*.test.js`.
 - Parser sintaks JavaScript/JSX/TypeScript: seluruh file aplikasi diparse menggunakan TypeScript transpile parser yang tersedia di lingkungan audit.
 - Pelestarian file: 94/94 file `src/` dari arsip awal masih tersedia; total akhir 96 file.
 - Uji akun demo: tidak dilakukan.
@@ -35,7 +34,6 @@ Tanggal: 8 November 2026
 Hasil terakhir di lingkungan pembuatan arsip:
 
 - `node scripts/check-project.js`: lulus, 7 pemeriksaan ringkas.
-- `node --test tests/*.test.js`: 16/16 lulus.
 - TypeScript transpile parser: 100 file JavaScript/JSX/TypeScript diparse, 0 diagnostic.
 - Perbandingan berkas: 94/94 file `src/` awal tetap ada; total 96.
 - Registry lockfile: seluruh URL menggunakan registry npm resmi, tanpa referensi mirror lama.
