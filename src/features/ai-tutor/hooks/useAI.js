@@ -154,15 +154,18 @@ export const useAI = () => {
   const pingAI = useCallback(async () => {
     try {
       const apiKey = import.meta.env.VITE_CUSTOM_AI_TUTOR_KEY || "christian";
+      const { data: { session } } = await supabase.auth.getSession();
 
       const { error } = await supabase.functions.invoke('ai-tutor', {
         body: { ping: true, message: "ping" },
-        headers: { 'x-api-key': apiKey }
+        headers: {
+          'x-api-key': apiKey,
+          ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {})
+        }
       });
 
       return !error;
     } catch (e) {
-      console.error("Ping AI error:", e);
       return false;
     }
   }, []);
