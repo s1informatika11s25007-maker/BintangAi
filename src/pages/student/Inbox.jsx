@@ -133,7 +133,7 @@ const StudentInbox = () => {
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Memuat Pesan...</p>
             </div>
           ) : (
-            <div className="space-y-5 max-w-3xl">
+            <div className="space-y-5 w-full">
               {messages.map((m) => {
                 const isGuru = m.sender_role === 'guru';
                 return (
