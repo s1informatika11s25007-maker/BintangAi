@@ -1,4 +1,0 @@
--- BintangAi education database schema.
--- Source of truth: supabase/migrations/20261108100000_bintangai_core_learning.sql
--- Apply that migration to the dedicated BintangAi Supabase project.
--- This pointer file is intentionally not a second, divergent schema definition.
