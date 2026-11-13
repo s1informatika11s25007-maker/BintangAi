@@ -1,5 +1,5 @@
 /**
- * SambungJaga AI — Unified Vercel Serverless Cron Automation Endpoint
+ * BintangAi — Unified Vercel Serverless Cron Automation Endpoint
  *
  * Combines both Scheduler Sweep and Outbox Worker Execution in a single serverless invocation.
  * Strictly compatible with all Vercel deployment plans (Hobby, Pro, Enterprise) and external cron webhooks.

@@ -26,8 +26,8 @@ for (const file of files) {
 }
 
 const forbiddenTerms = [
-  ['Sambung', 'Jaga'].join(''),
-  ['sambung', 'jaga'].join(''),
+  ['Bintang', 'Ai'].join(''),
+  ['bintang', 'ai'].join(''),
   ['resident', '_domain'].join(''),
   ['care', 'giver'].join(''),
   ['private', '-care-', 'evidence'].join(''),

@@ -1,4 +1,4 @@
-# 🌟 SambungJaga AI (BintangAi)
+# 🌟 BintangAi
 
 > **Platform Pembelajaran Inklusif Berbasis Kecerdasan Buatan untuk Siswa Tunanetra & Tunarungu**
 
@@ -13,9 +13,9 @@
 
 ## 📖 Ringkasan & Visi Proyek
 
-**SambungJaga AI** adalah edutech inklusif revolusioner yang dirancang khusus untuk menjembatani kesenjangan akses pendidikan bagi siswa **Tunanetra** (gangguan penglihatan) dan **Tunarungu** (gangguan pendengaran). 
+**BintangAi** adalah edutech inklusif revolusioner yang dirancang khusus untuk menjembatani kesenjangan akses pendidikan bagi siswa **Tunanetra** (gangguan penglihatan) dan **Tunarungu** (gangguan pendengaran). 
 
-Menggabungkan asisten kecerdasan buatan cerdas (**Kak Bintang** & **Asisten Nay**), **Navigasi Gestur Tangan (Hand Tracking)** via kamera, **Transkripsi Suara Real-time (Mata Pintar AI)**, serta **Penyesuaian Bahasa & Dialek Daerah**, SambungJaga AI menghadirkan pengalaman belajar yang interaktif, tanpa hambatan fisik, dan dapat diakses secara mandiri oleh siswa, dipantau oleh Orang Tua, serta dikelola secara efisien oleh Guru.
+Menggabungkan asisten kecerdasan buatan cerdas (**Kak Bintang** & **Asisten Nay**), **Navigasi Gestur Tangan (Hand Tracking)** via kamera, **Transkripsi Suara Real-time (Mata Pintar AI)**, serta **Penyesuaian Bahasa & Dialek Daerah**, BintangAi menghadirkan pengalaman belajar yang interaktif, tanpa hambatan fisik, dan dapat diakses secara mandiri oleh siswa, dipantau oleh Orang Tua, serta dikelola secara efisien oleh Guru.
 
 ---
 
@@ -53,9 +53,9 @@ Menggabungkan asisten kecerdasan buatan cerdas (**Kak Bintang** & **Asisten Nay*
 
 ## 🤖 Spesifikasi Model AI & Kegunaannya
 
-Dalam ekosistem SambungJaga AI, berbagai **LLM Model** dan model Machine Learning dimanfaatkan secara khusus tanpa ketergantungan vendor tertentu untuk memastikan performa tinggi, keamanan masukan, dan kecocokan materi anak:
+Dalam ekosistem BintangAi, berbagai **LLM Model** dan model Machine Learning dimanfaatkan secara khusus tanpa ketergantungan vendor tertentu untuk memastikan performa tinggi, keamanan masukan, dan kecocokan materi anak:
 
-| Nama Model | Kategori / Arsitektur | Peran & Kegunaan Spesifik dalam SambungJaga AI |
+| Nama Model | Kategori / Arsitektur | Peran & Kegunaan Spesifik dalam BintangAi |
 | :--- | :--- | :--- |
 | **Model AI Tutor Core**<br>`qwen/qwen3.8-27b` | LLM Model (Tutor Utama) | Berperan sebagai **"Kak Bintang"**, tutor virtual interaktif yang menjawab pertanyaan pembelajaran siswa. Mampu menyesuaikan gaya bahasa ramah anak sesuai tingkat kelas (misal Kelas 4 SD) serta mendukung **Multi-Bahasa & Dialek Daerah** (Indonesia, Jawa, Batak, Sunda, Karo, Inggris) dengan tingkat dialek (ringan, sedang, penuh). |
 | **Model Prompt Guard**<br>`meta-llama/llama-prompt-guard-2-22m` | LLM Model (Input Guard) | Berfungsi sebagai perisai pertahanan awal (*Input Shielding*) untuk mendeteksi dan menghentikan potensi serangan *prompt injection*, *jailbreak*, atau perintah masukan yang berbahaya sebelum diproses oleh model tutor utama. |
@@ -180,7 +180,7 @@ flowchart TD
 ## 📁 Struktur Proyek (Comprehensive File Tree)
 
 ```text
-SambungJaga/
+BintangAi/
 ├── api/                        # Backend Vercel Serverless Cron Workers
 │   ├── cron-automation.js      # Main Cron Gateway & Sweeper Manager
 │   ├── cron-scheduler.js       # Outbox Event Scheduler & Queue
@@ -246,10 +246,10 @@ SambungJaga/
 ### 2. Kloning Repositori & Instalasi Dependensi
 ```bash
 # Kloning repositori proyek
-git clone https://github.com/s1informatika11s25007-maker/SambungJagaAI.git
+git clone https://github.com/s1informatika11s25007-maker/BintangAi.git
 
 # Masuk ke direktori proyek
-cd SambungJagaAI
+cd BintangAi
 
 # Instal seluruh dependensi
 npm install
@@ -309,6 +309,6 @@ npm run preview
 
 ## 📄 Lisensi & Kredit
 
-Dipersembahkan dengan ❤️ oleh **Tim SambungJaga AI (BintangAi)** untuk mendukung pendidikan inklusif dan ramah disabilitas di Indonesia.
+Dipersembahkan dengan ❤️ oleh **Tim BintangAi** untuk mendukung pendidikan inklusif dan ramah disabilitas di Indonesia.
 
-© 2026 **SambungJaga AI**. All rights reserved.
+© 2026 **BintangAi**. All rights reserved.

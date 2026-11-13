@@ -1,5 +1,5 @@
 /**
- * SambungJaga AI — Vercel Cron Serverless Background Worker Endpoint
+ * BintangAi — Vercel Cron Serverless Background Worker Endpoint
  *
  * Triggered automatically by Vercel Cron every 1 minute.
  * Claims and executes jobs from PostgreSQL `automation_jobs` queue using `fn_claim_automation_jobs`.

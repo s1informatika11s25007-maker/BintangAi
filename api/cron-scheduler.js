@@ -1,5 +1,5 @@
 /**
- * SambungJaga AI — Vercel Cron Serverless Scheduler Endpoint
+ * BintangAi — Vercel Cron Serverless Scheduler Endpoint
  *
  * Triggered automatically by Vercel Cron every 1 minute.
  * Executes due persistent schedules from `automation_schedules` database table with real executors.

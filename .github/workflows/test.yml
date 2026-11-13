@@ -1,4 +1,4 @@
-name: SambungJaga AI - Production CI/CD Pipeline & Competition Automation
+name: BintangAi - Production CI/CD Pipeline & Competition Automation
 
 on:
   push:
@@ -248,7 +248,7 @@ jobs:
               : 'Perhatian: Terdapat bagian pengujian yang belum lulus. Silakan perbaiki bagian yang error pada lokal Anda, lalu lakukan git push kembali ke GitHub agar ter-evaluasi ulang.'
             }
 
-            Log Otomatis diproses oleh SambungJaga Competition Bot`;
+            Log Otomatis diproses oleh BintangAi Competition Bot`;
 
             // 1. Selalu tulis ke GitHub Actions Step Summary (Bisa dilihat di tab Actions setiap push)
             if (process.env.GITHUB_STEP_SUMMARY) {
@@ -313,4 +313,4 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           working-directory: ./
           alias-domains: |
-            sambungjaga.vercel.app
+            bintangai.vercel.app
