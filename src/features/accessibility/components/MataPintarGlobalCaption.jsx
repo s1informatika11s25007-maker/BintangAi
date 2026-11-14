@@ -55,8 +55,16 @@ export default function MataPintarGlobalCaption() {
 
     const handler = (text, speaker = 'Guru', type = 'speech') => {
       if (!text) return;
+      const cleanText = text.trim();
+      if (!cleanText) return;
       const id = ++idRef.current;
-      setCaptions(prev => [...prev.slice(-8), { id, text, speaker, type, timestamp: new Date() }]);
+      setCaptions(prev => {
+        const lastItem = prev[prev.length - 1];
+        if (lastItem && lastItem.text === cleanText && lastItem.speaker === speaker) {
+          return prev; // Deduplicate
+        }
+        return [...prev.slice(-8), { id, text: cleanText, speaker, type, timestamp: new Date() }];
+      });
     };
 
     globalCaptionListeners.push(handler);
@@ -112,7 +120,13 @@ export default function MataPintarGlobalCaption() {
           }
 
           const id = ++idRef.current;
-          setCaptions(prev => [...prev.slice(-8), { id, text: clean, speaker, type, timestamp: new Date() }]);
+          setCaptions(prev => {
+            const lastItem = prev[prev.length - 1];
+            if (lastItem && lastItem.text === clean && lastItem.speaker === speaker) {
+              return prev; // Deduplicate identical speech
+            }
+            return [...prev.slice(-8), { id, text: clean, speaker, type, timestamp: new Date() }];
+          });
           setInterimText('');
         }
       };
