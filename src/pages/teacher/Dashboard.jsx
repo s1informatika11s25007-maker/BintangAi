@@ -185,7 +185,8 @@ const TeacherDashboard = () => {
         .select('*, profiles!inner(id, full_name, xp, class_code), assignments!inner(id, title, teacher_id)')
         .eq('assignments.teacher_id', profile.id)
         .eq('profiles.class_code', profile?.class_code)
-        .order('submitted_at', { ascending: false });
+        .order('submitted_at', { ascending: false })
+        .range(0, 99);
 
       if (subsError) throw subsError;
 

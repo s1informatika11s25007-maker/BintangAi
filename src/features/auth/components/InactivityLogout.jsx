@@ -14,11 +14,19 @@ const InactivityLogout = ({ children }) => {
   // 15 minutes platform standard idle limit = 900.000 ms
   const INACTIVITY_LIMIT = 15 * 60 * 1000;
 
-  const updateOnlineStatus = useCallback(async (onlineStatus = true) => {
+  const lastOnlineUpdateRef = useRef(0);
+
+  const updateOnlineStatus = useCallback(async (onlineStatus = true, force = false) => {
     if (!user?.id) return;
+    const now = Date.now();
+    // 🎯 THROTTLING: Batasi pembaruan last_active_at di database maksimal 1 kali per 60 detik per siswa
+    if (!force && onlineStatus && now - lastOnlineUpdateRef.current < 60000) {
+      return;
+    }
+    lastOnlineUpdateRef.current = now;
+
     try {
       const todayDate = new Date().toISOString().split('T')[0];
-      // Single-row lightweight update on public.profiles - 0% database bloat
       await supabase.from('profiles').update({
         is_online: onlineStatus,
         last_active_at: new Date().toISOString(),

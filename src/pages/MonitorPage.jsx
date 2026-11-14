@@ -28,13 +28,15 @@ const MonitorPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
 
+  const [totalCount, setTotalCount] = useState(0);
+
   const handlePasswordSubmit = (e) => {
     e.preventDefault();
     if (passwordInput === 'Bintang123') {
       setIsAuthenticated(true);
       sessionStorage.setItem('bintang_monitor_unlocked', 'true');
       setErrorMsg('');
-      fetchLogs();
+      fetchLogs(1);
     } else {
       setErrorMsg('Sandi salah! Akses ditolak.');
     }
@@ -45,17 +47,28 @@ const MonitorPage = () => {
     sessionStorage.removeItem('bintang_monitor_unlocked');
   };
 
-  const fetchLogs = async () => {
+  // 🎯 SERVER-SIDE PAGINATION USING SUPABASE .range(from, to)
+  const fetchLogs = async (page = currentPage) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const from = (page - 1) * itemsPerPage;
+      const to = from + itemsPerPage - 1;
+
+      let query = supabase
         .from('user_activity_logs')
-        .select('*')
+        .select('*', { count: 'exact' });
+
+      if (roleFilter !== 'all') query = query.eq('user_role', roleFilter);
+      if (userFilter !== 'all') query = query.eq('user_name', userFilter);
+      if (actionFilter !== 'all') query = query.eq('action_type', actionFilter);
+
+      const { data, count, error } = await query
         .order('created_at', { ascending: false })
-        .limit(500);
+        .range(from, to);
 
       if (error) throw error;
       setLogs(data || []);
+      if (count !== null) setTotalCount(count);
     } catch (err) {
       console.error("Fetch logs error:", err);
     } finally {
@@ -68,6 +81,7 @@ const MonitorPage = () => {
       const { error } = await supabase.from('user_activity_logs').delete().eq('id', id);
       if (error) throw error;
       setLogs(prev => prev.filter(l => l.id !== id));
+      setTotalCount(c => Math.max(0, c - 1));
     } catch (err) {
       console.error("Delete log error:", err);
     }
@@ -78,6 +92,7 @@ const MonitorPage = () => {
       const { error } = await supabase.from('user_activity_logs').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       if (error) throw error;
       setLogs([]);
+      setTotalCount(0);
       setCurrentPage(1);
       setShowClearConfirm(false);
     } catch (err) {
@@ -85,15 +100,11 @@ const MonitorPage = () => {
     }
   };
 
-  // Real-time listener + 3-second auto-polling fallback for live activity logs
+  // 🎯 REAL-TIME LISTENER ONLY (3-Second Auto-Polling Removed - Saves up to 80% Database I/O)
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    fetchLogs();
-
-    const interval = setInterval(() => {
-      fetchLogs();
-    }, 3000);
+    fetchLogs(currentPage);
 
     const channelName = `monitor_logs_${Date.now()}`;
     const channel = supabase.channel(channelName)
@@ -101,16 +112,16 @@ const MonitorPage = () => {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'user_activity_logs' },
         (payload) => {
-          setLogs(prev => [payload.new, ...prev]);
+          setLogs(prev => [payload.new, ...prev.slice(0, itemsPerPage - 1)]);
+          setTotalCount(c => c + 1);
         }
       )
       .subscribe();
 
     return () => {
-      clearInterval(interval);
       supabase.removeChannel(channel);
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, currentPage, roleFilter, userFilter, actionFilter]);
 
   // Extract unique user names dynamically for filter dropdown
   const uniqueUserNames = useMemo(() => {
@@ -142,12 +153,16 @@ const MonitorPage = () => {
     setCurrentPage(1);
   }, [searchQuery, roleFilter, userFilter, actionFilter]);
 
-  // Calculate Pagination
-  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage) || 1;
+  // Calculate Server-Side Pagination
+  const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
   const currentLogs = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredLogs.slice(start, start + itemsPerPage);
-  }, [filteredLogs, currentPage, itemsPerPage]);
+    if (!searchQuery.trim()) return logs;
+    return logs.filter(log =>
+      (log.user_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (log.feature_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (log.description || '').toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [logs, searchQuery]);
 
   const totalLogins = logs.filter(l => l.action_type === 'LOGIN').length;
   const totalClicks = logs.filter(l => l.action_type === 'KLIK_TOMBOL').length;

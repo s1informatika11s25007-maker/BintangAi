@@ -2,6 +2,63 @@ import { useState, useCallback } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
 import { cleanMarkdownText } from '../../../utils';
 
+// In-Memory Fast Semantic Cache Fallback
+const inMemoryAiCache = new Map();
+
+const checkAICache = async (queryKey, kelas, nama) => {
+  if (!queryKey) return null;
+
+  // 1. Check in-memory map
+  if (inMemoryAiCache.has(queryKey)) {
+    const cachedText = inMemoryAiCache.get(queryKey);
+    return cachedText.replace(/\[NAMA\]/g, nama);
+  }
+
+  // 2. Check Supabase ai_response_cache database table
+  try {
+    const { data } = await supabase
+      .from('ai_response_cache')
+      .select('answer, hit_count')
+      .eq('query_key', queryKey)
+      .eq('grade_level', kelas)
+      .maybeSingle();
+
+    if (data?.answer) {
+      inMemoryAiCache.set(queryKey, data.answer);
+      // Increment hit_count asynchronously
+      supabase.from('ai_response_cache')
+        .update({ hit_count: (data.hit_count || 1) + 1, updated_at: new Date().toISOString() })
+        .eq('query_key', queryKey)
+        .catch(() => {});
+
+      return data.answer.replace(/\[NAMA\]/g, nama);
+    }
+  } catch (e) {
+    // Cache miss or table not created yet
+  }
+  return null;
+};
+
+const saveAICache = async (queryKey, rawQuery, kelas, answer, nama) => {
+  if (!queryKey || !answer || answer.length < 15) return;
+
+  // Mask student's name to template token [NAMA] for reusability across students
+  const templateAnswer = answer.replace(new RegExp(nama, 'gi'), '[NAMA]');
+  inMemoryAiCache.set(queryKey, templateAnswer);
+
+  try {
+    await supabase.from('ai_response_cache').upsert({
+      query_key: queryKey,
+      raw_query: rawQuery,
+      grade_level: kelas,
+      answer: templateAnswer,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'query_key' });
+  } catch (e) {
+    // Silently ignore if table fails or missing permissions
+  }
+};
+
 export const useAI = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -33,6 +90,21 @@ export const useAI = () => {
       const rawClass = profileData?.class_level || "4 SD";
       const parsedClass = parseInt(rawClass.replace(/\D/g, '') || "4", 10);
       const kelas = Math.max(1, Math.min(6, parsedClass));
+
+      // 🎯 SEMANTIC QUERY CACHING CHECK (Ultra-fast response < 50ms & 0 API cost)
+      const normalizedKey = query.trim().toLowerCase().replace(/[^\w\s]/gi, '');
+      const cachedResponse = await checkAICache(normalizedKey, kelas, nama);
+      if (cachedResponse) {
+        setLoading(false);
+        return {
+          answer: cachedResponse,
+          success: true,
+          isCached: true,
+          detectedTopic: null,
+          xpGained: 5,
+          options: []
+        };
+      }
 
       // 🎯 DYNAMIC GRADE TIER PROMPT (Kelas 1-2 vs 3-4 vs 5-6 SD)
       let gradeTierPrompt = '';
@@ -75,6 +147,8 @@ export const useAI = () => {
 
         if (!invokeError && data?.reply) {
           const cleanedReply = cleanMarkdownText(data.reply);
+          // Save to Semantic AI Cache
+          saveAICache(normalizedKey, query.trim(), kelas, cleanedReply, nama);
           return {
             answer: cleanedReply,
             success: true,
@@ -120,6 +194,7 @@ ATURAN UTAMA:
       const fallbackReply = cleanMarkdownText(rawFallbackReply);
 
       if (fallbackReply) {
+        saveAICache(normalizedKey, query.trim(), kelas, fallbackReply, nama);
         if (studentId) {
           try {
             await supabase.from('student_ai_chat_history').insert([

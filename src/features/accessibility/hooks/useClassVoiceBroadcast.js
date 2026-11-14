@@ -4,6 +4,7 @@ import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { useAccessibilityStore } from '@/features/accessibility/store/accessibilityStore';
 import { globalCaptionBus } from '@/features/accessibility/components/MataPintarGlobalCaption';
 import { useSubtitle } from '@/features/accessibility/components/Subtitles';
+import { audioQueueManager } from '@/features/accessibility/utils/audioQueueManager';
 
 export function useClassVoiceBroadcast() {
   const { profile } = useAuthStore();
@@ -33,17 +34,8 @@ export function useClassVoiceBroadcast() {
   const replayTeacherVoice = useCallback(() => {
     if (!activeTeacherMessage?.text) return;
     try {
-      if (synthRef.current) synthRef.current.cancel();
-      const utt = new SpeechSynthesisUtterance(`Guru ${activeTeacherMessage.teacherName || 'Guru'} berkata: ${activeTeacherMessage.text}`);
-      utt.lang = 'id-ID';
-      utt.rate = 1.0;
-      utt.volume = 1.0;
-
-      const voices = synthRef.current?.getVoices() || [];
-      const idVoice = voices.find(v => v.lang.startsWith('id') || v.lang.includes('ID') || (v.name && v.name.toLowerCase().includes('indonesia')));
-      if (idVoice) utt.voice = idVoice;
-
-      synthRef.current?.speak(utt);
+      const speechText = `Guru ${activeTeacherMessage.teacherName || 'Guru'} berkata: ${activeTeacherMessage.text}`;
+      audioQueueManager.speak(speechText, { priority: 'high' });
     } catch (e) {
       console.error('Replay speech error:', e);
     }
@@ -51,7 +43,7 @@ export function useClassVoiceBroadcast() {
 
   // Dismiss teacher message manually (Manual Close)
   const dismissTeacherMessage = useCallback(() => {
-    if (synthRef.current) synthRef.current.cancel();
+    audioQueueManager.stopAll();
     setActiveTeacherMessage(null);
   }, []);
 
@@ -115,20 +107,11 @@ export function useClassVoiceBroadcast() {
       };
       setActiveTeacherMessage(msgObj);
 
-      // A. SISWA TUNANETRA: Native SpeechSynthesis Audio
+      // A. SISWA TUNANETRA: Managed Audio Queue for SpeechSynthesis Audio
       if (mode === 'tunanetra' || profile.disability_type === 'tunanetra') {
         try {
-          if (synthRef.current) synthRef.current.cancel();
-          const utt = new SpeechSynthesisUtterance(`Guru ${teacherName} berkata: ${spokenText}`);
-          utt.lang = 'id-ID';
-          utt.rate = 1.0;
-          utt.volume = 1.0;
-
-          const voices = synthRef.current?.getVoices() || [];
-          const idVoice = voices.find(v => v.lang.startsWith('id') || v.lang.includes('ID') || (v.name && v.name.toLowerCase().includes('indonesia')));
-          if (idVoice) utt.voice = idVoice;
-
-          synthRef.current?.speak(utt);
+          const broadcastSpeechText = `Guru ${teacherName} berkata: ${spokenText}`;
+          audioQueueManager.speak(broadcastSpeechText, { priority: 'high', rate: 1.0 });
         } catch (e) {
           console.error('Speech synthesis broadcast error:', e);
         }
