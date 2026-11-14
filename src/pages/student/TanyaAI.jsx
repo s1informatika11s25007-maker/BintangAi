@@ -60,22 +60,24 @@ const TanyaAI = () => {
             {
               role: 'ai',
               content: `Halo ${getCleanFirstName(profile?.full_name) || 'Teman'}! 👋 Aku Kak Bintang. Ada yang bisa aku bantu hari ini?`,
-              timestamp: new Date(data[0].created_at)
+              timestamp: data[0].created_at ? new Date(data[0].created_at) : new Date()
             }
           ];
 
           data.forEach(item => {
+            const itemTime = item.created_at ? new Date(item.created_at) : new Date();
+
             if (item.question) {
               formatted.push({
                 role: 'user',
                 content: item.question,
-                timestamp: new Date(item.created_at)
+                timestamp: itemTime
               });
             } else if (item.role === 'user' && item.content) {
               formatted.push({
                 role: 'user',
                 content: item.content,
-                timestamp: new Date(item.created_at)
+                timestamp: itemTime
               });
             }
 
@@ -83,13 +85,13 @@ const TanyaAI = () => {
               formatted.push({
                 role: 'ai',
                 content: item.answer,
-                timestamp: new Date(item.created_at)
+                timestamp: itemTime
               });
             } else if (item.role === 'assistant' && item.content) {
               formatted.push({
                 role: 'ai',
                 content: item.content,
-                timestamp: new Date(item.created_at)
+                timestamp: itemTime
               });
             }
           });
@@ -304,7 +306,14 @@ const TanyaAI = () => {
                       text-[9px] md:text-[10px] font-black uppercase tracking-[0.15em] opacity-40
                       ${msg.role === 'user' ? 'text-indigo-100' : 'text-slate-400'}
                     `}>
-                      {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {(() => {
+                        try {
+                          const d = msg.timestamp instanceof Date ? msg.timestamp : new Date(msg.timestamp);
+                          return isNaN(d.getTime()) ? '' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        } catch {
+                          return '';
+                        }
+                      })()}
                     </span>
                   </div>
                 </div>
