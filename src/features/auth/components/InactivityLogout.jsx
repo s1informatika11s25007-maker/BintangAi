@@ -50,14 +50,22 @@ const InactivityLogout = ({ children }) => {
   }, [logout, updateOnlineStatus]);
 
   const resetTimer = useCallback((force = false) => {
-    // Throttling: Avoid unnecessary processing on every mouse move
     const now = Date.now();
-    if (!force && now - lastActivityRef.current < 2000) return;
+    const elapsed = now - lastActivityRef.current;
+
+    // 🎯 PRESET PRECISION: Jika durasi inaktif sudah mencapai/melebihi 15 menit (900.000 ms), langsung jalankan auto-logout
+    if (elapsed >= INACTIVITY_LIMIT) {
+      handleAutoLogout();
+      return;
+    }
+
+    // Throttling: Avoid unnecessary processing on every mouse move (< 2s)
+    if (!force && elapsed < 2000) return;
     lastActivityRef.current = now;
 
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
-    // If camera is active (user is likely using sign language/gestures), we pause the logout timer
+    // If camera is active (user is using sign language/gestures), pause the logout timer
     if (user && !cameraActiveRef.current) {
       timeoutRef.current = setTimeout(handleAutoLogout, INACTIVITY_LIMIT);
     }
@@ -72,7 +80,10 @@ const InactivityLogout = ({ children }) => {
     // Set online on mount & heartbeat every 30s for max precision
     updateOnlineStatus(true);
     const heartbeatInterval = setInterval(() => {
-      if (Date.now() - lastActivityRef.current < INACTIVITY_LIMIT) {
+      const elapsed = Date.now() - lastActivityRef.current;
+      if (elapsed >= INACTIVITY_LIMIT) {
+        handleAutoLogout();
+      } else {
         updateOnlineStatus(true);
       }
     }, 30000);
@@ -82,7 +93,6 @@ const InactivityLogout = ({ children }) => {
     // Cek apakah kamera sedang aktif secara akurat dan sangat ringan
     const checkCameraActivity = () => {
       const video = document.querySelector('video');
-      // Validasi apakah video benar-benar streaming (bukan sekadar elemen kosong)
       const isActive = !!(
         video &&
         video.srcObject &&
@@ -91,20 +101,23 @@ const InactivityLogout = ({ children }) => {
         !video.paused
       );
 
-      // Hanya panggil resetTimer jika status berubah untuk mencegah "kedap-kedip" logika/efisiensi
       if (isActive !== cameraActiveRef.current) {
         cameraActiveRef.current = isActive;
         resetTimer(true);
       }
     };
 
-    // Polling setiap 5 detik sudah sangat cukup untuk timer 10 menit
     const interval = setInterval(checkCameraActivity, 5000);
 
     const handleEvent = () => resetTimer();
     const handleFocus = () => {
-      updateOnlineStatus(true);
-      resetTimer(true);
+      const elapsed = Date.now() - lastActivityRef.current;
+      if (elapsed >= INACTIVITY_LIMIT) {
+        handleAutoLogout();
+      } else {
+        updateOnlineStatus(true);
+        resetTimer(true);
+      }
     };
 
     activityEvents.forEach(event => {
