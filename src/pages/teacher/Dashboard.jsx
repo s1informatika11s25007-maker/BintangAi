@@ -629,9 +629,6 @@ const TeacherDashboard = () => {
             </motion.div>
           </header>
 
-          {/* Teacher Realtime Voice Broadcast Widget */}
-          <TeacherVoiceBroadcastWidget />
-
           <AnimatePresence mode="wait">
             {activeTab === 'summary' && (
               <motion.div

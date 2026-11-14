@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { HiHome, HiBookOpen, HiLightningBolt, HiUserCircle, HiChatAlt2, HiPlusCircle, HiEye } from 'react-icons/hi';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { useAccessibility } from '@/features/accessibility/hooks/useAccessibility';
+import TeacherVoiceBroadcastWidget from '@/features/accessibility/components/TeacherVoiceBroadcastWidget';
 
 const AppLayout = ({ children }) => {
   const location = useLocation();
@@ -92,6 +93,13 @@ const AppLayout = ({ children }) => {
               <HiUserCircle size={24} />
             </button>
           </header>
+        )}
+
+        {/* Global Teacher Realtime Voice Broadcast Widget for ALL Teacher Features */}
+        {role === 'guru' && (
+          <div className="px-4 pt-4 sm:px-6 md:px-12">
+            <TeacherVoiceBroadcastWidget />
+          </div>
         )}
 
         <main className={`flex-1 w-full relative ${isFullScreenPage ? 'pb-0' : 'pb-28 lg:pb-0'}`}>
