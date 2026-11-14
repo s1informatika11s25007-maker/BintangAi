@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
+import { cleanMarkdownText } from '../../../utils';
 
 export const useAI = () => {
   const [loading, setLoading] = useState(false);
@@ -73,8 +74,9 @@ export const useAI = () => {
         });
 
         if (!invokeError && data?.reply) {
+          const cleanedReply = cleanMarkdownText(data.reply);
           return {
-            answer: data.reply,
+            answer: cleanedReply,
             success: true,
             detectedTopic: data.detected_topic,
             xpGained: data.xp_gained,
@@ -92,8 +94,9 @@ ATURAN UTAMA:
 1. SELALU panggil dan sebut nama siswa (${nama}) secara hangat dan akrab di setiap jawabanmu (contoh: "Halo ${nama}!", "Wah, pertanyaan bagus dari ${nama}!").
 2. Jawablah 100% seperti teman belajar AI Agent yang hidup, ramah, penuh semangat, empati, dan menyenangkan bagi anak SD kelas 1-6.
 3. Penjelasan harus sangat mudah dipahami anak SD kelas ${kelas}: ${gradeTierPrompt}
-4. Gunakan Bahasa Indonesia yang ramah, santun, dengan contoh sederhana sehari-hari.
-5. Berikan motivasi dan pujian kepada ${nama}.`;
+4. DILARANG MENGGUNAKAN SIMBOL MARKDOWN SEPERTI ASTERISK (** atau *), TANDA PAGAR (#), ATAU KODE MARKDOWN DALAM JAWABANMU. Gunakan teks polos Bahasa Indonesia yang bersih dan rapi.
+5. Gunakan Bahasa Indonesia yang ramah, santun, dengan contoh sederhana sehari-hari.
+6. Berikan motivasi dan pujian kepada ${nama}.`;
 
       const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
@@ -113,7 +116,8 @@ ATURAN UTAMA:
       });
 
       const groqData = await groqRes.json();
-      const fallbackReply = groqData?.choices?.[0]?.message?.content;
+      const rawFallbackReply = groqData?.choices?.[0]?.message?.content;
+      const fallbackReply = cleanMarkdownText(rawFallbackReply);
 
       if (fallbackReply) {
         if (studentId) {

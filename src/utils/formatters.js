@@ -19,3 +19,20 @@ export const getCleanFirstName = (fullName) => {
   // Capitalize properly
   return firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
 };
+
+/**
+ * Strips raw markdown syntax (**, *, #, -, `, etc.) from AI response text
+ */
+export const cleanMarkdownText = (text) => {
+  if (!text || typeof text !== 'string') return '';
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/__(.*?)__/g, '$1')
+    .replace(/_(.*?)_/g, '$1')
+    .replace(/^\s*\*\s+/gm, '• ')
+    .replace(/\s\*\s/g, ' ')
+    .replace(/^#+\s+/gm, '')
+    .replace(/`([^`]+)`/g, '$1')
+    .trim();
+};
