@@ -394,7 +394,7 @@ export default function MataPintarGlobalCaption() {
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </motion.div>
       </div>
 
       {/* CAPTION SETTINGS MODAL */}
