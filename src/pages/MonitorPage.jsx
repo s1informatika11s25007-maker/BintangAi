@@ -75,11 +75,15 @@ const MonitorPage = () => {
     }
   };
 
-  // Real-time listener for live activity logs
+  // Real-time listener + 4-second auto-polling fallback for live activity logs
   useEffect(() => {
     if (!isAuthenticated) return;
 
     fetchLogs();
+
+    const interval = setInterval(() => {
+      fetchLogs();
+    }, 4000);
 
     const channelName = `monitor_logs_${Date.now()}`;
     const channel = supabase.channel(channelName)
@@ -93,6 +97,7 @@ const MonitorPage = () => {
       .subscribe();
 
     return () => {
+      clearInterval(interval);
       supabase.removeChannel(channel);
     };
   }, [isAuthenticated]);

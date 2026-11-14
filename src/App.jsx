@@ -9,6 +9,7 @@ import { useNotification } from './hooks/useNotification';
 import NotificationContainer from './components/feedback/NotificationContainer';
 import AppLayout from './components/layout/AppLayout';
 import { ProtectedRoute, PublicOnlyRoute } from './components/layout/ProtectedRoute';
+import { logUserActivity } from './utils/logger';
 
 import LandingPage from './pages/landing/LandingPage';
 import Login from './pages/auth/Login';
@@ -69,6 +70,54 @@ function AppContent() {
     }, 4 * 60 * 1000);
     return () => clearInterval(interval);
   }, [pingSupabase, pingAI]);
+
+  // Global Page Access Logging for Realtime Monitor
+  useEffect(() => {
+    const profile = useAuthStore.getState().profile;
+    if (!profile?.id) return;
+
+    const featureNames = {
+      '/student/dashboard': 'Beranda Siswa',
+      '/student/tasks': 'Fitur QuizKu Aktif',
+      '/student/modules': 'Perpustakaan Modul Belajar',
+      '/student/tanya-ai': 'Tanya Kak Bintang AI',
+      '/student/collaboration': 'Komunitas & Diskusi Siswa',
+      '/student/live-captions': 'Mata Pintar AI (Live Captions)',
+      '/teacher/dashboard': 'Dashboard Pengajar',
+      '/teacher/upload': 'Upload Modul Pengajar',
+      '/teacher/create-task': 'Buat QuizKu Pengajar',
+      '/teacher/chat': 'Kotak Masuk & Chat Pengajar',
+      '/teacher/collaboration': 'Manajemen Kolaborasi Pengajar',
+      '/parent/dashboard': 'Dashboard Orang Tua',
+      '/parent/chat': 'Chat Bimbingan Orang Tua',
+    };
+
+    const featureName = featureNames[location.pathname];
+    if (featureName) {
+      logUserActivity('AKSES_FITUR', featureName, `Membuka halaman ${featureName}`, profile);
+    }
+  }, [location.pathname]);
+
+  // Global Button Click Logging for Realtime Monitor
+  useEffect(() => {
+    const handleGlobalClick = (e) => {
+      const target = e.target.closest('button, a, [data-feature]');
+      if (!target) return;
+
+      const profile = useAuthStore.getState().profile;
+      if (!profile?.id) return;
+
+      const btnText = target.innerText?.trim() || target.getAttribute('title') || target.getAttribute('aria-label') || 'Tombol';
+      const cleanText = btnText.split('\n')[0].slice(0, 45);
+
+      if (cleanText && cleanText !== '×') {
+        logUserActivity('KLIK_TOMBOL', 'Aksi Tombol / Fitur', `Menekan: "${cleanText}"`, profile);
+      }
+    };
+
+    window.addEventListener('click', handleGlobalClick, { capture: true, passive: true });
+    return () => window.removeEventListener('click', handleGlobalClick, { capture: true });
+  }, []);
 
   // Full-screen pure circular loading spinner during logout (NO TEXT)
   if (isLoggingOut) {
