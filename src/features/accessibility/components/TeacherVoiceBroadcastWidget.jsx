@@ -5,7 +5,7 @@ import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { supabase } from '@/lib/supabaseClient';
 import {
   HiMicrophone, HiStop, HiVolumeUp, HiChatAlt2, HiUserGroup,
-  HiSearch, HiX, HiCheck, HiFilter, HiUser
+  HiSearch, HiX, HiCheck, HiChevronDown, HiChevronUp
 } from 'react-icons/hi';
 
 export default function TeacherVoiceBroadcastWidget() {
@@ -24,6 +24,7 @@ export default function TeacherVoiceBroadcastWidget() {
   const [showSelectModal, setShowSelectModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
+  const [isExpanded, setIsExpanded] = useState(false); // Default compact/minimized so it never blocks page content
 
   // Fetch all students in the teacher's class
   useEffect(() => {
@@ -53,14 +54,8 @@ export default function TeacherVoiceBroadcastWidget() {
     });
   }, [classStudents, searchQuery, roleFilter]);
 
-  // Handle Select All / Unselect All / Group Selection
-  const handleSelectAll = () => {
-    setTargetStudentIds('all');
-  };
-
-  const handleSelectNone = () => {
-    setTargetStudentIds([]);
-  };
+  const handleSelectAll = () => setTargetStudentIds('all');
+  const handleSelectNone = () => setTargetStudentIds([]);
 
   const handleSelectRole = (role) => {
     const matchingIds = classStudents
@@ -71,7 +66,6 @@ export default function TeacherVoiceBroadcastWidget() {
 
   const toggleStudentSelection = (studentId) => {
     if (targetStudentIds === 'all') {
-      // Switch from 'all' to all IDs minus this one
       const allIds = classStudents.map((s) => s.id);
       setTargetStudentIds(allIds.filter((id) => id !== studentId));
     } else if (Array.isArray(targetStudentIds)) {
@@ -87,7 +81,7 @@ export default function TeacherVoiceBroadcastWidget() {
   const targetDescription = useMemo(() => {
     if (targetStudentIds === 'all') return `Semua Siswa (${classStudents.length})`;
     if (Array.isArray(targetStudentIds)) {
-      if (targetStudentIds.length === 0) return 'Belum Ada (Pilih Siswa)';
+      if (targetStudentIds.length === 0) return 'Belum Ada (Pilih)';
       if (targetStudentIds.length === classStudents.length && classStudents.length > 0) return `Semua Siswa (${classStudents.length})`;
       return `${targetStudentIds.length} Siswa Terpilih`;
     }
@@ -98,104 +92,115 @@ export default function TeacherVoiceBroadcastWidget() {
 
   return (
     <>
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-5 border border-indigo-500/20 shadow-xl relative overflow-hidden mb-8 space-y-4">
-        <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4 min-w-0">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0 transition-all ${
-              isBroadcasting ? 'bg-rose-500 shadow-lg shadow-rose-500/30 animate-pulse' : 'bg-indigo-600 shadow-lg shadow-indigo-600/30'
-            }`}>
-              <HiMicrophone />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <span className={`w-2 h-2 rounded-full ${isBroadcasting ? 'bg-rose-500 animate-ping' : 'bg-emerald-500'}`} />
-                <h4 className="text-xs font-black uppercase tracking-wider text-indigo-300">
-                  Siaran Suara Guru Realtime
-                </h4>
-                <span className="px-2 py-0.5 bg-white/10 text-[9px] font-extrabold rounded-md uppercase tracking-wider text-amber-300 border border-white/10">
-                  Kelas: {classCode}
-                </span>
+      {/* 🛡️ NON-INTRUSIVE FLOATING / COMPACT BROADCAST DOCK (NEVER PUSHES PAGE CONTENT) */}
+      <div className="fixed right-3 sm:right-6 top-16 lg:top-4 z-[250] flex flex-col items-end pointer-events-none transition-all duration-300 max-w-[92vw] sm:max-w-xl">
+        <div className="pointer-events-auto bg-slate-950/95 backdrop-blur-2xl text-white rounded-2xl sm:rounded-3xl p-3 sm:p-4 shadow-2xl border border-indigo-500/30 w-full flex flex-col gap-2">
+
+          {/* Compact Main Bar */}
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-base sm:text-xl shrink-0 transition-all ${
+                isBroadcasting ? 'bg-rose-500 text-white animate-pulse shadow-md' : 'bg-indigo-600 text-white'
+              }`}>
+                <HiMicrophone />
+              </div>
+
+              <div className="min-w-0 flex flex-col">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className={`w-2 h-2 rounded-full ${isBroadcasting ? 'bg-rose-500 animate-ping' : 'bg-emerald-500'}`} />
+                  <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-indigo-300 truncate">
+                    Siaran Suara Guru
+                  </span>
+                  <span className="px-1.5 py-0.5 bg-white/10 text-[8px] sm:text-[9px] font-extrabold rounded uppercase tracking-wider text-amber-300">
+                    Kelas: {classCode}
+                  </span>
+                </div>
 
                 {/* Target Student Pill */}
                 <button
                   onClick={() => setShowSelectModal(true)}
-                  className="px-2.5 py-0.5 bg-indigo-600/80 hover:bg-indigo-500 text-white text-[9px] font-black uppercase rounded-md border border-indigo-400/40 flex items-center gap-1 transition-all"
-                  title="Atur Siswa Penerima Siaran"
+                  className="text-[9px] sm:text-[10px] font-bold text-slate-300 hover:text-white flex items-center gap-1 transition-all text-left truncate mt-0.5"
+                  title="Klik untuk Atur Siswa Penerima"
                 >
-                  <HiUserGroup className="text-xs" />
-                  <span>👥 {targetDescription}</span>
+                  <HiUserGroup className="text-indigo-400 shrink-0" />
+                  <span className="truncate">👥 {targetDescription}</span>
                 </button>
               </div>
+            </div>
 
-              <p className="text-xs font-medium text-slate-300 truncate">
-                {isBroadcasting
-                  ? (latestBroadcast ? `"${latestBroadcast}"` : 'Sedang mendengarkan suara Anda...')
-                  : 'Ucapkan instruksi untuk disiarkan langsung ke siswa yang dipilih di kelas Anda'}
-              </p>
+            <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+              <button
+                onClick={toggleBroadcasting}
+                className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all active:scale-95 shadow-md ${
+                  isBroadcasting
+                    ? 'bg-rose-500 hover:bg-rose-600 text-white animate-bounce'
+                    : 'bg-indigo-600 hover:bg-indigo-500 text-white'
+                }`}
+              >
+                {isBroadcasting ? <HiStop /> : <HiVolumeUp />}
+                <span>{isBroadcasting ? 'Stop' : 'Siaran'}</span>
+              </button>
+
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="p-1.5 bg-white/10 hover:bg-white/20 rounded-xl text-slate-300 text-xs transition-all"
+                title={isExpanded ? 'Kecilkan Tampilan' : 'Buka Detail Siaran'}
+              >
+                {isExpanded ? <HiChevronUp /> : <HiChevronDown />}
+              </button>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-            <button
-              onClick={() => setShowSelectModal(true)}
-              className="px-3.5 py-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-bold text-xs flex items-center gap-1.5 transition-all border border-white/10 shrink-0"
-              title="Pilih Target Siswa"
-            >
-              <HiUserGroup className="text-base text-indigo-300" />
-              <span className="hidden sm:inline">Pilih Siswa</span>
-            </button>
+          {/* Expanded Detail Panel & Realtime Student Replies */}
+          <AnimatePresence>
+            {isExpanded && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="pt-3 border-t border-white/10 space-y-3"
+              >
+                {/* Status or Latest Speech */}
+                <div className="p-3 bg-white/5 rounded-xl border border-white/10 text-xs">
+                  <span className="text-[9px] font-black uppercase text-indigo-400 block mb-1">
+                    Status Siaran:
+                  </span>
+                  <p className="font-bold text-slate-200 italic leading-relaxed">
+                    {isBroadcasting
+                      ? (latestBroadcast ? `"${latestBroadcast}"` : 'Sedang mendengarkan suara Anda...')
+                      : 'Siaran nonaktif. Klik tombol "Siaran" untuk mengirim instruksi suara.'}
+                  </p>
+                </div>
 
-            <button
-              onClick={toggleBroadcasting}
-              className={`px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-2 shrink-0 transition-all active:scale-95 shadow-lg ${
-                isBroadcasting
-                  ? 'bg-rose-500 hover:bg-rose-600 text-white shadow-rose-500/30 animate-bounce'
-                  : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/30'
-              }`}
-            >
-              {isBroadcasting ? <HiStop className="text-lg" /> : <HiVolumeUp className="text-lg" />}
-              <span>{isBroadcasting ? 'Hentikan Siaran' : 'Mulai Siaran'}</span>
-            </button>
-          </div>
-        </div>
+                {/* Realtime Student Replies List */}
+                {studentReplies && studentReplies.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1">
+                        <HiChatAlt2 /> Balasan Siswa ({studentReplies.length})
+                      </span>
+                    </div>
 
-        {/* Realtime Student Replies List Section */}
-        {studentReplies && studentReplies.length > 0 && (
-          <div className="pt-4 border-t border-white/10 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 flex items-center gap-1.5">
-                <HiChatAlt2 className="text-sm" /> Balasan Siswa Realtime ({studentReplies.length})
-              </span>
-              <span className="text-[9px] text-slate-400 font-bold uppercase">Terhubung Langsung</span>
-            </div>
-
-            <div className="max-h-36 overflow-y-auto space-y-2 custom-scrollbar pr-1">
-              {studentReplies.map((reply) => {
-                const roleIcon = reply.role === 'tunanetra' ? '👁️ Tunanetra' : reply.role === 'tunarungu' ? '🧏 Tunarungu' : '🖐️ Tunawicara';
-                const roleBadgeColor = reply.role === 'tunanetra' ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' : reply.role === 'tunarungu' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-purple-500/20 text-purple-300 border-purple-500/30';
-
-                return (
-                  <div key={reply.id} className="p-3 bg-white/5 rounded-2xl border border-white/10 flex items-start justify-between gap-3 text-xs">
-                    <div className="space-y-1 min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-bold text-white text-xs">{reply.studentName}</span>
-                        <span className={`px-2 py-0.5 text-[8px] font-black uppercase rounded-md border ${roleBadgeColor}`}>
-                          {roleIcon}
-                        </span>
-                        <span className="text-[8px] text-slate-400 font-bold">
-                          {new Date(reply.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                      <p className="text-slate-200 font-medium italic leading-relaxed">
-                        "{reply.text}"
-                      </p>
+                    <div className="max-h-32 overflow-y-auto space-y-1.5 custom-scrollbar pr-1">
+                      {studentReplies.map((reply) => {
+                        const roleIcon = reply.role === 'tunanetra' ? '👁️ Tunanetra' : reply.role === 'tunarungu' ? '🧏 Tunarungu' : '🖐️ Tunawicara';
+                        return (
+                          <div key={reply.id} className="p-2.5 bg-white/5 rounded-xl border border-white/10 text-xs">
+                            <div className="flex items-center justify-between gap-2 mb-0.5">
+                              <span className="font-bold text-white text-[11px]">{reply.studentName}</span>
+                              <span className="text-[8px] font-black text-indigo-300 uppercase">{roleIcon}</span>
+                            </div>
+                            <p className="text-slate-300 font-medium italic text-[11px]">"{reply.text}"</p>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       {/* SELECT TARGET STUDENTS MODAL (HANDLES 100+ STUDENTS EASILY) */}
@@ -206,7 +211,7 @@ export default function TeacherVoiceBroadcastWidget() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white text-slate-800 w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100 max-h-[90vh] flex flex-col font-sans"
+              className="bg-white text-slate-800 w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100 max-h-[90vh] flex flex-col font-sans pointer-events-auto"
             >
               {/* Modal Header */}
               <div className="p-6 bg-slate-900 text-white flex justify-between items-center shrink-0 border-b border-slate-800">

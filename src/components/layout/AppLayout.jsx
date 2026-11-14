@@ -95,12 +95,8 @@ const AppLayout = ({ children }) => {
           </header>
         )}
 
-        {/* Global Teacher Realtime Voice Broadcast Widget for ALL Teacher Features */}
-        {role === 'guru' && (
-          <div className="px-4 pt-4 sm:px-6 md:px-12">
-            <TeacherVoiceBroadcastWidget />
-          </div>
-        )}
+        {/* Global Teacher Realtime Voice Broadcast Widget (Floating Dock) */}
+        {role === 'guru' && <TeacherVoiceBroadcastWidget />}
 
         <main className={`flex-1 w-full relative ${isFullScreenPage ? 'pb-0' : 'pb-28 lg:pb-0'}`}>
           <AnimatePresence mode="wait">
