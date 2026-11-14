@@ -79,6 +79,7 @@ const StudentTasks = () => {
               <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200 text-xs font-bold">
                 <button
                   onClick={() => setTabFilter('active')}
+                  data-tab-active="true"
                   className={`px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 ${
                     tabFilter === 'active'
                       ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100'
@@ -89,6 +90,7 @@ const StudentTasks = () => {
                 </button>
                 <button
                   onClick={() => setTabFilter('completed')}
+                  data-tab-completed="true"
                   className={`px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 ${
                     tabFilter === 'completed'
                       ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100'
@@ -240,6 +242,7 @@ const StudentTasks = () => {
                           e.stopPropagation();
                           navigate(`/student/task/${sub.assignment_id}`);
                         }}
+                        data-btn-pembahasan="true"
                         className="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-600 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-indigo-100"
                       >
                         <HiEye className="text-sm" /> Lihat Pembahasan

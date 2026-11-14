@@ -97,21 +97,32 @@ export function useGestureControl({ onGesture, onScroll, enabled } = {}) {
           lastYRef.current = null;
         }
 
-        countBuffer.push(currentFrameCount);
-        if (countBuffer.length > 10) countBuffer.shift();
+        if (!hasHand) {
+          countBuffer = [];
+          lastYRef.current = null;
+          if (lastFinalCount !== -1) {
+            lastFinalCount = -1;
+            setTotalFingers(0);
+          }
+        } else {
+          countBuffer.push(currentFrameCount);
+          if (countBuffer.length > 6) countBuffer.shift();
 
-        const counts = {};
-        countBuffer.forEach(x => { counts[x] = (counts[x] || 0) + 1; });
-        let modeCount = 0;
-        let maxFreq = 0;
-        for (const val in counts) {
-          if (counts[val] > maxFreq) { maxFreq = counts[val]; modeCount = parseInt(val); }
-        }
+          const counts = {};
+          countBuffer.forEach(x => { counts[x] = (counts[x] || 0) + 1; });
+          let modeCount = 0;
+          let maxFreq = 0;
+          for (const val in counts) {
+            if (counts[val] > maxFreq) { maxFreq = counts[val]; modeCount = parseInt(val); }
+          }
 
-        if (maxFreq >= 7 && modeCount !== lastFinalCount) {
-          lastFinalCount = modeCount;
-          setTotalFingers(modeCount);
-          if (onGestureRef.current) onGestureRef.current(modeCount);
+          if (maxFreq >= 4) {
+            if (modeCount !== lastFinalCount) {
+              lastFinalCount = modeCount;
+              setTotalFingers(modeCount);
+              if (onGestureRef.current) onGestureRef.current(modeCount);
+            }
+          }
         }
       }
     });

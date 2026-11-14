@@ -44,13 +44,23 @@ const Playground = () => {
         speak(response.answer);
         if (response.navigateTo) {
           const navMap = {
+            'dashboard': '/student/dashboard',
+            'beranda': '/student/dashboard',
             'modules': '/student/modules',
+            'materi': '/student/modules',
             'tasks': '/student/tasks',
+            'quiz': '/student/tasks',
             'profile': '/profile',
-            'dashboard': '/student/dashboard'
+            'profil': '/profile',
+            'collaboration': '/student/collaboration',
+            'grup': '/student/collaboration',
+            'inbox': '/student/inbox',
+            'pesan': '/student/inbox',
+            'live-captions': '/student/live-captions',
+            'mata-pintar': '/student/live-captions',
           };
           if (navMap[response.navigateTo]) {
-            setTimeout(() => navigate(navMap[response.navigateTo]), 2500);
+            setTimeout(() => navigate(navMap[response.navigateTo]), 300);
           }
         }
       }
@@ -224,14 +234,25 @@ const Playground = () => {
           ))}
         </div>
 
-        {/* Interaction Hint */}
+        {/* Interaction Hint & Keyboard Spacebar Shortcut Badge */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.3 }}
-          className="absolute bottom-16 text-center"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="absolute bottom-12 flex flex-col items-center gap-2.5 text-center pointer-events-none"
         >
-          <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.5em] text-white/60">
-            {isRecording ? "Sedang Mendengar..." : (isProcessing || isPreparing) ? "Sedang Berpikir..." : "Ketuk Layar / Spasi"}
+          <div className="px-5 py-2.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl text-white text-xs font-bold shadow-2xl flex items-center gap-3">
+            <span className="flex items-center gap-1">
+              <kbd className="px-2.5 py-1 bg-indigo-600 text-white rounded-lg border border-indigo-400 font-mono text-xs font-black uppercase tracking-wider shadow-inner">
+                SPASI ␣
+              </kbd>
+            </span>
+            <span className="text-white/90">Laptop: Tekan Spasi</span>
+            <span className="text-white/40">|</span>
+            <span className="text-white/90">Sentuh Layar</span>
+          </div>
+
+          <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.4em] text-white/60">
+            {isRecording ? "Sedang Mendengar..." : (isProcessing || isPreparing) ? "Sedang Berpikir..." : "Nay Siap Mendengar"}
           </p>
         </motion.div>
 

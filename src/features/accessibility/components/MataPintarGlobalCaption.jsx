@@ -188,19 +188,19 @@ export default function MataPintarGlobalCaption() {
   if (isMinimized) {
     return (
       <div
-        className={`fixed left-4 right-4 z-[350] flex flex-col items-end pointer-events-none transition-all duration-500 ${
-          captionPosition === 'bottom' ? 'bottom-4' : 'top-3'
+        className={`fixed left-3 right-3 sm:left-4 sm:right-4 z-[350] flex flex-col items-end pointer-events-none transition-all duration-500 ${
+          captionPosition === 'bottom' ? 'bottom-20 lg:bottom-4' : 'top-16 lg:top-3'
         }`}
       >
         <motion.button
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           onClick={() => setIsMinimized(false)}
-          className="pointer-events-auto px-4 py-2 bg-slate-950/95 border border-white/20 text-emerald-400 font-black text-xs rounded-full shadow-2xl backdrop-blur-2xl flex items-center gap-2 hover:scale-105 active:scale-95 transition-all"
+          className="pointer-events-auto px-3.5 py-1.5 sm:px-4 sm:py-2 bg-slate-950/95 border border-white/20 text-emerald-400 font-black text-[10px] sm:text-xs rounded-full shadow-2xl backdrop-blur-2xl flex items-center gap-2 hover:scale-105 active:scale-95 transition-all"
         >
           <span className={`w-2 h-2 rounded-full ${isListening ? 'bg-rose-500 animate-ping' : 'bg-emerald-500'}`} />
-          <span>👁️ Mata Pintar - Caption</span>
-          <span className="text-[9px] text-white/70 bg-white/10 px-2 py-0.5 rounded-full uppercase">Perbesar ↗</span>
+          <span className="truncate max-w-[120px] sm:max-w-none">👁️ Mata Pintar</span>
+          <span className="text-[8px] sm:text-[9px] text-white/70 bg-white/10 px-1.5 py-0.5 rounded-full uppercase">↗</span>
         </motion.button>
       </div>
     );
@@ -208,26 +208,26 @@ export default function MataPintarGlobalCaption() {
 
   return (
     <>
-      {/* 🛡️ UNOBTRUSIVE FLOATING CAPTION DOCK (POINTER EVENTS NONE ON WRAPPER TO NEVER BLOCK MAIN CONTENT/BUTTONS) */}
+      {/* 🛡️ UNOBTRUSIVE FLOATING CAPTION DOCK (POSITIONED BELOW MOBILE TOP BAR & ABOVE MOBILE BOTTOM NAV BAR) */}
       <div
-        className={`fixed left-4 right-4 z-[350] flex flex-col items-end pointer-events-none transition-all duration-500 ${
-          captionPosition === 'bottom' ? 'bottom-4' : 'top-3'
+        className={`fixed left-3 right-3 sm:left-4 sm:right-4 z-[350] flex flex-col items-end pointer-events-none transition-all duration-500 ${
+          captionPosition === 'bottom' ? 'bottom-20 lg:bottom-4' : 'top-16 lg:top-3'
         }`}
       >
         <div className="w-full max-w-2xl pointer-events-auto flex flex-col gap-1">
           {/* Header Bar */}
-          <div className="flex items-center justify-between px-3.5 py-1.5 bg-slate-950/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-xl text-white text-xs">
-            <div className="flex items-center gap-2">
-              <span className={`w-2 h-2 rounded-full ${isListening ? 'bg-rose-500 animate-ping' : 'bg-emerald-500'}`} />
-              <h4 className="text-[11px] font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1">
-                Mata Pintar – Caption
+          <div className="flex items-center justify-between px-2.5 sm:px-3.5 py-1.5 bg-slate-950/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-xl text-white text-xs">
+            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+              <span className={`w-2 h-2 rounded-full shrink-0 ${isListening ? 'bg-rose-500 animate-ping' : 'bg-emerald-500'}`} />
+              <h4 className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1 truncate">
+                Mata Pintar
               </h4>
 
               {/* Speaker Select */}
               <select
                 value={activeSpeaker}
                 onChange={(e) => setActiveSpeaker(e.target.value)}
-                className="bg-white/10 text-white border border-white/20 rounded-md px-1.5 py-0.5 text-[9px] font-bold outline-none cursor-pointer"
+                className="bg-white/10 text-white border border-white/20 rounded-md px-1 py-0.5 text-[8px] sm:text-[9px] font-bold outline-none cursor-pointer max-w-[75px] sm:max-w-none truncate"
               >
                 <option value="Guru" className="bg-slate-900 text-white">👨‍🏫 Guru</option>
                 <option value="Siswa" className="bg-slate-900 text-white">👦 Siswa</option>
@@ -240,13 +240,16 @@ export default function MataPintarGlobalCaption() {
               {/* Touch & Click Friendly Mic Toggle Button (Laptop: Spasi / Android: Sentuh Tombol) */}
               <button
                 onClick={toggleCapturing}
-                className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1 transition-all active:scale-95 touch-manipulation ${
+                className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all active:scale-95 touch-manipulation ${
                   isListening ? 'bg-rose-500 text-white animate-pulse' : 'bg-indigo-600 text-white hover:bg-indigo-700'
                 }`}
-                title="Laptop: Tekan Spasi | Android: Sentuh Tombol"
+                title="Laptop / Desktop: Tekan Spasi | Smartphone: Sentuh Tombol"
               >
                 {isListening ? <HiStop /> : <HiMicrophone />}
-                <span>{isListening ? 'Mendengar' : 'Mic (Spasi/Sentuh)'}</span>
+                <span>{isListening ? 'Mendengar' : 'Mic'}</span>
+                <span className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-black/30 text-amber-300 font-mono text-[9px] font-extrabold rounded border border-amber-300/40 ml-0.5 shadow-xs">
+                  ⌨️ SPASI
+                </span>
               </button>
 
               <button

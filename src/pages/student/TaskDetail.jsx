@@ -159,7 +159,7 @@ const StudentTaskDetail = () => {
 
   if (submissionRecord) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center p-4 md:p-6 pt-12 overflow-y-auto pb-32">
+      <div data-view-pembahasan="true" className="min-h-screen bg-[#F8FAFC] flex flex-col items-center p-4 md:p-6 pt-12 overflow-y-auto pb-32">
         <ConfettiEffect active={showConfetti} />
         <header className="text-center mb-8 md:mb-12 space-y-4">
            <div className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-[2rem] md:rounded-3xl shadow-xl flex items-center justify-center text-4xl md:text-5xl mx-auto border border-slate-50">🏆</div>
@@ -173,6 +173,7 @@ const StudentTaskDetail = () => {
            <button
             onClick={() => navigate('/student/tasks')}
             data-gesture-item="true"
+            data-btn-back="true"
             className="w-full md:w-auto px-8 md:px-12 py-4 md:py-5 bg-slate-900 text-white rounded-2xl md:rounded-[2rem] font-black uppercase text-[10px] md:text-xs tracking-widest hover:scale-105 transition-all shadow-xl"
            >
              Kembali ke Daftar

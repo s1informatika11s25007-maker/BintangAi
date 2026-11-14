@@ -24,11 +24,33 @@ const GlobalGestureCamera = () => {
   const lastProcessedFinger = useRef(-1);
   const cooldownRef = useRef(false);
 
+  // Helper function to scroll active container reliably across all pages
+  const scrollActivePage = (topOffset) => {
+    const containers = Array.from(document.querySelectorAll('.overflow-y-auto, main, body, #root'));
+    let scrollTarget = containers.find(el => el && el.scrollHeight > el.clientHeight);
+
+    if (!scrollTarget) {
+      scrollTarget = document.querySelector('main') || window;
+    }
+
+    if (scrollTarget && typeof scrollTarget.scrollBy === 'function') {
+      try {
+        scrollTarget.scrollBy({ top: topOffset, behavior: 'smooth' });
+      } catch (e) {
+        scrollTarget.scrollTop += topOffset;
+      }
+    } else if (scrollTarget) {
+      scrollTarget.scrollTop += topOffset;
+    } else {
+      window.scrollBy({ top: topOffset, behavior: 'smooth' });
+    }
+  };
+
   const { videoRef, canvasRef, isActive, handDetected, totalFingers } = useGestureControl({
     enabled: isEnabled,
     onScroll: (dir) => {
-      if (path === '/student/dashboard' && !menuActive) {
-        window.scrollBy({ top: dir === 'down' ? 250 : -250, behavior: 'smooth' });
+      if (!menuActive) {
+        scrollActivePage(dir === 'down' ? 280 : -280);
       }
     }
   });
@@ -56,30 +78,91 @@ const GlobalGestureCamera = () => {
 
     const isLoggedInPage = path.startsWith('/student/') || path === '/profile';
 
-    // TRIGGER MENU (10 Jari)
-    if (totalFingers >= 9 && isLoggedInPage) {
+    const isDashboardPage = path === '/student/dashboard';
+    const isTasksPage = path === '/student/tasks';
+    const isTaskDetailPage = path.includes('/student/task/');
+
+    // 1. TRIGGER MENU (10 Jari)
+    if (totalFingers === 10 && isLoggedInPage) {
       setMenuActive(!menuActive);
-      showSubtitle(menuActive ? '🏠 Menu Navigasi Ditutup' : '🔓 Menu Navigasi Terbuka', 'info');
-      triggerCooldown();
+      showSubtitle(menuActive ? '🏠 Menu Navigasi Ditutup' : '🔓 Menu Navigasi Terbuka (1=Beranda, 2=Quiz, 3=Materi, 4=Mabar, 5=Pesan Guru, 6=Tanya AI, 7=Profil)', 'info');
+      triggerCooldown(600);
       return;
     }
 
-    // HANDLE NAVIGATION MENU
+    // 2. HANDLE NAVIGATION MENU (Saat Menu Utama Aktif - 1-7 Jari)
     if (menuActive) {
       let targetPath = '';
-      if (totalFingers === 1) targetPath = '/student/dashboard';
-      else if (totalFingers === 2) targetPath = '/student/tasks';
-      else if (totalFingers === 3) targetPath = '/student/modules';
-      else if (totalFingers === 4) targetPath = '/student/collaboration';
-      else if (totalFingers === 5) targetPath = '/student/tanya-ai';
-      else if (totalFingers === 7) targetPath = '/profile';
+      let menuLabel = '';
+      if (totalFingers === 1) { targetPath = '/student/dashboard'; menuLabel = 'Beranda Utama'; }
+      else if (totalFingers === 2) { targetPath = '/student/tasks'; menuLabel = 'QuizKu'; }
+      else if (totalFingers === 3) { targetPath = '/student/modules'; menuLabel = 'Materi Belajar'; }
+      else if (totalFingers === 4) { targetPath = '/student/collaboration'; menuLabel = 'Grup Belajar'; }
+      else if (totalFingers === 5) { targetPath = '/student/inbox'; menuLabel = 'Pesan Guru'; }
+      else if (totalFingers === 6) { targetPath = profile?.disability_type === 'tunanetra' ? '/student/playground' : '/student/tanya-ai'; menuLabel = 'Tanya AI'; }
+      else if (totalFingers === 7) { targetPath = '/profile'; menuLabel = 'Profil Saya'; }
 
       if (targetPath) {
         setMenuActive(false);
+        showSubtitle(`🚀 Membuka ${menuLabel}`, 'success');
         navigate(targetPath);
-        triggerCooldown();
+        triggerCooldown(600);
       }
       return;
+    }
+
+    // 3. ATURAN KHUSUS HALAMAN BERANDA (Saat Menu Utama TIDAK Aktif)
+    if (isDashboardPage && !menuActive) {
+      if (totalFingers === 1) {
+        scrollActivePage(380);
+        showSubtitle('⬇️ Beranda: Scroll ke Bawah', 'info');
+        triggerCooldown(600);
+        return;
+      }
+      if (totalFingers === 2) {
+        scrollActivePage(-380);
+        showSubtitle('⬆️ Beranda: Scroll ke Atas', 'info');
+        triggerCooldown(600);
+        return;
+      }
+    }
+
+    // 4. ATURAN KHUSUS HALAMAN QUIZKU (Saat Menu Utama TIDAK Aktif)
+    if (isTasksPage && !menuActive) {
+      if (totalFingers === 1) {
+        const btnActive = document.querySelector('[data-tab-active="true"]');
+        if (btnActive) btnActive.click();
+        showSubtitle('⚡ Membuka Tab QuizKu Aktif', 'success');
+        triggerCooldown();
+        return;
+      }
+      if (totalFingers === 2) {
+        const btnHistory = document.querySelector('[data-tab-completed="true"]');
+        if (btnHistory) btnHistory.click();
+        showSubtitle('🏆 Membuka Tab Riwayat & Kunci Jawaban', 'success');
+        triggerCooldown();
+        return;
+      }
+      if (totalFingers === 3) {
+        const reviewBtn = document.querySelector('[data-btn-pembahasan="true"]');
+        if (reviewBtn) {
+          reviewBtn.click();
+          showSubtitle('📖 Membuka Pembahasan Quiz', 'success');
+          triggerCooldown();
+          return;
+        }
+      }
+    }
+
+    // 5. ATURAN KHUSUS HALAMAN PEMBAHASAN QUIZ (Saat Modal/View Pembahasan Aktif)
+    if (isTaskDetailPage && !menuActive) {
+      const isPembahasanView = !!document.querySelector('[data-view-pembahasan="true"]');
+      if (isPembahasanView && totalFingers === 1) {
+        showSubtitle('⬅️ Kembali ke Halaman Sebelumnya', 'info');
+        navigate('/student/tasks');
+        triggerCooldown();
+        return;
+      }
     }
 
     // PAGE SPECIFIC INTERACTIVE ITEMS

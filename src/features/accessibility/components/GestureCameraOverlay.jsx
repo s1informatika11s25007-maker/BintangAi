@@ -25,7 +25,8 @@ const GestureCameraOverlay = ({
     { icon: '✌️', label: 'QuizKu' },
     { icon: '🤘', label: 'Modul' },
     { icon: '🖖', label: 'Mabar' },
-    { icon: '✋', label: 'Tanya AI' },
+    { icon: '🖐️', label: 'Pesan' },
+    { icon: '6️⃣', label: 'Tanya AI' },
     { icon: '7️⃣', label: 'Profil' },
   ];
 
@@ -38,18 +39,34 @@ const GestureCameraOverlay = ({
     { icon: '✋', label: 'Lanjut' },
   ];
 
-  // 3. Perintah Khusus Daftar (Memilih List)
+  // 3. Perintah Khusus Daftar & Halaman Utama
   const itemCommands = [
     { icon: '☝️', label: 'Pilih 1' },
     { icon: '✌️', label: 'Pilih 2' },
     { icon: '🤘', label: 'Pilih 3' },
     { icon: '🖖', label: 'Pilih 4' },
     { icon: '✋', label: 'Pilih 5' },
-    { icon: '6️⃣', label: 'Next' },
-    { icon: '7️⃣', label: 'Prev' },
   ];
 
-  // 4. Perintah Khusus Membaca Modul
+  // 4. Perintah Khusus Beranda
+  const dashboardCommands = [
+    { icon: '☝️', label: 'Scroll ↓' },
+    { icon: '✌️', label: 'Scroll ↑' },
+  ];
+
+  // 5. Perintah Khusus Halaman QuizKu
+  const quizPageCommands = [
+    { icon: '☝️', label: 'Tab Aktif' },
+    { icon: '✌️', label: 'Riwayat' },
+    { icon: '🤘', label: 'Pembahasan' },
+  ];
+
+  // 6. Perintah Khusus Halaman Pembahasan
+  const pembahasanCommands = [
+    { icon: '☝️', label: 'Kembali' },
+  ];
+
+  // 7. Perintah Khusus Membaca Modul
   const readingCommands = [
     { icon: '☝️', label: 'Scroll ↓' },
     { icon: '✌️', label: 'Scroll ↑' },
@@ -61,6 +78,9 @@ const GestureCameraOverlay = ({
     { icon: '✌️', label: 'Keluar' },
     { icon: '🙌', label: 'Menu (10)' },
   ];
+
+  const isDashboardPage = path === '/student/dashboard';
+  const isSubmissionView = path.includes('/student/task/') && !!document.querySelector('[data-view-pembahasan="true"]');
 
   // LOGIKA PENENTUAN COMMAND YANG TAMPIL
   let currentCommands = navCommands;
@@ -78,17 +98,32 @@ const GestureCameraOverlay = ({
     title = '🔓 Menu Utama';
     accentColor = 'text-emerald-400';
     activeDot = 'bg-emerald-500';
+  } else if (isSubmissionView) {
+    currentCommands = pembahasanCommands;
+    title = '📖 Pembahasan Quiz';
+    accentColor = 'text-indigo-400';
+    activeDot = 'bg-indigo-500';
   } else if (isTaskDetail) {
     currentCommands = quizDetailCommands;
     title = '🎯 Fokus Quiz';
     accentColor = 'text-amber-500';
     activeDot = 'bg-amber-500';
+  } else if (isQuizList) {
+    currentCommands = quizPageCommands;
+    title = '⚡ QuizKu Kontrol';
+    accentColor = 'text-amber-400';
+    activeDot = 'bg-amber-500';
+  } else if (isDashboardPage) {
+    currentCommands = dashboardCommands;
+    title = '🏠 Scroll Beranda';
+    accentColor = 'text-indigo-400';
+    activeDot = 'bg-indigo-500';
   } else if (isModulesList && isModuleSelected) {
     currentCommands = readingCommands;
     title = '📖 Membaca PDF';
     accentColor = 'text-emerald-400';
     activeDot = 'bg-emerald-500';
-  } else if (isQuizList || isModulesList) {
+  } else if (isModulesList) {
     currentCommands = itemCommands;
     title = '📚 Pilih Materi';
     accentColor = 'text-blue-400';
@@ -130,18 +165,25 @@ const GestureCameraOverlay = ({
 
         <div className={`grid ${currentCommands.length > 5 ? 'grid-cols-4' : (isProfilePage ? 'grid-cols-2' : 'grid-cols-5')} gap-3`}>
           {currentCommands.map((cmd, i) => {
-            // Logic match finger for UI highlighting
+            // Dynamic finger matching for active instruction set
             let isMatch = false;
             if (isProfilePage) {
-               isMatch = (i === 0 && totalFingers === 2) || (i === 1 && totalFingers === 10);
+              isMatch = (i === 0 && totalFingers === 2) || (i === 1 && totalFingers === 10);
+            } else if (menuActive) {
+              const navFingerMap = [1, 2, 3, 4, 5, 6, 7];
+              isMatch = totalFingers === navFingerMap[i];
+            } else if (isSubmissionView) {
+              isMatch = (i === 0 && totalFingers === 1);
             } else if (isTaskDetail) {
-               isMatch = totalFingers === (i + 1);
+              isMatch = totalFingers === (i + 1);
+            } else if (isQuizList) {
+              isMatch = (i === 0 && totalFingers === 1) || (i === 1 && totalFingers === 2) || (i === 2 && totalFingers === 3);
+            } else if (isDashboardPage) {
+              isMatch = (i === 0 && totalFingers === 1) || (i === 1 && totalFingers === 2);
             } else if (isModulesList && isModuleSelected) {
-               isMatch = totalFingers === (i === 3 ? 5 : i + 1);
-            } else if (isQuizList || isModulesList) {
-               isMatch = totalFingers === (i + 1);
+              isMatch = (i === 0 && totalFingers === 1) || (i === 1 && totalFingers === 2) || (i === 2 && totalFingers === 3) || (i === 3 && totalFingers === 5);
             } else {
-               isMatch = totalFingers === (i === 5 ? 7 : i + 1);
+              isMatch = totalFingers === (i + 1);
             }
 
             return (
@@ -158,19 +200,39 @@ const GestureCameraOverlay = ({
         </div>
 
         <div className="mt-4 pt-3 border-t border-white/5 text-center">
-           {!menuActive && !isProfilePage ? (
-              <p className="text-[7px] font-bold text-slate-500 uppercase tracking-widest">
-                {isModuleSelected ? 'Gunakan Jari untuk Kontrol PDF' : '🙌 Angkat 10 jari untuk Menu Utama'}
-              </p>
-           ) : menuActive ? (
-              <p className="text-[7px] font-black text-emerald-400 uppercase tracking-widest animate-pulse">
-                Pilih Jari untuk Pindah Halaman
-              </p>
-           ) : (
-              <p className="text-[7px] font-black text-rose-400 uppercase tracking-widest">
-                2 Jari untuk Logout
-              </p>
-           )}
+          {menuActive ? (
+            <p className="text-[7px] font-black text-emerald-400 uppercase tracking-widest animate-pulse">
+              Pilih Jari (1-7) untuk Pindah Halaman | 10 = Tutup
+            </p>
+          ) : isDashboardPage ? (
+            <p className="text-[7px] font-extrabold text-indigo-300 uppercase tracking-widest">
+              1 Jari = Scroll ↓ | 2 Jari = Scroll ↑ | 10 = Menu
+            </p>
+          ) : isQuizList ? (
+            <p className="text-[7px] font-extrabold text-amber-300 uppercase tracking-widest">
+              1 = Aktif | 2 = Riwayat | 3 = Pembahasan | 10 = Menu
+            </p>
+          ) : isSubmissionView ? (
+            <p className="text-[7px] font-extrabold text-indigo-300 uppercase tracking-widest">
+              1 Jari = Kembali ke Daftar Quiz | 10 = Menu
+            </p>
+          ) : isTaskDetail ? (
+            <p className="text-[7px] font-extrabold text-amber-300 uppercase tracking-widest">
+              1-4 Jari = Opsi Jawaban | 5 Jari = Lanjut Soal
+            </p>
+          ) : isModulesList && isModuleSelected ? (
+            <p className="text-[7px] font-extrabold text-emerald-300 uppercase tracking-widest">
+              1 = Scroll ↓ | 2 = Scroll ↑ | 5 = Tutup | 10 = Menu
+            </p>
+          ) : isProfilePage ? (
+            <p className="text-[7px] font-black text-rose-400 uppercase tracking-widest">
+              2 Jari = Logout | 10 Jari = Menu Utama
+            </p>
+          ) : (
+            <p className="text-[7px] font-extrabold text-blue-300 uppercase tracking-widest">
+              1-5 Jari = Pilih Item | 6 = Next | 7 = Prev | 10 = Menu
+            </p>
+          )}
         </div>
       </div>
     </div>

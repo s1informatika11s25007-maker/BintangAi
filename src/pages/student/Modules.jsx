@@ -9,6 +9,7 @@ import { useAccessibility } from '@/features/accessibility/hooks/useAccessibilit
 import { useVoice } from '@/features/accessibility/hooks/useVoice';
 import { useSubtitle } from '@/features/accessibility/components/Subtitles';
 import { globalCaptionBus } from '@/features/accessibility/components/MataPintarGlobalCaption';
+import KamusIsyaratModal from '@/features/accessibility/components/KamusIsyaratModal';
 import {
   HiBookOpen, HiSearch, HiAcademicCap, HiChatAlt2,
   HiStop, HiSpeakerphone, HiX, HiPaperAirplane,
@@ -60,9 +61,14 @@ const StudentModules = () => {
 
   const chatEndRef = useRef(null);
 
-  // SMART PAGINATION FOR ACCESSIBILITY
+  // SMART PAGINATION & SUBJECT FILTER FOR ACCESSIBILITY
+  const [selectedSubject, setSelectedSubject] = useState('Semua');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = isMute ? 5 : 50;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedSubject]);
 
   useEffect(() => {
     fetchModules();
@@ -263,8 +269,13 @@ const StudentModules = () => {
   };
 
   const filteredModules = useMemo(() =>
-    modules.filter(m => m.title.toLowerCase().includes(searchQuery.toLowerCase())),
-    [modules, searchQuery]
+    modules.filter(m => {
+      const matchSearch = m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (m.description && m.description.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchSubject = selectedSubject === 'Semua' || (m.subject && m.subject.toLowerCase() === selectedSubject.toLowerCase());
+      return matchSearch && matchSubject;
+    }),
+    [modules, searchQuery, selectedSubject]
   );
 
   const totalPages = Math.ceil(filteredModules.length / itemsPerPage);
@@ -302,7 +313,7 @@ const StudentModules = () => {
               initial={{ x: -340 }} animate={{ x: 0 }} exit={{ x: -340 }}
               className="absolute lg:relative inset-y-0 left-0 w-[280px] sm:w-[320px] bg-white border-r border-slate-200 flex flex-col shrink-0 z-[110] shadow-xl lg:shadow-none"
             >
-              <div className="p-6 space-y-4">
+              <div className="p-6 space-y-4 pb-2">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
                     <HiBookOpen className="text-indigo-600" /> Materi Belajar
@@ -319,11 +330,50 @@ const StudentModules = () => {
                 </div>
               </div>
 
-              {isMute && totalPages > 1 && (
-                <div className="px-6 py-2 flex items-center justify-between border-b border-slate-50 bg-indigo-50/30">
-                   <button onClick={prevPage} disabled={currentPage === 1} className="p-2 bg-white rounded-lg shadow-sm disabled:opacity-30"><HiChevronLeft /></button>
-                   <span className="text-[10px] font-black text-indigo-600 uppercase">Hal {currentPage} / {totalPages}</span>
-                   <button onClick={nextPage} disabled={currentPage === totalPages} className="p-2 bg-white rounded-lg shadow-sm disabled:opacity-30"><HiChevronRight /></button>
+              {/* Subject Filter Pills */}
+              <div className="px-6 pb-3 flex gap-1.5 overflow-x-auto no-scrollbar">
+                {['Semua', 'IPA', 'MTK', 'Indo', 'PKn'].map((s) => {
+                  const targetSubject = s === 'MTK' ? 'Matematika' : s === 'Indo' ? 'Bahasa Indonesia' : s;
+                  const isActive = selectedSubject === targetSubject;
+                  return (
+                    <button
+                      key={s}
+                      onClick={() => setSelectedSubject(targetSubject)}
+                      className={`px-3 py-1.5 text-[9px] font-black rounded-xl transition-all shrink-0 border ${
+                        isActive
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                          : 'bg-slate-50 text-slate-500 border-slate-100 hover:bg-slate-100'
+                      }`}
+                    >
+                      {s}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {totalPages > 1 && (
+                <div className="px-6 py-2 flex items-center justify-between border-b border-slate-50 bg-indigo-50/40">
+                   <button
+                     onClick={prevPage}
+                     disabled={currentPage === 1}
+                     data-gesture-prev="true"
+                     className="p-2 bg-white rounded-lg shadow-xs text-indigo-600 disabled:opacity-30"
+                     title="7 Jari: Halaman Sebelumnya"
+                   >
+                     <HiChevronLeft />
+                   </button>
+                   <span className="text-[10px] font-black text-indigo-700 uppercase">
+                     Hal {currentPage} / {totalPages}
+                   </span>
+                   <button
+                     onClick={nextPage}
+                     disabled={currentPage === totalPages}
+                     data-gesture-next="true"
+                     className="p-2 bg-white rounded-lg shadow-xs text-indigo-600 disabled:opacity-30"
+                     title="6 Jari: Halaman Berikutnya"
+                   >
+                     <HiChevronRight />
+                   </button>
                 </div>
               )}
 
@@ -332,6 +382,7 @@ const StudentModules = () => {
                 {currentModules.map((m, idx) => (
                    <button
                     key={m.id}
+                    data-gesture-item="true"
                     onClick={() => selectModule(m)}
                     tabIndex={0}
                     aria-label={`Materi ${m.title}, Pelajaran ${m.subject || 'Umum'}`}
@@ -380,10 +431,11 @@ const StudentModules = () => {
                 <div className="flex items-center gap-2 flex-wrap">
                   <button
                     onClick={() => setIsKamusOpen(true)}
-                    className="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl flex items-center gap-1.5 border border-indigo-100 transition-all shadow-sm"
+                    className="px-4 py-2 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold text-xs rounded-xl flex items-center gap-2 border border-emerald-400/30 transition-all shadow-md shadow-emerald-200/60 hover:scale-105 active:scale-95"
+                    title="Buka Kamus Bahasa Isyarat & Glosarium SD"
                   >
-                    <span className="text-base">🤟</span>
-                    <span className="hidden sm:inline">Kamus Isyarat</span>
+                    <span className="text-base animate-pulse">🤟</span>
+                    <span className="font-black">Kamus Isyarat SD</span>
                   </button>
 
                   <button
@@ -581,6 +633,12 @@ const StudentModules = () => {
           )}
         </div>
       </main>
+
+      {/* KAMUS ISYARAT MODAL UNTUK SISWA TUNARUNGU */}
+      <KamusIsyaratModal
+        isOpen={isKamusOpen}
+        onClose={() => setIsKamusOpen(false)}
+      />
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }

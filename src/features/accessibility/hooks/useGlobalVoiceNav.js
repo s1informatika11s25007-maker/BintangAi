@@ -143,13 +143,61 @@ export function useGlobalVoiceNav() {
     const t = transcript.toLowerCase().trim();
     if (!t) return;
 
-    // Navigation Commands
-    if (t.includes('kembali')) { navigate(-1); speak('Kembali ke halaman sebelumnya'); return; }
-    if (t.includes('beranda') || t.includes('dashboard')) { navigate('/student/dashboard'); speak('Membuka Beranda Utama'); return; }
-    if (t.includes('tugas') || t.includes('kuis')) { navigate('/student/tasks'); speak('Membuka Halaman Quiz dan Tugas'); return; }
-    if (t.includes('materi') || t.includes('modul')) { navigate('/student/modules'); speak('Membuka Halaman Materi Belajar'); return; }
-    if (t.includes('tanya') || t.includes('playground') || t.includes('obrol')) { navigate('/student/playground'); speak('Membuka Halaman Tanya Kak Bintang'); return; }
-    if (t.includes('profil') || t.includes('pengaturan')) { navigate('/profile'); speak('Membuka Pengaturan Suara dan Profil'); return; }
+    // Navigation Commands - Auto Direct Routing (< 300ms)
+    if (t.includes('kembali') || t.includes('back')) {
+      navigate(-1);
+      speak('Kembali ke halaman sebelumnya');
+      return;
+    }
+
+    if (t.includes('beranda') || t.includes('dashboard') || t.includes('bantu navigasi') || t.includes('navigasi')) {
+      navigate('/student/dashboard');
+      speak('Membuka Beranda Utama');
+      return;
+    }
+
+    if (t.includes('tugas') || t.includes('kuis') || t.includes('quiz') || t.includes('mulai quiz') || t.includes('mulai kuis')) {
+      navigate('/student/tasks');
+      speak('Membuka Halaman QuizKu');
+      return;
+    }
+
+    if (t.includes('materi') || t.includes('modul') || t.includes('perpustakaan') || t.includes('pelajaran') || t.includes('buku')) {
+      navigate('/student/modules');
+      speak('Membuka Halaman Materi Belajar');
+      return;
+    }
+
+    if (t.includes('grup') || t.includes('kolaborasi') || t.includes('mabar') || t.includes('diskusi') || t.includes('teman')) {
+      navigate('/student/collaboration');
+      speak('Membuka Grup Belajar');
+      return;
+    }
+
+    if (t.includes('pesan') || t.includes('inbox') || t.includes('guru')) {
+      navigate('/student/inbox');
+      speak('Membuka Pesan Guru');
+      return;
+    }
+
+    if (t.includes('tanya') || t.includes('playground') || t.includes('obrol') || t.includes('bintang') || t.includes('asisten')) {
+      const target = isBlind ? '/student/playground' : '/student/tanya-ai';
+      navigate(target);
+      speak('Membuka Tanya Kak Bintang');
+      return;
+    }
+
+    if (t.includes('mata pintar') || t.includes('caption') || t.includes('subtitle')) {
+      navigate('/student/live-captions');
+      speak('Membuka Mata Pintar');
+      return;
+    }
+
+    if (t.includes('profil') || t.includes('pengaturan') || t.includes('akun')) {
+      navigate('/profile');
+      speak('Membuka Halaman Profil Saya');
+      return;
+    }
 
     // Page Reader & Sound Controls for Tunanetra
     if (t.includes('baca halaman') || t.includes('baca isi') || t.includes('baca teks')) { readPageContent(); return; }

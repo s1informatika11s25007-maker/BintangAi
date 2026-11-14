@@ -4,11 +4,15 @@ import { useAccessibility } from '../hooks/useAccessibility';
 import { useVoice } from '../hooks/useVoice';
 import { useSubtitle } from './Subtitles';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
+import { useClassVoiceBroadcast } from '../hooks/useClassVoiceBroadcast';
 
 const AccessibilityProvider = ({ children }) => {
   const { isBlind } = useAccessibility();
   const { speak } = useVoice();
   const { profile } = useAuthStore();
+
+  // Mount Realtime Teacher Class Voice Broadcast Hook globally for connected students
+  useClassVoiceBroadcast();
   const location = useLocation();
   const lastPathname = useRef(location.pathname);
   const welcomeAnnounced = useRef(false);

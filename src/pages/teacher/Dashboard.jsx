@@ -7,6 +7,7 @@ import { useAI } from '@/features/ai-tutor/hooks/useAI';
 import { getCleanFirstName } from '@/utils';
 import TeacherSidebar from '@/components/layout/TeacherSidebar';
 import Footer from '@/components/layout/Footer';
+import TeacherVoiceBroadcastWidget from '@/features/accessibility/components/TeacherVoiceBroadcastWidget';
 import {
   HiChartBar, HiUsers, HiBookOpen, HiBell,
   HiAcademicCap, HiChevronRight, HiCheckCircle, HiExclamation,
@@ -627,6 +628,9 @@ const TeacherDashboard = () => {
               </button>
             </motion.div>
           </header>
+
+          {/* Teacher Realtime Voice Broadcast Widget */}
+          <TeacherVoiceBroadcastWidget />
 
           <AnimatePresence mode="wait">
             {activeTab === 'summary' && (

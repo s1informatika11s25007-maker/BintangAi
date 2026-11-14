@@ -31,15 +31,60 @@ const BlindAIAssistant = () => {
 
   const isPlaygroundPage = location.pathname.includes('/student/playground');
 
-  const navMap = {
+  const navMap = useMemo(() => ({
     'dashboard': '/student/dashboard',
+    'beranda': '/student/dashboard',
+    'home': '/student/dashboard',
     'playground': '/student/playground',
+    'tanya-ai': profile?.disability_type === 'tunanetra' ? '/student/playground' : '/student/tanya-ai',
     'tasks': '/student/tasks',
+    'quiz': '/student/tasks',
+    'quizku': '/student/tasks',
     'modules': '/student/modules',
+    'materi': '/student/modules',
+    'modul': '/student/modules',
     'profile': '/profile',
-    'community': '/student/community',
-    'groups': '/student/community'
-  };
+    'profil': '/profile',
+    'collaboration': '/student/collaboration',
+    'grup': '/student/collaboration',
+    'community': '/student/collaboration',
+    'groups': '/student/collaboration',
+    'inbox': '/student/inbox',
+    'pesan': '/student/inbox',
+    'live-captions': '/student/live-captions',
+    'mata-pintar': '/student/live-captions',
+  }), [profile?.disability_type]);
+
+  // Try clicking matching button or card on active screen
+  const tryClickOnScreenElement = useCallback((transcript) => {
+    if (!transcript) return false;
+    const clean = transcript.toLowerCase().trim();
+    if (!clean) return false;
+
+    const elements = Array.from(document.querySelectorAll('button, a, [role="button"], [data-gesture-item="true"], h3'));
+
+    for (const el of elements) {
+      const text = (el.innerText || el.getAttribute('aria-label') || el.getAttribute('title') || '').toLowerCase().trim();
+      if (!text) continue;
+
+      if (text === clean || text.includes(clean) || clean.includes(text)) {
+        let target = el;
+        if (target.tagName === 'H3') {
+          const parent = target.closest('a') || target.closest('button');
+          if (parent) target = parent;
+        }
+
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => {
+          try {
+            target.click();
+          } catch(e) {}
+        }, 200);
+        return true;
+      }
+    }
+    return false;
+  }, []);
 
   // Improved context gathering - detect items on page
   const getPageContent = () => {
@@ -88,7 +133,7 @@ const BlindAIAssistant = () => {
 
         if (targetElement) {
           targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          setTimeout(() => targetElement.click(), 500);
+          setTimeout(() => targetElement.click(), 300);
           return true;
         }
         return false;
@@ -103,7 +148,7 @@ const BlindAIAssistant = () => {
           setTimeout(() => {
             const enterEvent = new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true });
             playgroundInput.dispatchEvent(enterEvent);
-          }, 500);
+          }, 300);
         }
         break;
       case 'SCROLL_DOWN':
@@ -115,57 +160,69 @@ const BlindAIAssistant = () => {
       default:
         console.warn("Unknown action:", action);
     }
-  }, [navigate]);
+  }, [navigate, navMap]);
 
   const handleProcessAudio = useCallback(async (blob) => {
-    if (isProcessing || !blob) return;
+    if (isProcessing) return;
     setIsProcessing(true);
     setAiResponse("Nay sedang memproses...");
 
     try {
       const context = getPageContent();
       const studentName = profile?.full_name?.split(' ')[0] || "Teman";
-      const response = await smartVoiceAssistant(blob, studentName, context);
 
-      if (response.success) {
-        lastTranscriptRef.current = response.transcript;
-        setLiveTranscript(response.transcript);
-        setAiResponse(response.answer);
-        speak(response.answer);
+      // Save and prioritize live speech transcript captured by Web Speech API
+      const speechInput = (lastTranscriptRef.current && lastTranscriptRef.current !== "Mendengarkan...")
+        ? lastTranscriptRef.current
+        : blob;
+
+      const response = await smartVoiceAssistant(speechInput, studentName, context);
+
+      if (response && response.success) {
+        const transcriptText = response.transcript || (typeof speechInput === 'string' ? speechInput : "Bantu Navigasi");
+        lastTranscriptRef.current = transcriptText;
+        setLiveTranscript(transcriptText);
+
+        // 1. Try matching screen button/element click
+        const elementClicked = tryClickOnScreenElement(transcriptText);
+
+        // 2. Target Route Determination
+        let targetRoute = null;
+        if (response.navigateTo && navMap[response.navigateTo]) {
+          targetRoute = navMap[response.navigateTo];
+        }
+
+        // Clean concise response (no long guide paragraphs)
+        const shortConfirmation = response.answer || "Membuka Halaman...";
+        setAiResponse(shortConfirmation);
+        speak(shortConfirmation);
+
+        // INSTANT AUTOMATIC NAVIGATION (< 200ms)
+        if (targetRoute && location.pathname !== targetRoute) {
+          setTimeout(() => {
+            navigate(targetRoute);
+          }, 200);
+        }
 
         setTimeout(() => {
-          let actionSuccess = false;
-
-          if (response.action) {
-            actionSuccess = handleAction(response.action, response.actionData);
-          }
-
-          if (response.navigateTo && navMap[response.navigateTo]) {
-            const targetPath = navMap[response.navigateTo];
-            if (location.pathname !== targetPath) {
-              navigate(targetPath);
-              actionSuccess = true;
-            }
-          }
-
-          setTimeout(() => {
-             setIsProcessing(false);
-             setLiveTranscript("");
-             setAiResponse("");
-          }, 4000);
-        }, 1500);
+           setIsProcessing(false);
+           setLiveTranscript("");
+           setAiResponse("");
+        }, 2500);
       } else {
         setIsProcessing(false);
-        speak("Maaf, Nay kurang jelas mendengar.");
+        speak("Membuka Beranda Utama...");
+        navigate('/student/dashboard');
       }
     } catch (err) {
       console.error("Nay process error:", err);
       setIsProcessing(false);
-      speak("Waduh, Nay sedang gangguan.");
+      speak("Membuka Beranda Utama...");
+      navigate('/student/dashboard');
     } finally {
       clearAudio();
     }
-  }, [smartVoiceAssistant, profile, navigate, speak, handleAction, location.pathname, clearAudio, isProcessing]);
+  }, [smartVoiceAssistant, profile, navigate, speak, tryClickOnScreenElement, location.pathname, clearAudio, isProcessing, navMap]);
 
   useEffect(() => {
     if (audioBlob && audioBlob !== lastProcessedBlobRef.current) {
@@ -182,11 +239,17 @@ const BlindAIAssistant = () => {
       stopSpeaking();
       setAiResponse("");
       setLiveTranscript("Mendengarkan...");
+      lastTranscriptRef.current = "";
       speak("Ya?", 1.5, true);
 
       setTimeout(() => {
         startRecording();
-        startListening((text) => setLiveTranscript(text));
+        startListening((text) => {
+          if (text) {
+            setLiveTranscript(text);
+            lastTranscriptRef.current = text;
+          }
+        });
       }, 400);
     }
   }, [isRecording, isProcessing, startRecording, stopRecording, startListening, stopListening, speak, stopSpeaking]);
