@@ -14,10 +14,16 @@ export function useClassVoiceBroadcast() {
   const [latestBroadcast, setLatestBroadcast] = useState('');
   const [activeTeacherMessage, setActiveTeacherMessage] = useState(null);
   const [studentReplies, setStudentReplies] = useState([]);
+  const [targetStudentIds, setTargetStudentIds] = useState('all'); // 'all' or Array of IDs
 
   const recognitionRef = useRef(null);
   const channelRef = useRef(null);
   const synthRef = useRef(window.speechSynthesis);
+  const targetStudentIdsRef = useRef('all');
+
+  useEffect(() => {
+    targetStudentIdsRef.current = targetStudentIds;
+  }, [targetStudentIds]);
 
   const isTeacher = profile?.role === 'guru';
   const isStudent = profile?.role === 'siswa';
@@ -83,11 +89,17 @@ export function useClassVoiceBroadcast() {
     const channelName = `class_voice_broadcast_${classCode}`;
     const channel = supabase.channel(channelName);
 
-    // Listener for Teacher Speech Broadcast (Received by Students)
+    // Listener for Teacher Speech Broadcast (Received by Targeted Students)
     channel.on('broadcast', { event: 'teacher_speech' }, (event) => {
       const payload = event.payload;
       if (!payload || !payload.text) return;
       if (payload.classCode && payload.classCode !== classCode) return;
+
+      // 🎯 CHECK IF CURRENT STUDENT IS IN TARGET SELECTION
+      const targets = payload.targetStudentIds;
+      const isTargeted = targets === 'all' || (Array.isArray(targets) && targets.includes(profile.id));
+
+      if (!isTargeted) return; // Ignore if student was not selected
 
       const teacherName = payload.teacherName || 'Guru';
       const spokenText = payload.text;
@@ -164,7 +176,7 @@ export function useClassVoiceBroadcast() {
     };
   }, [profile?.id, classCode, isTeacher, mode, showSubtitle]);
 
-  // 2. TEACHER BROADCASTER: Capture Teacher Voice & Send Realtime Broadcast
+  // 2. TEACHER BROADCASTER: Capture Teacher Voice & Send Realtime Broadcast to Selected Targets
   const startBroadcasting = useCallback(() => {
     if (!isTeacher || !classCode) return;
 
@@ -191,7 +203,10 @@ export function useClassVoiceBroadcast() {
 
       recognition.onstart = () => {
         setIsBroadcasting(true);
-        if (showSubtitle) showSubtitle(`🎙️ Siaran Suara Guru Aktif (Kelas: ${classCode})`, 'success');
+        const targetDesc = targetStudentIdsRef.current === 'all'
+          ? 'Semua Siswa'
+          : `${targetStudentIdsRef.current.length} Siswa Terpilih`;
+        if (showSubtitle) showSubtitle(`🎙️ Siaran Suara Guru Aktif (Target: ${targetDesc})`, 'success');
       };
 
       recognition.onresult = (event) => {
@@ -206,7 +221,7 @@ export function useClassVoiceBroadcast() {
           const cleanText = currentFinal.trim();
           setLatestBroadcast(cleanText);
 
-          // Broadcast instantly to all students with same classCode
+          // Broadcast instantly to selected targets with same classCode
           channelRef.current?.send({
             type: 'broadcast',
             event: 'teacher_speech',
@@ -214,6 +229,7 @@ export function useClassVoiceBroadcast() {
               teacherName: profile?.full_name?.split(' ')[0] || 'Guru',
               text: cleanText,
               classCode: classCode,
+              targetStudentIds: targetStudentIdsRef.current,
               timestamp: new Date().toISOString()
             }
           });
@@ -261,6 +277,8 @@ export function useClassVoiceBroadcast() {
     dismissTeacherMessage,
     sendStudentReply,
     studentReplies,
+    targetStudentIds,
+    setTargetStudentIds,
     classCode
   };
 }
