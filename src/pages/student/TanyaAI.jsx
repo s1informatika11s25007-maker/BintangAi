@@ -139,6 +139,8 @@ const TanyaAI = () => {
           try {
             await supabase.from('student_ai_chat_history').insert({
               student_id: profile.id,
+              role: 'user',
+              content: userMessage,
               question: userMessage,
               answer: response.answer,
               topic: response.detectedTopic || 'Tanya Kak Bintang',
