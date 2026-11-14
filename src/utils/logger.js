@@ -2,28 +2,43 @@ import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 
 /**
- * Detect real device name, browser, and OS accurately
+ * Detect detailed device model, browser, and OS accurately (e.g. Samsung Galaxy (Android 14) - Chrome)
  */
 export const getDeviceName = () => {
-  if (typeof navigator === 'undefined') return 'Perangkat Umum';
+  if (typeof navigator === 'undefined') return 'Desktop PC';
 
   const ua = navigator.userAgent;
-  let os = 'Desktop / Laptop';
+  let os = 'Desktop PC';
+  let deviceModel = '';
   let browser = 'Browser';
 
-  // OS Detection
+  // Specific Android Phone Model Detection (Samsung, Xiaomi, OPPO, Vivo, Realme, Pixel, Infinix)
   if (/android/i.test(ua)) {
-    const match = ua.match(/Android\s+([0-9\.]+)/i);
-    os = match ? `Android ${match[1]}` : 'Android';
-  } else if (/iphone|ipad|ipod/i.test(ua)) {
+    const androidMatch = ua.match(/Android\s+([0-9\.]+)/i);
+    const version = androidMatch ? androidMatch[1] : '';
+
+    if (/samsung|sm-/i.test(ua)) deviceModel = 'Samsung Galaxy';
+    else if (/redmi|mi /i.test(ua)) deviceModel = 'Xiaomi Redmi';
+    else if (/oppo|cph/i.test(ua)) deviceModel = 'OPPO';
+    else if (/vivo/i.test(ua)) deviceModel = 'Vivo';
+    else if (/realme/i.test(ua)) deviceModel = 'Realme';
+    else if (/pixel/i.test(ua)) deviceModel = 'Google Pixel';
+    else if (/infinix/i.test(ua)) deviceModel = 'Infinix';
+    else deviceModel = 'HP Android';
+
+    os = `${deviceModel} (Android ${version})`.trim();
+  } else if (/iphone/i.test(ua)) {
     const match = ua.match(/OS\s+([0-9_]+)/i);
-    os = match ? `iOS ${match[1].replace(/_/g, '.')}` : 'iOS';
+    const version = match ? match[1].replace(/_/g, '.') : '';
+    os = `iPhone (iOS ${version})`.trim();
+  } else if (/ipad/i.test(ua)) {
+    os = 'iPad';
   } else if (/windows/i.test(ua)) {
-    os = 'Windows';
+    os = 'Windows PC';
   } else if (/macintosh|mac os x/i.test(ua)) {
-    os = 'macOS';
+    os = 'MacBook / Mac';
   } else if (/linux/i.test(ua)) {
-    os = 'Linux';
+    os = 'Linux PC';
   }
 
   // Browser Detection
@@ -39,7 +54,7 @@ export const getDeviceName = () => {
     browser = 'Opera';
   }
 
-  return `${os} (${browser})`;
+  return `${os} - ${browser}`;
 };
 
 /**
