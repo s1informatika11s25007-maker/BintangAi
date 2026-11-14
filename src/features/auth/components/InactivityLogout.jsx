@@ -5,7 +5,7 @@ import { supabase } from '../../../lib/supabaseClient';
 import { logUserActivity } from '@/utils/logger';
 
 const InactivityLogout = ({ children }) => {
-  const { user, logout } = useAuthStore();
+  const { user, isLoggingOut, logout } = useAuthStore();
   const navigate = useNavigate();
   const timeoutRef = useRef(null);
   const cameraActiveRef = useRef(false);
@@ -17,7 +17,7 @@ const InactivityLogout = ({ children }) => {
   const lastOnlineUpdateRef = useRef(0);
 
   const updateOnlineStatus = useCallback(async (onlineStatus = true, force = false) => {
-    if (!user?.id) return;
+    if (!user?.id || isLoggingOut) return;
     const now = Date.now();
     // 🎯 THROTTLING: Batasi pembaruan last_active_at di database maksimal 1 kali per 60 detik per siswa
     if (!force && onlineStatus && now - lastOnlineUpdateRef.current < 60000) {
@@ -35,9 +35,10 @@ const InactivityLogout = ({ children }) => {
     } catch (err) {
       console.error('Failed to update online status:', err);
     }
-  }, [user?.id]);
+  }, [user?.id, isLoggingOut]);
 
   const handleAutoLogout = useCallback(async () => {
+    if (!user?.id || isLoggingOut) return;
     try {
       console.log('User inactive for 15 minutes. Logging out automatically...');
       const profile = useAuthStore.getState().profile;
@@ -47,9 +48,14 @@ const InactivityLogout = ({ children }) => {
     } catch (error) {
       console.error('Auto-logout failed:', error);
     }
-  }, [logout, updateOnlineStatus]);
+  }, [user?.id, isLoggingOut, logout, updateOnlineStatus]);
 
   const resetTimer = useCallback((force = false) => {
+    if (!user?.id || isLoggingOut) {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      return;
+    }
+
     const now = Date.now();
     const elapsed = now - lastActivityRef.current;
 
@@ -66,20 +72,24 @@ const InactivityLogout = ({ children }) => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
     // If camera is active (user is using sign language/gestures), pause the logout timer
-    if (user && !cameraActiveRef.current) {
+    if (user && !cameraActiveRef.current && !isLoggingOut) {
       timeoutRef.current = setTimeout(handleAutoLogout, INACTIVITY_LIMIT);
     }
-  }, [user, handleAutoLogout]);
+  }, [user, isLoggingOut, handleAutoLogout]);
 
   useEffect(() => {
     const publicPaths = ['/', '/auth/login', '/auth/register'];
     const isPublicRoute = typeof window !== 'undefined' && publicPaths.includes(window.location.pathname);
 
-    if (!user?.id || isPublicRoute) return;
+    if (!user?.id || isLoggingOut || isPublicRoute) {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      return;
+    }
 
     // Set online on mount & heartbeat every 30s for max precision
     updateOnlineStatus(true);
     const heartbeatInterval = setInterval(() => {
+      if (!user?.id || isLoggingOut) return;
       const elapsed = Date.now() - lastActivityRef.current;
       if (elapsed >= INACTIVITY_LIMIT) {
         handleAutoLogout();
@@ -92,6 +102,7 @@ const InactivityLogout = ({ children }) => {
 
     // Cek apakah kamera sedang aktif secara akurat dan sangat ringan
     const checkCameraActivity = () => {
+      if (!user?.id || isLoggingOut) return;
       const video = document.querySelector('video');
       const isActive = !!(
         video &&
@@ -109,8 +120,13 @@ const InactivityLogout = ({ children }) => {
 
     const interval = setInterval(checkCameraActivity, 5000);
 
-    const handleEvent = () => resetTimer();
+    const handleEvent = () => {
+      if (!user?.id || isLoggingOut) return;
+      resetTimer();
+    };
+
     const handleFocus = () => {
+      if (!user?.id || isLoggingOut) return;
       const elapsed = Date.now() - lastActivityRef.current;
       if (elapsed >= INACTIVITY_LIMIT) {
         handleAutoLogout();
@@ -125,13 +141,13 @@ const InactivityLogout = ({ children }) => {
     });
     window.addEventListener('focus', handleFocus);
     window.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === 'visible' && user?.id && !isLoggingOut) {
         handleFocus();
       }
     });
 
     const handleUnload = async () => {
-      if (user?.id) {
+      if (user?.id && !isLoggingOut) {
         try {
           const { data: { session } } = await supabase.auth.getSession();
           const token = session?.access_token;
@@ -171,7 +187,7 @@ const InactivityLogout = ({ children }) => {
       window.removeEventListener('beforeunload', handleUnload);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [user, resetTimer]);
+  }, [user, isLoggingOut, resetTimer, updateOnlineStatus, handleAutoLogout]);
 
   return <>{children}</>;
 };
