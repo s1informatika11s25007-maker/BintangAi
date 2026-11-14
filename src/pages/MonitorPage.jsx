@@ -218,12 +218,6 @@ const MonitorPage = () => {
 
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 shrink-0">
           <button
-            onClick={fetchLogs}
-            className="px-3.5 sm:px-4 py-2 sm:py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all border border-slate-700"
-          >
-            <HiRefresh className={loading ? 'animate-spin' : ''} /> <span className="hidden sm:inline">Refresh Logs</span>
-          </button>
-          <button
             onClick={() => setShowClearConfirm(true)}
             className="px-3.5 sm:px-4 py-2 sm:py-2.5 bg-rose-900/40 hover:bg-rose-600 text-rose-300 hover:text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all border border-rose-500/30"
             title="Hapus Seluruh Log"
@@ -425,9 +419,11 @@ const MonitorPage = () => {
                   {log.description || '-'}
                 </p>
 
-                <div className="text-[10px] font-mono text-slate-400 pt-1 border-t border-slate-50 flex items-center justify-between">
+                <div className="text-[10px] font-mono text-slate-400 pt-1.5 border-t border-slate-50 flex items-center justify-between gap-2">
                   <span>{formattedDate} • {formattedTime}</span>
-                  {log.class_code && <span className="bg-slate-100 px-2 py-0.5 rounded font-sans font-bold text-slate-500">Kelas: {log.class_code}</span>}
+                  <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-sans font-bold text-[9px] border border-indigo-100 truncate max-w-[150px]">
+                    📱 {log.device_info || 'Perangkat Umum'}
+                  </span>
                 </div>
               </div>
             );
@@ -443,13 +439,14 @@ const MonitorPage = () => {
         {/* Desktop / Laptop Table View (Hidden on Mobile, Visible on md+) */}
         <div className="hidden md:flex bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden flex-col w-full">
           <div className="overflow-x-auto custom-scrollbar">
-            <table className="w-full text-left border-collapse min-w-[700px]">
+            <table className="w-full text-left border-collapse min-w-[850px]">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-black uppercase tracking-wider text-slate-400">
                   <th className="px-5 py-4">Waktu & Tanggal</th>
                   <th className="px-5 py-4">Nama Pengguna</th>
                   <th className="px-5 py-4">Peran</th>
                   <th className="px-5 py-4">Tindakan</th>
+                  <th className="px-5 py-4">Perangkat & OS</th>
                   <th className="px-5 py-4">Fitur / Tombol</th>
                   <th className="px-5 py-4">Rincian Deskripsi</th>
                   <th className="px-5 py-4 text-right">Aksi</th>
@@ -484,12 +481,17 @@ const MonitorPage = () => {
                         <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase ${
                           log.action_type === 'LOGIN'
                             ? 'bg-emerald-500 text-white'
-                            : log.action_type === 'KLIK_TOMBOL'
-                              ? 'bg-amber-500 text-white'
-                              : 'bg-slate-800 text-white'
+                            : log.action_type === 'AUTO_LOGOUT'
+                              ? 'bg-rose-500 text-white'
+                              : log.action_type === 'KLIK_TOMBOL'
+                                ? 'bg-amber-500 text-white'
+                                : 'bg-slate-800 text-white'
                         }`}>
                           {log.action_type}
                         </span>
+                      </td>
+                      <td className="px-5 py-4 text-slate-700 font-bold text-[11px]">
+                        {log.device_info || 'Perangkat Umum'}
                       </td>
                       <td className="px-5 py-4 text-indigo-600 font-black">
                         {log.feature_name}

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../../lib/supabaseClient';
+import { logUserActivity } from '@/utils/logger';
 
 const InactivityLogout = ({ children }) => {
   const { user, logout } = useAuthStore();
@@ -31,6 +32,8 @@ const InactivityLogout = ({ children }) => {
   const handleAutoLogout = useCallback(async () => {
     try {
       console.log('User inactive for 15 minutes. Logging out automatically...');
+      const profile = useAuthStore.getState().profile;
+      await logUserActivity('AUTO_LOGOUT', 'Auto Logout Sesi', 'Pengguna otomatis keluar (logout) karena inaktif selama 15 menit', profile);
       await updateOnlineStatus(false);
       await logout('/auth/login?reason=inactivity');
     } catch (error) {
