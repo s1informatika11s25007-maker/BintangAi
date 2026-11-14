@@ -266,20 +266,30 @@ const StudentModules = () => {
 
   const getSafePdfUrl = (url) => {
     if (!url) return "";
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    if (isMobile) {
-      return `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
-    }
-    const cleanUrl = url.split('#')[0];
-    return `${cleanUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`;
+    if (url.startsWith('data:')) return url;
+    return url.split('#')[0];
   };
+
+  // Dynamically compute unique categories/subjects that ACTUALLY exist in the uploaded modules
+  const availableSubjects = useMemo(() => {
+    const set = new Set();
+    modules.forEach(m => {
+      const s = m.subject || m.category;
+      if (s && s.trim()) {
+        set.add(s.trim());
+      }
+    });
+    const sorted = Array.from(set).sort();
+    return ['Semua', ...sorted];
+  }, [modules]);
 
   const filteredModules = useMemo(() =>
     modules.filter(m => {
       const matchSearch = m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           (m.description && m.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
                           (m.content && m.content.toLowerCase().includes(searchQuery.toLowerCase()));
-      const matchSubject = selectedSubject === 'Semua' || (m.subject && m.subject.toLowerCase() === selectedSubject.toLowerCase());
+      const mSub = m.subject || m.category || '';
+      const matchSubject = selectedSubject === 'Semua' || mSub.toLowerCase() === selectedSubject.toLowerCase();
       return matchSearch && matchSubject;
     }),
     [modules, searchQuery, selectedSubject]
@@ -578,23 +588,30 @@ const StudentModules = () => {
                   {activeTab === 'pdf' && selectedModule.pdf_url && (
                     <div className="space-y-3">
                       <div className="flex items-center justify-between px-1">
-                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Dokumen PDF</span>
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Dokumen PDF Materi</span>
                         <a
                           href={selectedModule.pdf_url}
                           target="_blank"
                           rel="noreferrer"
-                          className="px-3 py-1 bg-slate-900 text-white rounded-lg text-xs font-bold flex items-center gap-1 hover:bg-slate-800 transition-all"
+                          className="px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 hover:bg-indigo-700 transition-all shadow-xs"
                         >
-                          Layar Penuh <HiExternalLink className="text-xs" />
+                          <span>Layar Penuh / Unduh</span>
+                          <HiExternalLink className="text-xs" />
                         </a>
                       </div>
 
                       <div className="w-full h-[550px] sm:h-[650px] rounded-2xl overflow-hidden border border-slate-200 shadow-sm bg-slate-100">
-                        <iframe
-                          src={getSafePdfUrl(selectedModule.pdf_url)}
-                          className="w-full h-full border-none"
-                          title={`Materi PDF: ${selectedModule.title}`}
-                        />
+                        <object
+                          data={getSafePdfUrl(selectedModule.pdf_url)}
+                          type="application/pdf"
+                          className="w-full h-full"
+                        >
+                          <iframe
+                            src={getSafePdfUrl(selectedModule.pdf_url)}
+                            className="w-full h-full border-none"
+                            title={`Materi PDF: ${selectedModule.title}`}
+                          />
+                        </object>
                       </div>
                     </div>
                   )}
@@ -758,7 +775,7 @@ const StudentModules = () => {
 
                   {/* Subject Category Pills */}
                   <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto no-scrollbar">
-                    {['Semua', 'IPA', 'Matematika', 'Bahasa Indonesia', 'PKn'].map((s) => {
+                    {availableSubjects.map((s) => {
                       const isActive = selectedSubject === s;
                       const meta = getSubjectMeta(s);
                       return (
@@ -771,7 +788,7 @@ const StudentModules = () => {
                               : 'bg-white text-slate-600 border-slate-200/80 hover:bg-slate-50'
                           }`}
                         >
-                          <span>{meta.emoji}</span>
+                          <span>{s === 'Semua' ? '📖' : meta.emoji}</span>
                           <span>{s}</span>
                         </button>
                       );

@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
+import { useAccessibilityStore } from '@/features/accessibility/store/accessibilityStore';
 import { useAI } from '@/features/ai-tutor/hooks/useAI';
 import { getCleanFirstName } from '@/utils';
 import TeacherSidebar from '@/components/layout/TeacherSidebar';
@@ -12,11 +13,12 @@ import {
   HiChartBar, HiUsers, HiBookOpen, HiBell,
   HiAcademicCap, HiChevronRight, HiCheckCircle, HiExclamation,
   HiTrash, HiExternalLink, HiPlus, HiArrowLeft,
-  HiDocumentReport, HiClock, HiLightningBolt, HiSearch, HiX, HiRefresh, HiLogout, HiChatAlt2, HiSparkles
+  HiDocumentReport, HiClock, HiLightningBolt, HiSearch, HiX, HiRefresh, HiLogout, HiChatAlt2, HiSparkles, HiMicrophone
 } from 'react-icons/hi';
 
 const TeacherDashboard = () => {
   const { profile, fetchProfile } = useAuthStore();
+  const { isTeacherBroadcastActive, setIsTeacherBroadcastActive } = useAccessibilityStore();
   const { generateAndSaveReport } = useAI();
   const navigate = useNavigate();
   const location = useLocation();
@@ -614,7 +616,19 @@ const TeacherDashboard = () => {
               <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mt-2">Mata Pelajaran: {profile?.subject || 'Umum'} • Kode Kelas: {profile?.class_code}</p>
             </motion.div>
 
-            <motion.div initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.8 }} className="flex gap-4">
+            <motion.div initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.8 }} className="flex flex-wrap gap-4">
+              <button
+                onClick={() => setIsTeacherBroadcastActive(!isTeacherBroadcastActive)}
+                className={`px-6 py-4 font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3 ${
+                  isTeacherBroadcastActive
+                    ? 'bg-rose-600 text-white shadow-rose-200 animate-pulse hover:bg-rose-700'
+                    : 'bg-slate-900 text-amber-300 hover:bg-slate-800 shadow-slate-200 border border-slate-700'
+                }`}
+              >
+                <HiMicrophone className={`text-lg ${isTeacherBroadcastActive ? 'animate-bounce' : ''}`} />
+                <span>{isTeacherBroadcastActive ? 'Nonaktifkan Siaran' : 'Siaran Suara Guru'}</span>
+              </button>
+
               <button
                 onClick={() => navigate('/teacher/upload')}
                 className="group px-8 py-4 bg-indigo-600 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-indigo-100 hover:scale-105 active:scale-95 transition-all flex items-center gap-3"

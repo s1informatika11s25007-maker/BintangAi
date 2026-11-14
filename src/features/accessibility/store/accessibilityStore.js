@@ -8,6 +8,7 @@ export const useAccessibilityStore = create(
       isVoiceActive: false,
       isSubtitleActive: false,
       isLiveCaptionActive: false,
+      isTeacherBroadcastActive: false,
       isGestureActive: false,
       profile: null,
 
@@ -37,6 +38,7 @@ export const useAccessibilityStore = create(
       },
 
       setIsLiveCaptionActive: (active) => set({ isLiveCaptionActive: active }),
+      setIsTeacherBroadcastActive: (active) => set({ isTeacherBroadcastActive: active }),
 
       setCaptionSettings: (settings) => {
         set((state) => ({

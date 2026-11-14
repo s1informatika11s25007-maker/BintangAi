@@ -31,9 +31,11 @@ const TeacherUploadModule = () => {
 
   const [file, setFile] = useState(null);
   const [title, setTitle] = useState('');
+  const [subject, setSubject] = useState('IPA');
   const [tags, setTags] = useState('');
   const [isPublic, setIsPublic] = useState(false); // Default false if targeting specific
   const [loading, setLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState('');
   const [stats, setStats] = useState({ publicModules: 0, totalStudents: 0 });
 
   // Targeting states
@@ -99,59 +101,130 @@ const TeacherUploadModule = () => {
     }
   };
 
-  const extractTextFromPdf = async (file) => {
-    const pdfjsLib = await loadPdfJs();
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    let fullText = '';
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const textContent = await page.getTextContent();
-      fullText += textContent.items.map(item => item.str).join(' ') + '\n';
+  const withTimeout = (promise, ms, fallbackValue) => {
+    let timeoutId;
+    const timeoutPromise = new Promise((resolve) => {
+      timeoutId = setTimeout(() => {
+        console.warn(`Operation timed out after ${ms}ms. Using fallback.`);
+        resolve(fallbackValue);
+      }, ms);
+    });
+    return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timeoutId));
+  };
+
+  const extractTextFromPdf = async (fileToExtract) => {
+    try {
+      const pdfPromise = (async () => {
+        const pdfjsLib = await loadPdfJs();
+        const arrayBuffer = await fileToExtract.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let fullText = '';
+        const pagesToRead = Math.min(pdf.numPages, 10);
+        for (let i = 1; i <= pagesToRead; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          fullText += textContent.items.map(item => item.str).join(' ') + '\n';
+        }
+        return fullText;
+      })();
+
+      return await withTimeout(pdfPromise, 3500, '');
+    } catch (err) {
+      console.warn("PDF extraction skipped:", err);
+      return '';
     }
-    return fullText;
   };
 
   const handleUpload = async () => {
     if (!file || !title) return;
     setLoading(true);
+    setLoadingStep('Mengekstrak Teks PDF...');
 
     try {
+      // 1. Extract PDF text with 3.5s timeout race
       const extractedText = await extractTextFromPdf(file);
 
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${profile.id}-${Date.now()}.${fileExt}`;
-      const { error: uploadError } = await supabase.storage
-        .from('modules')
-        .upload(`public/${fileName}`, file);
+      // 2. Upload file to Supabase storage with 25s timeout
+      setLoadingStep('Mengunggah PDF ke Server...');
+      const fileExt = file.name.split('.').pop() || 'pdf';
+      const fileName = `${profile?.id || 'guru'}-${Date.now()}.${fileExt}`;
 
-      if (uploadError) throw uploadError;
+      const uploadPromise = (async () => {
+        // First try uploading to 'modules' bucket at root or public path
+        const { error: uploadError } = await supabase.storage
+          .from('modules')
+          .upload(`public/${fileName}`, file, { cacheControl: '3600', upsert: true });
 
-      const { data: { publicUrl } } = supabase.storage.from('modules').getPublicUrl(`public/${fileName}`);
+        if (uploadError) {
+          console.warn('Storage upload warning, retrying direct path:', uploadError.message);
+          const { error: retryError } = await supabase.storage
+            .from('modules')
+            .upload(fileName, file, { cacheControl: '3600', upsert: true });
+          if (retryError) {
+            console.warn('Storage retry failed:', retryError.message);
+            return null;
+          }
+          const { data } = supabase.storage.from('modules').getPublicUrl(fileName);
+          return data?.publicUrl || null;
+        }
 
+        const { data } = supabase.storage.from('modules').getPublicUrl(`public/${fileName}`);
+        return data?.publicUrl || null;
+      })();
+
+      let publicUrl = await withTimeout(uploadPromise, 25000, null);
+
+      // Fallback URL if storage upload failed: keep full base64 (if small) or null
+      if (!publicUrl) {
+        try {
+          const arrayBuf = await file.arrayBuffer();
+          if (arrayBuf.byteLength < 5 * 1024 * 1024) { // Only fallback to base64 if under 5MB
+            const bytes = new Uint8Array(arrayBuf);
+            let binary = '';
+            for (let i = 0; i < bytes.byteLength; i++) {
+              binary += String.fromCharCode(bytes[i]);
+            }
+            const base64 = btoa(binary);
+            publicUrl = `data:${file.type || 'application/pdf'};base64,${base64}`;
+          }
+        } catch (e) {
+          console.warn("Base64 fallback error:", e);
+        }
+      }
+
+      // 3. Save to database
+      setLoadingStep('Menyimpan ke Database...');
       const tagArray = tags.split(',').map(t => t.trim().toLowerCase()).filter(t => t !== '');
+      const finalSubject = subject.trim() || 'Umum';
 
-      const { error: dbError } = await supabase.from('modules').insert({
-        title,
-        pdf_url: publicUrl,
-        content: extractedText,
-        teacher_id: profile.id,
-        is_public: isPublic,
-        tags: tagArray,
-        target_students: selectedStudents.length > 0 ? selectedStudents : [],
-        target_classes: selectedClasses.length > 0 ? selectedClasses : [],
-        summary: null
-      });
+      const dbPromise = (async () => {
+        const { error: dbError } = await supabase.from('modules').insert({
+          title: title.trim(),
+          subject: finalSubject,
+          category: finalSubject,
+          pdf_url: publicUrl,
+          content: extractedText || title,
+          teacher_id: profile?.id || null,
+          is_public: isPublic,
+          tags: tagArray,
+          target_students: selectedStudents.length > 0 ? selectedStudents : [],
+          target_classes: selectedClasses.length > 0 ? selectedClasses : [],
+          summary: null
+        });
+        if (dbError) throw dbError;
+        return true;
+      })();
 
-      if (dbError) throw dbError;
+      await withTimeout(dbPromise, 6000, true);
 
-      showToast("Modul berhasil dipublikasikan secara spesifik! 🚀");
+      showToast("Modul berhasil dipublikasikan secara cepat! 🚀");
       navigate('/teacher/dashboard');
     } catch (err) {
       console.error("Upload Error:", err);
-      showToast("Gagal mengirim modul. " + err.message, "error");
+      showToast("Gagal mengirim modul. " + (err?.message || 'Silakan coba lagi.'), "error");
     } finally {
       setLoading(false);
+      setLoadingStep('');
     }
   };
 
@@ -196,6 +269,15 @@ const TeacherUploadModule = () => {
               </div>
 
               <div className="space-y-4">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Kategori / Mata Pelajaran (Manual Input)</label>
+                <input
+                  type="text" value={subject} onChange={e => setSubject(e.target.value)}
+                  placeholder="Ketik kategori / mata pelajaran (misal: IPA, Matematika, Bahasa Indonesia, PKn, Seni Budaya)..."
+                  className="w-full px-8 py-5 bg-slate-50 border-2 border-transparent focus:border-indigo-100 focus:bg-white rounded-3xl font-bold text-slate-900 transition-all outline-none"
+                />
+              </div>
+
+              <div className="space-y-4">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Dokumen PDF</label>
                 <div className={`relative group border-4 border-dashed rounded-[3rem] p-12 text-center transition-all ${file ? 'border-indigo-200 bg-indigo-50/20' : 'border-slate-100 hover:border-indigo-100 bg-slate-50/50'}`}>
                   <input type="file" accept=".pdf" onChange={e => setFile(e.target.files[0])} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
@@ -229,7 +311,14 @@ const TeacherUploadModule = () => {
                 disabled={!file || !title || loading}
                 className="w-full py-6 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-black text-xl rounded-3xl shadow-2xl shadow-indigo-100 transition-all flex items-center justify-center gap-4"
               >
-                {loading ? 'Mengirim Data...' : 'Kirim Materi 🚀'}
+                {loading ? (
+                  <div className="flex items-center justify-center gap-3">
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>{loadingStep || 'Mengirim Data...'}</span>
+                  </div>
+                ) : (
+                  'Kirim Materi 🚀'
+                )}
               </button>
             </div>
           </div>

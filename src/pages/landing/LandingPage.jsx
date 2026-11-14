@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion';
 import Footer from '@/components/layout/Footer';
 import BintangAvatar from '@/features/ai-tutor/components/BintangAvatar';
+import AuthHeaderAccessibilityBar from '@/components/ui/AuthHeaderAccessibilityBar';
 import {
   HiArrowRight,
   HiBookOpen,
@@ -231,89 +232,16 @@ const LandingPage = () => {
         style={{ scaleX }}
       />
 
-      {/* 🚀 BAR AKSESIBILITAS UTAMA (ACCESSIBILITY TOOLBAR FOR TUNANETRA / TUNARUNGU / TUNAWICARA & SD) */}
-      <div
-        className={`sticky top-0 z-50 border-b transition-all duration-300 ${
-          highContrast
-            ? 'bg-black border-yellow-400 text-yellow-300'
-            : 'bg-indigo-950 text-white border-indigo-900'
-        }`}
-        role="region"
-        aria-label="Toolbar Aksesibilitas"
-      >
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-8 py-2 text-xs font-bold">
-          {/* Audio Reader & High Contrast Toggle */}
-          <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
-            <button
-              onClick={handleReadLandingPage}
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg transition active:scale-95 border ${
-                isPlayingLandingAudio
-                  ? 'bg-rose-600 text-white border-rose-500 animate-pulse'
-                  : highContrast
-                  ? 'bg-yellow-400 text-black border-yellow-300'
-                  : 'bg-indigo-600 text-white hover:bg-indigo-500 border-indigo-500'
-              }`}
-              title="Dengarkan seluruh penjelasan halaman landing"
-              aria-label="Bacakan halaman landing page"
-            >
-              {isPlayingLandingAudio ? <HiPause className="text-sm" /> : <HiVolumeUp className="text-sm" />}
-              <span>{isPlayingLandingAudio ? 'Hentikan Suara ⏸️' : '🔊 Bacakan Halaman (Tunanetra)'}</span>
-            </button>
-
-            <button
-              onClick={() => setHighContrast(!highContrast)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border transition ${
-                highContrast
-                  ? 'bg-yellow-300 text-black border-yellow-400'
-                  : 'bg-indigo-900/80 text-indigo-100 border-indigo-700 hover:bg-indigo-800'
-              }`}
-              aria-label="Ubah mode kontras tinggi"
-            >
-              <HiSun className="text-sm" />
-              <span>{highContrast ? 'Mode Normal ☀️' : 'Kontras Tinggi 👁️'}</span>
-            </button>
-
-            {/* Font Size Scaling */}
-            <div className="hidden md:flex items-center gap-1 bg-indigo-900/60 px-2 py-0.5 rounded-lg border border-indigo-800">
-              <span className="text-[10px] text-indigo-200 uppercase mr-1 font-extrabold">Ukuran Teks:</span>
-              <button
-                onClick={() => setFontSizeScale(1)}
-                className={`px-2 py-0.5 rounded text-[11px] ${
-                  fontSizeScale === 1 ? 'bg-white text-indigo-950 font-black' : 'text-indigo-200'
-                }`}
-              >
-                Normal
-              </button>
-              <button
-                onClick={() => setFontSizeScale(1.15)}
-                className={`px-2 py-0.5 rounded text-[11px] ${
-                  fontSizeScale === 1.15 ? 'bg-white text-indigo-950 font-black' : 'text-indigo-200'
-                }`}
-              >
-                Besar
-              </button>
-              <button
-                onClick={() => setFontSizeScale(1.3)}
-                className={`px-2 py-0.5 rounded text-[11px] ${
-                  fontSizeScale === 1.3 ? 'bg-white text-indigo-950 font-black' : 'text-indigo-200'
-                }`}
-              >
-                Sangat Besar
-              </button>
-            </div>
-          </div>
-
-          <div className="hidden sm:flex items-center gap-3 text-[11px]">
-            <span className="inline-flex items-center gap-1 text-emerald-400 font-extrabold">
-              <HiBadgeCheck className="text-sm" /> Standar Aksesibilitas WCAG 2.1 AAA
-            </span>
-          </div>
-        </div>
-      </div>
+      {/* 🚀 BAR AKSESIBILITAS UTAMA CLEAN DROPDOWN */}
+      <AuthHeaderAccessibilityBar
+        spokenTitle="Halaman Beranda BintangAi"
+        spokenText="Selamat datang di Bintang AI, Ruang Belajar Jarak Jauh SD Inklusif untuk kelas 1 sampai 6."
+        onReadPage={handleReadLandingPage}
+      />
 
       {/* NAVIGASI UTAMA STICKY */}
       <header
-        className={`sticky top-[41px] z-40 border-b transition-all duration-300 ${
+        className={`sticky top-0 z-40 border-b transition-all duration-300 ${
           highContrast
             ? 'bg-black border-yellow-400 text-yellow-300'
             : 'bg-white/95 backdrop-blur-xl border-slate-100 text-slate-900'
@@ -371,7 +299,7 @@ const LandingPage = () => {
                   : 'hover:text-indigo-600'
               }`}
             >
-              🎯 Simulator 3 Role Disabilitas
+              Simulator 3 Role Disabilitas
             </a>
             <a
               onClick={(e) => scrollToSection(e, 'kesesuaian-sd')}
@@ -418,7 +346,7 @@ const LandingPage = () => {
                   : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200'
               }`}
             >
-              Daftar Gratis SD 🚀
+              Daftar Gratis SD
             </button>
           </div>
 

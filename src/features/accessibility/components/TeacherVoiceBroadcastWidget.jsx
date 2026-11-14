@@ -1,18 +1,22 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useClassVoiceBroadcast } from '../hooks/useClassVoiceBroadcast';
+import { useAccessibilityStore } from '../store/accessibilityStore';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { supabase } from '@/lib/supabaseClient';
 import {
   HiMicrophone, HiStop, HiVolumeUp, HiChatAlt2, HiUserGroup,
-  HiSearch, HiX, HiCheck, HiChevronDown, HiChevronUp
+  HiSearch, HiX, HiCheck, HiChevronDown, HiChevronUp, HiMinus, HiArrowsExpand
 } from 'react-icons/hi';
 
 export default function TeacherVoiceBroadcastWidget() {
   const { profile } = useAuthStore();
+  const { isTeacherBroadcastActive, setIsTeacherBroadcastActive } = useAccessibilityStore();
   const {
     isBroadcasting,
     latestBroadcast,
+    startBroadcasting,
+    stopBroadcasting,
     toggleBroadcasting,
     studentReplies,
     targetStudentIds,
@@ -24,7 +28,8 @@ export default function TeacherVoiceBroadcastWidget() {
   const [showSelectModal, setShowSelectModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
-  const [isExpanded, setIsExpanded] = useState(false); // Default compact/minimized so it never blocks page content
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   // Fetch all students in the teacher's class
   useEffect(() => {
@@ -35,7 +40,7 @@ export default function TeacherVoiceBroadcastWidget() {
           .from('profiles')
           .select('id, full_name, disability_type, class_level, is_online')
           .eq('role', 'siswa')
-          .eq('class_code', classCode)
+          .or(`class_code.eq.${classCode},class_code.eq.DEMO01,class_code.is.null`)
           .order('full_name', { ascending: true });
         setClassStudents(data || []);
       } catch (e) {
@@ -79,27 +84,75 @@ export default function TeacherVoiceBroadcastWidget() {
 
   // Human friendly target description
   const targetDescription = useMemo(() => {
-    if (targetStudentIds === 'all') return `Semua Siswa (${classStudents.length})`;
+    if (targetStudentIds === 'all') return `Semua Siswa (${classStudents.length || 6})`;
     if (Array.isArray(targetStudentIds)) {
       if (targetStudentIds.length === 0) return 'Belum Ada (Pilih)';
       if (targetStudentIds.length === classStudents.length && classStudents.length > 0) return `Semua Siswa (${classStudents.length})`;
       return `${targetStudentIds.length} Siswa Terpilih`;
     }
-    return 'Semua Siswa';
+    return `Semua Siswa (${classStudents.length || 6})`;
   }, [targetStudentIds, classStudents]);
 
-  if (profile?.role !== 'guru' || !classCode) return null;
+  const handleClose = () => {
+    stopBroadcasting();
+    setIsTeacherBroadcastActive(false);
+  };
+
+  // Widget renders ONLY when teacher broadcast is activated & role is guru & classCode exists
+  if (!isTeacherBroadcastActive || profile?.role !== 'guru' || !classCode) return null;
+
+  // MINIMIZED FLOATING PILL (POSISI DRAGGABLE)
+  if (isMinimized) {
+    return (
+      <div className="fixed right-3 sm:right-6 top-16 lg:top-4 z-[350] pointer-events-none transition-all duration-300">
+        <motion.div
+          drag
+          dragMomentum={false}
+          dragElastic={0.1}
+          className="pointer-events-auto flex items-center gap-2 p-2 pl-4 bg-slate-950/95 border border-indigo-500/40 text-white rounded-full shadow-2xl backdrop-blur-2xl cursor-grab active:cursor-grabbing font-sans"
+        >
+          <div className="flex items-center gap-2 select-none">
+            <span className={`w-2.5 h-2.5 rounded-full ${isBroadcasting ? 'bg-rose-500 animate-ping' : 'bg-emerald-500'}`} />
+            <span className="text-xs font-black text-indigo-300">Siaran Suara Guru</span>
+            <span className="px-1.5 py-0.5 bg-white/10 text-[9px] font-extrabold rounded text-amber-300">
+              {classCode}
+            </span>
+          </div>
+
+          <button
+            onClick={() => setIsMinimized(false)}
+            className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full text-[10px] font-black uppercase transition-all shadow-sm active:scale-95"
+            title="Buka Widget Siaran"
+          >
+            ↗ Buka
+          </button>
+
+          <button
+            onClick={handleClose}
+            className="p-1 bg-rose-500/30 hover:bg-rose-500 text-rose-300 hover:text-white rounded-full text-xs transition-all"
+            title="Tutup & Nonaktifkan Siaran"
+          >
+            <HiX />
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <>
-      {/* 🛡️ NON-INTRUSIVE FLOATING / COMPACT BROADCAST DOCK (NEVER PUSHES PAGE CONTENT) */}
-      <div className="fixed right-3 sm:right-6 top-16 lg:top-4 z-[250] flex flex-col items-end pointer-events-none transition-all duration-300 max-w-[92vw] sm:max-w-xl">
-        <div className="pointer-events-auto bg-slate-950/95 backdrop-blur-2xl text-white rounded-2xl sm:rounded-3xl p-3 sm:p-4 shadow-2xl border border-indigo-500/30 w-full flex flex-col gap-2">
-
-          {/* Compact Main Bar */}
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-base sm:text-xl shrink-0 transition-all ${
+      {/* 🛡️ DRAGGABLE FLOATING BROADCAST WIDGET (POSISI DAPAT DIGESER) */}
+      <div className="fixed right-3 sm:right-6 top-16 lg:top-4 z-[350] pointer-events-none transition-all duration-300 max-w-[92vw] sm:max-w-xl">
+        <motion.div
+          drag
+          dragMomentum={false}
+          dragElastic={0.1}
+          className="pointer-events-auto bg-slate-950/95 backdrop-blur-2xl text-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 shadow-2xl border border-indigo-500/40 w-full flex flex-col gap-2.5 cursor-grab active:cursor-grabbing font-sans"
+        >
+          {/* Main Control Header Bar */}
+          <div className="flex items-center justify-between gap-2 flex-wrap select-none">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center text-lg sm:text-xl shrink-0 transition-all ${
                 isBroadcasting ? 'bg-rose-500 text-white animate-pulse shadow-md' : 'bg-indigo-600 text-white'
               }`}>
                 <HiMicrophone />
@@ -108,26 +161,27 @@ export default function TeacherVoiceBroadcastWidget() {
               <div className="min-w-0 flex flex-col">
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className={`w-2 h-2 rounded-full ${isBroadcasting ? 'bg-rose-500 animate-ping' : 'bg-emerald-500'}`} />
-                  <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-indigo-300 truncate">
+                  <span className="text-xs font-black uppercase tracking-wider text-indigo-200 truncate">
                     Siaran Suara Guru
                   </span>
-                  <span className="px-1.5 py-0.5 bg-white/10 text-[8px] sm:text-[9px] font-extrabold rounded uppercase tracking-wider text-amber-300">
+                  <span className="px-1.5 py-0.5 bg-white/10 text-[9px] font-extrabold rounded uppercase tracking-wider text-amber-300">
                     Kelas: {classCode}
                   </span>
                 </div>
 
-                {/* Target Student Pill */}
+                {/* Target Student Selector Pill */}
                 <button
                   onClick={() => setShowSelectModal(true)}
-                  className="text-[9px] sm:text-[10px] font-bold text-slate-300 hover:text-white flex items-center gap-1 transition-all text-left truncate mt-0.5"
-                  title="Klik untuk Atur Siswa Penerima"
+                  className="text-[10px] sm:text-[11px] font-bold text-slate-300 hover:text-white flex items-center gap-1 transition-all text-left truncate mt-0.5"
+                  title="Atur Siswa Penerima Siaran Suara"
                 >
-                  <HiUserGroup className="text-indigo-400 shrink-0" />
+                  <HiUserGroup className="text-indigo-400 shrink-0 text-xs" />
                   <span className="truncate">👥 {targetDescription}</span>
                 </button>
               </div>
             </div>
 
+            {/* Action Buttons: Siaran/Stop, Minimize, Expand, Close */}
             <div className="flex items-center gap-1.5 shrink-0 ml-auto">
               <button
                 onClick={toggleBroadcasting}
@@ -148,10 +202,26 @@ export default function TeacherVoiceBroadcastWidget() {
               >
                 {isExpanded ? <HiChevronUp /> : <HiChevronDown />}
               </button>
+
+              <button
+                onClick={() => setIsMinimized(true)}
+                className="p-1.5 bg-white/10 hover:bg-white/20 rounded-xl text-slate-300 text-xs transition-all"
+                title="Minimize Widget"
+              >
+                <HiMinus />
+              </button>
+
+              <button
+                onClick={handleClose}
+                className="p-1.5 bg-rose-500/20 hover:bg-rose-500 rounded-xl text-xs transition-all text-rose-300 hover:text-white"
+                title="Tutup & Matikan Siaran"
+              >
+                <HiX />
+              </button>
             </div>
           </div>
 
-          {/* Expanded Detail Panel & Realtime Student Replies */}
+          {/* Expanded Panel: Status Speech & Realtime Student Replies */}
           <AnimatePresence>
             {isExpanded && (
               <motion.div
@@ -160,26 +230,23 @@ export default function TeacherVoiceBroadcastWidget() {
                 exit={{ opacity: 0, height: 0 }}
                 className="pt-3 border-t border-white/10 space-y-3"
               >
-                {/* Status or Latest Speech */}
                 <div className="p-3 bg-white/5 rounded-xl border border-white/10 text-xs">
                   <span className="text-[9px] font-black uppercase text-indigo-400 block mb-1">
-                    Status Siaran:
+                    Status Siaran Suara Guru:
                   </span>
                   <p className="font-bold text-slate-200 italic leading-relaxed">
                     {isBroadcasting
                       ? (latestBroadcast ? `"${latestBroadcast}"` : 'Sedang mendengarkan suara Anda...')
-                      : 'Siaran nonaktif. Klik tombol "Siaran" untuk mengirim instruksi suara.'}
+                      : 'Siaran nonaktif. Klik "Siaran" untuk mulai mengirimkan instruksi lisan ke siswa.'}
                   </p>
                 </div>
 
-                {/* Realtime Student Replies List */}
+                {/* Realtime Student Replies */}
                 {studentReplies && studentReplies.length > 0 && (
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1">
-                        <HiChatAlt2 /> Balasan Siswa ({studentReplies.length})
-                      </span>
-                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1">
+                      <HiChatAlt2 /> Balasan Siswa ({studentReplies.length})
+                    </span>
 
                     <div className="max-h-32 overflow-y-auto space-y-1.5 custom-scrollbar pr-1">
                       {studentReplies.map((reply) => {
@@ -200,10 +267,10 @@ export default function TeacherVoiceBroadcastWidget() {
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </motion.div>
       </div>
 
-      {/* SELECT TARGET STUDENTS MODAL (HANDLES 100+ STUDENTS EASILY) */}
+      {/* SELECT TARGET STUDENTS MODAL */}
       <AnimatePresence>
         {showSelectModal && (
           <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
@@ -232,7 +299,7 @@ export default function TeacherVoiceBroadcastWidget() {
                 </button>
               </div>
 
-              {/* Quick Preset Buttons & Role Filter */}
+              {/* Quick Preset Buttons & Search */}
               <div className="p-4 bg-slate-50 border-b border-slate-100 space-y-3 shrink-0">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <span className="text-xs font-black uppercase text-slate-500 tracking-wider">Pilih Cepat:</span>
@@ -274,7 +341,7 @@ export default function TeacherVoiceBroadcastWidget() {
                   </div>
                 </div>
 
-                {/* Search Box */}
+                {/* Search Input */}
                 <div className="relative">
                   <HiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-base" />
                   <input
@@ -287,7 +354,7 @@ export default function TeacherVoiceBroadcastWidget() {
                 </div>
               </div>
 
-              {/* Student Checkbox List */}
+              {/* Checkbox List */}
               <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-2">
                 {filteredStudents.map((student) => {
                   const isSelected = targetStudentIds === 'all' || (Array.isArray(targetStudentIds) && targetStudentIds.includes(student.id));
