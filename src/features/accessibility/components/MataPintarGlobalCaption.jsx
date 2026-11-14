@@ -198,7 +198,8 @@ export default function MataPintarGlobalCaption() {
     amber: 'bg-amber-950/95 border-amber-600/60 text-amber-100 backdrop-blur-xl'
   };
 
-  if (!isDeaf || !profile || isPublicPage || isLiveCaptionsPage) return null;
+  // Render dock only when isLiveCaptionActive is true
+  if (!isLiveCaptionActive || !profile || isPublicPage || isLiveCaptionsPage) return null;
 
   if (isMinimized) {
     return (
@@ -207,16 +208,32 @@ export default function MataPintarGlobalCaption() {
           captionPosition === 'bottom' ? 'bottom-20 lg:bottom-4' : 'top-16 lg:top-3'
         }`}
       >
-        <motion.button
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          onClick={() => setIsMinimized(false)}
-          className="pointer-events-auto px-3.5 py-1.5 sm:px-4 sm:py-2 bg-slate-950/95 border border-white/20 text-emerald-400 font-black text-[10px] sm:text-xs rounded-full shadow-2xl backdrop-blur-2xl flex items-center gap-2 hover:scale-105 active:scale-95 transition-all"
+        <motion.div
+          drag
+          dragMomentum={false}
+          dragElastic={0.1}
+          className="pointer-events-auto flex items-center gap-1 cursor-grab active:cursor-grabbing"
         >
-          <span className={`w-2 h-2 rounded-full ${isListening ? 'bg-rose-500 animate-ping' : 'bg-emerald-500'}`} />
-          <span className="truncate max-w-[120px] sm:max-w-none">👁️ Mata Pintar</span>
-          <span className="text-[8px] sm:text-[9px] text-white/70 bg-white/10 px-1.5 py-0.5 rounded-full uppercase">↗</span>
-        </motion.button>
+          <button
+            onClick={() => setIsMinimized(false)}
+            className="px-3.5 py-1.5 sm:px-4 sm:py-2 bg-slate-950/95 border border-white/20 text-emerald-400 font-black text-[10px] sm:text-xs rounded-full shadow-2xl backdrop-blur-2xl flex items-center gap-2 hover:scale-105 active:scale-95 transition-all"
+          >
+            <span className={`w-2 h-2 rounded-full ${isListening ? 'bg-rose-500 animate-ping' : 'bg-emerald-500'}`} />
+            <span className="truncate max-w-[120px] sm:max-w-none">👁️ Mata Pintar</span>
+            <span className="text-[8px] sm:text-[9px] text-white/70 bg-white/10 px-1.5 py-0.5 rounded-full uppercase">↗</span>
+          </button>
+
+          <button
+            onClick={() => {
+              stopCapturing();
+              setIsLiveCaptionActive(false);
+            }}
+            className="p-1.5 bg-rose-500 hover:bg-rose-600 text-white rounded-full text-xs shadow-lg transition-all"
+            title="Tutup & Nonaktifkan Mata Pintar"
+          >
+            <HiX />
+          </button>
+        </motion.div>
       </div>
     );
   }
