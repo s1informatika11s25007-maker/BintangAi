@@ -12,7 +12,7 @@ import { useSubtitle } from '@/features/accessibility/components/Subtitles';
 import { useAccessibility } from '@/features/accessibility/hooks/useAccessibility';
 import {
   HiLightningBolt, HiCheckCircle, HiChevronRight,
-  HiClock, HiAcademicCap, HiInformationCircle, HiChevronLeft, HiSparkles, HiVolumeUp
+  HiClock, HiAcademicCap, HiInformationCircle, HiChevronLeft, HiBookOpen, HiVolumeUp
 } from 'react-icons/hi';
 
 const StudentTaskDetail = () => {
@@ -195,7 +195,7 @@ const StudentTaskDetail = () => {
               const q = detail.question || detail.assignment_questions;
               const options = q?.assignment_question_options || [];
               const isCorrect = detail.is_correct;
-              const explanation = q?.ai_explanation || q?.ai_feedback_wrong || 'Pembahasan telah diverifikasi oleh AI Tutor.';
+              const explanation = q?.ai_explanation || q?.ai_feedback_wrong || 'Pembahasan telah diverifikasi oleh Kak Bintang.';
 
               return (
                 <div
@@ -265,13 +265,13 @@ const StudentTaskDetail = () => {
                     })}
                   </div>
 
-                  {/* Pembahasan / AI Explanation */}
+                  {/* Pembahasan / Explanation */}
                   <div className="mt-4 p-4 bg-indigo-50/70 border border-indigo-100 rounded-2xl flex items-start gap-3">
-                    <HiSparkles className="text-indigo-600 text-lg shrink-0 mt-0.5" />
+                    <HiBookOpen className="text-indigo-600 text-lg shrink-0 mt-0.5" />
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600">
-                          Pembahasan AI
+                          Pembahasan Kak Bintang
                         </span>
                         <button
                           onClick={() => speak(explanation, 1.0, true)}
