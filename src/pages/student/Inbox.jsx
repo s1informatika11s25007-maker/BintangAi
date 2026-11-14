@@ -200,7 +200,7 @@ const StudentInbox = () => {
                     animate={{ opacity: 1, y: 0 }}
                     className={`flex ${isGuru ? 'justify-start' : 'justify-end'} w-full`}
                   >
-                    <div className={`max-w-2xl rounded-2xl p-4 md:p-5 shadow-sm border transition-all ${
+                    <div className={`w-full max-w-[88%] md:max-w-[80%] rounded-2xl p-4 md:p-5 shadow-sm border transition-all ${
                       isGuru
                         ? 'bg-white text-slate-800 border-slate-100 rounded-tl-none'
                         : 'bg-indigo-600 text-white border-indigo-600 rounded-tr-none'

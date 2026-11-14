@@ -355,7 +355,7 @@ const TeacherChat = () => {
                     animate={{ opacity: 1, y: 0 }}
                     className={`flex ${isMe ? 'justify-end' : 'justify-start'} w-full`}
                   >
-                    <div className={`max-w-xl rounded-2xl p-4 shadow-sm border transition-all ${
+                    <div className={`w-full max-w-[88%] md:max-w-[80%] rounded-2xl p-4 shadow-sm border transition-all ${
                       isMe
                         ? 'bg-indigo-600 text-white border-indigo-600 rounded-tr-none'
                         : 'bg-white text-slate-800 border-slate-100 rounded-tl-none'
