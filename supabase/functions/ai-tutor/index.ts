@@ -18,11 +18,16 @@ Deno.serve(async (req: Request) => {
 
     const classLevel = profile.class_level || 1;
     const disability = profile.disability_type || 'tidak_ada';
+    const rawName = profile.full_name || 'Teman';
+    const cleanName = rawName.replace(/^(Pak|Ibu|Bapak|Dokter|Dr\.|Prof\.)\s+/i, '').split(',')[0].trim().split(' ')[0] || 'Teman';
+    const studentFirstName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1).toLowerCase();
+
     const allowedLanguages = ['auto', 'indonesia', 'english', 'jawa', 'sunda', 'batak', 'karo'];
     const requestedLanguage = String(profile.preferred_language || body?.language || 'auto').toLowerCase();
     const preferredLanguage = allowedLanguages.includes(requestedLanguage) ? requestedLanguage : 'auto';
     const dialectLevel = ['ringan', 'sedang', 'penuh'].includes(profile.dialect_level) ? profile.dialect_level : 'ringan';
     const useLocalAnalogies = profile.use_local_analogies !== false;
+
     const history = Array.isArray(body?.history)
       ? body.history.slice(-10).filter((entry: any) => ['user', 'assistant'].includes(entry?.role) && typeof entry?.content === 'string')
           .map((entry: any) => ({ role: entry.role, content: entry.content.slice(0, 2000) }))
@@ -31,8 +36,14 @@ Deno.serve(async (req: Request) => {
     const context = String(body?.context || '').slice(0, 2500);
 
     const systemPrompt = task === 'navigation'
-      ? `Kamu adalah Nay, asisten navigasi pada BintangAi untuk siswa SD dan pengguna berkebutuhan aksesibilitas. Jawab Bahasa Indonesia, singkat dan jelas. Jika pengguna meminta pindah halaman, sisipkan tepat satu token [NAVIGATE:target] dengan target yang diizinkan: dashboard, playground, tasks, modules, profile, collaboration. Jangan membuat navigasi untuk target di luar daftar. Konteks halaman: ${context}. Profil aksesibilitas: ${disability}.` 
-      : `Kamu adalah Kak Bintang, tutor pendidikan inklusif untuk siswa SD kelas ${classLevel}. Nama pengguna: ${profile.full_name}. Mata pelajaran dan contoh harus sesuai usia kelas. Bahasa Indonesia sederhana, kalimat singkat, langkah demi langkah, suportif dan tidak menghakimi. Tipe aksesibilitas: ${disability}. Preferensi bahasa: ${preferredLanguage === 'auto' ? 'Bahasa Indonesia sederhana' : preferredLanguage}. Tingkat kesederhanaan/dialek: ${dialectLevel}. Gunakan analogi lokal yang dekat dengan kehidupan sehari-hari: ${useLocalAnalogies ? 'ya' : 'tidak'}. Untuk tunarungu/tunawicara, jangan mengharuskan audio, bicara, atau instruksi suara; gunakan kata-kata tertulis dan contoh visual berbasis deskripsi. Untuk tunanetra, gunakan urutan verbal yang jelas dan hindari bergantung pada warna atau posisi visual saja. Jangan mengklaim bisa menerjemahkan BISINDO/SIBI. Jangan mengarang sumber. Jawab pertanyaan belajar dengan contoh aman dan ramah anak.`;
+      ? `Kamu adalah Nay, asisten navigasi pada BintangAi untuk siswa SD dan pengguna berkebutuhan aksesibilitas. Jawab Bahasa Indonesia, singkat dan jelas. Jika pengguna meminta pindah halaman, sisipkan tepat satu token [NAVIGATE:target] dengan target yang diizinkan: dashboard, playground, tasks, modules, profile, collaboration. Jangan membuat navigasi untuk target di luar daftar. Konteks halaman: ${context}. Profil aksesibilitas: ${disability}.`
+      : `Kamu adalah Kak Bintang, sahabat dan tutor pintar anak-anak SD kelas ${classLevel}. Nama siswa yang sedang mengobrol denganmu adalah ${studentFirstName}.
+ATURAN UTAMA:
+1. SELALU panggil dan sebut nama siswa (${studentFirstName}) secara hangat dan akrab di setiap jawabanmu (contoh: "Halo ${studentFirstName}!", "Wah, pertanyaan bagus dari ${studentFirstName}!").
+2. Bertindaklah 100% seperti teman belajar AI Agent yang hidup, ramah, penuh semangat, empati, dan menyenangkan bagi anak SD kelas 1-6.
+3. Penjelasan harus sangat mudah dipahami anak SD kelas ${classLevel}: ${body?.grade_tier_prompt || 'Gunakan kalimat sederhana, petunjuk bertahap, dan contoh konkret.'}
+4. Tipe aksesibilitas: ${disability}. Preferensi bahasa: ${preferredLanguage === 'auto' ? 'Bahasa Indonesia sederhana' : preferredLanguage}. Tingkat dialek: ${dialectLevel}. Gunakan analogi lokal dekat kehidupan sehari-hari anak-anak: ${useLocalAnalogies ? 'ya' : 'tidak'}.
+5. Jawablah dengan sabar, bertahap langkah demi langkah, dan selalu berikan motivasi positif serta pujian kepada ${studentFirstName}.`;
 
     const { text: generated, model } = await generateWithFallback([
       { role: 'system', content: systemPrompt },
@@ -43,8 +54,8 @@ Deno.serve(async (req: Request) => {
 
     if (profile.role === 'siswa') {
       await client.from('student_ai_chat_history').insert([
-        { student_id: user.id, role: 'user', content: message, context: task },
-        { student_id: user.id, role: 'assistant', content: reply, context: task, model_id: model },
+        { student_id: user.id, role: 'user', content: message, context: task, question: message },
+        { student_id: user.id, role: 'assistant', content: reply, context: task, model_id: model, answer: reply },
       ]);
     }
 

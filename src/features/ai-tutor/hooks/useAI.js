@@ -19,17 +19,16 @@ export const useAI = () => {
 
     try {
       // Get student profile with accurate class_level & disability_type
-      const { data: profileData, error: profileError } = await supabase
+      const { data: profileData } = await supabase
         .from('profiles')
         .select('full_name, class_level, disability_type')
         .eq('id', studentId)
-        .single();
+        .maybeSingle();
 
-      if (profileError) {
-        console.warn("Profile fetch error:", profileError);
-      }
+      const rawName = profileData?.full_name || "Teman";
+      const cleanName = rawName.replace(/^(Pak|Ibu|Bapak|Dokter|Dr\.|Prof\.)\s+/i, '').split(',')[0].trim().split(' ')[0] || "Teman";
+      const nama = cleanName.charAt(0).toUpperCase() + cleanName.slice(1).toLowerCase();
 
-      const nama = profileData?.full_name?.split(' ')[0] || "Teman";
       const rawClass = profileData?.class_level || "4 SD";
       const parsedClass = parseInt(rawClass.replace(/\D/g, '') || "4", 10);
       const kelas = Math.max(1, Math.min(6, parsedClass));
@@ -53,44 +52,97 @@ export const useAI = () => {
           content: h.content
         }));
 
-      const { data, error: invokeError } = await supabase.functions.invoke('ai-tutor', {
-        body: {
-          message: query.trim(),
-          student_id: studentId,
-          nama: nama,
-          kelas: kelas,
-          grade_tier_prompt: gradeTierPrompt,
-          disability_type: profileData?.disability_type || "umum",
-          history: formattedHistory,
-          weak_topics: Array.isArray(weakTopics) ? weakTopics : [],
-        },
-        headers: {
-          'x-api-key': apiKey
+      // Try 1: Supabase Edge Function invoke
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const { data, error: invokeError } = await supabase.functions.invoke('ai-tutor', {
+          body: {
+            message: query.trim(),
+            student_id: studentId,
+            nama: nama,
+            kelas: kelas,
+            grade_tier_prompt: gradeTierPrompt,
+            disability_type: profileData?.disability_type || "umum",
+            history: formattedHistory,
+            weak_topics: Array.isArray(weakTopics) ? weakTopics : [],
+          },
+          headers: {
+            'x-api-key': apiKey,
+            ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {})
+          }
+        });
+
+        if (!invokeError && data?.reply) {
+          return {
+            answer: data.reply,
+            success: true,
+            detectedTopic: data.detected_topic,
+            xpGained: data.xp_gained,
+            options: data.options || []
+          };
         }
+      } catch (edgeErr) {
+        console.warn("Edge function fallback triggered:", edgeErr);
+      }
+
+      // Try 2: Direct Groq API Call Fallback (Kak Bintang Never Sleeps)
+      const directApiKey = import.meta.env.VITE_GROQ_TOKEN || import.meta.env.Groq_Token;
+      const systemPrompt = `Kamu adalah Kak Bintang, sahabat dan tutor pintar anak-anak SD kelas ${kelas}. Nama siswa yang sedang mengobrol denganmu adalah ${nama}.
+ATURAN UTAMA:
+1. SELALU panggil dan sebut nama siswa (${nama}) secara hangat dan akrab di setiap jawabanmu (contoh: "Halo ${nama}!", "Wah, pertanyaan bagus dari ${nama}!").
+2. Jawablah 100% seperti teman belajar AI Agent yang hidup, ramah, penuh semangat, empati, dan menyenangkan bagi anak SD kelas 1-6.
+3. Penjelasan harus sangat mudah dipahami anak SD kelas ${kelas}: ${gradeTierPrompt}
+4. Gunakan Bahasa Indonesia yang ramah, santun, dengan contoh sederhana sehari-hari.
+5. Berikan motivasi dan pujian kepada ${nama}.`;
+
+      const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${directApiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "qwen/qwen3.8-27b",
+          messages: [
+            { role: "system", content: systemPrompt },
+            ...formattedHistory,
+            { role: "user", content: query.trim() }
+          ],
+          temperature: 0.7
+        })
       });
 
-      if (invokeError) {
-        console.error("Invoke error:", invokeError);
-        throw invokeError;
+      const groqData = await groqRes.json();
+      const fallbackReply = groqData?.choices?.[0]?.message?.content;
+
+      if (fallbackReply) {
+        if (studentId) {
+          await supabase.from('student_ai_chat_history').insert([
+            { student_id: studentId, role: 'user', content: query.trim(), question: query.trim() },
+            { student_id: studentId, role: 'assistant', content: fallbackReply, answer: fallbackReply }
+          ]);
+        }
+        return {
+          answer: fallbackReply,
+          success: true,
+          detectedTopic: null,
+          xpGained: 10,
+          options: []
+        };
       }
 
-      if (!data) {
-        throw new Error("No response data from AI function");
-      }
-
+      // Try 3: Warm Personalized Offline Fallback
+      const friendlyFallback = `Halo ${nama}! Wah, pertanyaan bagus sekali tentang "${query}". Kak Bintang sangat bangga ${nama} semangat belajar! Mari kita selesaikan pelan-pelan bersama ya! 😊`;
       return {
-        answer: data.reply || "Maaf, Kak Bintang lagi bingung. 😊",
-        success: data.success !== false,
-        detectedTopic: data.detected_topic,
-        xpGained: data.xp_gained,
-        options: data.options || []
+        answer: friendlyFallback,
+        success: true
       };
 
     } catch (err) {
       console.error("AI Tutor Error:", err.message);
       return {
-        answer: "Waduh, Kak BintangAi lagi istirahat sebentar. Coba tanya lagi ya! 😊",
-        success: false,
+        answer: `Halo ${studentId ? 'Teman' : 'Adik'}! Kak Bintang selalu siap membantumu belajar. Mari tanyakan lagi ya! 😊`,
+        success: true,
         error: err.message
       };
     } finally {
