@@ -33,7 +33,6 @@ const StudentDashboard = () => {
   const [greeting, setGreeting] = useState('');
   const [avatarState, setAvatarState] = useState('idle');
   const [showConfetti, setShowConfetti] = useState(false);
-  const [isKamusOpen, setIsKamusOpen] = useState(false);
   const hasAnnouncedRef = useRef(false);
 
   useEffect(() => {

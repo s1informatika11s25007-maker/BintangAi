@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import StudentSidebar from '@/components/layout/StudentSidebar';
@@ -9,13 +9,12 @@ import { useAccessibility } from '@/features/accessibility/hooks/useAccessibilit
 import { useVoice } from '@/features/accessibility/hooks/useVoice';
 import { useSubtitle } from '@/features/accessibility/components/Subtitles';
 import { globalCaptionBus } from '@/features/accessibility/components/MataPintarGlobalCaption';
-import KamusIsyaratModal from '@/features/accessibility/components/KamusIsyaratModal';
 import {
   HiBookOpen, HiSearch, HiChatAlt2,
-  HiX, HiPaperAirplane, HiLightBulb, HiChevronRight,
+  HiPaperAirplane, HiLightBulb, HiChevronRight,
   HiExternalLink, HiChevronDown, HiChevronUp,
   HiVolumeUp, HiPause, HiPlay, HiRefresh,
-  HiChevronDoubleRight, HiChevronDoubleLeft, HiArrowLeft, HiTranslate
+  HiChevronDoubleRight, HiChevronDoubleLeft, HiArrowLeft
 } from 'react-icons/hi';
 
 const StudentModules = () => {
@@ -32,9 +31,6 @@ const StudentModules = () => {
   const [selectedModule, setSelectedModule] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-
-  // Kamus Bahasa Isyarat Modal State
-  const [isKamusOpen, setIsKamusOpen] = useState(false);
 
   // View mode for PDF vs Text
   const [activeTab, setActiveTab] = useState('text'); // 'text' or 'pdf'
@@ -346,17 +342,6 @@ const StudentModules = () => {
                   >
                     <HiRefresh className="text-sm" />
                   </button>
-
-                  {isDeaf && (
-                    <button
-                      onClick={() => setIsKamusOpen(true)}
-                      className="p-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold flex items-center gap-1 transition-all"
-                      title="Kamus Bahasa Isyarat"
-                    >
-                      <HiTranslate className="text-sm text-emerald-600" />
-                      <span className="hidden md:inline">Kamus Isyarat</span>
-                    </button>
-                  )}
                 </div>
               </div>
 
@@ -682,9 +667,6 @@ const StudentModules = () => {
           )}
         </div>
       </main>
-
-      {/* KAMUS BAHASA ISYARAT MODAL */}
-      <KamusIsyaratModal isOpen={isKamusOpen} onClose={() => setIsKamusOpen(false)} />
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
