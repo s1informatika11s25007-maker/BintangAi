@@ -33,14 +33,17 @@ const TanyaAI = () => {
   ]);
 
   const messagesEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (messages.length > 0) {
+      scrollToBottom();
+    }
+  }, [messages.length]);
 
   // Restore chat history on page refresh
   useEffect(() => {
@@ -254,8 +257,11 @@ const TanyaAI = () => {
           </div>
         </header>
 
-        {/* MESSAGES AREA - EXPANDED VERTICAL ROOM */}
-        <div className="flex-1 overflow-y-auto px-3 sm:px-6 md:px-8 py-4 sm:py-6 space-y-3 sm:space-y-4 no-scrollbar bg-slate-50/30 relative">
+        {/* MESSAGES AREA - BUTTERY SMOOTH 60FPS SCROLLING */}
+        <div
+          ref={chatContainerRef}
+          className="flex-1 overflow-y-auto scroll-smooth custom-scrollbar overscroll-contain touch-pan-y px-3 sm:px-6 md:px-8 py-4 sm:py-6 space-y-3 sm:space-y-4 bg-slate-50/30 relative"
+        >
 
           <AnimatePresence initial={false}>
             {messages.map((msg, idx) => (
@@ -458,10 +464,10 @@ const TanyaAI = () => {
       </main>
 
       <style>{`
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.25); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.5); }
       `}</style>
     </div>
   );
