@@ -14,9 +14,9 @@ export const AuthHeaderAccessibilityBar = ({
   onReadPage = null
 }) => {
   const { speak, stopSpeaking, isSpeaking } = useVoice();
-  const { mode, setModeFromProfile } = useAccessibilityStore();
+  const { mode, setManualMode } = useAccessibilityStore();
 
-  const [selectedDisability, setSelectedDisability] = useState('tidak_ada');
+  const [selectedDisability, setSelectedDisability] = useState(mode || 'tidak_ada');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [fontSizeLevel, setFontSizeLevel] = useState(100);
   const [isHighContrast, setIsHighContrast] = useState(false);
@@ -25,11 +25,7 @@ export const AuthHeaderAccessibilityBar = ({
 
   // Sync with global store mode
   useEffect(() => {
-    if (mode) {
-      setSelectedDisability(mode);
-    } else {
-      setSelectedDisability('tidak_ada');
-    }
+    setSelectedDisability(mode || 'tidak_ada');
   }, [mode]);
 
   // Sync high contrast status from DOM
@@ -38,8 +34,10 @@ export const AuthHeaderAccessibilityBar = ({
     const currentDisability = root.getAttribute('data-disability');
     if (currentDisability === 'tunanetra' || root.classList.contains('blind-mode')) {
       setIsHighContrast(true);
+    } else {
+      setIsHighContrast(false);
     }
-  }, []);
+  }, [mode, selectedDisability]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -56,18 +54,12 @@ export const AuthHeaderAccessibilityBar = ({
     setSelectedDisability(newMode);
     setIsDropdownOpen(false);
 
-    const mockProfile = { disability_type: newMode };
-    setModeFromProfile(mockProfile);
+    setManualMode(newMode);
 
-    const root = document.documentElement;
     if (newMode === 'tunanetra') {
-      root.setAttribute('data-disability', 'tunanetra');
-      root.classList.add('blind-mode');
       setIsHighContrast(true);
       speak('Mode Tunanetra dipilih. Fitur Suara Pembaca dan Kontras Tinggi diaktifkan.', 1.0, true);
     } else {
-      root.setAttribute('data-disability', newMode === 'tidak_ada' ? 'none' : newMode);
-      root.classList.remove('blind-mode');
       setIsHighContrast(false);
 
       const labels = {

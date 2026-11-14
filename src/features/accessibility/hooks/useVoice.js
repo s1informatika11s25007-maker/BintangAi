@@ -151,15 +151,22 @@ export function useVoice() {
 
       const voices = window.speechSynthesis.getVoices();
 
-      // Find matching voice
+      // Find matching voice with enhanced Indonesian detection
       let selectedVoice = null;
       if (currentVoiceURI) {
         selectedVoice = voices.find(v => v.voiceURI === currentVoiceURI || v.name === currentVoiceURI);
       }
 
-      // Fallback to Indonesian voice
       if (!selectedVoice) {
-        selectedVoice = voices.find(v => v.lang.startsWith('id') || v.lang.includes('ID') || (v.name && v.name.toLowerCase().includes('indonesia')));
+        selectedVoice = voices.find(v => {
+          const lang = (v.lang || '').toLowerCase().replace('_', '-');
+          const name = (v.name || '').toLowerCase();
+          return lang === 'id-id' || lang === 'id' || name.includes('indonesia') || name.includes('bahasa') || name.includes('damayanti') || name.includes('siti') || name.includes('andika') || name.includes('gadis');
+        });
+      }
+
+      if (!selectedVoice) {
+        selectedVoice = voices.find(v => (v.lang || '').toLowerCase().includes('id'));
       }
 
       const speakRound = (remaining) => {
@@ -227,19 +234,33 @@ export function useVoice() {
    * 🎯 PEMBACA SOAL KUIS OTOMATIS (Sequential Quiz Reader for Tunanetra)
    */
   const speakQuestionAndOptions = useCallback(({ questionNumber, questionText, options = [], instructions = '' }) => {
-    let formattedText = `Soal nomor ${questionNumber}. ${questionText}. `;
+    if (!questionText) return;
+
+    const cleanQuestion = String(questionText).replace(/\s+/g, ' ').trim();
+    let formattedText = `Soal nomor ${questionNumber}. ${cleanQuestion}. `;
 
     if (Array.isArray(options) && options.length > 0) {
       options.forEach((opt, idx) => {
         const letter = String.fromCharCode(65 + idx); // A, B, C, D
-        formattedText += `Pilihan ${letter}, ${opt}. `;
+        let optText = '';
+
+        if (typeof opt === 'string' || typeof opt === 'number') {
+          optText = String(opt);
+        } else if (typeof opt === 'object' && opt !== null) {
+          optText = opt.option_text || opt.text || opt.content || opt.label || opt.value || String(opt);
+        }
+
+        optText = String(optText).replace(/\s+/g, ' ').trim();
+        if (optText && optText !== '[object Object]') {
+          formattedText += `Pilihan ${letter}: ${optText}. `;
+        }
       });
     }
 
     if (instructions) {
       formattedText += `${instructions} `;
     } else {
-      formattedText += `Silakan pilih jawaban. Kamu bisa menekan tombol A, B, atau C pada keyboard, atau gunakan Tab untuk memilih.`;
+      formattedText += `Silakan pilih jawaban. Kamu bisa menekan A, B, C, atau D pada keyboard untuk menjawab. Tekan R untuk mendengarkan ulang soal.`;
     }
 
     speak(formattedText, 1.0, true);

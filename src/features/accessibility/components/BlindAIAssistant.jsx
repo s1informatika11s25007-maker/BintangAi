@@ -13,7 +13,7 @@ const BlindAIAssistant = () => {
   const { profile } = useAuthStore();
   const { speak, stopSpeaking, startListening, stopListening } = useVoice();
   const { isRecording, startRecording, stopRecording, audioBlob, clearAudio } = useAudioRecorder();
-  const { smartVoiceAssistant } = useAI();
+  const { smartVoiceAssistant, transcribeAudio } = useAI();
   const [isProcessing, setIsProcessing] = useState(false);
   const [liveTranscript, setLiveTranscript] = useState("");
   const [aiResponse, setAiResponse] = useState("");
@@ -55,19 +55,74 @@ const BlindAIAssistant = () => {
     'mata-pintar': '/student/live-captions',
   }), [profile?.disability_type]);
 
-  // Try clicking matching button or card on active screen
+  // Smart Screen & Quiz Option Clicker
   const tryClickOnScreenElement = useCallback((transcript) => {
     if (!transcript) return false;
-    const clean = transcript.toLowerCase().trim();
-    if (!clean) return false;
+    const raw = transcript.toLowerCase().trim();
+    if (!raw) return false;
 
-    const elements = Array.from(document.querySelectorAll('button, a, [role="button"], [data-gesture-item="true"], h3'));
+    // Clean common Indonesian voice prefixes
+    let clean = raw
+      .replace(/^(jawaban|pilihan|opsi|pilih|jawab|nomor|no|saya pilih|pilihkan|jawabannya|pilihannya)\s+/gi, '')
+      .trim();
 
+    // Quiz Option Mapping (A=0, B=1, C=2, D=3 / 1=0, 2=1, 3=2, 4=3)
+    let optionIndex = -1;
+
+    const isOptionA = ['a', 'satu', '1', 'alfa', 'alpha'].some(k => clean === k || raw.includes('pilihan a') || raw.includes('jawaban a') || raw.includes('opsi a') || raw.includes('pilih a'));
+    const isOptionB = ['b', 'dua', '2', 'bravo'].some(k => clean === k || raw.includes('pilihan b') || raw.includes('jawaban b') || raw.includes('opsi b') || raw.includes('pilih b'));
+    const isOptionC = ['c', 'tiga', '3', 'charlie'].some(k => clean === k || raw.includes('pilihan c') || raw.includes('jawaban c') || raw.includes('opsi c') || raw.includes('pilih c'));
+    const isOptionD = ['d', 'empat', '4', 'delta'].some(k => clean === k || raw.includes('pilihan d') || raw.includes('jawaban d') || raw.includes('opsi d') || raw.includes('pilih d'));
+
+    if (isOptionA) optionIndex = 0;
+    else if (isOptionB) optionIndex = 1;
+    else if (isOptionC) optionIndex = 2;
+    else if (isOptionD) optionIndex = 3;
+
+    const elements = Array.from(document.querySelectorAll('button, a, [role="button"], [data-gesture-item="true"], [data-option-index], h3'));
+
+    // 1. If option index is matched, find the option button by index or data-option-index or aria-label
+    if (optionIndex !== -1) {
+      const optionLetter = String.fromCharCode(65 + optionIndex); // A, B, C, D
+      const targetOptionBtn = elements.find(el => {
+        const aria = (el.getAttribute('aria-label') || '').toLowerCase();
+        const text = (el.innerText || '').toLowerCase();
+        const optIndexAttr = el.getAttribute('data-option-index');
+        return optIndexAttr === String(optionIndex) ||
+               aria.startsWith(`pilihan ${optionLetter.toLowerCase()}`) ||
+               text.startsWith(optionLetter.toLowerCase());
+      });
+
+      if (targetOptionBtn) {
+        targetOptionBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => {
+          try { targetOptionBtn.click(); } catch(e) {}
+        }, 100);
+        return true;
+      }
+    }
+
+    // 2. Check quiz option texts directly if on quiz page
+    const quizOptionButtons = Array.from(document.querySelectorAll('[data-option-index]'));
+    if (quizOptionButtons.length > 0) {
+      for (const btn of quizOptionButtons) {
+        const optText = (btn.getAttribute('data-option-text') || btn.innerText || '').toLowerCase().trim();
+        if (optText && (optText === clean || raw.includes(optText) || optText.includes(clean))) {
+          btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setTimeout(() => {
+            try { btn.click(); } catch(e) {}
+          }, 100);
+          return true;
+        }
+      }
+    }
+
+    // 3. Fuzzy text match across interactive elements
     for (const el of elements) {
       const text = (el.innerText || el.getAttribute('aria-label') || el.getAttribute('title') || '').toLowerCase().trim();
-      if (!text) continue;
+      if (!text || text.length < 1) continue;
 
-      if (text === clean || text.includes(clean) || clean.includes(text)) {
+      if (text === clean || text === raw || text.includes(clean) || clean.includes(text)) {
         let target = el;
         if (target.tagName === 'H3') {
           const parent = target.closest('a') || target.closest('button');
@@ -76,10 +131,8 @@ const BlindAIAssistant = () => {
 
         target.scrollIntoView({ behavior: 'smooth', block: 'center' });
         setTimeout(() => {
-          try {
-            target.click();
-          } catch(e) {}
-        }, 200);
+          try { target.click(); } catch(e) {}
+        }, 100);
         return true;
       }
     }
@@ -168,40 +221,87 @@ const BlindAIAssistant = () => {
     setAiResponse("Nay sedang memproses...");
 
     try {
+      const isQuizPage = location.pathname.includes('/student/quiz/');
       const context = getPageContent();
       const studentName = profile?.full_name?.split(' ')[0] || "Teman";
 
-      // Save and prioritize live speech transcript captured by Web Speech API
-      const speechInput = (lastTranscriptRef.current && lastTranscriptRef.current !== "Mendengarkan...")
-        ? lastTranscriptRef.current
-        : blob;
+      // Resolve actual transcript text from Speech Recognition or Audio Blob transcription
+      let transcriptText = "";
+      if (lastTranscriptRef.current && lastTranscriptRef.current !== "Mendengarkan...") {
+        transcriptText = lastTranscriptRef.current.trim();
+      } else if (typeof blob === 'string' && blob.trim() !== '') {
+        transcriptText = blob.trim();
+      } else if (blob) {
+        const transRes = await transcribeAudio(blob);
+        if (transRes?.success && transRes?.text) {
+          transcriptText = transRes.text.trim();
+        }
+      }
 
-      const response = await smartVoiceAssistant(speechInput, studentName, context);
+      if (transcriptText) {
+        setLiveTranscript(transcriptText);
+      }
+
+      const elementClicked = tryClickOnScreenElement(transcriptText);
+
+      if (elementClicked) {
+        setAiResponse("Memilih jawaban...");
+        speak("Memilih jawaban...", 1.0, true);
+        setTimeout(() => {
+          setIsProcessing(false);
+          setLiveTranscript("");
+          setAiResponse("");
+        }, 2000);
+        return;
+      }
+
+      // ON QUIZ PAGE: Focus ONLY on quiz answers! Never run AI navigation or redirect!
+      if (isQuizPage) {
+        const lower = transcriptText.toLowerCase();
+        const isExitCommand = lower.includes('keluar') || lower.includes('beranda') || lower.includes('tutup kuis') || lower.includes('dashboard');
+
+        if (isExitCommand) {
+          setAiResponse("Kembali ke Beranda...");
+          speak("Kembali ke Beranda Utama.", 1.0, true);
+          setTimeout(() => {
+            navigate('/student/dashboard');
+          }, 300);
+        } else {
+          const notFoundText = "Pilihan tidak dikenali. Katakan pilihan A, B, C, atau D.";
+          setAiResponse(notFoundText);
+          speak(notFoundText, 1.0, true);
+        }
+
+        setTimeout(() => {
+          setIsProcessing(false);
+          setLiveTranscript("");
+          setAiResponse("");
+        }, 2500);
+        return;
+      }
+
+      const response = await smartVoiceAssistant(transcriptText || blob, studentName, context);
 
       if (response && response.success) {
-        const transcriptText = response.transcript || (typeof speechInput === 'string' ? speechInput : "Bantu Navigasi");
-        lastTranscriptRef.current = transcriptText;
-        setLiveTranscript(transcriptText);
+        const finalTranscript = response.transcript || transcriptText;
+        lastTranscriptRef.current = finalTranscript;
+        setLiveTranscript(finalTranscript);
 
-        // 1. Try matching screen button/element click
-        const elementClicked = tryClickOnScreenElement(transcriptText);
+        const secondaryClick = tryClickOnScreenElement(finalTranscript);
 
-        // 2. Target Route Determination
         let targetRoute = null;
         if (response.navigateTo && navMap[response.navigateTo]) {
           targetRoute = navMap[response.navigateTo];
         }
 
-        // Clean concise response (no long guide paragraphs)
-        const shortConfirmation = response.answer || "Membuka Halaman...";
+        const shortConfirmation = response.answer || (secondaryClick ? "Aksi dilaksanakan..." : "Baik.");
         setAiResponse(shortConfirmation);
         speak(shortConfirmation);
 
-        // INSTANT AUTOMATIC NAVIGATION (< 200ms)
-        if (targetRoute && location.pathname !== targetRoute) {
+        if (targetRoute && location.pathname !== targetRoute && !secondaryClick) {
           setTimeout(() => {
             navigate(targetRoute);
-          }, 200);
+          }, 300);
         }
 
         setTimeout(() => {
@@ -211,18 +311,16 @@ const BlindAIAssistant = () => {
         }, 2500);
       } else {
         setIsProcessing(false);
-        speak("Membuka Beranda Utama...");
-        navigate('/student/dashboard');
+        speak("Maaf, Nay kurang jelas mendengarnya. Silakan coba lagi.");
       }
     } catch (err) {
       console.error("Nay process error:", err);
       setIsProcessing(false);
-      speak("Membuka Beranda Utama...");
-      navigate('/student/dashboard');
+      speak("Maaf, terjadi kendala. Silakan coba lagi.");
     } finally {
       clearAudio();
     }
-  }, [smartVoiceAssistant, profile, navigate, speak, tryClickOnScreenElement, location.pathname, clearAudio, isProcessing, navMap]);
+  }, [isProcessing, location.pathname, profile, tryClickOnScreenElement, transcribeAudio, smartVoiceAssistant, navMap, speak, navigate, clearAudio]);
 
   useEffect(() => {
     if (audioBlob && audioBlob !== lastProcessedBlobRef.current) {
@@ -257,7 +355,9 @@ const BlindAIAssistant = () => {
   useEffect(() => {
     if (!isBlind || isPublicPage) return;
     const handleKeyDown = (e) => {
-      if (e.code === 'Space' && e.target === document.body) {
+      const activeEl = document.activeElement;
+      const isInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable);
+      if (e.code === 'Space' && !isInput) {
         e.preventDefault();
         handleMicClick();
       }
@@ -329,7 +429,7 @@ const BlindAIAssistant = () => {
             </div>
 
             <div className="text-center mt-2">
-              <p className={`text-[11px] font-black uppercase tracking-[0.2em] ${isRecording ? 'text-rose-500 animate-pulse' : 'text-indigo-400'}`}>
+              <p className={`text-[11px] font-black uppercase tracking-[0.2em] ${isRecording ? "Mendengarkan..." : isProcessing ? "Berpikir..." : "Nay Selesai"}`}>
                 {isRecording ? "Mendengarkan..." : isProcessing ? "Berpikir..." : "Nay Selesai"}
               </p>
             </div>
@@ -339,9 +439,13 @@ const BlindAIAssistant = () => {
 
       <div className="relative pointer-events-auto">
         <motion.button
+          type="button"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.9 }}
-          onClick={handleMicClick}
+          onClick={(e) => {
+            e.preventDefault();
+            handleMicClick();
+          }}
           className={`
             w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center border-4 border-white/20 shadow-2xl
             relative overflow-hidden transition-all duration-500

@@ -48,6 +48,13 @@ const AccessibilityProvider = ({ children }) => {
 
     // Handle page transitions with friendly guidance for SD students
     if (lastPathname.current !== location.pathname) {
+      // 🛡️ SKIP Page transition guidance on quiz execution pages to avoid cutting off question TTS
+      const isQuizPage = location.pathname.startsWith('/student/quiz/') || location.pathname.startsWith('/student/task/');
+      if (isQuizPage) {
+        lastPathname.current = location.pathname;
+        return;
+      }
+
       const { name, guide } = getPageInfo(location.pathname);
 
       if (justWelcomed || location.pathname === '/student/dashboard') {
@@ -92,80 +99,105 @@ const AccessibilityProvider = ({ children }) => {
   useEffect(() => {
     if (isPublicPage || !isBlind || !profile) return;
 
-    let lastFocusedElement = null;
+    let lastSpokenBlock = null;
     let lastSpokenText = '';
     let lastSpokenTime = 0;
+    let hoverDebounceTimer = null;
 
-    const handleAccessibilityFeedback = (e) => {
+    const handleAccessibilityFeedback = (e, isKeyboard = false) => {
       if (!e.target || typeof e.target.closest !== 'function') return;
 
-      // 🎯 W3C DESKRIPSI GAMBAR DAN DIAGRAM (Alt Text & Diagram Reader)
-      const imgTarget = e.target.closest('img, svg, figure, [data-description], [alt]');
-      if (imgTarget && !e.target.closest('button, a')) {
-        const alt = imgTarget.getAttribute('alt') || imgTarget.getAttribute('data-description') || imgTarget.getAttribute('aria-label') || imgTarget.getAttribute('title') || '';
-        if (alt.trim()) {
-          const now = Date.now();
-          if (imgTarget === lastFocusedElement && alt === lastSpokenText && now - lastSpokenTime < 1000) return;
-          lastFocusedElement = imgTarget;
-          lastSpokenText = alt;
-          lastSpokenTime = now;
-          speak(`Deskripsi Gambar atau Diagram: ${alt.trim()}`, 1.0, true);
-          return;
-        }
+      // 1. Target resolution: Match any readable text container or interactive element
+      const container = e.target.closest(
+        'button, a, input, select, textarea, [role="button"], [role="article"], [role="option"], ' +
+        'p, span, h1, h2, h3, h4, h5, h6, li, label, blockquote, figure, img, svg, ' +
+        '[data-description], [data-message], [aria-label], [tabindex], .clickable-item, .chat-bubble'
+      );
+
+      if (!container) return;
+
+      // Skip reading hidden elements
+      if (container.offsetParent === null && container.tagName !== 'BODY') return;
+
+      // 2. Extract readable text & attributes
+      let ariaLabel = container.getAttribute('aria-label') || container.getAttribute('data-description') || '';
+      let dataMessageRole = container.getAttribute('data-message') || container.closest('[data-message]')?.getAttribute('data-message');
+      let altText = container.getAttribute('alt') || container.getAttribute('title') || container.placeholder || '';
+
+      let rawText = ariaLabel || altText || container.innerText || container.textContent || '';
+      let text = rawText.replace(/\s+/g, ' ').trim();
+
+      if (!text || text.length < 2) return;
+
+      // 3. Deduplication check: Avoid re-triggering speech inside the same block repeatedly
+      const now = Date.now();
+      if (container === lastSpokenBlock && text === lastSpokenText && (now - lastSpokenTime < 1800)) {
+        return;
       }
 
-      // Search for nearest interactive element
-      const target = e.target.closest('button, a, input, [role="button"], .clickable-item, [aria-label], select, textarea, h1, h2, h3, h4, [tabindex], [data-gesture-item="true"], [data-description]');
-      if (!target) return;
+      if (text === lastSpokenText && (now - lastSpokenTime < 800)) {
+        return;
+      }
 
-      let text = target.getAttribute('aria-label') || target.innerText || target.placeholder || target.getAttribute('title') || target.getAttribute('data-description') || '';
-      text = text.replace(/\n/g, ' ').trim();
-
-      if (!text) return;
-
-      const now = Date.now();
-      if (target === lastFocusedElement && text === lastSpokenText && now - lastSpokenTime < 700) return;
-
-      lastFocusedElement = target;
+      lastSpokenBlock = container;
       lastSpokenText = text;
       lastSpokenTime = now;
 
-      const tag = target.tagName.toLowerCase();
-      const role = target.getAttribute('role');
-      let typePrefix = '';
+      // 4. Formatting speech output cleanly based on element type
+      const tag = container.tagName.toLowerCase();
+      const role = container.getAttribute('role');
+      const isInteractive = (tag === 'button' || tag === 'a' || tag === 'input' || tag === 'select' || tag === 'textarea' || role === 'button');
 
+      let typePrefix = '';
       let spokenText = text;
-      if (text.toLowerCase() === 'beranda' || text.toLowerCase() === 'home') {
-        spokenText = 'Beranda Utama';
+
+      if (tag === 'img' || tag === 'svg' || tag === 'figure') {
+        typePrefix = 'Deskripsi Gambar atau Diagram: ';
+      } else if (dataMessageRole) {
+        if (!spokenText.toLowerCase().startsWith(dataMessageRole.toLowerCase())) {
+          typePrefix = `Pesan ${dataMessageRole}: `;
+        }
+      } else if (isInteractive) {
+        if (text.toLowerCase() === 'beranda' || text.toLowerCase() === 'home') {
+          spokenText = 'Beranda Utama';
+        }
+        const hasPrefix = (p) => spokenText.toLowerCase().startsWith(p.toLowerCase());
+        if ((tag === 'button' || role === 'button') && !hasPrefix('Tombol')) typePrefix = 'Tombol ';
+        else if (tag === 'a' && !hasPrefix('Menu')) typePrefix = 'Menu ';
+        else if (tag === 'input' && container.type === 'checkbox' && !hasPrefix('Kotak centang')) typePrefix = 'Kotak centang ';
+        else if ((tag === 'input' || tag === 'textarea') && !hasPrefix('Kolom isian')) typePrefix = 'Kolom isian ';
+        else if (tag === 'select' && !hasPrefix('Pilihan')) typePrefix = 'Pilihan ';
       }
 
-      const hasPrefix = (p) => spokenText.toLowerCase().startsWith(p.toLowerCase());
+      const fullMessage = `${typePrefix}${spokenText}`;
 
-      if ((tag === 'button' || role === 'button') && !hasPrefix('Tombol')) typePrefix = 'Tombol ';
-      else if (tag === 'a' && !hasPrefix('Menu')) typePrefix = 'Menu ';
-      else if (tag === 'input' && target.type === 'checkbox' && !hasPrefix('Kotak centang')) typePrefix = 'Kotak centang ';
-      else if ((tag === 'input' || tag === 'textarea') && !hasPrefix('Kolom isian')) typePrefix = 'Kolom isian ';
-      else if (tag === 'select' && !hasPrefix('Pilihan')) typePrefix = 'Pilihan ';
-
-      // Speak with user-configured voice settings
-      speak(`${typePrefix}${spokenText}`, 1.0, true);
+      // Speak speech output cleanly with configurable user settings
+      speak(fullMessage, 1.0, true);
     };
 
     const handleMouseMove = (e) => {
       if (!e.clientX || !e.clientY) return;
-      const el = document.elementFromPoint(e.clientX, e.clientY);
-      if (el) {
-        handleAccessibilityFeedback({ target: el });
-      }
+      if (hoverDebounceTimer) clearTimeout(hoverDebounceTimer);
+      hoverDebounceTimer = setTimeout(() => {
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        if (el) {
+          handleAccessibilityFeedback({ target: el }, false);
+        }
+      }, 50);
     };
 
-    window.addEventListener('focus', handleAccessibilityFeedback, true);
-    window.addEventListener('mouseenter', handleAccessibilityFeedback, true);
+    const handleFocus = (e) => {
+      handleAccessibilityFeedback(e, true);
+    };
+
+    window.addEventListener('focus', handleFocus, true);
+    window.addEventListener('mouseenter', handleFocus, true);
     window.addEventListener('mousemove', handleMouseMove, { passive: true, capture: true });
 
     return () => {
-      window.removeEventListener('focus', handleAccessibilityFeedback, true);
-      window.removeEventListener('mouseenter', handleAccessibilityFeedback, true);
+      if (hoverDebounceTimer) clearTimeout(hoverDebounceTimer);
+      window.removeEventListener('focus', handleFocus, true);
+      window.removeEventListener('mouseenter', handleFocus, true);
       window.removeEventListener('mousemove', handleMouseMove, { passive: true, capture: true });
     };
   }, [isPublicPage, isBlind, profile, speak]);

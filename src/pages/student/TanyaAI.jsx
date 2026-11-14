@@ -316,8 +316,11 @@ const TanyaAI = () => {
                   </div>
                 )}
 
-                <div className={`
-                  max-w-[88%] sm:max-w-[78%] md:max-w-[70%] p-3.5 sm:p-5 rounded-2xl shadow-sm relative transition-all
+                <div
+                  data-message={msg.role === 'ai' ? 'Kak Bintang' : 'Saya'}
+                  tabIndex={0}
+                  className={`
+                  max-w-[88%] sm:max-w-[78%] md:max-w-[70%] p-3.5 sm:p-5 rounded-2xl shadow-sm relative transition-all focus:ring-2 focus:ring-indigo-400 focus:outline-none
                   ${msg.role === 'user'
                     ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-br-none'
                     : 'bg-white text-slate-800 border border-slate-200/80 rounded-bl-none'}

@@ -406,12 +406,22 @@ ATURAN UTAMA:
       }
 
       const q = transcriptText.toLowerCase();
+      const isQuizContext = pageContext.toLowerCase().includes('quiz') || (typeof window !== 'undefined' && window.location.pathname.includes('/student/quiz/'));
+
+      if (isQuizContext) {
+        return {
+          success: true,
+          transcript: transcriptText || "Jawaban Kuis",
+          answer: "Memproses pilihan kuis...",
+          navigateTo: null
+        };
+      }
 
       // Direct Keyword Matching for Sidebar Navigation & Features
       if (q.includes('materi') || q.includes('modul') || q.includes('perpustakaan') || q.includes('pelajaran') || q.includes('buku')) {
         return { success: true, transcript: transcriptText || "Buka Materi", answer: "Membuka Perpustakaan Materi...", navigateTo: "modules" };
       }
-      if (q.includes('quiz') || q.includes('kuis') || q.includes('tugas') || q.includes('mulai quiz') || q.includes('mulai kuis') || q.includes('soal')) {
+      if (q.includes('quiz') || q.includes('kuis') || q.includes('tugas') || q.includes('mulai quiz') || q.includes('mulai kuis')) {
         return { success: true, transcript: transcriptText || "Mulai Quiz", answer: "Membuka Halaman QuizKu...", navigateTo: "tasks" };
       }
       if (q.includes('grup') || q.includes('kolaborasi') || q.includes('mabar') || q.includes('diskusi') || q.includes('teman') || q.includes('kelompok')) {
@@ -459,7 +469,7 @@ ATURAN UTAMA:
       };
     } catch (err) {
       console.error("Smart Voice Assistant Error:", err);
-      return { success: true, transcript: "Bantu Navigasi", answer: "Membuka Beranda Utama...", navigateTo: "dashboard" };
+      return { success: true, transcript: "Bantu Navigasi", answer: "Membuka Beranda Utama...", navigateTo: null };
     } finally {
       setLoading(false);
     }

@@ -68,11 +68,14 @@ const StudentQuiz = () => {
   // 🎯 PEMBACA SOAL KUIS OTOMATIS UNTUK SISWA TUNANETRA
   useEffect(() => {
     if (isBlind && currentQ && !finished && !alreadyDone && !loading) {
-      speakQuestionAndOptions({
-        questionNumber: currentIndex + 1,
-        questionText: currentQ.text || currentQ.question,
-        options: currentQ.options || []
-      });
+      const timer = setTimeout(() => {
+        speakQuestionAndOptions({
+          questionNumber: currentIndex + 1,
+          questionText: currentQ.text || currentQ.question || currentQ.title,
+          options: currentQ.options || currentQ.choices || currentQ.assignment_question_options || []
+        });
+      }, 300);
+      return () => clearTimeout(timer);
     }
   }, [currentIndex, currentQ, isBlind, finished, alreadyDone, loading, speakQuestionAndOptions]);
 
@@ -472,7 +475,7 @@ const StudentQuiz = () => {
 
       <header className={`bg-white border-b-2 md:border-b-2 border-slate-100 p-4 md:p-5 sticky z-20 flex justify-between items-center transition-all ${isBlind || isMute ? 'top-4 md:top-6' : 'top-0'}`}>
         <div className="flex items-center gap-2 md:gap-4">
-          <button onClick={() => navigate(-1)} className="p-2 md:p-2.5 bg-slate-50 rounded-xl md:rounded-xl text-slate-400 hover:text-indigo-600 transition-all active:scale-90">
+          <button type="button" onClick={(e) => { e.preventDefault(); navigate(-1); }} className="p-2 md:p-2.5 bg-slate-50 rounded-xl md:rounded-xl text-slate-400 hover:text-indigo-600 transition-all active:scale-90">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 md:h-7 md:w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M15 19l-7-7 7-7" />
             </svg>
@@ -487,11 +490,15 @@ const StudentQuiz = () => {
           {/* Re-read question button for blind users */}
           {isBlind && currentQ && (
             <button
-              onClick={() => speakQuestionAndOptions({
-                questionNumber: currentIndex + 1,
-                questionText: currentQ.text || currentQ.question,
-                options: currentQ.options || []
-              })}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                speakQuestionAndOptions({
+                  questionNumber: currentIndex + 1,
+                  questionText: currentQ.text || currentQ.question,
+                  options: currentQ.options || []
+                });
+              }}
               className="px-3 py-2 bg-indigo-600 text-white rounded-xl font-bold text-xs flex items-center gap-1.5 shadow-md hover:bg-indigo-700 transition-all"
               title="Bacakan Soal & Pilihan"
             >
@@ -559,9 +566,16 @@ const StudentQuiz = () => {
           {currentQ?.options?.map((opt, i) => (
             <motion.button
               key={i}
+              type="button"
+              data-option-index={i}
+              data-option-letter={String.fromCharCode(65 + i)}
+              data-option-text={opt}
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => handleAnswer(i)}
+              onClick={(e) => {
+                e.preventDefault();
+                handleAnswer(i);
+              }}
               disabled={selectedAnswer !== null}
               tabIndex={0}
               aria-label={`Pilihan ${String.fromCharCode(65 + i)}, ${opt}`}

@@ -4,7 +4,8 @@ import { persist } from 'zustand/middleware';
 export const useAccessibilityStore = create(
   persist(
     (set, get) => ({
-      mode: null, // 'tunanetra', 'tunarungu', 'tunawicara'
+      mode: null, // 'tunanetra', 'tunarungu', 'tunawicara' or null for 'tidak_ada' (Umum)
+      isManualSelection: false,
       isVoiceActive: false,
       isSubtitleActive: false,
       isLiveCaptionActive: false,
@@ -32,11 +33,28 @@ export const useAccessibilityStore = create(
 
         set((state) => ({
           mode,
+          isManualSelection: false,
           isVoiceActive: isSiswa && mode === 'tunanetra',
           isSubtitleActive: isSiswa && (mode === 'tunarungu' || mode === 'tunawicara'),
           isLiveCaptionActive: isSiswa && (state.isLiveCaptionActive !== undefined ? state.isLiveCaptionActive : (mode === 'tunarungu')),
           isGestureActive: isSiswa && mode === 'tunawicara',
           profile
+        }));
+
+        get().reapplyMode();
+      },
+
+      setManualMode: (newMode) => {
+        const validModes = ['tunanetra', 'tunarungu', 'tunawicara'];
+        const mode = validModes.includes(newMode) ? newMode : null;
+
+        set(() => ({
+          mode,
+          isManualSelection: true,
+          isVoiceActive: mode === 'tunanetra',
+          isSubtitleActive: mode === 'tunarungu' || mode === 'tunawicara',
+          isLiveCaptionActive: mode === 'tunarungu',
+          isGestureActive: mode === 'tunawicara'
         }));
 
         get().reapplyMode();
@@ -55,11 +73,13 @@ export const useAccessibilityStore = create(
 
       // Reapply mode on page load and route changes
       reapplyMode: (forceOff = false) => {
-        const { mode, profile } = get();
+        const { mode, profile, isManualSelection } = get();
         const root = document.documentElement;
         const isSiswa = profile?.role === 'siswa';
 
-        if (mode && isSiswa && !forceOff) {
+        const shouldApply = mode && ((isSiswa && !forceOff) || isManualSelection);
+
+        if (shouldApply) {
           root.setAttribute('data-disability', mode);
 
           // Clear existing classes and add current mode class
@@ -102,6 +122,7 @@ export const useAccessibilityStore = create(
 
         set({
           mode: null,
+          isManualSelection: false,
           isVoiceActive: false,
           isSubtitleActive: false,
           isLiveCaptionActive: false,
@@ -117,6 +138,7 @@ export const useAccessibilityStore = create(
       name: 'bintangai-accessibility',
       partialize: (state) => ({
         mode: state.mode,
+        isManualSelection: state.isManualSelection,
         isLiveCaptionActive: state.isLiveCaptionActive,
         captionFontSize: state.captionFontSize,
         captionBgColor: state.captionBgColor,

@@ -200,11 +200,15 @@ const StudentInbox = () => {
                     animate={{ opacity: 1, y: 0 }}
                     className={`flex ${isGuru ? 'justify-start' : 'justify-end'} w-full`}
                   >
-                    <div className={`w-full max-w-[88%] md:max-w-[80%] rounded-2xl p-4 md:p-5 shadow-sm border transition-all ${
-                      isGuru
-                        ? 'bg-white text-slate-800 border-slate-100 rounded-tl-none'
-                        : 'bg-indigo-600 text-white border-indigo-600 rounded-tr-none'
-                    }`}>
+                    <div
+                      data-message={isGuru ? (m.sender?.full_name?.split(' ')[0] || 'Guru') : 'Saya'}
+                      tabIndex={0}
+                      className={`w-full max-w-[88%] md:max-w-[80%] rounded-2xl p-4 md:p-5 shadow-sm border transition-all focus:ring-2 focus:ring-indigo-400 focus:outline-none ${
+                        isGuru
+                          ? 'bg-white text-slate-800 border-slate-100 rounded-tl-none'
+                          : 'bg-indigo-600 text-white border-indigo-600 rounded-tr-none'
+                      }`}
+                    >
                       {/* Bubble Header */}
                       <div className="flex items-center justify-between gap-4 mb-2">
                         <div className="flex items-center gap-2">

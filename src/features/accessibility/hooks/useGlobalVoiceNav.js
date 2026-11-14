@@ -143,6 +143,15 @@ export function useGlobalVoiceNav() {
     const t = transcript.toLowerCase().trim();
     if (!t) return;
 
+    const isQuizPage = location.pathname.includes('/student/quiz/');
+    if (isQuizPage) {
+      if (t.includes('keluar') || t.includes('tutup kuis') || t.includes('kembali ke beranda')) {
+        navigate('/student/dashboard');
+        speak('Kembali ke Beranda Utama');
+      }
+      return;
+    }
+
     // Navigation Commands - Auto Direct Routing (< 300ms)
     if (t.includes('kembali') || t.includes('back')) {
       navigate(-1);
@@ -235,10 +244,11 @@ export function useGlobalVoiceNav() {
       speak('Volume suara diatur ke 50 persen.', 1.0, true);
       return;
     }
-  }, [navigate, speak, readPageContent]);
+  }, [navigate, speak, readPageContent, location.pathname]);
 
   const startGlobalListening = useCallback(() => {
-    if (!isBlind || !isVoiceActive || activeRef.current || aiListening) return;
+    const isQuizPage = location.pathname.includes('/student/quiz/');
+    if (!isBlind || !isVoiceActive || activeRef.current || aiListening || isQuizPage) return;
 
     if (!sharedRecognition) {
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -288,22 +298,6 @@ export function useGlobalVoiceNav() {
       return () => stopGlobalListening();
     }
   }, [isBlind, isVoiceActive, startGlobalListening, stopGlobalListening]);
-
-  useEffect(() => {
-    if (!isBlind || !isVoiceActive) return;
-    const handleHover = (e) => {
-      const target = e.target.closest('button, a, h1, h2, h3, p');
-      if (target) {
-        const text = target.innerText || target.getAttribute('aria-label');
-        if (text && text !== lastSpokenRef.current) {
-          speak(text);
-          lastSpokenRef.current = text;
-        }
-      }
-    };
-    window.addEventListener('mouseover', handleHover);
-    return () => window.removeEventListener('mouseover', handleHover);
-  }, [isBlind, isVoiceActive, speak]);
 
   return {
     speak,

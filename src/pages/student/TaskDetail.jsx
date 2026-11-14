@@ -19,7 +19,7 @@ const StudentTaskDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { profile, fetchProfile } = useAuthStore();
-  const { speak } = useVoice();
+  const { speak, speakQuestionAndOptions, speakQuizResult } = useVoice();
   const { showSubtitle } = useSubtitle();
   const { isMute, isBlind } = useAccessibility();
 
@@ -112,6 +112,57 @@ const StudentTaskDetail = () => {
       setLoading(false);
     }
   };
+
+  // 🎯 PEMBACA SOAL KUIS OTOMATIS UNTUK SISWA TUNANETRA DI TASKDETAIL
+  useEffect(() => {
+    if (isBlind && started && questions.length > 0 && currentStep > 0 && !submissionRecord) {
+      const q = questions[currentStep - 1];
+      if (q) {
+        const opts = (q.assignment_question_options || []).map(o => o.option_text || o.text || String(o));
+        const timer = setTimeout(() => {
+          speakQuestionAndOptions({
+            questionNumber: currentStep,
+            questionText: q.question_text || q.question || q.text,
+            options: opts
+          });
+        }, 300);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [isBlind, started, currentStep, questions, submissionRecord, speakQuestionAndOptions]);
+
+  // 🎯 KEYBOARD SHORTCUTS KHUSUS TUNANETRA DI TASKDETAIL (A, B, C, D atau 1, 2, 3, 4 untuk menjawab)
+  useEffect(() => {
+    if (!isBlind || !started || currentStep <= 0 || submissionRecord) return;
+
+    const q = questions[currentStep - 1];
+    if (!q) return;
+
+    const handleKeyDown = (e) => {
+      const key = e.key.toLowerCase();
+      const opts = q.assignment_question_options || [];
+
+      if (key === 'a' || key === '1') {
+        if (opts.length > 0) handleAnswerChoice(0);
+      } else if (key === 'b' || key === '2') {
+        if (opts.length > 1) handleAnswerChoice(1);
+      } else if (key === 'c' || key === '3') {
+        if (opts.length > 2) handleAnswerChoice(2);
+      } else if (key === 'd' || key === '4') {
+        if (opts.length > 3) handleAnswerChoice(3);
+      } else if (key === 'r') {
+        const optTexts = opts.map(o => o.option_text || o.text || String(o));
+        speakQuestionAndOptions({
+          questionNumber: currentStep,
+          questionText: q.question_text || q.question || q.text,
+          options: optTexts
+        });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isBlind, started, currentStep, questions, submissionRecord, speakQuestionAndOptions]);
 
   const handleAnswerChoice = (index) => {
     const q = questions[currentStep - 1];
@@ -410,7 +461,9 @@ const StudentTaskDetail = () => {
                             {q.assignment_question_options?.map((opt, oi) => (
                                 <button
                                     key={opt.id}
+                                    data-option-index={oi}
                                     data-gesture-item="true"
+                                    aria-label={`Pilihan ${String.fromCharCode(65 + oi)}, ${opt.option_text}`}
                                     onClick={() => handleAnswerChoice(oi)}
                                     className={`group p-5 md:p-8 rounded-2xl md:rounded-[2.5rem] border-2 text-left flex items-center justify-between gap-4 md:gap-6 transition-all duration-300 relative overflow-hidden ${
                                       answers[q.id]?.selected_option_id === opt.id
