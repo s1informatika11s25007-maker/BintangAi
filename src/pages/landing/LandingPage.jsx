@@ -277,17 +277,19 @@ const LandingPage = () => {
 
               <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-bold text-slate-500 pt-3">
                 <span className="inline-flex items-center gap-1.5"><HiCheckCircle className="text-indigo-600" /> Guru & Siswa Beda Daerah</span>
-                <span className="inline-flex items-center gap-1.5"><HiCheckCircle className="text-indigo-600" /> Sahabat Belajar Kak Bintang</span>
+                <span className="inline-flex items-center gap-1.5"><HiCheckCircle className="text-indigo-600" /> Pembelajaran Inklusif SD</span>
                 <span className="inline-flex items-center gap-1.5"><HiCheckCircle className="text-indigo-600" /> Ramah 3 Role Disabilitas</span>
               </div>
             </motion.div>
 
-            {/* Interactive Animated Classroom Card (Simulated Direct Dialogue) */}
+            {/* Interactive Animated Classroom Card (Simulated Direct Dialogue Teacher - Student) */}
             <motion.div {...reveal} className="lg:col-span-5 relative">
               <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-xl space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-3">
-                    <BintangAvatar size="xs" state="idle" />
+                    <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black text-lg shadow-sm">
+                      📖
+                    </div>
                     <div>
                       <h3 className="font-bold text-slate-800 text-xs sm:text-sm">BintangAi Belajar Di Rumah</h3>
                       <p className="text-[10px] text-indigo-600 font-bold flex items-center gap-1">
@@ -300,7 +302,7 @@ const LandingPage = () => {
                   </span>
                 </div>
 
-                {/* Simulated Dialogue Conversation between Teacher & Student */}
+                {/* Simulated Dialogue Conversation Exclusively between Teacher & Student */}
                 <div className="space-y-2.5 text-xs">
                   {/* Teacher Message */}
                   <div className="p-3 bg-indigo-50/90 border border-indigo-100 rounded-2xl space-y-1">
@@ -313,7 +315,7 @@ const LandingPage = () => {
                     </p>
                   </div>
 
-                  {/* Student Message */}
+                  {/* Student Reply 1 */}
                   <div className="p-3 bg-slate-100/80 border border-slate-200/80 rounded-2xl space-y-1 ml-4">
                     <div className="flex items-center justify-between text-[10px]">
                       <span className="font-bold text-slate-700">👧 Bintang (Siswa - Surabaya)</span>
@@ -324,7 +326,7 @@ const LandingPage = () => {
                     </p>
                   </div>
 
-                  {/* Teacher Reply */}
+                  {/* Teacher Reply 2 */}
                   <div className="p-3 bg-indigo-50/90 border border-indigo-100 rounded-2xl space-y-1">
                     <div className="flex items-center justify-between text-[10px]">
                       <span className="font-bold text-indigo-700">👩‍🏫 Ibu Guru Ratna (Jakarta)</span>
@@ -334,16 +336,14 @@ const LandingPage = () => {
                     </p>
                   </div>
 
-                  {/* Kak Bintang AI Companion */}
-                  <div className="p-3 bg-amber-50/70 border border-amber-200/60 rounded-2xl space-y-1">
+                  {/* Student Reply 2 */}
+                  <div className="p-3 bg-emerald-50/90 border border-emerald-200/80 rounded-2xl space-y-1 ml-4">
                     <div className="flex items-center justify-between text-[10px]">
-                      <span className="font-bold text-amber-900 flex items-center gap-1">
-                        🤖 Kak Bintang AI Tutor
-                      </span>
-                      <span className="text-amber-700 font-bold">Sahabat Belajar</span>
+                      <span className="font-bold text-emerald-800">👧 Bintang (Siswa - Surabaya)</span>
+                      <span className="text-emerald-600 font-bold">Paham Pembelajaran</span>
                     </div>
-                    <p className="font-medium text-amber-950 leading-relaxed">
-                      "Penjelasan Ibu Guru Ratna sangat jelas! Bintang mau Kak Bintang bacakan paragrafnya lagi?"
+                    <p className="font-medium text-emerald-950 leading-relaxed">
+                      "Wah, terima kasih banyak Ibu Guru Ratna! Sekarang Bintang sudah sangat paham!"
                     </p>
                   </div>
                 </div>
@@ -425,7 +425,7 @@ const LandingPage = () => {
                         <span className="text-[10px] font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-md">Suara Lisan TTS</span>
                       </div>
                       <p className="text-xs text-amber-900 font-medium leading-relaxed">
-                        Pesan dan petunjuk dari Guru Lintas Daerah langsung dibacakan lisan (TTS) secara otomatis oleh Kak Bintang dengan tombol pengatur kecepatan suara.
+                        Pesan dan petunjuk dari Guru Lintas Daerah langsung dibacakan lisan (TTS) secara otomatis oleh sistem dengan tombol pengatur kecepatan suara.
                       </p>
                     </div>
 
