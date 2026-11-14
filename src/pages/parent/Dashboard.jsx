@@ -109,7 +109,11 @@ const ParentDashboard = () => {
           return (
             <div key={idx} className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs space-y-2.5">
               {lines.map((line, lIdx) => {
-                const cleanLine = line.replace(/^[#*•\-\s]+/, '').replace(/\*\*([^*]+)\*\*/g, '$1').trim();
+                const cleanLine = line
+                  .replaceAll('**', '')
+                  .replaceAll('##', '')
+                  .replace(/^[#*•\-\s]+/, '')
+                  .trim();
                 if (!cleanLine) return null;
 
                 if (lIdx === 0 && (isHeader || line.startsWith('###') || line.startsWith('**'))) {

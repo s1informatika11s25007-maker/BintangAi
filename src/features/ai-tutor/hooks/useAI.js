@@ -613,6 +613,8 @@ export const cleanReportText = (text) => {
     .replace(/skor akhir \(`?score`?\)[^\n]*\n?/gi, '')
     .replace(/oleh karena itu, ringkasan ini berfokus[^\n]*\n?/gi, '')
     .replace(/[★⭐🌟]/g, '')
+    .replaceAll('**', '')
+    .replaceAll('##', '')
     .trim();
 
   // Strip greeting/introduction sentences in the first few lines
