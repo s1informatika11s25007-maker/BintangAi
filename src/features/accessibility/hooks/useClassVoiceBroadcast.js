@@ -12,62 +12,151 @@ export function useClassVoiceBroadcast() {
 
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [latestBroadcast, setLatestBroadcast] = useState('');
+  const [activeTeacherMessage, setActiveTeacherMessage] = useState(null);
+  const [studentReplies, setStudentReplies] = useState([]);
+
   const recognitionRef = useRef(null);
   const channelRef = useRef(null);
   const synthRef = useRef(window.speechSynthesis);
 
   const isTeacher = profile?.role === 'guru';
+  const isStudent = profile?.role === 'siswa';
   const classCode = profile?.class_code;
 
-  // 1. STUDENT LISTENER: Subscribe to Realtime Voice Broadcast for profile.class_code
+  // Replay teacher voice for Siswa Tunanetra
+  const replayTeacherVoice = useCallback(() => {
+    if (!activeTeacherMessage?.text) return;
+    try {
+      if (synthRef.current) synthRef.current.cancel();
+      const utt = new SpeechSynthesisUtterance(`Guru ${activeTeacherMessage.teacherName || 'Guru'} berkata: ${activeTeacherMessage.text}`);
+      utt.lang = 'id-ID';
+      utt.rate = 1.0;
+      utt.volume = 1.0;
+
+      const voices = synthRef.current?.getVoices() || [];
+      const idVoice = voices.find(v => v.lang.startsWith('id') || v.lang.includes('ID') || (v.name && v.name.toLowerCase().includes('indonesia')));
+      if (idVoice) utt.voice = idVoice;
+
+      synthRef.current?.speak(utt);
+    } catch (e) {
+      console.error('Replay speech error:', e);
+    }
+  }, [activeTeacherMessage]);
+
+  // Dismiss teacher message manually (Manual Close)
+  const dismissTeacherMessage = useCallback(() => {
+    if (synthRef.current) synthRef.current.cancel();
+    setActiveTeacherMessage(null);
+  }, []);
+
+  // Send Student Reply to Teacher via Supabase Realtime
+  const sendStudentReply = useCallback((replyText) => {
+    if (!profile?.id || !classCode || !replyText?.trim()) return;
+
+    const cleanReply = replyText.trim();
+    const payload = {
+      studentId: profile.id,
+      studentName: profile.full_name || 'Siswa',
+      role: mode || profile.disability_type || 'umum',
+      text: cleanReply,
+      classCode: classCode,
+      timestamp: new Date().toISOString()
+    };
+
+    if (channelRef.current) {
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'student_reply',
+        payload
+      });
+    }
+
+    if (showSubtitle) {
+      showSubtitle(`🚀 Balasan terkirim ke Guru: "${cleanReply}"`, 'success');
+    }
+  }, [profile, classCode, mode, showSubtitle]);
+
+  // 1. REALTIME SUBSCRIBER: Handles Both Teacher Speech & Student Replies
   useEffect(() => {
-    if (!profile?.id || !classCode || isTeacher) return;
+    if (!profile?.id || !classCode) return;
 
     const channelName = `class_voice_broadcast_${classCode}`;
     const channel = supabase.channel(channelName);
 
-    channel
-      .on('broadcast', { event: 'teacher_speech' }, (event) => {
+    // Listener for Teacher Speech Broadcast (Received by Students)
+    channel.on('broadcast', { event: 'teacher_speech' }, (event) => {
+      const payload = event.payload;
+      if (!payload || !payload.text) return;
+      if (payload.classCode && payload.classCode !== classCode) return;
+
+      const teacherName = payload.teacherName || 'Guru';
+      const spokenText = payload.text;
+
+      setLatestBroadcast(spokenText);
+
+      // Save persistent teacher message card until student manually closes
+      const msgObj = {
+        id: Date.now(),
+        teacherName,
+        text: spokenText,
+        timestamp: payload.timestamp || new Date().toISOString()
+      };
+      setActiveTeacherMessage(msgObj);
+
+      // A. SISWA TUNANETRA: Native SpeechSynthesis Audio
+      if (mode === 'tunanetra' || profile.disability_type === 'tunanetra') {
+        try {
+          if (synthRef.current) synthRef.current.cancel();
+          const utt = new SpeechSynthesisUtterance(`Guru ${teacherName} berkata: ${spokenText}`);
+          utt.lang = 'id-ID';
+          utt.rate = 1.0;
+          utt.volume = 1.0;
+
+          const voices = synthRef.current?.getVoices() || [];
+          const idVoice = voices.find(v => v.lang.startsWith('id') || v.lang.includes('ID') || (v.name && v.name.toLowerCase().includes('indonesia')));
+          if (idVoice) utt.voice = idVoice;
+
+          synthRef.current?.speak(utt);
+        } catch (e) {
+          console.error('Speech synthesis broadcast error:', e);
+        }
+      }
+
+      // B. SISWA TUNARUNGU & TUNAWICARA: Subtitles / Captions
+      if (mode === 'tunarungu' || mode === 'tunawicara' || profile.disability_type === 'tunarungu' || profile.disability_type === 'tunawicara') {
+        globalCaptionBus.emit(spokenText, `Guru (${teacherName})`, 'speech');
+        if (showSubtitle) {
+          showSubtitle(`👨‍🏫 Guru (${teacherName}): "${spokenText}"`, 'info');
+        }
+      }
+    });
+
+    // Listener for Student Replies (Received by Teacher)
+    if (isTeacher) {
+      channel.on('broadcast', { event: 'student_reply' }, (event) => {
         const payload = event.payload;
         if (!payload || !payload.text) return;
 
-        // Verify same class code
-        if (payload.classCode && payload.classCode !== classCode) return;
+        setStudentReplies(prev => [
+          {
+            id: Date.now() + Math.random(),
+            studentId: payload.studentId,
+            studentName: payload.studentName,
+            role: payload.role,
+            text: payload.text,
+            timestamp: payload.timestamp || new Date().toISOString()
+          },
+          ...prev.slice(0, 49) // Keep last 50 student replies
+        ]);
 
-        const teacherName = payload.teacherName || 'Guru';
-        const spokenText = payload.text;
-
-        setLatestBroadcast(spokenText);
-
-        // A. SISWA TUNANETRA (Visual Impairment / Blind): Native Browser TTS Audio
-        if (mode === 'tunanetra') {
-          try {
-            if (synthRef.current) synthRef.current.cancel();
-            const utt = new SpeechSynthesisUtterance(`Guru ${teacherName} berkata: ${spokenText}`);
-            utt.lang = 'id-ID';
-            utt.rate = 1.0;
-            utt.volume = 1.0;
-
-            const voices = synthRef.current?.getVoices() || [];
-            const idVoice = voices.find(v => v.lang.startsWith('id') || v.lang.includes('ID') || (v.name && v.name.toLowerCase().includes('indonesia')));
-            if (idVoice) utt.voice = idVoice;
-
-            synthRef.current?.speak(utt);
-          } catch (e) {
-            console.error('Speech synthesis broadcast error:', e);
-          }
+        if (showSubtitle) {
+          const roleIcon = payload.role === 'tunanetra' ? '👁️' : payload.role === 'tunarungu' ? '🧏' : '🖐️';
+          showSubtitle(`${roleIcon} Balasan dari ${payload.studentName}: "${payload.text}"`, 'success');
         }
+      });
+    }
 
-        // B. SISWA TUNARUNGU & TUNAWICARA: Mata Pintar Live Subtitles / Captions
-        if (mode === 'tunarungu' || mode === 'tunawicara') {
-          globalCaptionBus.emit(spokenText, `Guru (${teacherName})`, 'speech');
-          if (showSubtitle) {
-            showSubtitle(`👨‍🏫 Guru (${teacherName}): "${spokenText}"`, 'info');
-          }
-        }
-      })
-      .subscribe();
-
+    channel.subscribe();
     channelRef.current = channel;
 
     return () => {
@@ -167,6 +256,11 @@ export function useClassVoiceBroadcast() {
     startBroadcasting,
     stopBroadcasting,
     toggleBroadcasting,
+    activeTeacherMessage,
+    replayTeacherVoice,
+    dismissTeacherMessage,
+    sendStudentReply,
+    studentReplies,
     classCode
   };
 }

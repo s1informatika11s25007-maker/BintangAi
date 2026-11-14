@@ -2,8 +2,13 @@ import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-route
 import { useEffect } from 'react';
 import { InactivityLogout } from './features/auth';
 import { useAuthStore } from './features/auth/store/useAuthStore';
-import { Subtitles, GlobalGestureCamera, BlindAIAssistant, AccessibilityProvider, useAccessibilityStore } from './features/accessibility';
+import Subtitles from './features/accessibility/components/Subtitles';
+import GlobalGestureCamera from './features/accessibility/components/GlobalGestureCamera';
+import BlindAIAssistant from './features/accessibility/components/BlindAIAssistant';
+import AccessibilityProvider from './features/accessibility/components/AccessibilityProvider';
+import { useAccessibilityStore } from './features/accessibility/store/accessibilityStore';
 import MataPintarGlobalCaption from './features/accessibility/components/MataPintarGlobalCaption';
+import StudentBroadcastReceiverOverlay from './features/accessibility/components/StudentBroadcastReceiverOverlay';
 import { useAI } from './features/ai-tutor';
 import { useNotification } from './hooks/useNotification';
 import NotificationContainer from './components/feedback/NotificationContainer';
@@ -135,6 +140,7 @@ function AppContent() {
       <MataPintarGlobalCaption />
       <BlindAIAssistant />
       <GlobalGestureCamera />
+      <StudentBroadcastReceiverOverlay />
       <AppLayout>
         <Routes>
           {/* Public Routes */}
