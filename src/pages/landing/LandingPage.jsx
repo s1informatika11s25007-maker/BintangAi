@@ -4,6 +4,7 @@ import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion';
 import Footer from '@/components/layout/Footer';
 import BintangAvatar from '@/features/ai-tutor/components/BintangAvatar';
 import AuthHeaderAccessibilityBar from '@/components/ui/AuthHeaderAccessibilityBar';
+import { useAccessibilityStore } from '@/features/accessibility/store/accessibilityStore';
 import {
   HiArrowRight,
   HiBookOpen,
@@ -163,6 +164,12 @@ const LandingPage = () => {
       );
     }
   };
+
+  const { reset: resetAccessibility } = useAccessibilityStore();
+
+  useEffect(() => {
+    resetAccessibility();
+  }, [resetAccessibility]);
 
   useEffect(() => {
     const handleScroll = () => {

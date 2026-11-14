@@ -16,7 +16,7 @@ export const AuthHeaderAccessibilityBar = ({
   const { speak, stopSpeaking, isSpeaking } = useVoice();
   const { mode, setModeFromProfile } = useAccessibilityStore();
 
-  const [selectedDisability, setSelectedDisability] = useState(mode || 'tidak_ada');
+  const [selectedDisability, setSelectedDisability] = useState('tidak_ada');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [fontSizeLevel, setFontSizeLevel] = useState(100);
   const [isHighContrast, setIsHighContrast] = useState(false);
@@ -25,7 +25,11 @@ export const AuthHeaderAccessibilityBar = ({
 
   // Sync with global store mode
   useEffect(() => {
-    if (mode) setSelectedDisability(mode);
+    if (mode) {
+      setSelectedDisability(mode);
+    } else {
+      setSelectedDisability('tidak_ada');
+    }
   }, [mode]);
 
   // Sync high contrast status from DOM
