@@ -3,11 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
 import {
   HiLockClosed, HiShieldCheck, HiSearch, HiRefresh,
-  HiClock, HiUserGroup, HiLightningBolt, HiFilter, HiX, HiCheckCircle
+  HiClock, HiUserGroup, HiLightningBolt, HiFilter, HiX, HiCheckCircle, HiTrash
 } from 'react-icons/hi';
 
 const MonitorPage = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return sessionStorage.getItem('bintang_monitor_unlocked') === 'true';
+  });
   const [passwordInput, setPasswordInput] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -21,11 +23,17 @@ const MonitorPage = () => {
     e.preventDefault();
     if (passwordInput === 'Bintang123') {
       setIsAuthenticated(true);
+      sessionStorage.setItem('bintang_monitor_unlocked', 'true');
       setErrorMsg('');
       fetchLogs();
     } else {
       setErrorMsg('Sandi salah! Akses ditolak.');
     }
+  };
+
+  const handleLockAccess = () => {
+    setIsAuthenticated(false);
+    sessionStorage.removeItem('bintang_monitor_unlocked');
   };
 
   const fetchLogs = async () => {
@@ -35,7 +43,7 @@ const MonitorPage = () => {
         .from('user_activity_logs')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(200);
+        .limit(300);
 
       if (error) throw error;
       setLogs(data || []);
@@ -43,6 +51,27 @@ const MonitorPage = () => {
       console.error("Fetch logs error:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteLog = async (id) => {
+    try {
+      const { error } = await supabase.from('user_activity_logs').delete().eq('id', id);
+      if (error) throw error;
+      setLogs(prev => prev.filter(l => l.id !== id));
+    } catch (err) {
+      console.error("Delete log error:", err);
+    }
+  };
+
+  const handleClearAllLogs = async () => {
+    if (!window.confirm("Apakah Anda yakin ingin menghapus SELURUH riwayat log aktivitas pengguna?")) return;
+    try {
+      const { error } = await supabase.from('user_activity_logs').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      if (error) throw error;
+      setLogs([]);
+    } catch (err) {
+      console.error("Clear all logs error:", err);
     }
   };
 
@@ -155,7 +184,14 @@ const MonitorPage = () => {
             <HiRefresh className={loading ? 'animate-spin' : ''} /> Refresh Logs
           </button>
           <button
-            onClick={() => setIsAuthenticated(false)}
+            onClick={handleClearAllLogs}
+            className="px-4 py-2.5 bg-rose-900/40 hover:bg-rose-600 text-rose-300 hover:text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all border border-rose-500/30"
+            title="Hapus Seluruh Log"
+          >
+            <HiTrash /> Hapus Semua Log
+          </button>
+          <button
+            onClick={handleLockAccess}
             className="px-4 py-2.5 bg-rose-600/20 text-rose-400 font-bold text-xs rounded-xl hover:bg-rose-600 hover:text-white transition-all border border-rose-500/30"
           >
             Kunci Akses
@@ -257,6 +293,7 @@ const MonitorPage = () => {
                 <th className="px-6 py-4">Tindakan</th>
                 <th className="px-6 py-4">Fitur / Tombol</th>
                 <th className="px-6 py-4">Rincian Deskripsi</th>
+                <th className="px-6 py-4 text-right">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs font-bold">
@@ -301,13 +338,22 @@ const MonitorPage = () => {
                     <td className="px-6 py-4 text-slate-600 font-medium">
                       {log.description || '-'}
                     </td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={() => handleDeleteLog(log.id)}
+                        className="p-2 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all border border-rose-100"
+                        title="Hapus Log Ini"
+                      >
+                        <HiTrash />
+                      </button>
+                    </td>
                   </tr>
                 );
               })}
 
               {filteredLogs.length === 0 && (
                 <tr>
-                  <td colSpan="6" className="px-6 py-12 text-center text-slate-400 font-bold">
+                  <td colSpan="7" className="px-6 py-12 text-center text-slate-400 font-bold">
                     Tidak ada log aktivitas yang ditemukan.
                   </td>
                 </tr>
