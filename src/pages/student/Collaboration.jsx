@@ -49,11 +49,16 @@ const StudentCollaboration = () => {
   useEffect(() => {
     if (groupId && myGroups.length > 0) {
       const group = myGroups.find(g => g.id === groupId);
-      if (group) setSelectedGroup(group);
+      if (group) {
+        setSelectedGroup(group);
+      } else {
+        setSelectedGroup(null);
+        navigate('/student/collaboration', { replace: true });
+      }
     } else if (!groupId) {
       setSelectedGroup(null);
     }
-  }, [groupId, myGroups]);
+  }, [groupId, myGroups, navigate]);
 
   // 2. Initial Load & Global Listeners
   useEffect(() => {
@@ -62,9 +67,14 @@ const StudentCollaboration = () => {
     loadInitialData();
 
     const channel = supabase.channel('student-sync')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'group_members', filter: `student_id=eq.${profile.id}` }, () => {
-        fetchMyGroups();
-        fetchAllGroups();
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'group_members', filter: `student_id=eq.${profile.id}` }, (payload) => {
+        if (payload.eventType === 'DELETE' && selectedGroup?.id) {
+          fetchMyGroups();
+          fetchAllGroups();
+        } else {
+          fetchMyGroups();
+          fetchAllGroups();
+        }
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'group_join_requests', filter: `student_id=eq.${profile.id}` }, () => {
         fetchMyRequests();
@@ -73,7 +83,7 @@ const StudentCollaboration = () => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [profile?.id]);
+  }, [profile?.id, selectedGroup?.id]);
 
   const loadInitialData = async () => {
     setLoading(true);
@@ -81,7 +91,7 @@ const StudentCollaboration = () => {
     setLoading(false);
   };
 
-  // 3. Chat Real-time Listener
+  // 3. Chat & Real-time Membership Ejection Listener (< 1s)
   useEffect(() => {
     if (!selectedGroup) return;
 
@@ -89,14 +99,38 @@ const StudentCollaboration = () => {
     fetchMembers(selectedGroup.id);
     checkRole(selectedGroup.id);
 
-    const chatChannel = supabase.channel(`chat-${selectedGroup.id}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'group_messages', filter: `group_id=eq.${selectedGroup.id}` }, () => {
+    const channelName = `chat_${selectedGroup.id}_${profile?.id}_${Date.now()}`;
+    const chatChannel = supabase.channel(channelName)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'group_messages',
+        filter: `group_id=eq.${selectedGroup.id}`
+      }, () => {
         fetchMessages(selectedGroup.id);
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'group_members',
+        filter: `group_id=eq.${selectedGroup.id}`
+      }, async (payload) => {
+        // Instant ejection (< 1s) if this student was removed from group_members!
+        if (payload.eventType === 'DELETE' && payload.old?.student_id === profile?.id) {
+          setSelectedGroup(null);
+          showSubtitle("⚠️ Anda telah dikeluarkan dari kelompok belajar ini oleh Guru", "warning");
+          await fetchMyGroups();
+          await fetchAllGroups();
+          navigate('/student/collaboration', { replace: true });
+          return;
+        }
+        fetchMembers(selectedGroup.id);
+        checkRole(selectedGroup.id);
       })
       .subscribe();
 
     return () => { supabase.removeChannel(chatChannel); };
-  }, [selectedGroup?.id]);
+  }, [selectedGroup?.id, profile?.id]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -217,7 +251,25 @@ const StudentCollaboration = () => {
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!newMessage.trim() || !selectedGroup) return;
-    const content = newMessage;
+
+    // Strict membership verification before posting message
+    const { data: memberCheck } = await supabase
+      .from('group_members')
+      .select('id')
+      .eq('group_id', selectedGroup.id)
+      .eq('student_id', profile.id)
+      .maybeSingle();
+
+    if (!memberCheck) {
+      showSubtitle("⚠️ Anda telah dikeluarkan dari kelompok ini oleh Guru", "warning");
+      setSelectedGroup(null);
+      await fetchMyGroups();
+      await fetchAllGroups();
+      navigate('/student/collaboration', { replace: true });
+      return;
+    }
+
+    const content = newMessage.trim();
     setNewMessage('');
     await supabase.from('group_messages').insert({ group_id: selectedGroup.id, sender_id: profile.id, content });
   };
