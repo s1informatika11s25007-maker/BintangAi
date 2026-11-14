@@ -76,9 +76,9 @@ const AppLayout = ({ children }) => {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 relative z-10">
-        {/* Mobile Top Bar - Added to match desktop sidebar logo */}
+        {/* Mobile Top Bar - Added to match desktop sidebar logo (Without profile button as requested) */}
         {!isFullScreenPage && (
-          <header className="lg:hidden h-16 bg-white/80 backdrop-blur-md border-b border-slate-100 px-6 flex items-center justify-between sticky top-0 z-[90]">
+          <header className="lg:hidden h-14 bg-white/90 backdrop-blur-md border-b border-slate-100 px-6 flex items-center justify-between sticky top-0 z-[90]">
             <div
               className="flex items-center gap-2 cursor-pointer active:scale-95 transition-transform"
               onClick={() => navigate('/')}
@@ -86,12 +86,6 @@ const AppLayout = ({ children }) => {
               <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">B</div>
               <span className="text-lg font-bold tracking-tight text-slate-900">Bintang<span className="text-indigo-600">Ai</span></span>
             </div>
-            <button
-              onClick={() => navigate('/profile')}
-              className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 hover:bg-white transition-all shadow-sm"
-            >
-              <HiUserCircle size={24} />
-            </button>
           </header>
         )}
 

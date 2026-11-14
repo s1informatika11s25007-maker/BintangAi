@@ -427,16 +427,8 @@ const StudentModules = () => {
                   </div>
                 </div>
 
-                {/* Tombol Kontrol Pembaca Suara & Kamus Isyarat */}
+                {/* Tombol Kontrol Pembaca Suara Paragraf */}
                 <div className="flex items-center gap-2 flex-wrap">
-                  <button
-                    onClick={() => setIsKamusOpen(true)}
-                    className="px-4 py-2 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold text-xs rounded-xl flex items-center gap-2 border border-emerald-400/30 transition-all shadow-md shadow-emerald-200/60 hover:scale-105 active:scale-95"
-                    title="Buka Kamus Bahasa Isyarat & Glosarium SD"
-                  >
-                    <span className="text-base animate-pulse">🤟</span>
-                    <span className="font-black">Kamus Isyarat SD</span>
-                  </button>
 
                   <button
                     onClick={prevParagraph}
@@ -633,12 +625,6 @@ const StudentModules = () => {
           )}
         </div>
       </main>
-
-      {/* KAMUS ISYARAT MODAL UNTUK SISWA TUNARUNGU */}
-      <KamusIsyaratModal
-        isOpen={isKamusOpen}
-        onClose={() => setIsKamusOpen(false)}
-      />
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }

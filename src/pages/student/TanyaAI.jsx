@@ -355,11 +355,11 @@ const TanyaAI = () => {
           initial={{ y: 100 }}
           animate={{ y: 0 }}
           transition={{ type: "spring", damping: 25, stiffness: 200 }}
-          className="p-4 md:p-8 bg-white/80 backdrop-blur-xl border-t border-slate-100 relative z-30"
+          className="p-3 sm:p-4 bg-white/95 backdrop-blur-xl border-t border-slate-100 relative z-30"
         >
           {/* Animated Suggestions for Tunarungu/Tunawicara */}
           {(isDeaf || isMute) && messages.length < 3 && (
-            <div className="absolute -top-12 left-0 right-0 flex gap-2 px-4 overflow-x-auto no-scrollbar pb-2">
+            <div className="absolute -top-10 left-0 right-0 flex gap-2 px-4 overflow-x-auto no-scrollbar pb-1">
                {["Bantu aku belajar", "Apa itu BintangAi?", "Cara kerjakan tugas"].map((text, i) => (
                  <motion.button
                    key={i}
@@ -367,7 +367,7 @@ const TanyaAI = () => {
                    animate={{ opacity: 1, x: 0 }}
                    transition={{ delay: 0.5 + (i * 0.1) }}
                    onClick={() => setInput(text)}
-                   className="whitespace-nowrap px-3 py-1.5 bg-white/90 backdrop-blur border border-indigo-100 text-indigo-600 text-[9px] font-black uppercase tracking-widest rounded-full shadow-sm hover:bg-indigo-50 transition-all"
+                   className="whitespace-nowrap px-3 py-1 bg-white/95 border border-indigo-100 text-indigo-600 text-[9px] font-black uppercase tracking-wider rounded-full shadow-sm hover:bg-indigo-50 transition-all"
                  >
                    {text}
                  </motion.button>
@@ -390,7 +390,7 @@ const TanyaAI = () => {
                    }
                  }}
                  placeholder="Ketik pesan..."
-                 className="w-full pl-4 pr-10 py-3 bg-slate-100 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all resize-none min-h-[48px] max-h-[120px] custom-scrollbar"
+                 className="w-full pl-4 pr-9 py-2.5 bg-slate-100 border-none rounded-xl text-xs sm:text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all resize-none min-h-[40px] max-h-[100px] custom-scrollbar"
                  rows={1}
                />
                {input && (
@@ -399,7 +399,7 @@ const TanyaAI = () => {
                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600"
                    onClick={() => setInput('')}
                  >
-                   <HiTrash className="text-sm" />
+                   <HiTrash className="text-xs" />
                  </button>
                )}
             </div>
@@ -408,17 +408,17 @@ const TanyaAI = () => {
               type="submit"
               disabled={!input.trim() || loading}
               className={`
-                w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-lg
+                w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center transition-all shadow-md shrink-0
                 ${!input.trim() || loading
                   ? 'bg-slate-100 text-slate-300 shadow-none'
                   : 'bg-indigo-600 text-white shadow-indigo-200 hover:scale-105 active:scale-95'}
               `}
             >
-              <HiPaperAirplane className={`text-xl ${input.trim() && !loading ? 'rotate-45 -translate-y-0.5 translate-x-0.5' : ''}`} />
+              <HiPaperAirplane className={`text-lg ${input.trim() && !loading ? 'rotate-45 -translate-y-0.5 translate-x-0.5' : ''}`} />
             </button>
           </form>
 
-          <p className="text-center text-[7px] font-black text-slate-300 uppercase tracking-[0.2em] mt-3">
+          <p className="text-center text-[7px] font-black text-slate-300 uppercase tracking-[0.2em] mt-1.5">
             BintangAi dapat membuat kesalahan.
           </p>
         </motion.div>
