@@ -110,9 +110,9 @@ const ParentDashboard = () => {
             <div key={idx} className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs space-y-2.5">
               {lines.map((line, lIdx) => {
                 const cleanLine = line
-                  .replaceAll('**', '')
-                  .replaceAll('##', '')
-                  .replace(/^[#*•\-\s]+/, '')
+                  .replaceAll('*', '')
+                  .replaceAll('#', '')
+                  .replace(/^[•\-\s]+/, '')
                   .trim();
                 if (!cleanLine) return null;
 
