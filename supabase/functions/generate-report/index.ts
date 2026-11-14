@@ -16,13 +16,13 @@ Deno.serve(async (req: Request) => {
       client.from('submissions').select('score,total_score,status,submitted_at,assignments(title,subject)').eq('student_id', studentId).order('submitted_at', { ascending: false }).limit(30),
       client.from('student_ai_chat_history').select('role,content,context,created_at').eq('student_id', studentId).order('created_at', { ascending: false }).limit(20),
     ]);
-    const prompt = `Buat ringkasan perkembangan belajar yang objektif, suportif, dan ramah anak dalam Bahasa Indonesia. Jangan memberi diagnosis atau label kemampuan tetap. Gunakan data berikut, pisahkan kemajuan, hal yang perlu dilatih, dan saran kegiatan sederhana untuk guru/orang tua.
-Siswa: ${student.full_name}; kelas: ${student.class_level || 'belum diatur'}; XP: ${student.xp}; streak: ${student.streak}.
+    const prompt = `Buat ringkasan perkembangan belajar yang objektif, suportif, dan ramah anak dalam Bahasa Indonesia. DILARANG menggunakan salam pembuka AI (seperti Hello! atau Halo!), DILARANG menggunakan ikon bintang, dan DILARANG menuliskan catatan debug teknis seperti "ketidaksesuaian data". Gunakan data berikut, pisahkan kemajuan, hal yang perlu dilatih, dan saran kegiatan sederhana untuk guru/orang tua.
+Siswa: ${student.full_name}; kelas: ${student.class_level || '4 SD'}; XP: ${student.xp}; streak: ${student.streak}.
 Hasil tugas: ${JSON.stringify(submissions || []).slice(0,6000)}
-Interaksi tutor (kutipan pendek): ${JSON.stringify(history || []).slice(0,5000)}
-Berikan 3-5 poin dengan bahasa positif dan faktual.`;
+Interaksi tutor: ${JSON.stringify(history || []).slice(0,5000)}
+Berikan 3-5 poin dengan bahasa positif, Rapi dan faktual.`;
     await verifyPrompt(prompt);
-    const { text: generated, model } = await generateWithFallback([{ role: 'system', content: 'Kamu adalah pendamping guru untuk pendidikan inklusif. Jangan membuat fakta yang tidak ada.' }, { role: 'user', content: prompt }], 900);
+    const { text: generated, model } = await generateWithFallback([{ role: 'system', content: 'Kamu adalah pendamping guru untuk pendidikan inklusif SD. DILARANG menggunakan salam pembuka AI, DILARANG ikon bintang, DILARANG catatan debug teknis. Hasil laporan harus langsung berisi ringkasan faktual dan positif.' }, { role: 'user', content: prompt }], 900);
     const reportText = await guardPotentiallySensitiveAnswer(generated);
     const { data: report, error: insertError } = await client.from('student_reports').insert({
       student_id: studentId, teacher_id: user.id, report_type: 'Kemajuan Belajar',

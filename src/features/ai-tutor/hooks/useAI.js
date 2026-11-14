@@ -533,7 +533,7 @@ ATURAN UTAMA:
         .limit(20);
 
       const groqToken = import.meta.env.VITE_GROQ_TOKEN || import.meta.env.Groq_Token;
-      let summaryText = `Ringkasan Laporan Perkembangan Belajar untuk ${studentName}:\n1. Kemajuan Belajar: Siswa aktif berpartisipasi dan menyelesaikan tugas.\n2. Evaluasi: Rata-rata nilai kuis stabil.\n3. Rekomendasi: Pertahankan semangat belajar dan tingkatkan latihan mandiri secara berkala.`;
+      let summaryText = `Ringkasan Laporan Perkembangan Belajar – ${studentName}:\n\n- Kemajuan Belajar: Siswa aktif berpartisipasi dan menyelesaikan tugas pembelajaran.\n- Evaluasi: Rata-rata nilai kuis dan partisipasi kelas stabil.\n- Rekomendasi: Pertahankan semangat belajar dan tingkatkan latihan mandiri secara berkala.`;
 
       if (groqToken) {
         try {
@@ -546,7 +546,7 @@ ATURAN UTAMA:
             body: JSON.stringify({
               model: 'qwen/qwen3.8-27b',
               messages: [
-                { role: 'system', content: 'Kamu pendamping guru inklusif SD. Buat ringkasan perkembangan belajar siswa yang objektif, ramah, dan positif dalam Bahasa Indonesia.' },
+                { role: 'system', content: 'Kamu pendamping guru inklusif SD. Buat ringkasan perkembangan belajar siswa yang objektif, ramah, dan positif dalam Bahasa Indonesia. DILARANG menggunakan salam pembuka AI seperti "Hello!", "Halo!", atau kalimat pembuka AI. DILARANG mencetak catatan debug teknis seperti "catatan penting ketidaksesuaian data". DILARANG menggunakan ikon bintang. Langsung mulai dari judul ringkasan perkembangan belajar secara rapi dan profesional.' },
                 { role: 'user', content: `Buat ringkasan perkembangan belajar siswa SD bernama ${studentName}, kelas ${student?.class_level || 4}, XP ${student?.xp || 0}. Hasil tugas: ${JSON.stringify(submissions || []).slice(0, 2000)}.` }
               ],
               max_tokens: 800
@@ -554,7 +554,7 @@ ATURAN UTAMA:
           });
           const groqJson = await res.json();
           const aiReply = groqJson?.choices?.[0]?.message?.content;
-          if (aiReply) summaryText = aiReply.trim();
+          if (aiReply) summaryText = cleanReportText(aiReply);
         } catch (groqErr) {
           console.warn("Groq report fallback notice:", groqErr);
         }
@@ -600,4 +600,38 @@ ATURAN UTAMA:
     loading,
     error
   };
+};
+
+export const cleanReportText = (text) => {
+  if (!text) return '';
+  let cleaned = text
+    .replace(/^hello!?[^\n]*\n?/gi, '')
+    .replace(/^halo!?[^\n]*\n?/gi, '')
+    .replace(/^berikut (adalah|merupakan)[^\n]*\n?/gi, '')
+    .replace(/catatan penting:?\s*terdapat ketidaksesuaian data[^\n]*\n?/gi, '')
+    .replace(/terdapat ketidaksesuaian data[^\n]*\n?/gi, '')
+    .replace(/skor akhir \(`?score`?\)[^\n]*\n?/gi, '')
+    .replace(/oleh karena itu, ringkasan ini berfokus[^\n]*\n?/gi, '')
+    .replace(/[★⭐🌟]/g, '')
+    .trim();
+
+  // Strip greeting/introduction sentences in the first few lines
+  const lines = cleaned.split('\n');
+  while (lines.length > 0) {
+    const first = lines[0].trim().toLowerCase();
+    if (
+      first.startsWith('hello') ||
+      first.startsWith('halo') ||
+      first.startsWith('berikut adalah') ||
+      first.startsWith('berikut ringkasan') ||
+      first.includes('ketidaksesuaian data') ||
+      first.includes('skor akhir (`score`)')
+    ) {
+      lines.shift();
+    } else {
+      break;
+    }
+  }
+
+  return lines.join('\n').trim();
 };

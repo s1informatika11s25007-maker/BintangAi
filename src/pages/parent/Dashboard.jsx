@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
-import { useAI } from '@/features/ai-tutor/hooks/useAI';
+import { useAI, cleanReportText } from '@/features/ai-tutor/hooks/useAI';
 import XPBar from '@/features/gamification/components/XPBar';
 import StreakBadge from '@/features/gamification/components/StreakBadge';
 import ParentSidebar from '@/components/layout/ParentSidebar';
@@ -91,6 +91,61 @@ const ParentDashboard = () => {
 
   const handleDownloadPdf = () => window.print();
   const onTabChange = (tabId) => setSearchParams({ tab: tabId });
+
+  const renderReportFormatted = (rawText) => {
+    if (!rawText) return null;
+    const cleanText = cleanReportText(rawText);
+    const blocks = cleanText.split(/\n\s*\n/);
+
+    return (
+      <div className="space-y-4 text-slate-800 font-sans">
+        {blocks.map((block, idx) => {
+          const lines = block.split('\n').filter(l => l.trim().length > 0);
+          if (lines.length === 0) return null;
+
+          const firstLine = lines[0].trim();
+          const isHeader = /^#+|^[\*\#\s]*[A-Z0-9\s—–\-:]{3,}[\*\#\s]*$/i.test(firstLine) || firstLine.startsWith('**');
+
+          return (
+            <div key={idx} className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs space-y-2.5">
+              {lines.map((line, lIdx) => {
+                const cleanLine = line.replace(/^[#*•\-\s]+/, '').replace(/\*\*([^*]+)\*\*/g, '$1').trim();
+                if (!cleanLine) return null;
+
+                if (lIdx === 0 && (isHeader || line.startsWith('###') || line.startsWith('**'))) {
+                  return (
+                    <div key={lIdx} className="flex items-center gap-2 pb-2 border-b border-indigo-100/80 mb-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 shrink-0"></span>
+                      <h4 className="font-extrabold text-base text-indigo-950 tracking-tight">
+                        {cleanLine}
+                      </h4>
+                    </div>
+                  );
+                }
+
+                if (line.trim().startsWith('*') || line.trim().startsWith('•') || line.trim().startsWith('-')) {
+                  return (
+                    <div key={lIdx} className="flex items-start gap-2.5 bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+                      <span className="text-emerald-600 font-bold text-sm shrink-0 mt-0.5">✓</span>
+                      <p className="text-xs md:text-sm font-medium text-slate-700 leading-relaxed">
+                        {cleanLine}
+                      </p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <p key={lIdx} className="text-xs md:text-sm font-medium text-slate-700 leading-relaxed">
+                    {cleanLine}
+                  </p>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   if (!profile?.linked_student_id) {
     return (
@@ -263,10 +318,8 @@ const ParentDashboard = () => {
                   </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-8 md:p-12">
-                  <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 whitespace-pre-wrap text-slate-700 leading-relaxed text-lg">
-                    {selectedReport.content}
-                  </div>
+                <div className="flex-1 overflow-y-auto p-6 md:p-10 bg-slate-50/50">
+                  {renderReportFormatted(selectedReport.content)}
                 </div>
 
                 <div className="p-8 border-t border-slate-100 flex justify-end gap-4 bg-slate-50/50">
@@ -315,9 +368,7 @@ const ParentDashboard = () => {
 
               <div className="bg-slate-50 p-10 rounded-[2rem] border border-slate-100 min-h-[500px]">
                 <h3 className="text-sm font-bold text-indigo-600 uppercase tracking-widest mb-6 border-b border-indigo-100 pb-4">Analisis & Rekomendasi AI</h3>
-                <div className="whitespace-pre-wrap text-slate-800 leading-relaxed">
-                  {selectedReport.content}
-                </div>
+                {renderReportFormatted(selectedReport.content)}
               </div>
             </div>
           )}
