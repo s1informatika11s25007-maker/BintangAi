@@ -460,7 +460,7 @@ const LandingPage = () => {
                   <div>
                     <h3 className="font-black text-sm sm:text-base">Kak Bintang AI Tutor SD</h3>
                     <p className="text-xs text-indigo-600 font-extrabold flex items-center gap-1 mt-0.5">
-                      <HiSparkles className="text-amber-500" /> Sahabat Belajar Pintar Anak SD
+                      Sahabat Belajar Pintar Anak SD
                     </p>
                   </div>
                 </div>
@@ -506,7 +506,7 @@ const LandingPage = () => {
               <span className={`px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider inline-flex items-center gap-1.5 border ${
                 highContrast ? 'bg-yellow-400 text-black border-yellow-300' : 'bg-indigo-100 text-indigo-800 border-indigo-200'
               }`}>
-                <HiSparkles className="text-amber-500" /> Uji Coba Langsung 3 Role Disabilitas
+                Uji Coba Langsung 3 Role Disabilitas
               </span>
               <h2 className="text-2xl sm:text-4xl font-black leading-snug">
                 Coba Simulasi Antarmuka Aksesibilitas
