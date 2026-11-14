@@ -58,60 +58,63 @@ export const StudentSidebar = () => {
   }
 
   return (
-    <aside className="w-64 bg-white border-r border-slate-100 flex flex-col sticky top-0 h-screen shrink-0 z-40 hidden lg:flex">
-      <div className="flex flex-col h-full px-6 py-10">
-        {/* Logo */}
-        <div
-          className="flex items-center gap-2 px-3 mb-12 cursor-pointer transition-transform active:scale-95"
-          onClick={() => navigate('/')}
-        >
-          <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">B</div>
-          <span className="text-lg font-bold tracking-tight text-slate-900">Bintang<span className="text-indigo-600">Ai</span></span>
-        </div>
+    <aside className="w-64 bg-white border-r border-slate-100 flex flex-col sticky top-0 h-screen shrink-0 z-40 hidden lg:flex overflow-hidden">
+      <div className="flex flex-col h-full justify-between">
+        {/* Top Scrollable Menu Content */}
+        <div className="px-6 pt-6 pb-2 space-y-6 flex-1 overflow-y-auto custom-scrollbar">
+          {/* Logo */}
+          <div
+            className="flex items-center gap-2 px-3 mb-6 cursor-pointer transition-transform active:scale-95"
+            onClick={() => navigate('/')}
+          >
+            <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">B</div>
+            <span className="text-lg font-bold tracking-tight text-slate-900">Bintang<span className="text-indigo-600">Ai</span></span>
+          </div>
 
-        {/* Menu Section */}
-        <div className="flex-1 space-y-8">
-          <div>
-            <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4">Dashboard</p>
-            <div className="space-y-1">
-              {finalMenuItems.map((item) => {
-                const isActive = location.pathname === item.path;
-                return (
-                  <Link
-                    key={item.label}
-                    to={item.path}
-                    aria-label={`Menu ${item.label}${isActive ? ', aktif' : ''}`}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-200 group relative ${
-                      isActive
-                        ? 'text-indigo-600 font-bold'
-                        : 'text-slate-500 font-medium hover:text-slate-900 hover:bg-slate-50'
-                    }`}
-                  >
-                    <span className={`transition-colors ${isActive ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-500'}`}>
-                      {item.icon}
-                    </span>
-                    {item.label}
-                    {isActive && (
-                      <motion.div
-                        layoutId="active-nav-bg-student"
-                        className="absolute inset-0 bg-indigo-50 rounded-xl -z-10"
-                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                      />
-                    )}
-                  </Link>
-                );
-              })}
+          {/* Menu Section */}
+          <div className="space-y-5">
+            <div>
+              <p className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2.5">Dashboard</p>
+              <div className="space-y-1">
+                {finalMenuItems.map((item) => {
+                  const isActive = location.pathname === item.path;
+                  return (
+                    <Link
+                      key={item.label}
+                      to={item.path}
+                      aria-label={`Menu ${item.label}${isActive ? ', aktif' : ''}`}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all duration-200 group relative ${
+                        isActive
+                          ? 'text-indigo-600 font-bold'
+                          : 'text-slate-500 font-medium hover:text-slate-900 hover:bg-slate-50'
+                      }`}
+                    >
+                      <span className={`transition-colors ${isActive ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-500'}`}>
+                        {item.icon}
+                      </span>
+                      {item.label}
+                      {isActive && (
+                        <motion.div
+                          layoutId="active-nav-bg-student"
+                          className="absolute inset-0 bg-indigo-50 rounded-xl -z-10"
+                          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                        />
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Profile */}
-        <div className="pt-8 border-t border-slate-50">
+        {/* Profile (Flushed Edge-to-Edge at the Very Bottom of Sidebar with 0 White Gap) */}
+        <div className="p-4 border-t border-slate-100 bg-slate-50/80 shrink-0">
           <button
             onClick={() => navigate('/profile')}
-            className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 transition-all group"
+            className="w-full flex items-center gap-3 p-2 rounded-2xl hover:bg-white transition-all group"
           >
-            <div className="w-9 h-9 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-lg shadow-indigo-100">
+            <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-md shadow-indigo-100 shrink-0">
               {profile?.full_name?.[0] || 'B'}
             </div>
             <div className="text-left overflow-hidden">

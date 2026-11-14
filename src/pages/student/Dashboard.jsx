@@ -156,14 +156,14 @@ const StudentDashboard = () => {
             {/* HERO BINTANG LOGO & WELCOME BANNER */}
             <motion.section
               variants={itemVariants}
-              className={`lg:col-span-12 p-5 sm:p-8 md:p-10 rounded-3xl sm:rounded-[2.5rem] md:rounded-[3.5rem] shadow-xl relative overflow-hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 md:gap-8 ${
+              className={`lg:col-span-12 p-4 sm:p-6 md:p-8 rounded-3xl shadow-xl relative overflow-hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 md:gap-6 ${
                 isBlind ? 'bg-indigo-950 border border-white/10 text-white' : 'bg-white border border-slate-100 text-slate-800'
               }`}
             >
               <div className="absolute top-0 right-0 w-80 h-80 sm:w-96 sm:h-96 bg-indigo-500/10 rounded-full -mr-20 -mt-20 blur-[120px] pointer-events-none" />
 
               {/* ANIMATED BINTANG STAR AVATAR */}
-              <div className="flex items-center gap-4 sm:gap-6 md:gap-10 relative z-10 min-w-0 w-full sm:w-auto">
+              <div className="flex items-center gap-4 sm:gap-6 relative z-10 min-w-0 w-full sm:w-auto">
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   onClick={() => navigate('/student/tanya-ai')}
@@ -173,11 +173,11 @@ const StudentDashboard = () => {
                   <BintangAvatar state={avatarState} size="md" />
                 </motion.div>
 
-                <div className="space-y-1 sm:space-y-2 min-w-0 flex-1">
+                <div className="space-y-1 min-w-0 flex-1">
                   <span className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-indigo-100 inline-block">
                     {greeting} 👋
                   </span>
-                  <h2 className="text-2xl sm:text-3xl md:text-5xl font-black tracking-tight leading-tight truncate">
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight leading-tight truncate">
                     {getCleanFirstName(profile?.full_name)} <span className="text-indigo-600">.</span>
                   </h2>
                   <p className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest truncate">
@@ -187,14 +187,14 @@ const StudentDashboard = () => {
               </div>
 
               {/* XP BADGE & STATUS */}
-              <div className="flex items-center gap-3 sm:gap-4 bg-slate-50 px-4 sm:px-6 py-3 sm:py-4 rounded-2xl sm:rounded-3xl border border-slate-100 shrink-0 relative z-10 w-full sm:w-auto justify-between sm:justify-start">
+              <div className="flex items-center gap-3 bg-slate-50 px-4 py-3 rounded-2xl border border-slate-100 shrink-0 relative z-10 w-full sm:w-auto justify-between sm:justify-start">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-amber-500 text-white flex items-center justify-center text-xl sm:text-2xl shadow-md shadow-amber-200 shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center text-xl shadow-md shadow-amber-200 shrink-0">
                     <HiAcademicCap />
                   </div>
                   <div>
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Poin XP Kamu</p>
-                    <p className="text-lg sm:text-xl font-black text-slate-900 leading-none mt-1">{profile?.xp || 0} XP</p>
+                    <p className="text-base sm:text-lg font-black text-slate-900 leading-none mt-1">{profile?.xp || 0} XP</p>
                   </div>
                 </div>
               </div>
@@ -203,7 +203,7 @@ const StudentDashboard = () => {
             {/* HERO SECTION - Progress & Level */}
             <motion.section
               variants={itemVariants}
-              className={`lg:col-span-8 p-5 sm:p-8 md:p-12 rounded-3xl sm:rounded-[2.5rem] md:rounded-[3.5rem] shadow-xl md:shadow-2xl relative overflow-hidden group ${
+              className={`lg:col-span-8 p-4 sm:p-6 md:p-8 rounded-3xl shadow-xl relative overflow-hidden group ${
                 isBlind ? 'bg-indigo-900 border border-white/10' : 'bg-white border border-slate-100 sm:border-slate-50'
               }`}
             >
@@ -211,21 +211,21 @@ const StudentDashboard = () => {
 
               <div className="relative z-10 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4 sm:gap-6">
-                  <div className={`w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl sm:rounded-[1.8rem] flex items-center justify-center text-3xl sm:text-4xl shadow-lg shrink-0 ${isBlind ? 'bg-white/10 text-white' : 'bg-indigo-600 text-white shadow-indigo-200'}`}>
+                  <div className={`w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl shadow-lg shrink-0 ${isBlind ? 'bg-white/10 text-white' : 'bg-indigo-600 text-white shadow-indigo-200'}`}>
                     <HiFire />
                   </div>
                   <div>
-                    <h3 className="text-2xl sm:text-3xl md:text-5xl font-black tracking-tighter">Level {currentLevel}</h3>
-                    <p className={`text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-[0.3em] mt-0.5 sm:mt-1 ${isBlind ? 'text-indigo-300' : 'text-slate-400'}`}>Target: {currentLevel * 1000} XP</p>
+                    <h3 className="text-xl sm:text-2xl md:text-4xl font-black tracking-tighter">Level {currentLevel}</h3>
+                    <p className={`text-[10px] sm:text-xs font-black uppercase tracking-wider mt-0.5 ${isBlind ? 'text-indigo-300' : 'text-slate-400'}`}>Target: {currentLevel * 1000} XP</p>
                   </div>
                 </div>
                 <div className="text-right">
-                   <p className={`text-3xl sm:text-4xl md:text-6xl font-black tracking-tighter ${isBlind ? 'text-indigo-400' : 'text-indigo-600'}`}>{Math.round(progressPercentage)}%</p>
+                   <p className={`text-2xl sm:text-3xl md:text-5xl font-black tracking-tighter ${isBlind ? 'text-indigo-400' : 'text-indigo-600'}`}>{Math.round(progressPercentage)}%</p>
                 </div>
               </div>
 
-              <div className="mt-6 sm:mt-10 relative">
-                 <div className={`h-4 sm:h-6 md:h-8 rounded-full border-2 sm:border-[6px] overflow-hidden ${isBlind ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-white shadow-inner'}`}>
+              <div className="mt-4 sm:mt-6 relative">
+                 <div className={`h-3.5 sm:h-5 rounded-full border-2 sm:border-4 overflow-hidden ${isBlind ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-white shadow-inner'}`}>
                     <motion.div
                       initial={{ width: 0 }} animate={{ width: `${progressPercentage}%` }}
                       transition={{ duration: 2, ease: "circOut" }}
@@ -234,7 +234,7 @@ const StudentDashboard = () => {
                        <div className="absolute inset-0 bg-white/20 animate-shimmer" />
                     </motion.div>
                  </div>
-                 <div className="flex justify-between mt-2 sm:mt-3">
+                 <div className="flex justify-between mt-1.5 sm:mt-2">
                     <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest opacity-40">Mulai</span>
                     <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest opacity-40">Level Up</span>
                  </div>
@@ -245,7 +245,7 @@ const StudentDashboard = () => {
             <motion.section variants={itemVariants} className="lg:col-span-4 grid grid-cols-2 gap-3 sm:gap-4">
                <button
                 onClick={() => navigate('/student/tasks')}
-                className={`p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-[2rem] md:rounded-[2.5rem] flex flex-col items-center justify-center gap-2 sm:gap-3 transition-all active:scale-95 shadow-md hover:shadow-xl ${
+                className={`p-3.5 sm:p-5 md:p-6 rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center gap-2 transition-all active:scale-95 shadow-md hover:shadow-xl ${
                   isBlind ? 'bg-amber-600 text-white' : 'bg-white text-slate-700 border border-slate-100 hover:border-amber-200'
                 }`}
                >
@@ -254,7 +254,7 @@ const StudentDashboard = () => {
                </button>
                <button
                 onClick={() => navigate(profile?.disability_type === 'tunanetra' ? '/student/playground' : '/student/tanya-ai')}
-                className={`p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-[2rem] md:rounded-[2.5rem] flex flex-col items-center justify-center gap-2 sm:gap-3 transition-all active:scale-95 shadow-md hover:shadow-xl ${
+                className={`p-3.5 sm:p-5 md:p-6 rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center gap-2 transition-all active:scale-95 shadow-md hover:shadow-xl ${
                   isBlind ? 'bg-indigo-600 text-white' : 'bg-white text-slate-700 border border-slate-100 hover:border-indigo-200'
                 }`}
                >
@@ -263,11 +263,11 @@ const StudentDashboard = () => {
                </button>
                <button
                 onClick={() => navigate('/student/modules')}
-                className={`col-span-2 p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-[2rem] md:rounded-[2.5rem] flex items-center justify-between px-5 sm:px-8 transition-all active:scale-95 shadow-md hover:shadow-xl ${
+                className={`col-span-2 p-3.5 sm:p-5 md:p-6 rounded-2xl sm:rounded-3xl flex items-center justify-between px-4 sm:px-6 transition-all active:scale-95 shadow-md hover:shadow-xl ${
                   isBlind ? 'bg-slate-800 text-white' : 'bg-white text-slate-700 border border-slate-100'
                 }`}
                >
-                  <div className="flex items-center gap-3 sm:gap-6 min-w-0">
+                  <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                     <HiAcademicCap className="text-blue-500 text-2xl sm:text-3xl shrink-0" />
                     <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider truncate">Perpustakaan Materi</span>
                   </div>
@@ -276,87 +276,87 @@ const StudentDashboard = () => {
             </motion.section>
 
             {/* Upcoming Quiz (Span 8) */}
-            <motion.div variants={itemVariants} className={`lg:col-span-8 p-5 sm:p-8 md:p-10 rounded-3xl sm:rounded-[2.5rem] md:rounded-[3rem] ${isBlind ? 'bg-white/5 border border-white/5' : 'bg-white shadow-sm border border-slate-100 sm:border-slate-50'}`}>
-               <div className="flex items-center justify-between mb-5 sm:mb-8">
-                  <h4 className="text-base sm:text-xl font-black uppercase tracking-tight flex items-center gap-2 sm:gap-3">
+            <motion.div variants={itemVariants} className={`lg:col-span-8 p-4 sm:p-6 md:p-8 rounded-3xl ${isBlind ? 'bg-white/5 border border-white/5' : 'bg-white shadow-sm border border-slate-100 sm:border-slate-50'}`}>
+               <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <h4 className="text-sm sm:text-lg font-black uppercase tracking-tight flex items-center gap-2 sm:gap-3">
                      <HiCollection className="text-amber-500" /> Quiz Terbaru
                   </h4>
                   <button onClick={() => navigate('/student/tasks')} className="text-[10px] sm:text-xs font-black text-indigo-600 uppercase tracking-widest hover:underline">Semua</button>
                </div>
-               <div className="space-y-3 sm:space-y-4">
+               <div className="space-y-2.5 sm:space-y-3">
                   {tasks?.map(task => (
                     <motion.div
                      whileHover={{ x: 6 }} key={task.id}
                      onClick={() => navigate(`/student/task/${task.id}`)}
-                     className={`p-4 sm:p-6 rounded-2xl flex items-center justify-between cursor-pointer transition-all border ${
+                     className={`p-3.5 sm:p-4 rounded-2xl flex items-center justify-between cursor-pointer transition-all border ${
                        isBlind ? 'bg-white/5 border-white/5 hover:bg-white/10' : 'bg-slate-50 border-transparent hover:border-indigo-100 hover:bg-white'
                      }`}
                     >
                        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                          <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0"><HiLightningBolt /></div>
+                          <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0"><HiLightningBolt /></div>
                           <div className="min-w-0">
-                             <p className="font-bold text-xs sm:text-base truncate">{task.title}</p>
+                             <p className="font-bold text-xs sm:text-sm truncate">{task.title}</p>
                              <p className="text-[9px] sm:text-[10px] opacity-50 uppercase font-black truncate">Batas: {new Date(task.deadline).toLocaleDateString()}</p>
                           </div>
                        </div>
                        <HiChevronRight className="opacity-30 shrink-0 ml-2" />
                     </motion.div>
                   ))}
-                  {tasks?.length === 0 && <p className="text-center py-8 opacity-40 text-xs font-black uppercase tracking-widest">Kosong untuk saat ini</p>}
+                  {tasks?.length === 0 && <p className="text-center py-6 opacity-40 text-xs font-black uppercase tracking-widest">Kosong untuk saat ini</p>}
                </div>
             </motion.div>
 
             {/* Accessibility Assist for Tunanetra / Live Assist for Tunarungu (Span 4) */}
             {isBlind ? (
-              <motion.section variants={itemVariants} className="lg:col-span-4 bg-indigo-600 p-5 sm:p-8 rounded-3xl sm:rounded-[2.5rem] text-white space-y-4 sm:space-y-6 shadow-2xl flex flex-col justify-between">
+              <motion.section variants={itemVariants} className="lg:col-span-4 bg-indigo-600 p-4 sm:p-6 md:p-8 rounded-3xl text-white space-y-3 sm:space-y-4 shadow-2xl flex flex-col justify-between">
                  <div>
-                   <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white/20 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl shadow-inner mb-4"><HiSpeakerphone /></div>
-                   <h4 className="text-xl sm:text-2xl font-black leading-none mb-2">Bantuan Suara</h4>
-                   <p className="text-xs sm:text-sm font-bold opacity-80 leading-relaxed uppercase tracking-wider">Ketuk di mana saja untuk mendengar navigasi atau gunakan panduan lengkap.</p>
+                   <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-2xl flex items-center justify-center text-xl sm:text-2xl shadow-inner mb-3"><HiSpeakerphone /></div>
+                   <h4 className="text-lg sm:text-xl font-black leading-none mb-1">Bantuan Suara</h4>
+                   <p className="text-[10px] sm:text-xs font-bold opacity-80 leading-relaxed uppercase tracking-wider">Ketuk di mana saja untuk mendengar navigasi atau gunakan panduan lengkap.</p>
                  </div>
-                 <button onClick={() => getAudioGuide()} className="w-full py-4 sm:py-5 bg-white text-indigo-600 rounded-xl sm:rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.2em] shadow-lg active:scale-95">Dengarkan Panduan</button>
+                 <button onClick={() => getAudioGuide()} className="w-full py-3 sm:py-4 bg-white text-indigo-600 rounded-xl sm:rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg active:scale-95">Dengarkan Panduan</button>
               </motion.section>
             ) : profile?.disability_type === 'tunarungu' ? (
                <motion.section
                  variants={itemVariants} onClick={() => navigate('/student/live-captions')}
-                 className="lg:col-span-4 bg-gradient-to-br from-emerald-500 to-teal-700 p-5 sm:p-8 rounded-3xl sm:rounded-[2.5rem] text-white shadow-xl cursor-pointer active:scale-95 transition-all group flex flex-col justify-between"
+                 className="lg:col-span-4 bg-gradient-to-br from-emerald-500 to-teal-700 p-4 sm:p-6 md:p-8 rounded-3xl text-white shadow-xl cursor-pointer active:scale-95 transition-all group flex flex-col justify-between"
                >
-                  <div className="flex justify-between items-start mb-6">
-                     <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white/20 rounded-2xl flex items-center justify-center text-3xl sm:text-4xl group-hover:scale-110 transition-transform"><HiEye /></div>
-                     <span className="px-3 py-1 bg-white/20 rounded-full text-[8px] font-black uppercase tracking-widest">Live Assist</span>
+                  <div className="flex justify-between items-start mb-4">
+                     <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl group-hover:scale-110 transition-transform"><HiEye /></div>
+                     <span className="px-2.5 py-0.5 bg-white/20 rounded-full text-[8px] font-black uppercase tracking-widest">Live Assist</span>
                   </div>
                   <div>
-                    <h4 className="text-xl sm:text-2xl font-black leading-none mb-2 tracking-tighter uppercase">Mata Pintar AI</h4>
+                    <h4 className="text-lg sm:text-xl font-black leading-none mb-1.5 tracking-tighter uppercase">Mata Pintar AI</h4>
                     <p className="text-[10px] sm:text-xs font-bold opacity-80 leading-relaxed uppercase tracking-wider">Ubah suara di sekitarmu menjadi teks otomatis dengan akurasi 100%.</p>
                   </div>
                </motion.section>
             ) : null}
 
             {/* Teman Belajar (Span 6) */}
-            <motion.div variants={itemVariants} className={`lg:col-span-6 p-5 sm:p-8 md:p-10 rounded-3xl sm:rounded-[2.5rem] md:rounded-[3rem] ${isBlind ? 'bg-white/5 border border-white/5' : 'bg-white shadow-sm border border-slate-100 sm:border-slate-50'}`}>
-               <div className="flex items-center justify-between mb-5 sm:mb-8">
-                  <h4 className="text-base sm:text-xl font-black uppercase tracking-tight flex items-center gap-2 sm:gap-3">
+            <motion.div variants={itemVariants} className={`lg:col-span-6 p-4 sm:p-6 md:p-8 rounded-3xl ${isBlind ? 'bg-white/5 border border-white/5' : 'bg-white shadow-sm border border-slate-100 sm:border-slate-50'}`}>
+               <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <h4 className="text-sm sm:text-lg font-black uppercase tracking-tight flex items-center gap-2 sm:gap-3">
                      <HiUsers className="text-emerald-500" /> Teman Belajar
                   </h4>
                </div>
-               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {groups?.map(g => (
-                    <div key={g.id} className={`p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border transition-all ${isBlind ? 'bg-indigo-900/40 border-white/10' : 'bg-slate-50 border-slate-100/50'}`}>
-                       <p className="font-bold text-xs sm:text-sm mb-2 truncate">{g.name}</p>
+                    <div key={g.id} className={`p-3.5 sm:p-4 rounded-2xl border transition-all ${isBlind ? 'bg-indigo-900/40 border-white/10' : 'bg-slate-50 border-slate-100/50'}`}>
+                       <p className="font-bold text-xs sm:text-sm mb-1.5 truncate">{g.name}</p>
                        <button onClick={() => navigate('/student/collaboration')} className="text-[9px] sm:text-[10px] font-black text-indigo-500 uppercase tracking-widest">Masuk Diskusi</button>
                     </div>
                   ))}
-                  {groups?.length === 0 && <button onClick={() => navigate('/student/collaboration')} className="col-span-full py-6 sm:py-8 border-2 border-dashed border-slate-200 rounded-2xl sm:rounded-[2rem] text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Cari Grup Belajar</button>}
+                  {groups?.length === 0 && <button onClick={() => navigate('/student/collaboration')} className="col-span-full py-5 sm:py-6 border-2 border-dashed border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Cari Grup Belajar</button>}
                </div>
             </motion.div>
 
             {/* Peringkat Kelas / Leaderboard (Span 6) */}
-            <motion.section variants={itemVariants} className={`lg:col-span-6 p-5 sm:p-8 md:p-10 rounded-3xl sm:rounded-[2.5rem] md:rounded-[3rem] ${isBlind ? 'bg-white/5 border border-white/5 shadow-2xl' : 'bg-slate-900 shadow-xl shadow-slate-200'} text-white`}>
-               <h4 className="text-xs sm:text-base font-black uppercase tracking-[0.2em] mb-5 sm:mb-6 text-indigo-400 flex items-center gap-2 sm:gap-3"><HiAcademicCap className="text-amber-400 text-lg" /> Peringkat Kelas</h4>
-               <div className="space-y-2.5 sm:space-y-3">
+            <motion.section variants={itemVariants} className={`lg:col-span-6 p-4 sm:p-6 md:p-8 rounded-3xl ${isBlind ? 'bg-white/5 border border-white/5 shadow-2xl' : 'bg-slate-900 shadow-xl shadow-slate-200'} text-white`}>
+               <h4 className="text-xs sm:text-sm font-black uppercase tracking-[0.2em] mb-4 text-indigo-400 flex items-center gap-2"><HiAcademicCap className="text-amber-400 text-lg" /> Peringkat Kelas</h4>
+               <div className="space-y-2 sm:space-y-2.5">
                   {leaderboard?.map((s, i) => (
-                    <div key={s.id} className={`flex items-center gap-3 sm:gap-4 p-2.5 sm:p-3 rounded-2xl ${s.id === profile?.id ? 'bg-indigo-600/30 ring-1 ring-indigo-500' : ''}`}>
-                       <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center font-black text-xs shrink-0 ${i === 0 ? 'bg-amber-400 text-amber-950' : i === 1 ? 'bg-slate-300 text-slate-800' : 'bg-slate-800 text-slate-500'}`}>{i + 1}</div>
+                    <div key={s.id} className={`flex items-center gap-3 p-2 sm:p-2.5 rounded-xl ${s.id === profile?.id ? 'bg-indigo-600/30 ring-1 ring-indigo-500' : ''}`}>
+                       <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center font-black text-xs shrink-0 ${i === 0 ? 'bg-amber-400 text-amber-950' : i === 1 ? 'bg-slate-300 text-slate-800' : 'bg-slate-800 text-slate-500'}`}>{i + 1}</div>
                        <span className="flex-1 font-bold text-xs sm:text-sm truncate">{s.full_name}</span>
                        <span className="font-black text-xs text-indigo-400 shrink-0">{s.xp} <span className="text-[7px] opacity-40 uppercase">XP</span></span>
                     </div>
