@@ -117,10 +117,14 @@ ATURAN UTAMA:
 
       if (fallbackReply) {
         if (studentId) {
-          await supabase.from('student_ai_chat_history').insert([
-            { student_id: studentId, role: 'user', content: query.trim(), question: query.trim() },
-            { student_id: studentId, role: 'assistant', content: fallbackReply, answer: fallbackReply }
-          ]);
+          try {
+            await supabase.from('student_ai_chat_history').insert([
+              { student_id: studentId, role: 'user', content: query.trim(), question: query.trim() },
+              { student_id: studentId, role: 'assistant', content: fallbackReply, answer: fallbackReply }
+            ]);
+          } catch (logErr) {
+            console.warn("DB log error ignored:", logErr);
+          }
         }
         return {
           answer: fallbackReply,

@@ -53,50 +53,64 @@ const TanyaAI = () => {
       timestamp: new Date()
     }]);
 
+    let aiMessageAdded = false;
+
     try {
       const response = await askTutor(userMessage, profile?.id, [], {
         history: messages.map(m => ({ role: m.role, content: m.content }))
       });
 
-      if (response.success) {
+      if (response && response.answer) {
+        aiMessageAdded = true;
         setMessages(prev => [...prev, {
           role: 'ai',
           content: response.answer,
           timestamp: new Date()
         }]);
 
-        // Permanently record Q&A interaction in student_ai_chat_history for Teacher Monitoring
+        // Permanently record Q&A interaction in student_ai_chat_history for Teacher Monitoring (isolated try-catch)
         if (profile?.id) {
-          await supabase.from('student_ai_chat_history').insert({
-            student_id: profile.id,
-            question: userMessage,
-            answer: response.answer,
-            topic: response.detectedTopic || 'Tanya Kak Bintang',
-            class_code: profile.class_code || null,
-            student_name: profile.full_name || null,
-            created_at: new Date().toISOString()
-          });
+          try {
+            await supabase.from('student_ai_chat_history').insert({
+              student_id: profile.id,
+              question: userMessage,
+              answer: response.answer,
+              topic: response.detectedTopic || 'Tanya Kak Bintang',
+              class_code: profile.class_code || null,
+              student_name: profile.full_name || null,
+              created_at: new Date().toISOString()
+            });
+          } catch (logErr) {
+            console.warn("Background chat log error:", logErr);
+          }
         }
 
         // Speak response out loud using user's voice speed, volume, and voice selection
-        speak(response.answer);
-      } else {
-        const errorMsg = "Maaf, ada kendala koneksi. Coba lagi ya!";
+        try {
+          speak(response.answer);
+        } catch (speakErr) {
+          console.warn("Audio speech error:", speakErr);
+        }
+      } else if (!aiMessageAdded) {
+        aiMessageAdded = true;
+        const errorMsg = "Halo! Kak Bintang siap membantu. Coba tanyakan lagi ya! 😊";
         setMessages(prev => [...prev, {
           role: 'ai',
           content: errorMsg,
           timestamp: new Date()
         }]);
-        speak(errorMsg);
       }
     } catch (err) {
-      const failMsg = "Waduh, Kak Bintang lagi istirahat. Nanti tanya lagi ya!";
-      setMessages(prev => [...prev, {
-        role: 'ai',
-        content: failMsg,
-        timestamp: new Date()
-      }]);
-      speak(failMsg);
+      console.error("handleSend Error:", err);
+      if (!aiMessageAdded) {
+        aiMessageAdded = true;
+        const failMsg = `Halo ${profile?.full_name ? profile.full_name.split(' ')[0] : 'Teman'}! Kak Bintang selalu siap membantumu belajar. Mari tanyakan lagi ya! 😊`;
+        setMessages(prev => [...prev, {
+          role: 'ai',
+          content: failMsg,
+          timestamp: new Date()
+        }]);
+      }
     }
   };
 
