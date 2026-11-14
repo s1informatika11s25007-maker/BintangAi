@@ -11,8 +11,23 @@ import {
   HiChatAlt2, HiUsers, HiUserGroup, HiLockClosed, HiLockOpen,
   HiPaperAirplane, HiX, HiSearch, HiCheckCircle,
   HiInformationCircle, HiChevronLeft, HiDotsVertical,
-  HiAcademicCap, HiChatAlt, HiClock, HiCheck
+  HiAcademicCap, HiChatAlt, HiClock, HiCheck,
+  HiBookOpen, HiGlobe, HiLightningBolt, HiCube, HiColorSwatch, HiBeaker
 } from 'react-icons/hi';
+
+export const renderGroupIcon = (iconName, className = "text-xl") => {
+  switch (iconName) {
+    case 'academic': return <HiAcademicCap className={className} />;
+    case 'users': return <HiUserGroup className={className} />;
+    case 'globe': return <HiGlobe className={className} />;
+    case 'lightning': return <HiLightningBolt className={className} />;
+    case 'puzzle': return <HiCube className={className} />;
+    case 'art': return <HiColorSwatch className={className} />;
+    case 'beaker': return <HiBeaker className={className} />;
+    case 'book':
+    default: return <HiBookOpen className={className} />;
+  }
+};
 
 const StudentCollaboration = () => {
   const { profile } = useAuthStore();
@@ -315,7 +330,9 @@ const StudentCollaboration = () => {
           <div className="flex items-center gap-4">
             {selectedGroup && <button onClick={() => navigate('/student/collaboration')} className="md:hidden p-2 text-indigo-600 bg-indigo-50 rounded-full"><HiChevronLeft className="text-2xl" /></button>}
             <div className="flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white text-xl shadow-lg transition-all duration-500 ${selectedGroup ? 'bg-indigo-600 rotate-6' : 'bg-slate-200'}`}>{selectedGroup?.name ? selectedGroup.name[0].toUpperCase() : <HiUsers />}</div>
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white text-xl shadow-lg transition-all duration-500 ${selectedGroup ? 'bg-indigo-600 rotate-6' : 'bg-slate-200'}`}>
+                {selectedGroup?.name ? renderGroupIcon(selectedGroup.icon) : <HiUsers />}
+              </div>
               <div className="overflow-hidden">
                 <h2 className="font-black text-slate-900 truncate text-lg">{selectedGroup?.name || 'Grup Belajar'}</h2>
                 <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{selectedGroup ? `${members.length} Teman Belajar` : 'Pilih grup untuk memulai'}</span>
@@ -367,7 +384,9 @@ const StudentCollaboration = () => {
                       data-idx={idx}
                       className={`w-full p-4 text-left flex items-center gap-4 transition-all rounded-3xl group ${selectedGroup?.id === g.id ? 'bg-indigo-600 text-white shadow-xl' : (isGestureSelected ? 'bg-indigo-50 border-2 border-indigo-200 shadow-md' : 'hover:bg-slate-50')} ${isPending ? 'opacity-50' : ''}`}
                     >
-                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg ${selectedGroup?.id === g.id ? 'bg-white/20' : (isGestureSelected ? 'bg-indigo-600 text-white' : 'bg-slate-100')}`}>{g.name[0].toUpperCase()}</div>
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg ${selectedGroup?.id === g.id ? 'bg-white/20 text-white' : (isGestureSelected ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-600 border border-indigo-100')}`}>
+                        {renderGroupIcon(g.icon)}
+                      </div>
                       <div className="flex-1 min-w-0">
                          <div className="flex justify-between items-center"><p className="font-black text-sm truncate">{g.name}</p>{isPending && <span className="bg-amber-100 text-amber-600 text-[7px] px-2 py-0.5 rounded-full font-black">PENDING</span>}</div>
                          <p className={`text-[11px] truncate ${selectedGroup?.id === g.id ? 'text-indigo-100' : 'text-slate-400'}`}>{isPending ? 'Menunggu izin' : g.description || 'Yuk kolaborasi!'}</p>

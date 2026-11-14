@@ -4,7 +4,36 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import TeacherSidebar from '@/components/layout/TeacherSidebar';
-import { HiCheck, HiX, HiUserAdd, HiUserRemove, HiLogout, HiChatAlt2, HiTrash, HiLockClosed, HiLockOpen, HiUsers, HiUserGroup, HiAcademicCap, HiSearch, HiBell } from 'react-icons/hi';
+import {
+  HiCheck, HiX, HiUserAdd, HiUserRemove, HiLogout, HiChatAlt2, HiTrash,
+  HiLockClosed, HiLockOpen, HiUsers, HiUserGroup, HiAcademicCap, HiSearch, HiBell,
+  HiBookOpen, HiGlobe, HiLightningBolt, HiCube, HiColorSwatch, HiBeaker
+} from 'react-icons/hi';
+
+const ICON_OPTIONS = [
+  { id: 'book', label: 'Buku', icon: <HiBookOpen className="text-xl" /> },
+  { id: 'academic', label: 'Sains', icon: <HiAcademicCap className="text-xl" /> },
+  { id: 'users', label: 'Diskusi', icon: <HiUserGroup className="text-xl" /> },
+  { id: 'globe', label: 'Bahasa', icon: <HiGlobe className="text-xl" /> },
+  { id: 'lightning', label: 'Kreatif', icon: <HiLightningBolt className="text-xl" /> },
+  { id: 'puzzle', label: 'Logika', icon: <HiCube className="text-xl" /> },
+  { id: 'art', label: 'Seni', icon: <HiColorSwatch className="text-xl" /> },
+  { id: 'beaker', label: 'Lab', icon: <HiBeaker className="text-xl" /> },
+];
+
+export const renderGroupIcon = (iconName, className = "text-xl") => {
+  switch (iconName) {
+    case 'academic': return <HiAcademicCap className={className} />;
+    case 'users': return <HiUserGroup className={className} />;
+    case 'globe': return <HiGlobe className={className} />;
+    case 'lightning': return <HiLightningBolt className={className} />;
+    case 'puzzle': return <HiCube className={className} />;
+    case 'art': return <HiColorSwatch className={className} />;
+    case 'beaker': return <HiBeaker className={className} />;
+    case 'book':
+    default: return <HiBookOpen className={className} />;
+  }
+};
 
 const TeacherCollaboration = () => {
   const { profile } = useAuthStore();
@@ -36,8 +65,37 @@ const TeacherCollaboration = () => {
     name: '',
     description: '',
     password: '',
-    requires_approval: false
+    requires_approval: false,
+    icon: 'book'
   });
+
+  const handleCreateOrUpdateGroup = async (e) => {
+    if (e) e.preventDefault();
+    if (!groupForm.name.trim()) return;
+
+    try {
+      const payload = {
+        name: groupForm.name.trim(),
+        description: groupForm.description.trim(),
+        requires_approval: groupForm.requires_approval,
+        icon: groupForm.icon || 'book',
+        created_by: profile.id,
+        class_code: profile?.class_code || 'DEMO01'
+      };
+
+      if (isEditing && selectedGroup) {
+        await supabase.from('study_groups').update(payload).eq('id', selectedGroup.id);
+      } else {
+        await supabase.from('study_groups').insert(payload);
+      }
+
+      setShowCreateModal(false);
+      setGroupForm({ name: '', description: '', password: '', requires_approval: false, icon: 'book' });
+      fetchGroups();
+    } catch (err) {
+      console.error("Error creating group:", err);
+    }
+  };
 
   const scrollRef = useRef(null);
 
@@ -182,12 +240,34 @@ const TeacherCollaboration = () => {
         <div className="flex-1 flex overflow-hidden">
           <div className="w-85 border-r border-slate-100 bg-white overflow-y-auto shrink-0 p-6 space-y-4 custom-scrollbar">
             {groups.map(group => (
-              <button key={group.id} onClick={() => navigate(`/teacher/collaboration/${group.id}`)} className={`w-full p-6 text-left rounded-[2rem] transition-all relative overflow-hidden group ${selectedGroup?.id === group.id ? 'bg-indigo-600 text-white shadow-2xl' : 'hover:bg-slate-50 text-slate-700'}`}>
-                <div className="flex justify-between items-start relative z-10">
-                   <p className="font-black text-sm truncate pr-4">{group.name}</p>
-                   {group.requestCount > 0 && <span className="bg-rose-500 text-white text-[9px] font-black px-2 py-1 rounded-lg flex items-center gap-1 animate-bounce"><HiBell /> {group.requestCount}</span>}
+              <button
+                key={group.id}
+                onClick={() => navigate(`/teacher/collaboration/${group.id}`)}
+                className={`w-full p-4 text-left rounded-[2rem] transition-all relative overflow-hidden group flex items-center gap-4 ${
+                  selectedGroup?.id === group.id ? 'bg-indigo-600 text-white shadow-2xl' : 'hover:bg-slate-50 text-slate-700'
+                }`}
+              >
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl shrink-0 transition-all ${
+                  selectedGroup?.id === group.id ? 'bg-white/20 text-white' : 'bg-indigo-50 text-indigo-600 border border-indigo-100'
+                }`}>
+                  {renderGroupIcon(group.icon)}
                 </div>
-                {selectedGroup?.id === group.id && <motion.div layoutId="bg-glow-t" className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-indigo-700 -z-0" />}
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-center">
+                    <p className="font-black text-sm truncate">{group.name}</p>
+                    {group.requestCount > 0 && (
+                      <span className="bg-rose-500 text-white text-[9px] font-black px-2 py-0.5 rounded-lg flex items-center gap-1 animate-bounce">
+                        <HiBell /> {group.requestCount}
+                      </span>
+                    )}
+                  </div>
+                  <p className={`text-[11px] truncate mt-0.5 ${selectedGroup?.id === group.id ? 'text-indigo-100' : 'text-slate-400'}`}>
+                    {group.description || 'Kelompok Belajar'}
+                  </p>
+                </div>
+
+                {selectedGroup?.id === group.id && <motion.div layoutId="bg-glow-t" className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-indigo-700 -z-10" />}
               </button>
             ))}
           </div>
@@ -271,10 +351,40 @@ const TeacherCollaboration = () => {
               <div className="absolute top-0 inset-x-0 h-2 bg-indigo-600 shadow-lg" />
               <h2 className="text-2xl font-black text-slate-900 mb-8 uppercase tracking-tight text-center">Buat Komunitas</h2>
               <form onSubmit={handleCreateOrUpdateGroup} className="space-y-6">
-                <input type="text" required value={groupForm.name} onChange={e => setGroupForm({...groupForm, name: e.target.value})} placeholder="Nama Kelompok" className="w-full p-5 bg-slate-50 border-2 border-transparent focus:border-indigo-100 rounded-[2rem] outline-none font-bold shadow-inner" />
-                <textarea value={groupForm.description} onChange={e => setGroupForm({...groupForm, description: e.target.value})} placeholder="Deskripsi Singkat" className="w-full p-5 bg-slate-50 border-2 border-transparent focus:border-indigo-100 rounded-[2rem] outline-none font-bold min-h-[120px] shadow-inner" />
-                <label className="flex items-center gap-4 p-4 bg-indigo-50 rounded-3xl border border-indigo-100 cursor-pointer"><input type="checkbox" checked={groupForm.requires_approval} onChange={e => setGroupForm({...groupForm, requires_approval: e.target.checked})} className="w-6 h-6 rounded-xl border-slate-300 text-indigo-600" /><span className="text-[10px] font-black text-indigo-700 uppercase tracking-widest">Sistem Persetujuan</span></label>
-                <div className="flex gap-4 pt-6"><button type="button" onClick={() => setShowCreateModal(false)} className="flex-1 py-5 font-black text-[10px] uppercase bg-slate-100 text-slate-400 rounded-[2rem]">Batal</button><button type="submit" className="flex-1 py-5 font-black text-[10px] uppercase bg-indigo-600 text-white rounded-[2rem] shadow-xl shadow-indigo-200">Buat Sekarang</button></div>
+                <input type="text" required value={groupForm.name} onChange={e => setGroupForm({...groupForm, name: e.target.value})} placeholder="Nama Kelompok" className="w-full p-5 bg-slate-50 border-2 border-transparent focus:border-indigo-100 rounded-[2rem] outline-none font-bold shadow-inner text-sm" />
+                <textarea value={groupForm.description} onChange={e => setGroupForm({...groupForm, description: e.target.value})} placeholder="Deskripsi Singkat" className="w-full p-5 bg-slate-50 border-2 border-transparent focus:border-indigo-100 rounded-[2rem] outline-none font-bold min-h-[100px] shadow-inner text-sm" />
+
+                {/* Icon Picker for Group */}
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider block mb-3">Pilih Ikon Kelompok</label>
+                  <div className="grid grid-cols-4 gap-2.5">
+                    {ICON_OPTIONS.map(opt => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setGroupForm({ ...groupForm, icon: opt.id })}
+                        className={`p-3 rounded-2xl border flex flex-col items-center gap-1.5 transition-all ${
+                          groupForm.icon === opt.id
+                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-100'
+                            : 'bg-slate-50 text-slate-600 border-slate-100 hover:bg-slate-100'
+                        }`}
+                        title={opt.label}
+                      >
+                        {opt.icon}
+                        <span className="text-[9px] font-black uppercase truncate w-full text-center">{opt.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <label className="flex items-center gap-4 p-4 bg-indigo-50 rounded-3xl border border-indigo-100 cursor-pointer">
+                  <input type="checkbox" checked={groupForm.requires_approval} onChange={e => setGroupForm({...groupForm, requires_approval: e.target.checked})} className="w-5 h-5 rounded-xl border-slate-300 text-indigo-600" />
+                  <span className="text-[10px] font-black text-indigo-700 uppercase tracking-widest">Sistem Persetujuan</span>
+                </label>
+                <div className="flex gap-4 pt-4">
+                  <button type="button" onClick={() => setShowCreateModal(false)} className="flex-1 py-4 font-black text-[10px] uppercase bg-slate-100 text-slate-400 rounded-[2rem]">Batal</button>
+                  <button type="submit" className="flex-1 py-4 font-black text-[10px] uppercase bg-indigo-600 text-white rounded-[2rem] shadow-xl shadow-indigo-200">Buat Sekarang</button>
+                </div>
               </form>
             </motion.div>
           </div>
