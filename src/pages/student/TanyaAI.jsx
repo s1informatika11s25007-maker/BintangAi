@@ -65,6 +65,19 @@ const TanyaAI = () => {
           timestamp: new Date()
         }]);
 
+        // Permanently record Q&A interaction in student_ai_chat_history for Teacher Monitoring
+        if (profile?.id) {
+          await supabase.from('student_ai_chat_history').insert({
+            student_id: profile.id,
+            question: userMessage,
+            answer: response.answer,
+            topic: response.detectedTopic || 'Tanya Kak Bintang',
+            class_code: profile.class_code || null,
+            student_name: profile.full_name || null,
+            created_at: new Date().toISOString()
+          });
+        }
+
         // Speak response out loud using user's voice speed, volume, and voice selection
         speak(response.answer);
       } else {

@@ -265,7 +265,32 @@ const TeacherDashboard = () => {
 
       if (intError) throw intError;
 
-      setStudentInteractions(interactions || []);
+      const normalized = [];
+      if (interactions && interactions.length > 0) {
+        for (let i = 0; i < interactions.length; i++) {
+          const item = interactions[i];
+          if (item.question && item.answer) {
+            normalized.push({
+              id: item.id,
+              question: item.question,
+              answer: item.answer,
+              topic: item.topic || 'Umum',
+              created_at: item.created_at
+            });
+          } else if (item.role === 'user') {
+            const assistantMatch = interactions.find(a => a.role === 'assistant' && Math.abs(new Date(a.created_at) - new Date(item.created_at)) < 10000);
+            normalized.push({
+              id: item.id,
+              question: item.content || 'Pertanyaan siswa',
+              answer: assistantMatch?.content || item.answer || 'Tanggapan Kak Bintang AI',
+              topic: item.topic || 'Tanya Kak Bintang',
+              created_at: item.created_at
+            });
+          }
+        }
+      }
+
+      setStudentInteractions(normalized);
 
       // Also fetch some basic stats for the report
       const { data: submissions } = await supabase
@@ -275,7 +300,7 @@ const TeacherDashboard = () => {
 
       setStudentDetail({
         submissions: submissions || [],
-        totalInteractions: interactions?.length || 0
+        totalInteractions: normalized.length
       });
 
       setIsReportOpen(true);
