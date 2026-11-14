@@ -134,13 +134,8 @@ export function useClassVoiceBroadcast() {
         }
       }
 
-      // B. SISWA TUNARUNGU & TUNAWICARA: Subtitles / Captions
-      if (mode === 'tunarungu' || mode === 'tunawicara' || profile.disability_type === 'tunarungu' || profile.disability_type === 'tunawicara') {
-        globalCaptionBus.emit(spokenText, `Guru (${teacherName})`, 'speech');
-        if (showSubtitle) {
-          showSubtitle(`👨‍🏫 Guru (${teacherName}): "${spokenText}"`, 'info');
-        }
-      }
+      // B. SISWA TUNARUNGU & TUNAWICARA: Handled exclusively by persistent activeTeacherMessage card in StudentBroadcastReceiverOverlay!
+      // (No duplicate popup toasts that disappear abruptly)
     });
 
     // Listener for Student Replies (Received by Teacher)
