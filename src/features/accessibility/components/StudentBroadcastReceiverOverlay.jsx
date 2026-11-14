@@ -99,14 +99,16 @@ export default function StudentBroadcastReceiverOverlay() {
       >
         {/* Header Bar */}
         <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-3">
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-2.5 min-w-0">
             <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping shrink-0" />
-            <span className="px-2.5 py-1 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase tracking-wider shrink-0">
-              👨‍🏫 Siaran Suara Guru
-            </span>
-            <span className="text-xs font-bold text-indigo-200 truncate">
-              {activeTeacherMessage.teacherName}
-            </span>
+            <div className="flex flex-col min-w-0">
+              <span className="text-[10px] font-black uppercase tracking-wider text-indigo-400">
+                👨‍🏫 Siaran Suara Guru
+              </span>
+              <span className="text-sm font-extrabold text-white truncate">
+                {activeTeacherMessage.teacherName || 'Guru'}
+              </span>
+            </div>
           </div>
 
           <button

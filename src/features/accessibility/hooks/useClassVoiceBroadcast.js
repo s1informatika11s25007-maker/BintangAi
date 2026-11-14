@@ -221,7 +221,7 @@ export function useClassVoiceBroadcast() {
             type: 'broadcast',
             event: 'teacher_speech',
             payload: {
-              teacherName: profile?.full_name?.split(' ')[0] || 'Guru',
+              teacherName: profile?.full_name || 'Guru',
               text: cleanText,
               classCode: classCode,
               targetStudentIds: targetStudentIdsRef.current,
