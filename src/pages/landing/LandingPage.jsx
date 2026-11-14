@@ -12,6 +12,7 @@ import {
   HiVolumeUp,
   HiChevronUp,
   HiSparkles,
+  HiStar,
   HiLightningBolt,
   HiAnnotation,
   HiHome,
@@ -143,13 +144,13 @@ const LandingPage = () => {
           className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-8 py-4"
           aria-label="Navigasi utama"
         >
-          {/* LOGO BINTANGAI */}
+          {/* LOGO BINTANGAI (LOGO B SEBELUMNYA) */}
           <div
             onClick={() => go('/')}
             className="flex items-center gap-3 cursor-pointer group select-none"
           >
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-700 to-violet-600 text-white flex items-center justify-center text-xl font-black shadow-md shadow-indigo-200 group-hover:scale-105 transition-transform">
-              <HiAcademicCap className="text-2xl" />
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-700 text-white flex items-center justify-center font-black text-2xl shadow-md shadow-indigo-200 group-hover:scale-105 transition-transform select-none">
+              B
             </div>
             <div>
               <span className="font-black text-slate-900 text-base sm:text-lg tracking-tight block leading-none">
@@ -242,7 +243,7 @@ const LandingPage = () => {
           <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 sm:px-8 py-12 sm:py-20 lg:grid-cols-12">
             <motion.div {...fadeInVariants} className="lg:col-span-7 space-y-6">
               <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-white/90 px-3.5 py-1.5 text-xs font-bold text-indigo-700 shadow-2xs">
-                <HiSparkles className="text-amber-500 text-sm" />
+                <HiStar className="text-amber-500 text-sm animate-pulse" />
                 Ruang Belajar Jarak Jauh SD Inklusif
               </div>
 
@@ -284,8 +285,8 @@ const LandingPage = () => {
               <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-xl space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black text-lg shadow-sm">
-                      📖
+                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-400 to-amber-500 text-white flex items-center justify-center font-black text-lg shadow-md shadow-amber-200">
+                      <HiStar className="text-2xl text-white" />
                     </div>
                     <div>
                       <h3 className="font-bold text-slate-800 text-xs sm:text-sm">Interaksi Belajar Dari Rumah</h3>
