@@ -36,6 +36,33 @@ const StudentTaskDetail = () => {
   const [submissionDetails, setSubmissionDetails] = useState([]);
   const [avatarState, setAvatarState] = useState('idle');
   const [showConfetti, setShowConfetti] = useState(false);
+  const [retakeStarting, setRetakeStarting] = useState(false);
+  const [dismissRetakePrompt, setDismissRetakePrompt] = useState(false);
+
+  const confirmStartRetake = async () => {
+    if (!submissionRecord?.id || retakeStarting) return;
+    setRetakeStarting(true);
+    try {
+      await supabase.from('submission_answers').delete().eq('submission_id', submissionRecord.id);
+      await supabase.from('submissions').delete().eq('id', submissionRecord.id);
+
+      setSubmissionRecord(null);
+      setSubmissionDetails([]);
+      setAnswers({});
+      setStarted(true);
+      setCurrentStep(1);
+      if (task?.duration_minutes) {
+        const dur = task.duration_minutes * 60;
+        setTimeLeft(dur);
+        setInitialDuration(dur);
+      }
+      if (isMute) showSubtitle(`🚀 Mengerjakan Ulang QuizKu! Soal 1 dari ${questions.length}.`, 'success');
+    } catch (err) {
+      console.error("Error starting retake:", err);
+    } finally {
+      setRetakeStarting(false);
+    }
+  };
 
   useEffect(() => { if (id) fetchTaskData(); }, [id, profile?.id]);
 
@@ -158,9 +185,50 @@ const StudentTaskDetail = () => {
   );
 
   if (submissionRecord) {
+    const isRetakeAllowed = submissionRecord.allow_retake === true || submissionRecord.status === 'retake_allowed';
+
     return (
       <div data-view-pembahasan="true" className="min-h-screen bg-[#F8FAFC] flex flex-col items-center p-4 md:p-6 pt-12 overflow-y-auto pb-32">
         <ConfettiEffect active={showConfetti} />
+
+        {/* Retake Prompt Card when Teacher grants permission */}
+        {isRetakeAllowed && !dismissRetakePrompt && (
+          <div className="w-full max-w-4xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 md:p-8 rounded-[2.5rem] shadow-xl mb-8 space-y-4">
+            <div className="flex items-start sm:items-center gap-4">
+              <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-2xl font-bold shrink-0">
+                🎉
+              </div>
+              <div className="flex-1">
+                <span className="px-3 py-1 bg-amber-400 text-slate-900 rounded-full font-black text-[9px] uppercase tracking-widest">
+                  Izin Kerjakan Ulang Dari Guru
+                </span>
+                <h4 className="text-xl font-black tracking-tight mt-1.5">
+                  Guru telah mengizinkan Anda untuk mengerjakan ulang QuizKu ini!
+                </h4>
+                <p className="text-xs text-indigo-100 font-medium mt-1 leading-relaxed">
+                  Nilai Anda saat ini ({submissionRecord.total_score || submissionRecord.score || 0}) tetap tersimpan aman. Anda dapat memilih untuk mengerjakan ulang kuis sekarang atau melakukannya nanti saat sudah siap.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-white/10">
+              <button
+                onClick={confirmStartRetake}
+                disabled={retakeStarting}
+                className="px-8 py-3.5 bg-amber-400 hover:bg-amber-300 text-slate-900 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-amber-500/20 flex items-center gap-2"
+              >
+                <span>{retakeStarting ? 'Mempersiapkan Kuis...' : '🚀 Kerjakan Ulang Sekarang'}</span>
+              </button>
+              <button
+                onClick={() => setDismissRetakePrompt(true)}
+                className="px-6 py-3.5 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all border border-white/20"
+              >
+                🕒 Nanti Saja
+              </button>
+            </div>
+          </div>
+        )}
+
         <header className="text-center mb-8 md:mb-12 space-y-4">
            <div className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-[2rem] md:rounded-3xl shadow-xl flex items-center justify-center text-4xl md:text-5xl mx-auto border border-slate-50">🏆</div>
            <h2 className="text-2xl md:text-4xl font-black text-slate-900 uppercase tracking-tighter">Hasil Petualanganmu</h2>

@@ -31,10 +31,36 @@ const StudentQuiz = () => {
   const [showConfetti, setShowConfetti] = useState(false);
   const [alreadyDone, setAlreadyDone] = useState(false);
   const [existingResult, setExistingResult] = useState(null);
+  const [retakeAllowedSub, setRetakeAllowedSub] = useState(null);
+  const [retakeStarting, setRetakeStarting] = useState(false);
   const [timeLeft, setTimeLeft] = useState(60);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
   const [resultsDetail, setResultsDetail] = useState([]);
+
+  const confirmStartRetakeInQuiz = async () => {
+    if (!retakeAllowedSub?.id || retakeStarting) return;
+    setRetakeStarting(true);
+    try {
+      await supabase.from('submission_answers').delete().eq('submission_id', retakeAllowedSub.id);
+      await supabase.from('submissions').delete().eq('id', retakeAllowedSub.id);
+
+      setRetakeAllowedSub(null);
+      setAlreadyDone(false);
+      setExistingResult(null);
+      setCurrentIndex(0);
+      setSelectedAnswer(null);
+      setScore(0);
+      setFinished(false);
+      setCorrectCount(0);
+      setResultsDetail([]);
+      if (isMute) showSubtitle(`🚀 Mengerjakan Ulang Kuis! Soal 1 dari ${questions.length}.`, 'success');
+    } catch (err) {
+      console.error("Retake error in Quiz.jsx:", err);
+    } finally {
+      setRetakeStarting(false);
+    }
+  };
 
   const timerRef = useRef(null);
   const currentQ = questions[currentIndex];
@@ -133,9 +159,13 @@ const StudentQuiz = () => {
         .eq('student_id', profile.id)
         .maybeSingle();
 
-      if (sub?.status === 'submitted' || sub?.status === 'graded') {
-        setAlreadyDone(true);
-        setExistingResult(sub);
+      if (sub) {
+        if (sub.allow_retake === true || sub.status === 'retake_allowed') {
+          setRetakeAllowedSub(sub);
+        } else if (sub.status === 'submitted' || sub.status === 'graded') {
+          setAlreadyDone(true);
+          setExistingResult(sub);
+        }
       }
     } catch (err) {
       console.error('Error fetching quiz:', err);
@@ -269,6 +299,45 @@ const StudentQuiz = () => {
       <h2 className="font-black text-slate-400 uppercase tracking-[0.2em] md:tracking-[0.3em] text-xs md:text-base animate-pulse">Menyiapkan Petualangan...</h2>
     </div>
   );
+
+  if (retakeAllowedSub) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-6 text-slate-800 font-sans">
+        <div className="w-full max-w-xl bg-white p-8 md:p-10 rounded-[2.5rem] shadow-2xl border border-slate-100 text-center space-y-6">
+          <div className="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-3xl flex items-center justify-center text-4xl mx-auto shadow-inner border border-indigo-100">
+            🎉
+          </div>
+          <div>
+            <span className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full font-black text-[9px] uppercase tracking-widest">
+              Izin Kerjakan Ulang Dari Guru
+            </span>
+            <h3 className="text-2xl font-black text-slate-900 tracking-tight mt-3">
+              Guru Telah Mengizinkan Anda Mengerjakan Ulang Kuis Ini!
+            </h3>
+            <p className="text-xs text-slate-500 font-medium mt-2 leading-relaxed">
+              Nilai Anda sebelumnya ({retakeAllowedSub.total_score || retakeAllowedSub.score || 0}) tetap tersimpan aman. Apakah Anda siap untuk memulai ulang kuis sekarang?
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <button
+              onClick={confirmStartRetakeInQuiz}
+              disabled={retakeStarting}
+              className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+            >
+              {retakeStarting ? 'Mempersiapkan Kuis...' : '🚀 Kerjakan Ulang Sekarang'}
+            </button>
+            <button
+              onClick={() => navigate('/student/tasks')}
+              className="flex-1 py-4 bg-slate-100 text-slate-700 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all"
+            >
+              🕒 Nanti Saja
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!loading && questions.length === 0 && !alreadyDone) return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 md:p-10 text-center">

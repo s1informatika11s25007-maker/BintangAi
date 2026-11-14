@@ -449,21 +449,24 @@ const TeacherDashboard = () => {
     setConfirmModal({
       show: true,
       title: 'Izinkan Kerjakan Ulang?',
-      description: `Apakah Anda yakin ingin mengizinkan ${studentName} untuk mengerjakan ulang "${assignmentTitle}"? Hasil dan jawaban sebelumnya akan direset.`,
+      description: `Apakah Anda yakin ingin memberikan izin kepada ${studentName} untuk mengerjakan ulang "${assignmentTitle}"? Siswa dapat memilih sendiri saat yang tepat untuk mulai mengerjakan ulang.`,
       confirmText: 'Izinkan Ulang',
       type: 'info',
       icon: <HiRefresh className="text-3xl text-indigo-600" />,
       onConfirm: async () => {
         try {
-          await supabase.from('submission_answers').delete().eq('submission_id', submission.id);
-          const { error } = await supabase.from('submissions').delete().eq('id', submission.id);
+          const { error } = await supabase
+            .from('submissions')
+            .update({ allow_retake: true, status: 'retake_allowed' })
+            .eq('id', submission.id);
+
           if (error) throw error;
 
-          setAssignmentSubmissions(prev => prev.filter(s => s.id !== submission.id));
+          setAssignmentSubmissions(prev => prev.map(s => s.id === submission.id ? { ...s, allow_retake: true, status: 'retake_allowed' } : s));
           fetchStats();
-          showToast(`Siswa ${studentName} diizinkan mengerjakan ulang ${assignmentTitle}!`);
+          showToast(`Siswa ${studentName} telah diizinkan mengerjakan ulang ${assignmentTitle}!`);
         } catch (err) {
-          showToast(`Gagal meriset pengerjaan: ${err.message}`, 'error');
+          showToast(`Gagal mengizinkan retake: ${err.message}`, 'error');
         }
       }
     });

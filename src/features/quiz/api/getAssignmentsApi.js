@@ -10,13 +10,15 @@ export const getAvailableAssignments = async (studentId) => {
       .eq('id', studentId)
       .maybeSingle();
 
-    // 2. Fetch submitted assignment IDs for this student
+    // 2. Fetch submitted assignment IDs for this student (exclude assignments with retake permission)
     const { data: submissions } = await supabase
       .from('submissions')
-      .select('assignment_id')
+      .select('assignment_id, allow_retake, status')
       .eq('student_id', studentId);
 
-    const submittedIds = submissions?.map(s => s.assignment_id) || [];
+    const submittedIds = submissions
+      ?.filter(s => s.allow_retake !== true && s.status !== 'retake_allowed')
+      ?.map(s => s.assignment_id) || [];
 
     // 3. Fetch all raw assignments
     const { data: rawAssignments, error } = await supabase
