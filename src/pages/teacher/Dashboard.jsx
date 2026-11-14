@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { useAI } from '@/features/ai-tutor/hooks/useAI';
+import { getCleanFirstName } from '@/utils';
 import TeacherSidebar from '@/components/layout/TeacherSidebar';
 import Footer from '@/components/layout/Footer';
 import {
@@ -569,7 +570,7 @@ const TeacherDashboard = () => {
                 <h4 className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.4em] leading-none">Dashboard Pengajar</h4>
               </div>
               <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
-                Halo, Pak/Bu {profile?.full_name?.split(' ')[0]} <span className="text-indigo-600">.</span>
+                Halo, Pak/Bu {getCleanFirstName(profile?.full_name)} <span className="text-indigo-600">.</span>
               </h2>
               <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mt-2">Mata Pelajaran: {profile?.subject || 'Umum'} • Kode Kelas: {profile?.class_code}</p>
             </motion.div>

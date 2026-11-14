@@ -8,6 +8,7 @@ import XPBar from '@/features/gamification/components/XPBar';
 import StreakBadge from '@/features/gamification/components/StreakBadge';
 import ParentSidebar from '@/components/layout/ParentSidebar';
 import Footer from '@/components/layout/Footer';
+import { getCleanFirstName } from '@/utils';
 import { HiSparkles } from 'react-icons/hi';
 
 const ParentDashboard = () => {
@@ -111,7 +112,7 @@ const ParentDashboard = () => {
       <main className="flex-1 overflow-y-auto h-screen flex flex-col justify-between print:p-0">
         <div className="p-6 md:p-10 lg:p-14 space-y-10 print:hidden">
           <header className="mb-12">
-             <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Halo, Pak/Bu {profile?.full_name?.split(' ')[0]}!</h2>
+             <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Halo, Pak/Bu {getCleanFirstName(profile?.full_name)}!</h2>
              <p className="text-slate-600 font-medium text-lg mt-2">Memantau progres belajar <span className="text-indigo-600 font-bold">{childData?.full_name}</span></p>
           </header>
 

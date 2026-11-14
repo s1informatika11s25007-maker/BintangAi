@@ -12,6 +12,7 @@ import Footer from '@/components/layout/Footer';
 import KamusIsyaratModal from '@/features/accessibility/components/KamusIsyaratModal';
 import { useAI } from '@/features/ai-tutor';
 import { getAvailableAssignments } from '@/features/quiz/api/getAssignmentsApi';
+import { getCleanFirstName } from '@/utils';
 import {
   HiFire, HiLightningBolt, HiAcademicCap, HiChevronRight,
   HiCube, HiChatAlt2, HiVariable,
@@ -164,7 +165,7 @@ const StudentDashboard = () => {
                 {greeting}
               </p>
               <h1 className={`text-2xl md:text-4xl font-black tracking-tighter truncate max-w-[180px] md:max-w-none`}>
-                {profile?.full_name?.split(' ')[0]} <span className={isBlind ? 'text-indigo-400' : 'text-indigo-600'}>.</span>
+                {getCleanFirstName(profile?.full_name)} <span className={isBlind ? 'text-indigo-400' : 'text-indigo-600'}>.</span>
               </h1>
             </div>
           </div>
