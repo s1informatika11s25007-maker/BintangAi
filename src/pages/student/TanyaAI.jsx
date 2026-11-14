@@ -213,52 +213,16 @@ const TanyaAI = () => {
         <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-50 rounded-full blur-[100px] pointer-events-none opacity-50" />
         <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-50 rounded-full blur-[100px] pointer-events-none opacity-50" />
 
-        {/* CLEAN HIGH-CONTRAST HEADER */}
-        <header className="px-4 py-3 md:px-8 md:py-4 border-b border-slate-100 flex items-center justify-between bg-white shrink-0 z-30 shadow-xs">
-          <div className="flex items-center gap-3">
-             <button
-               onClick={() => navigate('/student/dashboard')}
-               className="p-1.5 hover:bg-slate-100 rounded-xl lg:hidden text-slate-500"
-             >
-               <HiChevronLeft className="text-xl" />
-             </button>
-             <div className="relative cursor-pointer shrink-0" onClick={() => navigate('/student/dashboard')}>
-                <BintangAvatar state="idle" size="xs" />
-                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
-             </div>
-             <div>
-                <h2 className="text-sm md:text-base font-black text-slate-900 tracking-tight leading-none">Tanya Bintang</h2>
-                <p className="text-[10px] font-extrabold text-emerald-500 uppercase tracking-widest mt-1">Online • Asisten AI</p>
-             </div>
-          </div>
+      <main className="flex-1 flex flex-col relative min-w-0 bg-white overflow-hidden rounded-none m-0 shadow-none border-0">
+        {/* Background Decorations */}
+        <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-50 rounded-full blur-[100px] pointer-events-none opacity-50" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-50 rounded-full blur-[100px] pointer-events-none opacity-50" />
 
-          <div className="flex items-center gap-2">
-            {/* Quick Voice Settings Button */}
-            <button
-              onClick={() => setShowVoiceSettingsModal(true)}
-              className="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all shadow-xs border border-indigo-100/80"
-              title="Pengaturan Suara"
-            >
-              <HiVolumeUp className="text-sm text-indigo-600" />
-              <span className="hidden sm:inline">Pengaturan Suara</span>
-            </button>
-
-            <button
-              onClick={clearChat}
-              className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
-              title="Bersihkan Chat"
-            >
-              <HiTrash className="text-lg" />
-            </button>
-          </div>
-        </header>
-
-        {/* MESSAGES AREA - NON-OVERLAPPING FLEX CHILD */}
+        {/* MESSAGES AREA - FULL VERTICAL SCREEN HEIGHT (HEADER REMOVED) */}
         <div
           ref={chatContainerRef}
-          className="flex-1 overflow-y-auto scroll-smooth custom-scrollbar overscroll-contain touch-pan-y px-3 sm:px-6 md:px-8 pt-5 pb-6 space-y-3 sm:space-y-4 bg-slate-50/30 relative"
+          className="flex-1 overflow-y-auto scroll-smooth custom-scrollbar overscroll-contain touch-pan-y px-3 sm:px-6 md:px-8 py-4 sm:py-6 space-y-3 sm:space-y-4 bg-slate-50/30 relative"
         >
-
           <AnimatePresence initial={false}>
             {messages.map((msg, idx) => (
               <motion.div
@@ -352,12 +316,12 @@ const TanyaAI = () => {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* INPUT AREA */}
+        {/* INPUT AREA WITH INTEGRATED ACTION BUTTONS */}
         <motion.div
           initial={{ y: 100 }}
           animate={{ y: 0 }}
           transition={{ type: "spring", damping: 25, stiffness: 200 }}
-          className="px-3 py-2 sm:px-4 sm:py-2.5 bg-white border-t border-slate-100 relative z-30 shrink-0"
+          className="px-3 py-2.5 sm:px-4 sm:py-3 bg-white border-t border-slate-100 relative z-30 shrink-0"
         >
           {/* Animated Suggestions for Tunarungu/Tunawicara */}
           {(isDeaf || isMute) && messages.length < 3 && (
@@ -379,8 +343,39 @@ const TanyaAI = () => {
 
           <form
             onSubmit={handleSend}
-            className="relative flex items-center gap-2 max-w-4xl mx-auto w-full"
+            className="relative flex items-center gap-1.5 sm:gap-2 max-w-4xl mx-auto w-full"
           >
+            {/* Back Button on Mobile */}
+            <button
+              type="button"
+              onClick={() => navigate('/student/dashboard')}
+              className="p-2 sm:p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl lg:hidden shrink-0 transition-all"
+              title="Kembali ke Beranda"
+            >
+              <HiChevronLeft className="text-lg sm:text-xl" />
+            </button>
+
+            {/* Clear Chat Button */}
+            <button
+              type="button"
+              onClick={clearChat}
+              className="p-2 sm:p-2.5 bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-xl transition-all border border-rose-100 shrink-0"
+              title="Bersihkan Percakapan Chat"
+            >
+              <HiTrash className="text-base sm:text-lg" />
+            </button>
+
+            {/* Quick Voice Settings Button */}
+            <button
+              type="button"
+              onClick={() => setShowVoiceSettingsModal(true)}
+              className="p-2 sm:p-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl border border-indigo-100/80 transition-all shrink-0"
+              title="Pengaturan Suara"
+            >
+              <HiVolumeUp className="text-base sm:text-lg text-indigo-600" />
+            </button>
+
+            {/* Input Textarea */}
             <div className="flex-1 relative">
                <textarea
                  value={input}
@@ -391,14 +386,14 @@ const TanyaAI = () => {
                      handleSend();
                    }
                  }}
-                 placeholder="Ketik pesan..."
-                 className="w-full pl-4 pr-9 py-2 bg-slate-100 border-none rounded-xl text-xs sm:text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all resize-none min-h-[38px] max-h-[90px] custom-scrollbar"
+                 placeholder="Tanya Bintang sesuatu..."
+                 className="w-full pl-3.5 pr-8 py-2 bg-slate-100 border-none rounded-xl text-xs sm:text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all resize-none min-h-[38px] max-h-[90px] custom-scrollbar"
                  rows={1}
                />
                {input && (
                  <button
                    type="button"
-                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600"
+                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600"
                    onClick={() => setInput('')}
                  >
                    <HiTrash className="text-xs" />
@@ -406,6 +401,7 @@ const TanyaAI = () => {
                )}
             </div>
 
+            {/* Send Button */}
             <button
               type="submit"
               disabled={!input.trim() || loading}
