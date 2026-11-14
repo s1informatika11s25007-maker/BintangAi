@@ -115,9 +115,9 @@ const AppLayout = ({ children }) => {
         </main>
       </div>
 
-      {/* Mobile Bottom Navigation - Enhanced Glassmorphism */}
+      {/* Mobile Bottom Navigation - Enhanced Glassmorphism for All Android Devices */}
       {!isFullScreenPage && (
-        <nav className="fixed bottom-4 left-4 right-4 z-[100] lg:hidden bg-white/70 backdrop-blur-2xl border border-white/40 rounded-3xl shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] px-2 py-2">
+        <nav className="fixed bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 z-[100] lg:hidden bg-white/95 backdrop-blur-2xl border border-slate-200/80 rounded-2xl sm:rounded-3xl shadow-[0_8px_32px_0_rgba(31,38,135,0.12)] px-1.5 py-1.5 sm:px-2 sm:py-2">
           <div className="flex items-center justify-around">
             {currentNav.map((item) => {
               const isActive = location.pathname === item.path;
@@ -125,24 +125,24 @@ const AppLayout = ({ children }) => {
                 <button
                   key={item.label}
                   onClick={() => navigate(item.path)}
-                  className="relative flex flex-col items-center gap-1 p-2 min-w-[60px] transition-all"
+                  className="relative flex flex-col items-center gap-0.5 sm:gap-1 p-1 sm:p-2 min-w-[50px] sm:min-w-[60px] transition-all active:scale-95"
                 >
                   <motion.span
                     animate={{
-                      scale: isActive ? 1.2 : 1,
-                      color: isActive ? '#4F46E5' : '#94A3B8'
+                      scale: isActive ? 1.15 : 1,
+                      color: isActive ? '#4F46E5' : '#64748B'
                     }}
-                    className="text-2xl"
+                    className="text-xl sm:text-2xl"
                   >
                     {item.icon}
                   </motion.span>
-                  <span className={`text-[9px] font-bold uppercase tracking-wider transition-colors duration-300 ${isActive ? 'text-indigo-600' : 'text-slate-400'}`}>
+                  <span className={`text-[8px] sm:text-[9px] font-black uppercase tracking-wider transition-colors duration-300 truncate max-w-[68px] ${isActive ? 'text-indigo-600' : 'text-slate-500'}`}>
                     {item.label}
                   </span>
                   {isActive && (
                     <motion.div
                       layoutId="active-pill-mobile"
-                      className="absolute inset-0 bg-indigo-50 rounded-2xl -z-10"
+                      className="absolute inset-0 bg-indigo-50 border border-indigo-100/80 rounded-xl sm:rounded-2xl -z-10"
                       transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                     />
                   )}
