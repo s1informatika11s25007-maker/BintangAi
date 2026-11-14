@@ -275,99 +275,94 @@ const StudentDashboard = () => {
                </button>
             </motion.section>
 
-            {/* LISTS SECTIONS */}
-            <div className="lg:col-span-8 space-y-6 sm:space-y-8 md:space-y-10">
-               {/* Upcoming Quiz */}
-               <motion.div variants={itemVariants} className={`p-5 sm:p-8 md:p-10 rounded-3xl sm:rounded-[2.5rem] md:rounded-[3rem] ${isBlind ? 'bg-white/5 border border-white/5' : 'bg-white shadow-sm border border-slate-100 sm:border-slate-50'}`}>
-                  <div className="flex items-center justify-between mb-5 sm:mb-8">
-                     <h4 className="text-base sm:text-xl font-black uppercase tracking-tight flex items-center gap-2 sm:gap-3">
-                        <HiCollection className="text-amber-500" /> Quiz Terbaru
-                     </h4>
-                     <button onClick={() => navigate('/student/tasks')} className="text-[10px] sm:text-xs font-black text-indigo-600 uppercase tracking-widest hover:underline">Semua</button>
-                  </div>
-                  <div className="space-y-3 sm:space-y-4">
-                     {tasks?.map(task => (
-                       <motion.div
-                        whileHover={{ x: 6 }} key={task.id}
-                        onClick={() => navigate(`/student/task/${task.id}`)}
-                        className={`p-4 sm:p-6 rounded-2xl flex items-center justify-between cursor-pointer transition-all border ${
-                          isBlind ? 'bg-white/5 border-white/5 hover:bg-white/10' : 'bg-slate-50 border-transparent hover:border-indigo-100 hover:bg-white'
-                        }`}
-                       >
-                          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                             <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0"><HiLightningBolt /></div>
-                             <div className="min-w-0">
-                                <p className="font-bold text-xs sm:text-base truncate">{task.title}</p>
-                                <p className="text-[9px] sm:text-[10px] opacity-50 uppercase font-black truncate">Batas: {new Date(task.deadline).toLocaleDateString()}</p>
-                             </div>
+            {/* Upcoming Quiz (Span 8) */}
+            <motion.div variants={itemVariants} className={`lg:col-span-8 p-5 sm:p-8 md:p-10 rounded-3xl sm:rounded-[2.5rem] md:rounded-[3rem] ${isBlind ? 'bg-white/5 border border-white/5' : 'bg-white shadow-sm border border-slate-100 sm:border-slate-50'}`}>
+               <div className="flex items-center justify-between mb-5 sm:mb-8">
+                  <h4 className="text-base sm:text-xl font-black uppercase tracking-tight flex items-center gap-2 sm:gap-3">
+                     <HiCollection className="text-amber-500" /> Quiz Terbaru
+                  </h4>
+                  <button onClick={() => navigate('/student/tasks')} className="text-[10px] sm:text-xs font-black text-indigo-600 uppercase tracking-widest hover:underline">Semua</button>
+               </div>
+               <div className="space-y-3 sm:space-y-4">
+                  {tasks?.map(task => (
+                    <motion.div
+                     whileHover={{ x: 6 }} key={task.id}
+                     onClick={() => navigate(`/student/task/${task.id}`)}
+                     className={`p-4 sm:p-6 rounded-2xl flex items-center justify-between cursor-pointer transition-all border ${
+                       isBlind ? 'bg-white/5 border-white/5 hover:bg-white/10' : 'bg-slate-50 border-transparent hover:border-indigo-100 hover:bg-white'
+                     }`}
+                    >
+                       <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                          <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0"><HiLightningBolt /></div>
+                          <div className="min-w-0">
+                             <p className="font-bold text-xs sm:text-base truncate">{task.title}</p>
+                             <p className="text-[9px] sm:text-[10px] opacity-50 uppercase font-black truncate">Batas: {new Date(task.deadline).toLocaleDateString()}</p>
                           </div>
-                          <HiChevronRight className="opacity-30 shrink-0 ml-2" />
-                       </motion.div>
-                     ))}
-                     {tasks?.length === 0 && <p className="text-center py-8 opacity-40 text-xs font-black uppercase tracking-widest">Kosong untuk saat ini</p>}
-                  </div>
-               </motion.div>
-
-               {/* Learning Groups */}
-               <motion.div variants={itemVariants} className={`p-5 sm:p-8 md:p-10 rounded-3xl sm:rounded-[2.5rem] md:rounded-[3rem] ${isBlind ? 'bg-white/5 border border-white/5' : 'bg-white shadow-sm border border-slate-100 sm:border-slate-50'}`}>
-                  <div className="flex items-center justify-between mb-5 sm:mb-8">
-                     <h4 className="text-base sm:text-xl font-black uppercase tracking-tight flex items-center gap-2 sm:gap-3">
-                        <HiUsers className="text-emerald-500" /> Teman Belajar
-                     </h4>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                     {groups?.map(g => (
-                       <div key={g.id} className={`p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border transition-all ${isBlind ? 'bg-indigo-900/40 border-white/10' : 'bg-slate-50 border-slate-100/50'}`}>
-                          <p className="font-bold text-xs sm:text-sm mb-2 truncate">{g.name}</p>
-                          <button onClick={() => navigate('/student/collaboration')} className="text-[9px] sm:text-[10px] font-black text-indigo-500 uppercase tracking-widest">Masuk Diskusi</button>
                        </div>
-                     ))}
-                     {groups?.length === 0 && <button onClick={() => navigate('/student/collaboration')} className="col-span-full py-6 sm:py-8 border-2 border-dashed border-slate-200 rounded-2xl sm:rounded-[2rem] text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Cari Grup Belajar</button>}
+                       <HiChevronRight className="opacity-30 shrink-0 ml-2" />
+                    </motion.div>
+                  ))}
+                  {tasks?.length === 0 && <p className="text-center py-8 opacity-40 text-xs font-black uppercase tracking-widest">Kosong untuk saat ini</p>}
+               </div>
+            </motion.div>
+
+            {/* Accessibility Assist for Tunanetra / Live Assist for Tunarungu (Span 4) */}
+            {isBlind ? (
+              <motion.section variants={itemVariants} className="lg:col-span-4 bg-indigo-600 p-5 sm:p-8 rounded-3xl sm:rounded-[2.5rem] text-white space-y-4 sm:space-y-6 shadow-2xl flex flex-col justify-between">
+                 <div>
+                   <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white/20 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl shadow-inner mb-4"><HiSpeakerphone /></div>
+                   <h4 className="text-xl sm:text-2xl font-black leading-none mb-2">Bantuan Suara</h4>
+                   <p className="text-xs sm:text-sm font-bold opacity-80 leading-relaxed uppercase tracking-wider">Ketuk di mana saja untuk mendengar navigasi atau gunakan panduan lengkap.</p>
+                 </div>
+                 <button onClick={() => getAudioGuide()} className="w-full py-4 sm:py-5 bg-white text-indigo-600 rounded-xl sm:rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.2em] shadow-lg active:scale-95">Dengarkan Panduan</button>
+              </motion.section>
+            ) : profile?.disability_type === 'tunarungu' ? (
+               <motion.section
+                 variants={itemVariants} onClick={() => navigate('/student/live-captions')}
+                 className="lg:col-span-4 bg-gradient-to-br from-emerald-500 to-teal-700 p-5 sm:p-8 rounded-3xl sm:rounded-[2.5rem] text-white shadow-xl cursor-pointer active:scale-95 transition-all group flex flex-col justify-between"
+               >
+                  <div className="flex justify-between items-start mb-6">
+                     <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white/20 rounded-2xl flex items-center justify-center text-3xl sm:text-4xl group-hover:scale-110 transition-transform"><HiEye /></div>
+                     <span className="px-3 py-1 bg-white/20 rounded-full text-[8px] font-black uppercase tracking-widest">Live Assist</span>
                   </div>
-               </motion.div>
-            </div>
-
-            {/* SIDEBAR WIDGETS */}
-            <div className="lg:col-span-4 space-y-6 sm:space-y-8 md:space-y-10">
-               {/* Accessibility Assist for Tunanetra */}
-               {isBlind && (
-                 <motion.section variants={itemVariants} className="bg-indigo-600 p-5 sm:p-8 rounded-3xl sm:rounded-[2.5rem] text-white space-y-4 sm:space-y-6 shadow-2xl">
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white/20 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl shadow-inner"><HiSpeakerphone /></div>
-                    <h4 className="text-xl sm:text-2xl font-black leading-none">Bantuan Suara</h4>
-                    <p className="text-xs sm:text-sm font-bold opacity-80 leading-relaxed uppercase tracking-wider">Ketuk di mana saja untuk mendengar navigasi atau gunakan tombol di bawah untuk panduan lengkap.</p>
-                    <button onClick={() => getAudioGuide()} className="w-full py-4 sm:py-5 bg-white text-indigo-600 rounded-xl sm:rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.2em] shadow-lg active:scale-95">Dengarkan Panduan</button>
-                 </motion.section>
-               )}
-
-               {/* Deaf Vision Assist for Tunarungu */}
-               {profile?.disability_type === 'tunarungu' && (
-                  <motion.section
-                    variants={itemVariants} onClick={() => navigate('/student/live-captions')}
-                    className="bg-gradient-to-br from-emerald-500 to-teal-700 p-5 sm:p-8 rounded-3xl sm:rounded-[2.5rem] text-white shadow-xl cursor-pointer active:scale-95 transition-all group"
-                  >
-                     <div className="flex justify-between items-start mb-6 sm:mb-10">
-                        <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white/20 rounded-2xl flex items-center justify-center text-3xl sm:text-4xl group-hover:scale-110 transition-transform"><HiEye /></div>
-                        <span className="px-3 py-1 bg-white/20 rounded-full text-[8px] font-black uppercase tracking-widest">Live Assist</span>
-                     </div>
-                     <h4 className="text-xl sm:text-2xl font-black leading-none mb-2 sm:mb-3 tracking-tighter uppercase">Mata Pintar AI</h4>
-                     <p className="text-[10px] sm:text-xs font-bold opacity-80 leading-relaxed uppercase tracking-wider">Ubah suara di sekitarmu menjadi teks otomatis dengan akurasi 100%.</p>
-                  </motion.section>
-               )}
-
-               {/* Leaderboard Compact */}
-               <motion.section variants={itemVariants} className={`p-5 sm:p-8 rounded-3xl sm:rounded-[2.5rem] ${isBlind ? 'bg-white/5 border border-white/5 shadow-2xl' : 'bg-slate-900 shadow-xl shadow-slate-200'} text-white`}>
-                  <h4 className="text-xs font-black uppercase tracking-[0.3em] sm:tracking-[0.4em] mb-6 sm:mb-8 text-indigo-400 flex items-center gap-2 sm:gap-3"><HiAcademicCap className="text-amber-400 text-lg" /> Peringkat Kelas</h4>
-                  <div className="space-y-3 sm:space-y-4">
-                     {leaderboard?.map((s, i) => (
-                       <div key={s.id} className={`flex items-center gap-3 sm:gap-4 p-2.5 sm:p-3 rounded-2xl ${s.id === profile?.id ? 'bg-indigo-600/30 ring-1 ring-indigo-500' : ''}`}>
-                          <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center font-black text-xs shrink-0 ${i === 0 ? 'bg-amber-400 text-amber-950' : i === 1 ? 'bg-slate-300 text-slate-800' : 'bg-slate-800 text-slate-500'}`}>{i + 1}</div>
-                          <span className="flex-1 font-bold text-xs sm:text-sm truncate">{s.full_name}</span>
-                          <span className="font-black text-xs text-indigo-400 shrink-0">{s.xp} <span className="text-[7px] opacity-40 uppercase">XP</span></span>
-                       </div>
-                     ))}
+                  <div>
+                    <h4 className="text-xl sm:text-2xl font-black leading-none mb-2 tracking-tighter uppercase">Mata Pintar AI</h4>
+                    <p className="text-[10px] sm:text-xs font-bold opacity-80 leading-relaxed uppercase tracking-wider">Ubah suara di sekitarmu menjadi teks otomatis dengan akurasi 100%.</p>
                   </div>
                </motion.section>
-            </div>
+            ) : null}
+
+            {/* Teman Belajar (Span 6) */}
+            <motion.div variants={itemVariants} className={`lg:col-span-6 p-5 sm:p-8 md:p-10 rounded-3xl sm:rounded-[2.5rem] md:rounded-[3rem] ${isBlind ? 'bg-white/5 border border-white/5' : 'bg-white shadow-sm border border-slate-100 sm:border-slate-50'}`}>
+               <div className="flex items-center justify-between mb-5 sm:mb-8">
+                  <h4 className="text-base sm:text-xl font-black uppercase tracking-tight flex items-center gap-2 sm:gap-3">
+                     <HiUsers className="text-emerald-500" /> Teman Belajar
+                  </h4>
+               </div>
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  {groups?.map(g => (
+                    <div key={g.id} className={`p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border transition-all ${isBlind ? 'bg-indigo-900/40 border-white/10' : 'bg-slate-50 border-slate-100/50'}`}>
+                       <p className="font-bold text-xs sm:text-sm mb-2 truncate">{g.name}</p>
+                       <button onClick={() => navigate('/student/collaboration')} className="text-[9px] sm:text-[10px] font-black text-indigo-500 uppercase tracking-widest">Masuk Diskusi</button>
+                    </div>
+                  ))}
+                  {groups?.length === 0 && <button onClick={() => navigate('/student/collaboration')} className="col-span-full py-6 sm:py-8 border-2 border-dashed border-slate-200 rounded-2xl sm:rounded-[2rem] text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Cari Grup Belajar</button>}
+               </div>
+            </motion.div>
+
+            {/* Peringkat Kelas / Leaderboard (Span 6) */}
+            <motion.section variants={itemVariants} className={`lg:col-span-6 p-5 sm:p-8 md:p-10 rounded-3xl sm:rounded-[2.5rem] md:rounded-[3rem] ${isBlind ? 'bg-white/5 border border-white/5 shadow-2xl' : 'bg-slate-900 shadow-xl shadow-slate-200'} text-white`}>
+               <h4 className="text-xs sm:text-base font-black uppercase tracking-[0.2em] mb-5 sm:mb-6 text-indigo-400 flex items-center gap-2 sm:gap-3"><HiAcademicCap className="text-amber-400 text-lg" /> Peringkat Kelas</h4>
+               <div className="space-y-2.5 sm:space-y-3">
+                  {leaderboard?.map((s, i) => (
+                    <div key={s.id} className={`flex items-center gap-3 sm:gap-4 p-2.5 sm:p-3 rounded-2xl ${s.id === profile?.id ? 'bg-indigo-600/30 ring-1 ring-indigo-500' : ''}`}>
+                       <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center font-black text-xs shrink-0 ${i === 0 ? 'bg-amber-400 text-amber-950' : i === 1 ? 'bg-slate-300 text-slate-800' : 'bg-slate-800 text-slate-500'}`}>{i + 1}</div>
+                       <span className="flex-1 font-bold text-xs sm:text-sm truncate">{s.full_name}</span>
+                       <span className="font-black text-xs text-indigo-400 shrink-0">{s.xp} <span className="text-[7px] opacity-40 uppercase">XP</span></span>
+                    </div>
+                  ))}
+               </div>
+            </motion.section>
 
           </motion.div>
         </div>
