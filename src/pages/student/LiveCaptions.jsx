@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAI } from '@/features/ai-tutor/hooks/useAI';
 import StudentSidebar from '@/components/layout/StudentSidebar';
-import { HiMicrophone, HiStop, HiTrash, HiDocumentText, HiExclamation } from 'react-icons/hi';
+import { useAccessibilityStore } from '@/features/accessibility/store/accessibilityStore';
+import { HiMicrophone, HiStop, HiTrash, HiDocumentText, HiExclamation, HiEye } from 'react-icons/hi';
 
 const LiveCaptions = () => {
   const { transcribeAudio, loading: isTranscribing } = useAI();
@@ -152,6 +153,20 @@ const LiveCaptions = () => {
           </div>
 
           <div className="flex items-center gap-2 md:gap-4">
+             {/* Toggle Floating Widget Button */}
+             <button
+               onClick={() => setIsLiveCaptionActive(!isLiveCaptionActive)}
+               className={`flex items-center gap-2 px-3 md:px-5 py-2 md:py-3 border text-white text-[9px] md:text-[11px] font-black uppercase tracking-widest rounded-xl md:rounded-2xl transition-all active:scale-95 shadow-lg ${
+                 isLiveCaptionActive
+                   ? 'bg-emerald-600 hover:bg-emerald-500 border-emerald-400/40 shadow-emerald-500/20'
+                   : 'bg-indigo-600 hover:bg-indigo-500 border-indigo-400/40 shadow-indigo-500/20'
+               }`}
+               title="Aktifkan atau Matikan Widget Mata Pintar Melayang"
+             >
+               <HiEye className="text-sm md:text-lg" />
+               <span className="hidden sm:inline">{isLiveCaptionActive ? 'Widget Melayang Aktif' : 'Aktifkan Widget Melayang'}</span>
+             </button>
+
              {fullText && (
                <>
                  <button

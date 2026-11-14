@@ -212,23 +212,31 @@ export default function MataPintarGlobalCaption() {
           drag
           dragMomentum={false}
           dragElastic={0.1}
-          className="pointer-events-auto flex items-center gap-1 cursor-grab active:cursor-grabbing"
+          className="pointer-events-auto flex items-center gap-1.5 p-1.5 pl-3.5 bg-slate-950/95 border border-white/20 text-emerald-400 font-black text-[10px] sm:text-xs rounded-full shadow-2xl backdrop-blur-2xl cursor-grab active:cursor-grabbing"
         >
-          <button
-            onClick={() => setIsMinimized(false)}
-            className="px-3.5 py-1.5 sm:px-4 sm:py-2 bg-slate-950/95 border border-white/20 text-emerald-400 font-black text-[10px] sm:text-xs rounded-full shadow-2xl backdrop-blur-2xl flex items-center gap-2 hover:scale-105 active:scale-95 transition-all"
-          >
+          <div className="flex items-center gap-2 select-none">
             <span className={`w-2 h-2 rounded-full ${isListening ? 'bg-rose-500 animate-ping' : 'bg-emerald-500'}`} />
             <span className="truncate max-w-[120px] sm:max-w-none">👁️ Mata Pintar</span>
-            <span className="text-[8px] sm:text-[9px] text-white/70 bg-white/10 px-1.5 py-0.5 rounded-full uppercase">↗</span>
+          </div>
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsMinimized(false);
+            }}
+            className="p-1 px-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full text-[9px] font-black uppercase transition-all shadow-sm active:scale-95"
+            title="Buka / Perbesar Tampilan"
+          >
+            ↗ Buka
           </button>
 
           <button
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               stopCapturing();
               setIsLiveCaptionActive(false);
             }}
-            className="p-1.5 bg-rose-500 hover:bg-rose-600 text-white rounded-full text-xs shadow-lg transition-all"
+            className="p-1 bg-rose-500/30 hover:bg-rose-500 text-rose-300 hover:text-white rounded-full text-xs transition-all"
             title="Tutup & Nonaktifkan Mata Pintar"
           >
             <HiX />
