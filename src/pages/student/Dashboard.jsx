@@ -154,10 +154,8 @@ const StudentDashboard = () => {
               whileTap={{ scale: 0.9 }}
               className="relative cursor-pointer"
             >
-              <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-500 text-white flex items-center justify-center shadow-lg shadow-amber-200/60 border-2 border-white">
-                <HiStar className="text-2xl md:text-3xl text-white" />
-              </div>
-              <div className="absolute -bottom-1 -right-1 bg-white p-1 rounded-full shadow-lg">
+              <BintangAvatar state={avatarState} size="sm" />
+              <div className="absolute -bottom-1 -right-1 bg-white p-1 rounded-full shadow-lg z-20">
                 <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse" />
               </div>
             </motion.div>
