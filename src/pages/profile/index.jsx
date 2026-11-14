@@ -37,6 +37,10 @@ const Profile = () => {
     }
   });
 
+  const [studentInputId, setStudentInputId] = useState('');
+  const [linkedStudent, setLinkedStudent] = useState(null);
+  const [linkingLoading, setLinkingLoading] = useState(false);
+
   useEffect(() => {
     if (profile?.id) {
       supabase.from('profiles').select('*').eq('id', profile.id).single().then(({ data, error }) => {
@@ -44,6 +48,67 @@ const Profile = () => {
       });
     }
   }, [profile?.id]);
+
+  useEffect(() => {
+    const fetchLinkedStudent = async () => {
+      if (profile?.linked_student_id) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', profile.linked_student_id)
+          .maybeSingle();
+        if (data) setLinkedStudent(data);
+      } else if (profile?.class_code) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('role', 'siswa')
+          .eq('class_code', profile.class_code)
+          .order('full_name')
+          .limit(1)
+          .maybeSingle();
+        if (data) setLinkedStudent(data);
+      }
+    };
+    fetchLinkedStudent();
+  }, [profile?.linked_student_id, profile?.class_code]);
+
+  const handleLinkStudent = async () => {
+    const cleanId = studentInputId.trim();
+    if (!cleanId) {
+      setMessage({ type: 'error', text: 'Masukkan ID Siswa yang valid' });
+      return;
+    }
+    setLinkingLoading(true);
+    try {
+      const { data: student, error: fetchErr } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', cleanId)
+        .eq('role', 'siswa')
+        .single();
+
+      if (fetchErr || !student) {
+        throw new Error('Siswa dengan ID tersebut tidak ditemukan.');
+      }
+
+      const { error: updateErr } = await supabase
+        .from('profiles')
+        .update({ linked_student_id: student.id })
+        .eq('id', profile.id);
+
+      if (updateErr) throw updateErr;
+
+      setProfile({ ...profile, linked_student_id: student.id });
+      setLinkedStudent(student);
+      setStudentInputId('');
+      setMessage({ type: 'success', text: `Berhasil menghubungkan dengan siswa ${student.full_name}!` });
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || 'Gagal menghubungkan siswa' });
+    } finally {
+      setLinkingLoading(false);
+    }
+  };
 
   useEffect(() => {
     document.documentElement.style.fontSize = `${accSettings.fontSize}%`;
@@ -108,6 +173,7 @@ const Profile = () => {
     ],
     guru: [
       { id: 'identitas', label: 'Profil Guru', icon: <HiUser /> },
+      { id: 'link', label: 'Siswa Terhubung', icon: <HiFingerPrint /> },
       { id: 'pengaturan_suara', label: 'Pengaturan Suara', icon: <HiVolumeUp /> },
       { id: 'keamanan', label: 'Keamanan', icon: <HiShieldCheck /> },
     ],
@@ -323,7 +389,7 @@ const Profile = () => {
                   </div>
                 )}
 
-                {/* Teacher specific view */}
+                {/* Teacher / Parent specific view */}
                 {activeTab === 'identitas' && (
                    <div className="grid md:grid-cols-2 gap-6">
                       <div className="space-y-2">
@@ -336,21 +402,21 @@ const Profile = () => {
                       <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Instansi/Sekolah</label>
                         <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-800">
-                          {profile?.slb_name || '-'}
+                          {profile?.slb_name || 'Sekolah Umum'}
                         </div>
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Mata Pelajaran</label>
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Mata Pelajaran / Peran</label>
                         <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-800">
-                          {profile?.subject || '-'}
+                          {profile?.subject || (profile?.role === 'guru' ? 'Guru Pembimbing' : 'Orang Tua')}
                         </div>
                       </div>
 
-                      {/* Editable Class Level for Teacher */}
+                      {/* Editable Class Level */}
                       <div className="space-y-2">
                         <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest ml-1 flex items-center gap-1">
-                          <HiAcademicCap /> Kelas Diampu
+                          <HiAcademicCap /> Tingkat Kelas Diampu
                         </label>
                         <select
                           value={profile?.class_level || '4 SD'}
@@ -362,13 +428,99 @@ const Profile = () => {
                         </select>
                       </div>
 
-                      <div className="space-y-2 md:col-span-2">
+                      <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Kode Kelas Utama</label>
                         <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-xl font-black text-indigo-600 text-lg">
                           {profile?.class_code || '-'}
                         </div>
                       </div>
+
+                      {/* Nama Anak / Siswa Terhubung */}
+                      <div className="space-y-2 md:col-span-2">
+                        <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                          <HiUser /> Nama Anak / Siswa Terhubung
+                        </label>
+                        <div className="p-5 bg-indigo-50/80 border-2 border-indigo-100 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                          <div className="space-y-1">
+                            <p className="font-black text-slate-900 text-base">
+                              {linkedStudent?.full_name || 'Siswa SD BintangAi (Terhubung)'}
+                            </p>
+                            <p className="text-xs font-bold text-indigo-600">
+                              Tingkat: {linkedStudent?.class_level || profile?.class_level || 'Kelas 4 SD'} • Disabilitas: {linkedStudent?.disability_type?.toUpperCase() || 'UMUM'}
+                            </p>
+                            <p className="text-[10px] font-bold text-slate-400">
+                              Kode Kelas: {linkedStudent?.class_code || profile?.class_code || '-'}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => setActiveTab('link')}
+                            className="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-wider hover:bg-indigo-700 transition-all shadow-xs shrink-0 self-start sm:self-center"
+                          >
+                            Atur / Ubah Siswa 🔗
+                          </button>
+                        </div>
+                      </div>
                    </div>
+                )}
+
+                {/* Hubungkan Siswa / Anak View for Teacher & Parent */}
+                {activeTab === 'link' && (
+                  <div className="space-y-8 max-w-xl">
+                    <div>
+                      <h3 className="text-2xl font-black text-slate-900 tracking-tight">
+                        {profile?.role === 'guru' ? 'Siswa Terhubung' : 'Anak Terhubung'}
+                      </h3>
+                      <p className="text-slate-500 font-medium text-xs mt-1">
+                        Hubungkan akun Anda dengan ID Belajar Siswa untuk memantau aktivitas, tugas, dan laporan perkembangan anak/siswa secara langsung.
+                      </p>
+                    </div>
+
+                    {/* Current Linked Student Info Card */}
+                    <div className="p-6 bg-indigo-50/80 border-2 border-indigo-100 rounded-3xl space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Status Hubungan</span>
+                        <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full font-black text-[10px] uppercase tracking-wider">
+                          {linkedStudent ? 'Terhubung ✅' : 'Belum Ada Siswa'}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-xl font-black text-slate-900">
+                          {linkedStudent?.full_name || 'Belum Terhubung dengan Siswa'}
+                        </p>
+                        {linkedStudent && (
+                          <p className="text-xs font-bold text-indigo-600 mt-1">
+                            Tingkat: {linkedStudent.class_level || 'Kelas 4 SD'} • Disabilitas: {linkedStudent.disability_type?.toUpperCase() || 'UMUM'} • Kode Kelas: {linkedStudent.class_code || '-'}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Form Link New Student */}
+                    <div className="space-y-4 pt-4 border-t border-slate-100">
+                      <label className="text-xs font-black text-slate-700 uppercase tracking-wider block">
+                        Masukkan ID Belajar Siswa
+                      </label>
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <input
+                          type="text"
+                          value={studentInputId}
+                          onChange={(e) => setStudentInputId(e.target.value)}
+                          placeholder="Contoh: UUID ID Belajar Siswa..."
+                          className="flex-1 p-4 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs outline-none focus:border-indigo-600 transition-all"
+                        />
+                        <button
+                          onClick={handleLinkStudent}
+                          disabled={linkingLoading || !studentInputId.trim()}
+                          className="px-6 py-4 bg-indigo-600 text-white font-black text-xs uppercase tracking-widest rounded-xl hover:bg-indigo-700 transition-all disabled:opacity-50 shrink-0"
+                        >
+                          {linkingLoading ? 'Menghubungkan...' : 'Hubungkan'}
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-slate-400 italic">
+                        * ID Belajar Siswa dapat disalin dari menu Profil ID Belajar di akun siswa.
+                      </p>
+                    </div>
+                  </div>
                 )}
               </motion.div>
             </AnimatePresence>
