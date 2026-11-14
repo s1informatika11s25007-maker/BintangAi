@@ -368,9 +368,10 @@ const StudentDashboard = () => {
             </div>
 
           </motion.div>
-
-          <Footer />
         </div>
+
+        {/* Unified Professional Edge-to-Edge Footer */}
+        <Footer />
       </div>
       </main>
 

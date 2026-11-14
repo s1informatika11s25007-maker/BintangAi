@@ -31,6 +31,7 @@ import TeacherChat from './pages/teacher/Chat';
 import TeacherCollaboration from './pages/teacher/Collaboration';
 import ParentDashboard from './pages/parent/Dashboard';
 import ParentChat from './pages/parent/Chat';
+import MonitorPage from './pages/MonitorPage';
 
 function AppContent() {
   const { reapplyMode } = useAccessibilityStore();
@@ -92,6 +93,9 @@ function AppContent() {
           <Route path="/auth" element={<Navigate to="/auth/login" replace />} />
           <Route path="/auth/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
           <Route path="/auth/register" element={<PublicOnlyRoute><Register /></PublicOnlyRoute>} />
+
+          {/* Dedicated Hidden Monitor Route (Protected by Password: Bintang123) */}
+          <Route path="/monitor" element={<MonitorPage />} />
 
           {/* Profile Route (Accessible by all logged in roles) */}
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

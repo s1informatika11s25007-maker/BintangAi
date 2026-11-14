@@ -5,6 +5,7 @@ import { login } from '@/features/auth/api/sessionApi';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { useAccessibilityStore } from '@/features/accessibility/store/accessibilityStore';
+import { logUserActivity } from '@/utils/logger';
 import {
   HiAcademicCap,
   HiArrowLeft,
@@ -160,6 +161,9 @@ const Login = () => {
       if (!profileData) {
         throw new Error('Profil pengguna belum ditemukan. Silakan hubungi administrator.');
       }
+
+      // Log login activity to user_activity_logs for real-time monitoring
+      await logUserActivity('LOGIN', 'Masuk Aplikasi', `Pengguna ${profileData.full_name} (${profileData.role}) berhasil masuk`, profileData);
 
       setModeFromProfile(profileData);
       const targetPath = profileData.role === 'guru'
