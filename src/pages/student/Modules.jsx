@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
@@ -11,12 +11,11 @@ import { useSubtitle } from '@/features/accessibility/components/Subtitles';
 import { globalCaptionBus } from '@/features/accessibility/components/MataPintarGlobalCaption';
 import KamusIsyaratModal from '@/features/accessibility/components/KamusIsyaratModal';
 import {
-  HiBookOpen, HiSearch, HiAcademicCap, HiChatAlt2,
-  HiStop, HiSpeakerphone, HiX, HiPaperAirplane,
-  HiMenuAlt2, HiOutlineDocumentSearch, HiLightBulb, HiChevronRight,
-  HiClipboardList, HiShieldCheck, HiExternalLink, HiChevronDown, HiChevronUp,
+  HiBookOpen, HiSearch, HiChatAlt2,
+  HiX, HiPaperAirplane, HiMenuAlt2, HiLightBulb, HiChevronRight,
+  HiExternalLink, HiChevronDown, HiChevronUp,
   HiChevronLeft, HiVolumeUp, HiPause, HiPlay, HiRefresh,
-  HiChevronDoubleRight, HiChevronDoubleLeft, HiAdjustments
+  HiChevronDoubleRight, HiChevronDoubleLeft, HiArrowLeft, HiTranslate
 } from 'react-icons/hi';
 
 const StudentModules = () => {
@@ -26,8 +25,7 @@ const StudentModules = () => {
   const { isBlind, isDeaf, isMute } = useAccessibility();
   const { showSubtitle } = useSubtitle();
   const {
-    speak, stopSpeaking, speakImageDescription,
-    voiceSpeed, setVoiceSpeed, voiceVolume, setVoiceVolume
+    speak, stopSpeaking, speakImageDescription
   } = useVoice();
 
   const [modules, setModules] = useState([]);
@@ -35,21 +33,18 @@ const StudentModules = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isFocusMode, setIsFocusMode] = useState(false);
 
   // Kamus Bahasa Isyarat Modal State
   const [isKamusOpen, setIsKamusOpen] = useState(false);
 
-  // Audio Reading State (Pembaca Materi Otomatis)
+  // View mode for PDF vs Text
+  const [activeTab, setActiveTab] = useState('text'); // 'text' or 'pdf'
+
+  // Audio Reading State
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [isAudioPaused, setIsAudioPaused] = useState(false);
   const [currentParagraphIndex, setCurrentParagraphIndex] = useState(0);
   const [moduleParagraphs, setModuleParagraphs] = useState([]);
-
-  // Gesture Scroll State
-  const [scrollSpeed, setScrollSpeed] = useState(0);
-  const pdfContainerRef = useRef(null);
-  const scrollIntervalRef = useRef(null);
 
   // Mobile UI States
   const [isChatExpanded, setIsChatExpanded] = useState(false);
@@ -61,10 +56,10 @@ const StudentModules = () => {
 
   const chatEndRef = useRef(null);
 
-  // SMART PAGINATION & SUBJECT FILTER FOR ACCESSIBILITY
+  // SMART PAGINATION & SUBJECT FILTER
   const [selectedSubject, setSelectedSubject] = useState('Semua');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = isMute ? 5 : 50;
+  const itemsPerPage = isMute ? 6 : 50;
 
   useEffect(() => {
     setCurrentPage(1);
@@ -105,7 +100,7 @@ const StudentModules = () => {
    * 🎯 PEMBACA MATERI OTOMATIS (Paragraph-by-Paragraph Reader)
    */
   const extractParagraphs = (moduleData) => {
-    const rawContent = moduleData.description || moduleData.content || moduleData.summary || '';
+    const rawContent = moduleData.content || moduleData.description || moduleData.summary || '';
     let paragraphs = rawContent.split(/\n+/).filter(p => p.trim().length > 0);
 
     if (paragraphs.length === 0) {
@@ -125,6 +120,7 @@ const StudentModules = () => {
 
     setIsPlayingAudio(true);
     setIsAudioPaused(false);
+    setCurrentParagraphIndex(index);
 
     const announcement = index === 0
       ? `Membaca materi: ${selectedModule?.title || ''}. Paragraf pertama: ${currentP}`
@@ -134,7 +130,6 @@ const StudentModules = () => {
       speak(announcement, 1.0, true);
     }
 
-    // Emit live caption to Mata Pintar HUD for Tunarungu (Deaf) students
     if (isDeaf) {
       globalCaptionBus.emit(currentP, 'Guru', 'speech');
     }
@@ -168,17 +163,15 @@ const StudentModules = () => {
   const nextParagraph = () => {
     if (currentParagraphIndex < moduleParagraphs.length - 1) {
       const nextIdx = currentParagraphIndex + 1;
-      setCurrentParagraphIndex(nextIdx);
       readCurrentParagraph(nextIdx, moduleParagraphs);
     } else {
-      if (isBlind) speak('Ini adalah akhir dari paragraf materi.', 1.0, true);
+      if (isBlind) speak('Ini adalah akhir dari materi.', 1.0, true);
     }
   };
 
   const prevParagraph = () => {
     if (currentParagraphIndex > 0) {
       const prevIdx = currentParagraphIndex - 1;
-      setCurrentParagraphIndex(prevIdx);
       readCurrentParagraph(prevIdx, moduleParagraphs);
     } else {
       if (isBlind) speak('Ini adalah paragraf pertama.', 1.0, true);
@@ -187,6 +180,7 @@ const StudentModules = () => {
 
   const selectModule = (m) => {
     setSelectedModule(m);
+    setActiveTab(m.content ? 'text' : m.pdf_url ? 'pdf' : 'text');
     stopSpeaking();
     setIsPlayingAudio(false);
     setIsAudioPaused(false);
@@ -195,7 +189,7 @@ const StudentModules = () => {
     setModuleParagraphs(paragraphs);
     setCurrentParagraphIndex(0);
 
-    const initialAIMsg = `Halo ${profile?.full_name?.split(' ')[0] || 'Teman'}! 👋 Kak Bintang sudah siap membantumu belajar materi "${m.title}". Silakan tanya apa saja di bawah sini ya!`;
+    const initialAIMsg = `Halo ${profile?.full_name?.split(' ')[0] || 'Teman'}! 👋 Kak Bintang sudah siap membantumu belajar materi "${m.title}". Ada yang kurang jelas dari materi ini? Silakan tanyakan di bawah ya!`;
 
     setChatMessages([
       {
@@ -205,21 +199,29 @@ const StudentModules = () => {
     ]);
 
     if (isBlind) {
-      speak(`Membuka materi ${m.title}. Pilihan mata pelajaran ${m.subject || 'Umum'}. Menyiapkan pembacaan materi otomatis.`, 1.0, true);
+      speak(`Membuka materi ${m.title}. Mata pelajaran ${m.subject || 'Umum'}. Menyiapkan pembacaan materi.`, 1.0, true);
       setTimeout(() => {
         readCurrentParagraph(0, paragraphs);
-      }, 2500);
+      }, 2000);
     }
 
     if (isMute) {
-      setIsFocusMode(true);
-      setIsSidebarOpen(false);
-      showSubtitle(`Membuka ${m.title}. Gunakan 1 jari untuk scroll!`, "success");
+      showSubtitle(`Membuka ${m.title}.`, "success");
     }
 
     if (window.innerWidth < 1024) {
       setIsSidebarOpen(false);
       setIsChatExpanded(false);
+    }
+  };
+
+  const closeModule = () => {
+    setSelectedModule(null);
+    stopSpeaking();
+    setIsPlayingAudio(false);
+    setIsAudioPaused(false);
+    if (window.innerWidth < 1024) {
+      setIsSidebarOpen(false);
     }
   };
 
@@ -251,7 +253,7 @@ const StudentModules = () => {
         throw new Error(result.answer);
       }
     } catch (err) {
-      const errorMsg = "Maaf ya, Kak Bintang lagi gangguan koneksi. Coba lagi!";
+      const errorMsg = "Maaf ya, Kak Bintang sedang kendala koneksi. Coba tanyakan lagi ya!";
       setChatMessages(prev => [...prev, { role: 'ai', content: errorMsg }]);
       if (isBlind) speak(errorMsg, 1.0, true);
     } finally {
@@ -265,13 +267,15 @@ const StudentModules = () => {
     if (isMobile) {
       return `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
     }
-    return url;
+    const cleanUrl = url.split('#')[0];
+    return `${cleanUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`;
   };
 
   const filteredModules = useMemo(() =>
     modules.filter(m => {
       const matchSearch = m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          (m.description && m.description.toLowerCase().includes(searchQuery.toLowerCase()));
+                          (m.description && m.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                          (m.content && m.content.toLowerCase().includes(searchQuery.toLowerCase()));
       const matchSubject = selectedSubject === 'Semua' || (m.subject && m.subject.toLowerCase() === selectedSubject.toLowerCase());
       return matchSearch && matchSubject;
     }),
@@ -287,115 +291,125 @@ const StudentModules = () => {
   const nextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(prev => prev + 1);
-      if (isMute) showSubtitle(`Materi Halaman ${currentPage + 1}`, 'info');
     }
   };
 
   const prevPage = () => {
     if (currentPage > 1) {
       setCurrentPage(prev => prev - 1);
-      if (isMute) showSubtitle(`Kembali ke Halaman ${currentPage - 1}`, 'info');
     }
   };
 
   return (
     <div
-      className="h-screen bg-[#F8FAFC] flex font-sans overflow-hidden text-slate-800"
+      className="h-screen bg-slate-50 flex font-sans overflow-hidden text-slate-800"
       data-module-selected={!!selectedModule}
     >
       <StudentSidebar />
 
-      <main className="flex-1 flex flex-col min-w-0 relative overflow-hidden">
-        {/* SIDEBAR MODUL */}
+      <main className="flex-1 flex flex-col min-w-0 relative overflow-hidden bg-white">
+        {/* SIDEBAR MATERI (DRAWER FOR MOBILE / SIDEBAR FOR DESKTOP) */}
         <AnimatePresence>
           {isSidebarOpen && (
             <motion.div
               initial={{ x: -340 }} animate={{ x: 0 }} exit={{ x: -340 }}
-              className="absolute lg:relative inset-y-0 left-0 w-[280px] sm:w-[320px] bg-white border-r border-slate-200 flex flex-col shrink-0 z-[110] shadow-xl lg:shadow-none"
+              className="absolute lg:relative inset-y-0 left-0 w-[290px] sm:w-[320px] bg-white border-r border-slate-200 flex flex-col shrink-0 z-[110] shadow-xl lg:shadow-none"
             >
-              <div className="p-6 space-y-4 pb-2">
+              <div className="p-5 space-y-3 pb-2 border-b border-slate-100">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
-                    <HiBookOpen className="text-indigo-600" /> Materi Belajar
+                  <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                    <HiBookOpen className="text-indigo-600 text-lg" /> Modul Belajar
                   </h2>
-                  <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-2 text-slate-400"><HiX /></button>
+                  <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-2 text-slate-400 hover:text-slate-600">
+                    <HiX className="text-lg" />
+                  </button>
                 </div>
                 <div className="relative">
-                  <HiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
+                  <HiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
                   <input
-                    type="text" placeholder="Cari materi..." value={searchQuery}
+                    type="text" placeholder="Cari judul materi..." value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-3 bg-slate-50 border border-slate-100 rounded-xl text-[10px] font-bold outline-none focus:border-indigo-200 transition-all"
+                    className="w-full pl-9 pr-3 py-2 bg-slate-100 border border-slate-200/60 rounded-xl text-xs font-medium outline-none focus:bg-white focus:border-indigo-400 transition-all"
                   />
                 </div>
               </div>
 
               {/* Subject Filter Pills */}
-              <div className="px-6 pb-3 flex gap-1.5 overflow-x-auto no-scrollbar">
-                {['Semua', 'IPA', 'MTK', 'Indo', 'PKn'].map((s) => {
-                  const targetSubject = s === 'MTK' ? 'Matematika' : s === 'Indo' ? 'Bahasa Indonesia' : s;
-                  const isActive = selectedSubject === targetSubject;
+              <div className="p-3 flex gap-1.5 overflow-x-auto no-scrollbar border-b border-slate-100">
+                {['Semua', 'IPA', 'Matematika', 'Bahasa Indonesia', 'PKn'].map((s) => {
+                  const label = s === 'Bahasa Indonesia' ? 'Indo' : s === 'Matematika' ? 'MTK' : s;
+                  const isActive = selectedSubject === s || (s === 'Bahasa Indonesia' && selectedSubject === 'Bahasa Indonesia');
                   return (
                     <button
                       key={s}
-                      onClick={() => setSelectedSubject(targetSubject)}
-                      className={`px-3 py-1.5 text-[9px] font-black rounded-xl transition-all shrink-0 border ${
+                      onClick={() => setSelectedSubject(s)}
+                      className={`px-3 py-1 text-xs font-bold rounded-lg transition-all shrink-0 border ${
                         isActive
                           ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                          : 'bg-slate-50 text-slate-500 border-slate-100 hover:bg-slate-100'
+                          : 'bg-slate-50 text-slate-600 border-slate-200/60 hover:bg-slate-100'
                       }`}
                     >
-                      {s}
+                      {label}
                     </button>
                   );
                 })}
               </div>
 
               {totalPages > 1 && (
-                <div className="px-6 py-2 flex items-center justify-between border-b border-slate-50 bg-indigo-50/40">
+                <div className="px-4 py-2 flex items-center justify-between border-b border-slate-100 bg-indigo-50/40">
                    <button
                      onClick={prevPage}
                      disabled={currentPage === 1}
                      data-gesture-prev="true"
-                     className="p-2 bg-white rounded-lg shadow-xs text-indigo-600 disabled:opacity-30"
-                     title="7 Jari: Halaman Sebelumnya"
+                     className="p-1.5 bg-white rounded-lg border border-slate-200 text-indigo-600 disabled:opacity-30"
+                     title="Halaman Sebelumnya"
                    >
                      <HiChevronLeft />
                    </button>
-                   <span className="text-[10px] font-black text-indigo-700 uppercase">
-                     Hal {currentPage} / {totalPages}
+                   <span className="text-xs font-bold text-indigo-700">
+                     Hal {currentPage} dari {totalPages}
                    </span>
                    <button
                      onClick={nextPage}
                      disabled={currentPage === totalPages}
                      data-gesture-next="true"
-                     className="p-2 bg-white rounded-lg shadow-xs text-indigo-600 disabled:opacity-30"
-                     title="6 Jari: Halaman Berikutnya"
+                     className="p-1.5 bg-white rounded-lg border border-slate-200 text-indigo-600 disabled:opacity-30"
+                     title="Halaman Berikutnya"
                    >
                      <HiChevronRight />
                    </button>
                 </div>
               )}
 
-              <div className="flex-1 overflow-y-auto px-4 pb-10 space-y-2 custom-scrollbar mt-2">
-                {currentModules.length === 0 && !loading && <p className="text-center text-[10px] text-slate-400 font-bold uppercase py-10">Belum ada materi</p>}
-                {currentModules.map((m, idx) => (
+              <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2 custom-scrollbar">
+                {currentModules.length === 0 && !loading && (
+                  <p className="text-center text-xs text-slate-400 font-medium py-10">Materi tidak ditemukan</p>
+                )}
+                {currentModules.map((m) => (
                    <button
                     key={m.id}
                     data-gesture-item="true"
                     onClick={() => selectModule(m)}
                     tabIndex={0}
                     aria-label={`Materi ${m.title}, Pelajaran ${m.subject || 'Umum'}`}
-                    className={`w-full p-4 text-left rounded-2xl border transition-all flex items-center justify-between gap-3 outline-none focus:ring-4 focus:ring-indigo-500/30 ${selectedModule?.id === m.id ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'bg-white border-slate-50 text-slate-600 hover:bg-slate-50'}`}
+                    className={`w-full p-3.5 text-left rounded-xl border transition-all flex items-center gap-3 outline-none focus:ring-2 focus:ring-indigo-500/30 ${
+                      selectedModule?.id === m.id
+                        ? 'bg-indigo-600 border-indigo-600 text-white shadow-md'
+                        : 'bg-white border-slate-200/80 text-slate-700 hover:bg-slate-50'
+                    }`}
                    >
-                     <div className="flex items-center gap-3 truncate">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 ${selectedModule?.id === m.id ? 'bg-white/20' : 'bg-indigo-50 text-indigo-600'}`}>
-                            📖
-                        </div>
-                        <div className="min-w-0">
-                            <p className="font-black text-xs truncate">{m.title}</p>
-                            <p className={`text-[8px] font-black uppercase mt-0.5 ${selectedModule?.id === m.id ? 'text-indigo-200' : 'text-slate-400'}`}>{m.subject || 'Umum'}</p>
-                        </div>
+                     <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-base shrink-0 ${
+                       selectedModule?.id === m.id ? 'bg-white/20' : 'bg-indigo-50 text-indigo-600'
+                     }`}>
+                        📖
+                     </div>
+                     <div className="min-w-0 flex-1">
+                        <p className="font-bold text-xs truncate leading-snug">{m.title}</p>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider block mt-0.5 ${
+                          selectedModule?.id === m.id ? 'text-indigo-100' : 'text-slate-400'
+                        }`}>
+                          {m.subject || 'Umum'}
+                        </span>
                      </div>
                    </button>
                  ))}
@@ -404,208 +418,304 @@ const StudentModules = () => {
           )}
         </AnimatePresence>
 
-        {/* AREA UTAMA MEMBACA MATERI */}
-        <div className="flex-1 flex flex-col min-w-0 relative">
-          {!isSidebarOpen && (
-             <button onClick={() => setIsSidebarOpen(true)} className="absolute top-4 left-4 z-[100] w-10 h-10 bg-white rounded-lg shadow-md flex items-center justify-center text-indigo-600 border border-slate-100"><HiMenuAlt2 /></button>
-          )}
-
+        {/* AREA UTAMA READING VIEW / LIBRARY VIEW */}
+        <div className="flex-1 flex flex-col min-w-0 relative overflow-hidden bg-white">
           {selectedModule ? (
             <div className="flex-1 flex flex-col overflow-hidden relative">
 
-              {/* 🎯 KONTROL PEMBACA MATERI OTOMATIS & MATA PINTAR CAPTION */}
-              <div className="bg-white border-b border-slate-200 px-6 py-4 flex flex-wrap items-center justify-between gap-4 shadow-sm z-30">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-xl shadow-md">
-                    <HiBookOpen />
-                  </div>
-                  <div>
-                    <h2 className="font-black text-slate-800 text-sm">{selectedModule.title}</h2>
-                    <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">
+              {/* TOP CONTROL BAR UNTUK PEMBACA & NAVIGASI */}
+              <div className="bg-white border-b border-slate-200 px-3 py-2.5 sm:px-6 sm:py-3.5 flex flex-wrap items-center justify-between gap-2.5 z-30 shadow-xs">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <button
+                    onClick={closeModule}
+                    className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all flex items-center gap-1 text-xs font-bold"
+                    title="Kembali ke Daftar Materi"
+                  >
+                    <HiArrowLeft className="text-base" />
+                    <span className="hidden sm:inline">Daftar Materi</span>
+                  </button>
+
+                  <button
+                    onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                    className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all hidden lg:flex"
+                    title="Buka/Tutup Sidebar"
+                  >
+                    <HiMenuAlt2 className="text-base" />
+                  </button>
+
+                  <div className="min-w-0">
+                    <h2 className="font-bold text-slate-800 text-xs sm:text-sm truncate leading-tight">
+                      {selectedModule.title}
+                    </h2>
+                    <p className="text-[10px] sm:text-xs font-semibold text-indigo-600 uppercase tracking-wider truncate">
                       {selectedModule.subject || 'Pelajaran SD'} • Paragraf {currentParagraphIndex + 1} dari {moduleParagraphs.length || 1}
                     </p>
                   </div>
                 </div>
 
-                {/* Tombol Kontrol Pembaca Suara Paragraf */}
-                <div className="flex items-center gap-2 flex-wrap">
-
+                {/* Tombol Kontrol Suara Pembaca Paragraf */}
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                   <button
                     onClick={prevParagraph}
                     disabled={currentParagraphIndex === 0}
-                    className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center gap-1 transition-all disabled:opacity-40"
+                    className="p-2 sm:px-3 sm:py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center gap-1 transition-all disabled:opacity-40"
                     title="Paragraf Sebelumnya"
                   >
-                    <HiChevronDoubleLeft className="text-base" />
-                    <span className="hidden sm:inline">Sebelumnya</span>
+                    <HiChevronDoubleLeft className="text-sm" />
+                    <span className="hidden md:inline">Sebelumnya</span>
                   </button>
 
                   {isPlayingAudio && !isAudioPaused ? (
                     <button
                       onClick={pauseReadingModule}
-                      className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md transition-all"
+                      className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition-all"
                       title="Jeda Pembacaan Suara"
                     >
-                      <HiPause className="text-base" /> Jeda
+                      <HiPause className="text-sm" /> Jeda
                     </button>
                   ) : (
                     <button
                       onClick={resumeReadingModule}
-                      className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md transition-all"
+                      className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition-all"
                       title="Baca Materi / Lanjut Suara"
                     >
-                      <HiPlay className="text-base" /> {isAudioPaused ? 'Lanjut' : 'Baca Materi'}
+                      <HiPlay className="text-sm" /> {isAudioPaused ? 'Lanjut' : 'Baca Suara'}
                     </button>
                   )}
 
                   <button
                     onClick={nextParagraph}
                     disabled={currentParagraphIndex >= moduleParagraphs.length - 1}
-                    className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center gap-1 transition-all disabled:opacity-40"
+                    className="p-2 sm:px-3 sm:py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center gap-1 transition-all disabled:opacity-40"
                     title="Paragraf Berikutnya"
                   >
-                    <span className="hidden sm:inline">Berikutnya</span>
-                    <HiChevronDoubleRight className="text-base" />
+                    <span className="hidden md:inline">Berikutnya</span>
+                    <HiChevronDoubleRight className="text-sm" />
                   </button>
 
                   <button
                     onClick={() => readCurrentParagraph(currentParagraphIndex, moduleParagraphs)}
-                    className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center gap-1 transition-all"
+                    className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center transition-all"
                     title="Baca Ulang Paragraf Ini"
                   >
-                    <HiRefresh className="text-base" />
+                    <HiRefresh className="text-sm" />
                   </button>
+
+                  {isDeaf && (
+                    <button
+                      onClick={() => setIsKamusOpen(true)}
+                      className="p-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold flex items-center gap-1 transition-all"
+                      title="Kamus Bahasa Isyarat"
+                    >
+                      <HiTranslate className="text-sm text-emerald-600" />
+                      <span className="hidden md:inline">Kamus Isyarat</span>
+                    </button>
+                  )}
                 </div>
               </div>
 
+              {/* READER BODY: SCROLLABLE CONTAINER */}
               <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden relative">
 
-                {/* PDF & DOKUMEN VIEWER DENGAN DESKRIPSI GAMBAR W3C */}
-                <div className={`flex-1 min-h-0 flex flex-col transition-all duration-500 ${isChatExpanded ? 'h-[30vh] lg:h-full' : 'h-full'}`}>
-                  <div className="flex-1 min-h-0 p-4 overflow-hidden">
-                    <div
-                      ref={pdfContainerRef}
-                      className="bg-white shadow-2xl border border-slate-200 h-full w-full rounded-2xl lg:rounded-3xl relative overflow-y-auto custom-scrollbar p-6 space-y-6"
-                    >
-                      {/* Title & W3C Description Card for Tunanetra & Tunarungu */}
-                      <div className="p-6 bg-indigo-50/50 rounded-2xl border border-indigo-100 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-black text-indigo-600 uppercase tracking-widest">
-                            Materi SD • {selectedModule.subject || 'Umum'}
-                          </span>
-                          <button
-                            onClick={() => speakImageDescription(selectedModule.title, selectedModule.description)}
-                            className="px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-sm"
-                            title="Bacakan Deskripsi Visual W3C"
-                          >
-                            <HiVolumeUp /> Bacakan Deskripsi Visual
-                          </button>
-                        </div>
-                        <h1 className="text-2xl font-black text-slate-900">{selectedModule.title}</h1>
-                        <p className="text-sm font-medium text-slate-600 leading-relaxed">
-                          {selectedModule.description || selectedModule.summary || 'Modul pembelajaran SD inklusif Kak Bintang.'}
-                        </p>
+                {/* CONTENT VIEWER (TEXT & PDF VIEWER) */}
+                <div className={`flex-1 min-h-0 flex flex-col overflow-y-auto custom-scrollbar p-4 sm:p-6 space-y-6 ${isChatExpanded ? 'h-[40vh] lg:h-full' : 'h-full'}`}>
+
+                  {/* Header Card with Subject & Visual Description Button */}
+                  <div className="p-4 sm:p-6 bg-indigo-50/60 rounded-2xl border border-indigo-100 space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-xs font-bold text-indigo-700 uppercase tracking-wider">
+                        Materi SD • {selectedModule.subject || 'Umum'}
+                      </span>
+                      <button
+                        onClick={() => speakImageDescription(selectedModule.title, selectedModule.description || selectedModule.content)}
+                        className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-xs transition-all"
+                        title="Bacakan Deskripsi Visual W3C"
+                      >
+                        <HiVolumeUp className="text-sm" /> Bacakan Deskripsi Visual
+                      </button>
+                    </div>
+
+                    <h1 className="text-xl sm:text-2xl font-bold text-slate-900 leading-snug">{selectedModule.title}</h1>
+
+                    {selectedModule.description && (
+                      <p className="text-xs sm:text-sm font-medium text-slate-600 leading-relaxed">
+                        {selectedModule.description}
+                      </p>
+                    )}
+
+                    {/* Tab Switcher if PDF is available */}
+                    {selectedModule.pdf_url && (
+                      <div className="flex items-center gap-2 pt-2 border-t border-indigo-100/80">
+                        <button
+                          onClick={() => setActiveTab('text')}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                            activeTab === 'text'
+                              ? 'bg-indigo-600 text-white shadow-xs'
+                              : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                          }`}
+                        >
+                          📖 Teks Pelajaran
+                        </button>
+                        <button
+                          onClick={() => setActiveTab('pdf')}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                            activeTab === 'pdf'
+                              ? 'bg-indigo-600 text-white shadow-xs'
+                              : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                          }`}
+                        >
+                          📄 Dokumen PDF
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* READABLE TEXT PARAGRAPHS */}
+                  {activeTab === 'text' && (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between px-1">
+                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Isi Pelajaran</h3>
+                        <span className="text-[11px] font-medium text-slate-400">Klik paragraf untuk mendengarkan</span>
                       </div>
 
-                      {/* Display PDF file inside iframe or HTML viewer */}
-                      {selectedModule.pdf_url ? (
-                        <div className="w-full h-[600px] rounded-2xl overflow-hidden border border-slate-200 shadow-inner">
-                          <iframe
-                            src={getSafePdfUrl(selectedModule.pdf_url)}
-                            className="w-full h-full border-none"
-                            title={`Materi PDF: ${selectedModule.title}`}
-                          />
+                      {moduleParagraphs.map((paragraph, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => readCurrentParagraph(idx, moduleParagraphs)}
+                          className={`p-4 rounded-xl transition-all cursor-pointer border ${
+                            isPlayingAudio && currentParagraphIndex === idx
+                              ? 'bg-indigo-50/90 border-indigo-400 text-indigo-950 font-medium shadow-xs'
+                              : 'bg-white hover:bg-slate-50/80 border-slate-200/80 text-slate-700'
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <span className={`w-6 h-6 rounded-lg text-xs font-bold flex items-center justify-center shrink-0 mt-0.5 ${
+                              isPlayingAudio && currentParagraphIndex === idx
+                                ? 'bg-indigo-600 text-white'
+                                : 'bg-slate-100 text-slate-500'
+                            }`}>
+                              {idx + 1}
+                            </span>
+                            <p className="flex-1 text-xs sm:text-sm leading-relaxed font-normal whitespace-pre-wrap">
+                              {paragraph}
+                            </p>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                readCurrentParagraph(idx, moduleParagraphs);
+                              }}
+                              className="p-1.5 text-indigo-600 hover:bg-indigo-100/50 rounded-lg transition-all shrink-0"
+                              title="Dengarkan Paragraf Ini"
+                            >
+                              <HiVolumeUp className="text-base" />
+                            </button>
+                          </div>
                         </div>
-                      ) : null}
+                      ))}
+                    </div>
+                  )}
 
-                      {/* Explicit W3C Image & Diagram Description */}
-                      <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold text-slate-700 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <HiLightBulb className="text-amber-500 text-lg" />
-                          <span>Materi ini mendukung pembacaan otomatis W3C & deskripsi audio gambar/diagram.</span>
-                        </div>
+                  {/* PDF VIEWER CONTAINER (WITHOUT LEFT THUMBNAIL/NAVPANES SIDEBAR) */}
+                  {activeTab === 'pdf' && selectedModule.pdf_url && (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between px-1">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Dokumen PDF</span>
                         <a
                           href={selectedModule.pdf_url}
                           target="_blank"
                           rel="noreferrer"
-                          className="px-3 py-1.5 bg-slate-900 text-white rounded-xl text-[10px] font-bold flex items-center gap-1"
+                          className="px-3 py-1 bg-slate-900 text-white rounded-lg text-xs font-bold flex items-center gap-1 hover:bg-slate-800 transition-all"
                         >
-                          Buka PDF <HiExternalLink />
+                          Layar Penuh <HiExternalLink className="text-xs" />
                         </a>
                       </div>
+
+                      <div className="w-full h-[550px] sm:h-[650px] rounded-2xl overflow-hidden border border-slate-200 shadow-sm bg-slate-100">
+                        <iframe
+                          src={getSafePdfUrl(selectedModule.pdf_url)}
+                          className="w-full h-full border-none"
+                          title={`Materi PDF: ${selectedModule.title}`}
+                        />
+                      </div>
                     </div>
+                  )}
+
+                  {/* Accessibility Footnote */}
+                  <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-medium text-slate-600 flex items-center gap-2">
+                    <HiLightBulb className="text-amber-500 text-base shrink-0" />
+                    <span>Materi mendukung pembacaan otomatis W3C & navigasi suara interaktif Kak Bintang.</span>
                   </div>
+
                 </div>
 
                 {/* AI CHAT & TANYA MATERI PANEL */}
                 <div className={`
-                  flex flex-col min-h-0 bg-white border-t lg:border-t-0 lg:border-l border-slate-200 transition-all duration-500 z-[105]
-                  lg:w-[400px] xl:w-[450px]
-                  ${isChatExpanded ? 'h-[70vh]' : 'h-[60px]'} lg:h-full
+                  flex flex-col min-h-0 bg-white border-t lg:border-t-0 lg:border-l border-slate-200 transition-all duration-300 z-[105]
+                  lg:w-[360px] xl:w-[400px] shrink-0
+                  ${isChatExpanded ? 'h-[60vh]' : 'h-[52px]'} lg:h-full
                 `}>
-
                   <div
                     onClick={() => window.innerWidth < 1024 && setIsChatExpanded(!isChatExpanded)}
-                    className="h-[60px] shrink-0 bg-indigo-600 text-white px-5 flex items-center justify-between cursor-pointer lg:cursor-default"
+                    className="h-[52px] shrink-0 bg-indigo-600 text-white px-4 flex items-center justify-between cursor-pointer lg:cursor-default"
                   >
-                    <div className="flex items-center gap-3">
-                      <HiChatAlt2 className="text-xl text-indigo-200" />
+                    <div className="flex items-center gap-2.5">
+                      <HiChatAlt2 className="text-lg text-indigo-200" />
                       <div>
-                        <h3 className="font-black text-[10px] uppercase tracking-widest">Tanya Kak Bintang</h3>
-                        <p className="text-[8px] font-bold text-indigo-200 uppercase tracking-tighter">Pakar Materi SD</p>
+                        <h3 className="font-bold text-xs">Tanya Kak Bintang</h3>
+                        <p className="text-[10px] text-indigo-200">Sahabat Belajar Inklusif</p>
                       </div>
                     </div>
                     <div className="lg:hidden">
-                      {isChatExpanded ? <HiChevronDown className="text-xl" /> : <HiChevronUp className="text-xl" />}
+                      {isChatExpanded ? <HiChevronDown className="text-lg" /> : <HiChevronUp className="text-lg" />}
                     </div>
                   </div>
 
                   <div className={`flex-1 min-h-0 overflow-hidden flex flex-col ${!isChatExpanded && 'hidden lg:flex'}`}>
-                    <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-6 custom-scrollbar bg-slate-50/50">
+                    <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-slate-50/50">
                       {chatMessages.map((msg, i) => (
                         <motion.div
                           key={i} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
                           className={`flex ${msg.role === 'ai' ? 'justify-start' : 'justify-end'}`}
                         >
                           <div className={`
-                            max-w-[88%] p-4 rounded-2xl font-bold text-xs leading-relaxed shadow-sm break-words overflow-hidden
-                            ${msg.role === 'ai' ? 'bg-white text-slate-700 border border-slate-100 rounded-tl-none' : 'bg-indigo-600 text-white rounded-tr-none'}
+                            max-w-[88%] p-3.5 rounded-2xl text-xs leading-relaxed shadow-xs break-words overflow-hidden
+                            ${msg.role === 'ai' ? 'bg-white text-slate-800 border border-slate-200/80 rounded-tl-none font-medium' : 'bg-indigo-600 text-white rounded-tr-none font-medium'}
                           `}>
                             {msg.role === 'ai' && (
-                              <span className="text-[9px] font-black text-indigo-600 uppercase tracking-wider block mb-1">
-                                🤖 [Kak Bintang AI]
+                              <span className="text-[10px] font-bold text-indigo-600 block mb-1">
+                                🤖 Kak Bintang AI
                               </span>
                             )}
-                            <div className="whitespace-pre-wrap break-words leading-relaxed">{msg.content}</div>
+                            <div className="whitespace-pre-wrap leading-relaxed">{msg.content}</div>
                             {msg.role === 'ai' && (
                               <button
                                 onClick={() => speak(msg.content, 1.0, true)}
                                 className="mt-2 text-[10px] font-bold text-indigo-600 flex items-center gap-1 hover:underline"
                               >
-                                <HiVolumeUp /> Dengarkan Suara
+                                <HiVolumeUp /> Dengarkan
                               </button>
                             )}
                           </div>
                         </motion.div>
                       ))}
-                      {isAsking && <div className="text-indigo-600 font-black text-[9px] animate-pulse px-2">Bintang sedang berpikir...</div>}
+                      {isAsking && <div className="text-indigo-600 font-bold text-xs animate-pulse px-2">Bintang sedang berpikir...</div>}
                       <div ref={chatEndRef} />
                     </div>
 
-                    <div className="p-4 bg-white border-t border-slate-100">
+                    <div className="p-3 bg-white border-t border-slate-100">
                       <form onSubmit={handleAskAI} className="flex gap-2">
                         <input
                           type="text" value={userQuestion} onChange={(e) => setUserQuestion(e.target.value)}
-                          placeholder="Tanyakan tentang materi ini..."
+                          placeholder="Tanyakan materi ini..."
                           onFocus={() => window.innerWidth < 1024 && setIsChatExpanded(true)}
-                          className="flex-1 px-5 py-3 bg-slate-100 border-none rounded-xl outline-none text-xs font-bold focus:ring-2 focus:ring-indigo-100 transition-all"
+                          className="flex-1 px-3.5 py-2 bg-slate-100 border border-slate-200/60 rounded-xl outline-none text-xs font-medium focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
                         />
                         <button
                           type="submit"
                           disabled={isAsking || !userQuestion.trim()}
-                          className="w-11 h-11 bg-indigo-600 text-white rounded-xl flex items-center justify-center shadow-lg active:scale-95 disabled:opacity-30"
+                          className="w-9 h-9 bg-indigo-600 text-white rounded-xl flex items-center justify-center shadow-sm active:scale-95 disabled:opacity-30"
                         >
-                          <HiPaperAirplane className="rotate-45" />
+                          <HiPaperAirplane className="text-xs rotate-45" />
                         </button>
                       </form>
                     </div>
@@ -615,23 +725,130 @@ const StudentModules = () => {
               </div>
             </div>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-10 text-center bg-white">
-              <div className="w-40 h-40 bg-indigo-50 rounded-full flex items-center justify-center mb-6">
-                <HiBookOpen className="text-7xl text-indigo-300" />
+            /* LIBRARY VIEW (WHEN NO MODULE IS SELECTED YET) */
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-8 bg-slate-50/50">
+              <div className="max-w-5xl mx-auto space-y-6">
+
+                {/* Header Banner */}
+                <div className="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-3xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden">
+                  <div className="relative z-10 max-w-xl space-y-2">
+                    <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-wider text-indigo-100 inline-block">
+                      Perpustakaan Inklusif SD
+                    </span>
+                    <h1 className="text-2xl sm:text-3xl font-bold leading-tight">
+                      Materi Belajar Interaktif
+                    </h1>
+                    <p className="text-xs sm:text-sm font-normal text-indigo-100/90 leading-relaxed">
+                      Pilih materi di bawah ini untuk membaca teks pelajaran, mendengarkan suara Kak Bintang, atau bertanya langsung seputar topik materi.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Filter & Search Bar */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+                  <div className="relative w-full sm:w-72">
+                    <HiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
+                    <input
+                      type="text"
+                      placeholder="Cari materi..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-9 pr-3 py-2 bg-slate-100 border border-slate-200/60 rounded-xl text-xs font-medium outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto no-scrollbar">
+                    {['Semua', 'IPA', 'Matematika', 'Bahasa Indonesia', 'PKn'].map((s) => {
+                      const isActive = selectedSubject === s;
+                      return (
+                        <button
+                          key={s}
+                          onClick={() => setSelectedSubject(s)}
+                          className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all shrink-0 border ${
+                            isActive
+                              ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                              : 'bg-white text-slate-600 border-slate-200/80 hover:bg-slate-50'
+                          }`}
+                        >
+                          {s}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Modules Grid */}
+                {loading ? (
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[1, 2, 3, 4, 5, 6].map(i => (
+                      <div key={i} className="h-44 bg-white rounded-2xl border border-slate-200/80 p-5 space-y-3 animate-pulse">
+                        <div className="w-10 h-10 bg-slate-100 rounded-xl" />
+                        <div className="h-4 bg-slate-100 rounded-lg w-3/4" />
+                        <div className="h-3 bg-slate-100 rounded-lg w-1/2" />
+                      </div>
+                    ))}
+                  </div>
+                ) : filteredModules.length === 0 ? (
+                  <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center space-y-3">
+                    <HiBookOpen className="text-5xl text-slate-300 mx-auto" />
+                    <h3 className="font-bold text-slate-700 text-base">Materi Belum Tersedia</h3>
+                    <p className="text-xs text-slate-400">Tidak ada materi yang cocok dengan pencarian atau mata pelajaran ini.</p>
+                  </div>
+                ) : (
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredModules.map((m) => (
+                      <motion.div
+                        key={m.id}
+                        whileHover={{ y: -3 }}
+                        onClick={() => selectModule(m)}
+                        className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between space-y-4 group"
+                      >
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="px-2.5 py-1 bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-bold rounded-lg uppercase tracking-wider">
+                              {m.subject || 'Umum'}
+                            </span>
+                            {m.pdf_url && (
+                              <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">
+                                PDF
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="font-bold text-slate-900 text-sm sm:text-base leading-snug group-hover:text-indigo-600 transition-colors line-clamp-2">
+                            {m.title}
+                          </h3>
+                          <p className="text-xs text-slate-500 font-normal line-clamp-2 leading-relaxed">
+                            {m.description || m.content || 'Klik untuk membaca materi dan mendengarkan suara Kak Bintang.'}
+                          </p>
+                        </div>
+
+                        <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-indigo-600">
+                          <span>Baca Materi</span>
+                          <HiChevronRight className="text-base group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+
               </div>
-              <h3 className="text-2xl font-black text-slate-800 uppercase mb-2">Belajar Lebih Seru</h3>
-              <p className="text-xs font-bold text-slate-400 max-w-[280px] uppercase tracking-widest leading-relaxed">Pilih modul di sebelah kiri untuk mulai membaca materi otomatis dan bertanya langsung ke Kak Bintang.</p>
             </div>
           )}
         </div>
       </main>
 
+      {/* KAMUS BAHASA ISYARAT MODAL */}
+      <KamusIsyaratModal isOpen={isKamusOpen} onClose={() => setIsKamusOpen(false)} />
+
       <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.2); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.4); }
       `}</style>
     </div>
   );
 };
 
 export default StudentModules;
+
