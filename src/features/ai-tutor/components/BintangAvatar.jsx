@@ -5,9 +5,9 @@ const BintangAvatar = ({ state = 'idle', size = 'md' }) => {
   // states: idle, thinking, happy, speaking
 
   const sizes = {
-    xs: 'w-8 h-8',
-    sm: 'w-12 h-12',
-    md: 'w-32 h-32',
+    xs: 'w-12 h-12',
+    sm: 'w-24 h-24',
+    md: 'w-36 h-36',
     lg: 'w-48 h-48',
     xl: 'w-64 h-64'
   };

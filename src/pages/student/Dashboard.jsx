@@ -150,13 +150,13 @@ const StudentDashboard = () => {
         <header className={`sticky top-0 z-[50] px-6 py-5 md:px-12 md:py-8 backdrop-blur-xl border-b ${isBlind ? 'bg-indigo-950/80 border-white/10' : 'bg-white/80 border-slate-100'} flex items-center justify-between`}>
           <div className="flex items-center gap-4 md:gap-6">
             <motion.div
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              className="relative cursor-pointer"
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.95 }}
+              className="relative cursor-pointer shrink-0"
             >
-              <BintangAvatar state={avatarState} size="sm" />
-              <div className="absolute -bottom-1 -right-1 bg-white p-1 rounded-full shadow-lg z-20">
-                <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse" />
+              <BintangAvatar state={avatarState} size={window.innerWidth < 768 ? "md" : "lg"} />
+              <div className="absolute bottom-1 right-1 bg-white p-1 rounded-full shadow-lg z-20">
+                <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse" />
               </div>
             </motion.div>
             <div>
