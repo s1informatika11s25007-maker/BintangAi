@@ -254,8 +254,8 @@ const TanyaAI = () => {
           </div>
         </header>
 
-        {/* MESSAGES AREA */}
-        <div className="flex-1 overflow-y-auto px-4 md:px-8 pt-16 pb-10 md:pt-24 md:pb-12 space-y-8 no-scrollbar bg-slate-50/30 relative">
+        {/* MESSAGES AREA - EXPANDED VERTICAL ROOM */}
+        <div className="flex-1 overflow-y-auto px-3 sm:px-6 md:px-8 py-4 sm:py-6 space-y-3 sm:space-y-4 no-scrollbar bg-slate-50/30 relative">
 
           <AnimatePresence initial={false}>
             {messages.map((msg, idx) => (
@@ -355,7 +355,7 @@ const TanyaAI = () => {
           initial={{ y: 100 }}
           animate={{ y: 0 }}
           transition={{ type: "spring", damping: 25, stiffness: 200 }}
-          className="p-3 sm:p-4 bg-white/95 backdrop-blur-xl border-t border-slate-100 relative z-30"
+          className="px-3 py-2 sm:px-4 sm:py-2.5 bg-white border-t border-slate-100 relative z-30 shrink-0"
         >
           {/* Animated Suggestions for Tunarungu/Tunawicara */}
           {(isDeaf || isMute) && messages.length < 3 && (
@@ -390,7 +390,7 @@ const TanyaAI = () => {
                    }
                  }}
                  placeholder="Ketik pesan..."
-                 className="w-full pl-4 pr-9 py-2.5 bg-slate-100 border-none rounded-xl text-xs sm:text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all resize-none min-h-[40px] max-h-[100px] custom-scrollbar"
+                 className="w-full pl-4 pr-9 py-2 bg-slate-100 border-none rounded-xl text-xs sm:text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all resize-none min-h-[38px] max-h-[90px] custom-scrollbar"
                  rows={1}
                />
                {input && (
@@ -408,19 +408,15 @@ const TanyaAI = () => {
               type="submit"
               disabled={!input.trim() || loading}
               className={`
-                w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center transition-all shadow-md shrink-0
+                w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all shadow-md shrink-0
                 ${!input.trim() || loading
                   ? 'bg-slate-100 text-slate-300 shadow-none'
                   : 'bg-indigo-600 text-white shadow-indigo-200 hover:scale-105 active:scale-95'}
               `}
             >
-              <HiPaperAirplane className={`text-lg ${input.trim() && !loading ? 'rotate-45 -translate-y-0.5 translate-x-0.5' : ''}`} />
+              <HiPaperAirplane className={`text-base ${input.trim() && !loading ? 'rotate-45 -translate-y-0.5 translate-x-0.5' : ''}`} />
             </button>
           </form>
-
-          <p className="text-center text-[7px] font-black text-slate-300 uppercase tracking-[0.2em] mt-1.5">
-            BintangAi dapat membuat kesalahan.
-          </p>
         </motion.div>
 
         {/* VOICE SETTINGS MODAL */}
