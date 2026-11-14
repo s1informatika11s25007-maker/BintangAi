@@ -23,14 +23,15 @@ export const useAccessibilityStore = create(
         }
 
         const mode = profile.disability_type;
-        set({
+        set((state) => ({
           mode,
           isVoiceActive: mode === 'tunanetra',
-          isSubtitleActive: mode === 'tunarungu' || mode === 'tunawicara', // 🎯 FIX: Active for tunarungu & tunawicara
-          isLiveCaptionActive: mode === 'tunarungu',                        // 🎯 Active for tunarungu
+          isSubtitleActive: mode === 'tunarungu' || mode === 'tunawicara',
+          // Preserve user's manual close state if explicitly set
+          isLiveCaptionActive: state.isLiveCaptionActive !== undefined ? state.isLiveCaptionActive : (mode === 'tunarungu'),
           isGestureActive: mode === 'tunawicara',
           profile
-        });
+        }));
 
         get().reapplyMode();
       },
@@ -110,6 +111,7 @@ export const useAccessibilityStore = create(
       name: 'bintangai-accessibility',
       partialize: (state) => ({
         mode: state.mode,
+        isLiveCaptionActive: state.isLiveCaptionActive,
         captionFontSize: state.captionFontSize,
         captionBgColor: state.captionBgColor,
         captionPosition: state.captionPosition

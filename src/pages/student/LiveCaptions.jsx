@@ -6,6 +6,7 @@ import { useAccessibilityStore } from '@/features/accessibility/store/accessibil
 import { HiMicrophone, HiStop, HiTrash, HiDocumentText, HiExclamation, HiEye } from 'react-icons/hi';
 
 const LiveCaptions = () => {
+  const { isLiveCaptionActive, setIsLiveCaptionActive } = useAccessibilityStore();
   const { transcribeAudio, loading: isTranscribing } = useAI();
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState([]);
