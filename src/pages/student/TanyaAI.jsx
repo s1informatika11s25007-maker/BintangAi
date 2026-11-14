@@ -213,11 +213,6 @@ const TanyaAI = () => {
         <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-50 rounded-full blur-[100px] pointer-events-none opacity-50" />
         <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-50 rounded-full blur-[100px] pointer-events-none opacity-50" />
 
-      <main className="flex-1 flex flex-col relative min-w-0 bg-white overflow-hidden rounded-none m-0 shadow-none border-0">
-        {/* Background Decorations */}
-        <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-50 rounded-full blur-[100px] pointer-events-none opacity-50" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-50 rounded-full blur-[100px] pointer-events-none opacity-50" />
-
         {/* MESSAGES AREA - FULL VERTICAL SCREEN HEIGHT (HEADER REMOVED) */}
         <div
           ref={chatContainerRef}
