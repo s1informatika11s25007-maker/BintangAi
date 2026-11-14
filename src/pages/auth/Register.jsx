@@ -33,7 +33,7 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [role, setRole] = useState('siswa');
-  const [disabilityType, setDisabilityType] = useState('tunanetra');
+  const [selectedDisabilities, setSelectedDisabilities] = useState(['tunanetra']);
   const [slbName, setSlbName] = useState('');
   const [classLevel, setClassLevel] = useState('4 SD');
   const [classCode, setClassCode] = useState('');
@@ -115,16 +115,29 @@ const Register = () => {
     speak(`Peran dipilih: ${names[newRole] || newRole}`, 1.0, true);
   };
 
-  const handleDisabilityChange = (type) => {
-    setDisabilityType(type);
+  const toggleDisability = (type) => {
+    let updated = [];
+    if (type === 'tidak_ada') {
+      updated = ['tidak_ada'];
+      speak('Mode Umum tanpa hambatan khusus dipilih.', 1.0, true);
+    } else {
+      const prevWithoutGeneral = selectedDisabilities.filter(d => d !== 'tidak_ada');
+      if (prevWithoutGeneral.includes(type)) {
+        updated = prevWithoutGeneral.filter(d => d !== type);
+        if (updated.length === 0) updated = ['tidak_ada'];
+      } else {
+        updated = [...prevWithoutGeneral, type];
+      }
 
-    const labels = {
-      tunanetra: 'Tunanetra, fitur suara audio dan kontras tinggi.',
-      tunarungu: 'Tunarungu, fitur teks visual dan subtitle.',
-      tunawicara: 'Tunawicara, fitur gambar dan isyarat cepat.',
-      tidak_ada: 'Mode Umum tanpa hambatan khusus.'
-    };
-    speak(labels[type] || 'Kebutuhan khusus dipilih.', 1.0, true);
+      const labels = {
+        tunanetra: 'Tunanetra (Audio & Kontras Tinggi)',
+        tunarungu: 'Tunarungu (Teks Visual & Subtitle)',
+        tunawicara: 'Tunawicara (Isyarat & Pilihan Cepat)'
+      };
+      const activeLabels = updated.map(u => labels[u] || u).join(', ');
+      speak(`Kebutuhan khusus dipilih: ${activeLabels}`, 1.0, true);
+    }
+    setSelectedDisabilities(updated);
   };
 
   const handleRegister = async (e) => {
@@ -146,6 +159,9 @@ const Register = () => {
       if (role === 'siswa') {
         if (!classLevel) throw new Error('Tingkat kelas siswa (1 SD–6 SD) wajib dipilih.');
         if (!finalClassCode) throw new Error('Kode kelas dari guru wajib diisi.');
+        if (!selectedDisabilities || selectedDisabilities.length === 0) {
+          throw new Error('Pilih minimal 1 kebutuhan belajar siswa.');
+        }
       }
 
       if (role === 'ortu') {
@@ -163,6 +179,8 @@ const Register = () => {
         if (!classLevel) throw new Error('Tingkat kelas yang diampu wajib dipilih.');
       }
 
+      const primaryDisability = selectedDisabilities.find(d => d !== 'tidak_ada') || selectedDisabilities[0] || 'tidak_ada';
+
       const { data, error } = await supabase.auth.signUp({
         email: email.toLowerCase().trim(),
         password,
@@ -170,7 +188,8 @@ const Register = () => {
           data: {
             full_name: fullName.trim(),
             role,
-            disability_type: disabilityType,
+            disabilities: selectedDisabilities,
+            disability_type: primaryDisability,
             slb_name: finalSlbName,
             class_level: finalClassLevel,
             class_code: finalClassCode,
@@ -502,21 +521,27 @@ const Register = () => {
                     </div>
                   </div>
 
-                  {/* Disability Type Selection (If Siswa) */}
+                  {/* Disability Type Selection (If Siswa - Multi Select Enabled) */}
                   {role === 'siswa' && (
                     <div className="space-y-3 pt-2">
-                      <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-700">
-                        Langkah 1B: Pilih Kebutuhan Belajar Siswa <span className="text-rose-500">*</span>
-                      </label>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                        <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-700">
+                          Langkah 1B: Pilih Kebutuhan Belajar Siswa <span className="text-rose-500">*</span>
+                        </label>
+                        <span className="text-[10px] font-black text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-200 uppercase tracking-wider self-start sm:self-auto">
+                          ✨ Bisa Pilih Lebih Dari Satu (Multi-Select)
+                        </span>
+                      </div>
+
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {disabilityOptions.map((dis) => {
-                          const isSelected = disabilityType === dis.id;
+                          const isSelected = selectedDisabilities.includes(dis.id);
                           return (
                             <button
                               key={dis.id}
                               type="button"
-                              onClick={() => handleDisabilityChange(dis.id)}
-                              className={`p-4 rounded-2xl border-2 text-left transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-4 ${
+                              onClick={() => toggleDisability(dis.id)}
+                              className={`p-4 rounded-2xl border-2 text-left transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-4 flex items-center justify-between gap-3 ${
                                 isSelected
                                   ? `${dis.color} shadow-lg ring-2 ring-indigo-500/20 scale-[1.01]`
                                   : 'border-slate-200 bg-white hover:border-indigo-200'
@@ -528,6 +553,11 @@ const Register = () => {
                                   <p className="text-sm font-black text-slate-900">{dis.label}</p>
                                   <p className="text-xs text-slate-600 font-semibold">{dis.desc}</p>
                                 </div>
+                              </div>
+                              <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center font-black text-xs shrink-0 transition-all ${
+                                isSelected ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm' : 'border-slate-300 bg-white'
+                              }`}>
+                                {isSelected ? '✓' : ''}
                               </div>
                             </button>
                           );

@@ -4,7 +4,11 @@ import { persist } from 'zustand/middleware';
 export const useAccessibilityStore = create(
   persist(
     (set, get) => ({
-      mode: null, // 'tunanetra', 'tunarungu', 'tunawicara' or null for 'tidak_ada' (Umum)
+      mode: null, // primary mode for legacy string compatibility
+      modes: [], // ['tunanetra', 'tunarungu', 'tunawicara'] for multi-disability
+      isBlind: false,
+      isDeaf: false,
+      isMute: false,
       isManualSelection: false,
       isVoiceActive: false,
       isSubtitleActive: false,
@@ -24,20 +28,34 @@ export const useAccessibilityStore = create(
           return;
         }
 
-        // Accessibility disability modes (blind-mode, deaf-mode, mute-mode) are strictly for 'siswa' role!
-        // For 'ortu' (parent) and 'guru' (teacher), mode is ALWAYS null (standard UI).
         const isSiswa = profile.role === 'siswa';
-        const mode = isSiswa && ['tunanetra', 'tunarungu', 'tunawicara'].includes(profile.disability_type)
-          ? profile.disability_type
-          : null;
+
+        let rawDisabilities = [];
+        if (Array.isArray(profile.disabilities) && profile.disabilities.length > 0) {
+          rawDisabilities = profile.disabilities;
+        } else if (profile.disability_type && profile.disability_type !== 'tidak_ada') {
+          rawDisabilities = [profile.disability_type];
+        }
+
+        const validTypes = ['tunanetra', 'tunarungu', 'tunawicara'];
+        const modes = isSiswa ? rawDisabilities.filter(d => validTypes.includes(d)) : [];
+
+        const isBlind = isSiswa && modes.includes('tunanetra');
+        const isDeaf = isSiswa && modes.includes('tunarungu');
+        const isMute = isSiswa && modes.includes('tunawicara');
+        const primaryMode = modes[0] || null;
 
         set((state) => ({
-          mode,
+          mode: primaryMode,
+          modes,
+          isBlind,
+          isDeaf,
+          isMute,
           isManualSelection: false,
-          isVoiceActive: isSiswa && mode === 'tunanetra',
-          isSubtitleActive: isSiswa && (mode === 'tunarungu' || mode === 'tunawicara'),
-          isLiveCaptionActive: isSiswa && (state.isLiveCaptionActive !== undefined ? state.isLiveCaptionActive : (mode === 'tunarungu')),
-          isGestureActive: isSiswa && mode === 'tunawicara',
+          isVoiceActive: isBlind,
+          isSubtitleActive: isDeaf || isMute,
+          isLiveCaptionActive: isSiswa && (state.isLiveCaptionActive !== undefined ? state.isLiveCaptionActive : isDeaf),
+          isGestureActive: isMute,
           profile
         }));
 
@@ -46,15 +64,22 @@ export const useAccessibilityStore = create(
 
       setManualMode: (newMode) => {
         const validModes = ['tunanetra', 'tunarungu', 'tunawicara'];
-        const mode = validModes.includes(newMode) ? newMode : null;
+        const modes = validModes.includes(newMode) ? [newMode] : [];
+        const isBlind = modes.includes('tunanetra');
+        const isDeaf = modes.includes('tunarungu');
+        const isMute = modes.includes('tunawicara');
 
         set(() => ({
-          mode,
+          mode: newMode || null,
+          modes,
+          isBlind,
+          isDeaf,
+          isMute,
           isManualSelection: true,
-          isVoiceActive: mode === 'tunanetra',
-          isSubtitleActive: mode === 'tunarungu' || mode === 'tunawicara',
-          isLiveCaptionActive: mode === 'tunarungu',
-          isGestureActive: mode === 'tunawicara'
+          isVoiceActive: isBlind,
+          isSubtitleActive: isDeaf || isMute,
+          isLiveCaptionActive: isDeaf,
+          isGestureActive: isMute
         }));
 
         get().reapplyMode();
@@ -71,33 +96,34 @@ export const useAccessibilityStore = create(
         }));
       },
 
-      // Reapply mode on page load and route changes
+      // Reapply modes on page load and route changes
       reapplyMode: (forceOff = false) => {
-        const { mode, profile, isManualSelection } = get();
+        const { modes = [], profile, isManualSelection, isBlind, isDeaf } = get();
         const root = document.documentElement;
         const isSiswa = profile?.role === 'siswa';
 
-        const shouldApply = mode && ((isSiswa && !forceOff) || isManualSelection);
+        const shouldApply = (modes.length > 0) && ((isSiswa && !forceOff) || isManualSelection);
 
         if (shouldApply) {
-          root.setAttribute('data-disability', mode);
+          root.setAttribute('data-disability', modes[0] || 'none');
+          root.setAttribute('data-disabilities', modes.join(','));
 
-          // Clear existing classes and add current mode class
           root.classList.remove('blind-mode', 'deaf-mode', 'mute-mode');
-          root.classList.add(`${mode}-mode`);
+          modes.forEach(m => root.classList.add(`${m}-mode`));
 
-          if (mode === 'tunanetra') {
+          if (isBlind) {
             root.style.fontSize = '125%';
-          } else if (mode === 'tunarungu') {
+          } else if (isDeaf) {
             root.style.fontSize = '115%';
           } else {
             root.style.fontSize = '100%';
           }
 
-          localStorage.setItem('bintangai-mode-simple', mode);
+          localStorage.setItem('bintangai-mode-simple', modes.join(','));
         } else {
           // Clear all accessibility visual effects & audio when forceOff is true or non-student role
           root.setAttribute('data-disability', 'none');
+          root.setAttribute('data-disabilities', 'none');
           root.classList.remove('blind-mode', 'deaf-mode', 'mute-mode');
           root.style.fontSize = '100%';
 

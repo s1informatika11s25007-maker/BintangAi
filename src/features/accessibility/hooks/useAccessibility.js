@@ -5,7 +5,7 @@ import { useAuthStore } from '../../auth/store/useAuthStore';
 
 export function useAccessibility() {
   const { profile: authProfile } = useAuthStore();
-  const { mode, isVoiceActive, isSubtitleActive, isGestureActive, setModeFromProfile, isManualSelection } = useAccessibilityStore();
+  const { mode, modes = [], isBlind: storeBlind, isDeaf: storeDeaf, isMute: storeMute, isVoiceActive, isSubtitleActive, isGestureActive, setModeFromProfile, isManualSelection } = useAccessibilityStore();
   const location = useLocation();
 
   useEffect(() => {
@@ -22,19 +22,22 @@ export function useAccessibility() {
     return publicPaths.includes(location.pathname) || location.pathname.startsWith('/auth/');
   }, [location.pathname]);
 
-  const effectiveMode = (isPublicPage && !isManualSelection) || (!isSiswa && !isManualSelection) ? null : mode;
+  const isDisabled = (isPublicPage && !isManualSelection) || (!isSiswa && !isManualSelection);
 
-  const isBlind = effectiveMode === 'tunanetra';
-  const isDeaf = effectiveMode === 'tunarungu';
-  const isMute = effectiveMode === 'tunawicara';
+  const effectiveMode = isDisabled ? null : mode;
+  const effectiveModes = isDisabled ? [] : modes;
+  const isBlind = isDisabled ? false : storeBlind;
+  const isDeaf = isDisabled ? false : storeDeaf;
+  const isMute = isDisabled ? false : storeMute;
 
   return {
     mode: effectiveMode,
+    modes: effectiveModes,
     isBlind,
     isDeaf,
     isMute,
-    isVoiceActive: effectiveMode === 'tunanetra' ? isVoiceActive : false,
-    isSubtitleActive: (effectiveMode === 'tunarungu' || effectiveMode === 'tunawicara') ? isSubtitleActive : false,
-    isGestureActive: effectiveMode === 'tunawicara' ? isGestureActive : false
+    isVoiceActive: isBlind ? isVoiceActive : false,
+    isSubtitleActive: (isDeaf || isMute) ? isSubtitleActive : false,
+    isGestureActive: isMute ? isGestureActive : false
   };
 }
