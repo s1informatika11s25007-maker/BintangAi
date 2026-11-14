@@ -617,15 +617,9 @@ const TeacherDashboard = () => {
             <motion.div initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.8 }} className="flex gap-4">
               <button
                 onClick={() => navigate('/teacher/upload')}
-                className="group px-8 py-4 bg-white text-slate-700 font-black text-xs uppercase tracking-widest rounded-2xl shadow-sm border border-slate-100 hover:bg-slate-50 hover:shadow-md transition-all flex items-center gap-3"
+                className="group px-8 py-4 bg-indigo-600 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-indigo-100 hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
               >
-                <HiPlus className="text-lg text-indigo-600 group-hover:rotate-90 transition-transform" /> Modul Baru
-              </button>
-              <button
-                onClick={() => navigate('/teacher/create-task')}
-                className="px-8 py-4 bg-indigo-600 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-indigo-100 hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
-              >
-                <HiLightningBolt className="text-lg" /> Buat QuizKu
+                <HiPlus className="text-lg text-white group-hover:rotate-90 transition-transform" /> Modul Baru
               </button>
             </motion.div>
           </header>
