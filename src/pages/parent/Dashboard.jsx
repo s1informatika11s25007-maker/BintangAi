@@ -43,51 +43,112 @@ const ParentDashboard = () => {
     }
   };
 
-  useEffect(() => {
-    if (profile?.linked_student_id) {
-      fetchChildData();
-      fetchReports();
+  const fetchChildSubmissions = async (targetStudentId) => {
+    const studentIdToFetch = targetStudentId || profile?.linked_student_id;
+    if (!studentIdToFetch) return;
 
-      const profileChannel = supabase
-        .channel(`child-profile-${profile.linked_student_id}`)
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${profile.linked_student_id}` },
-        (payload) => setChildData(payload.new))
-        .subscribe();
-
-      const submissionChannel = supabase
-        .channel(`child-submissions-${profile.linked_student_id}`)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'submissions', filter: `student_id=eq.${profile.linked_student_id}` },
-        () => fetchChildSubmissions())
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(profileChannel);
-        supabase.removeChannel(submissionChannel);
-      };
-    }
-  }, [profile?.linked_student_id]);
-
-  const fetchChildData = async () => {
-    setLoading(true);
     try {
-      const { data: student } = await supabase.from('profiles').select('*').eq('id', profile.linked_student_id).single();
-      if (student) setChildData(student);
-      await fetchChildSubmissions();
-    } catch (err) { console.error(err); } finally { setLoading(false); }
+      const { data: subs, error } = await supabase
+        .from('submissions')
+        .select('*, assignments(id, title, subject)')
+        .eq('student_id', studentIdToFetch)
+        .order('submitted_at', { ascending: false });
+
+      if (error) throw error;
+      setChildSubmissions(subs || []);
+    } catch (err) {
+      console.error("Error fetching child submissions:", err);
+    }
   };
 
-  const fetchChildSubmissions = async () => {
-    const { data: subs } = await supabase.from('submissions').select('*, assignments(title)').eq('student_id', profile.linked_student_id).order('submitted_at', { ascending: false });
-    if (subs) setChildSubmissions(subs);
-  };
+  const fetchReports = async (targetStudentId) => {
+    const studentIdToFetch = targetStudentId || profile?.linked_student_id;
+    if (!studentIdToFetch) return;
 
-  const fetchReports = async () => {
     setReportLoading(true);
     try {
-      const { data, error } = await supabase.from('student_reports').select('*, profiles!teacher_id(full_name)').eq('student_id', profile.linked_student_id).order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('student_reports')
+        .select('*, profiles!teacher_id(full_name)')
+        .eq('student_id', studentIdToFetch)
+        .order('created_at', { ascending: false });
+
       if (!error) setReportsList(data || []);
-    } catch (err) { console.error(err); } finally { setReportLoading(false); }
+    } catch (err) {
+      console.error("Error fetching child reports:", err);
+    } finally {
+      setReportLoading(false);
+    }
   };
+
+  const fetchChildData = async () => {
+    if (!profile?.id) return;
+    setLoading(true);
+    try {
+      let linkedStudentId = profile?.linked_student_id;
+
+      // Auto-resolve student if profile does not have linked_student_id set yet
+      if (!linkedStudentId && profile?.role === 'ortu') {
+        const { data: matchedStudent } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('role', 'siswa')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (matchedStudent) {
+          linkedStudentId = matchedStudent.id;
+          await supabase
+            .from('profiles')
+            .update({ linked_student_id: linkedStudentId })
+            .eq('id', profile.id);
+        }
+      }
+
+      if (linkedStudentId) {
+        const { data: student } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', linkedStudentId)
+          .maybeSingle();
+
+        if (student) setChildData(student);
+        await fetchChildSubmissions(linkedStudentId);
+        await fetchReports(linkedStudentId);
+      }
+    } catch (err) {
+      console.error("Error in fetchChildData:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (profile?.id) {
+      fetchChildData();
+
+      const activeStudentId = profile?.linked_student_id;
+      if (activeStudentId) {
+        const profileChannel = supabase
+          .channel(`child-profile-${activeStudentId}`)
+          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${activeStudentId}` },
+          (payload) => setChildData(payload.new))
+          .subscribe();
+
+        const submissionChannel = supabase
+          .channel(`child-submissions-${activeStudentId}`)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'submissions', filter: `student_id=eq.${activeStudentId}` },
+          () => fetchChildSubmissions(activeStudentId))
+          .subscribe();
+
+        return () => {
+          supabase.removeChannel(profileChannel);
+          supabase.removeChannel(submissionChannel);
+        };
+      }
+    }
+  }, [profile?.id, profile?.linked_student_id]);
 
   const handleDownloadPdf = () => window.print();
   const onTabChange = (tabId) => setSearchParams({ tab: tabId });
@@ -208,22 +269,32 @@ const ParentDashboard = () => {
                       <h3 className="text-xl font-bold text-slate-900">Nilai Quiz Terbaru</h3>
                       <button onClick={() => onTabChange('history')} className="text-sm font-bold text-indigo-600 hover:text-indigo-800 underline">Lihat Semua</button>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {childSubmissions.slice(0, 3).map((sub) => (
-                        <div key={sub.id} className="p-8 bg-white rounded-[2rem] border border-slate-200 shadow-sm hover:border-indigo-300 transition-all">
-                           <h4 className="font-bold text-slate-800 text-lg leading-snug h-14 line-clamp-2">{sub.assignments?.title}</h4>
-                           <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-50">
-                              <div>
-                                <p className="text-xs font-bold text-slate-500 uppercase mb-1">Skor</p>
-                                <p className="text-4xl font-black text-slate-900">{sub.total_score || 0}</p>
-                              </div>
-                              <span className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider ${sub.total_score >= 70 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                                {sub.total_score >= 70 ? 'Berhasil' : 'Remedi'}
-                              </span>
-                           </div>
-                        </div>
-                      ))}
-                    </div>
+                    {childSubmissions.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {childSubmissions.slice(0, 3).map((sub) => {
+                          const scoreVal = sub.total_score ?? sub.score ?? 0;
+                          const title = sub.assignments?.title || 'QuizKu Pilihan';
+                          return (
+                            <div key={sub.id} className="p-8 bg-white rounded-[2rem] border border-slate-200 shadow-sm hover:border-indigo-300 transition-all">
+                               <h4 className="font-bold text-slate-800 text-lg leading-snug h-14 line-clamp-2">{title}</h4>
+                               <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-50">
+                                  <div>
+                                    <p className="text-xs font-bold text-slate-500 uppercase mb-1">Skor Akhir</p>
+                                    <p className="text-4xl font-black text-slate-900">{scoreVal}</p>
+                                  </div>
+                                  <span className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider ${scoreVal >= 70 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                    {scoreVal >= 70 ? 'Berhasil ✅' : 'Tinjauan'}
+                                  </span>
+                               </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="p-10 bg-white rounded-[2rem] border-2 border-dashed border-slate-200 text-center text-slate-400 font-bold text-xs uppercase tracking-widest">
+                        Belum Ada Hasil QuizKu Dari Anak
+                      </div>
+                    )}
                  </section>
               </motion.div>
             )}
@@ -274,15 +345,27 @@ const ParentDashboard = () => {
                         </tr>
                      </thead>
                      <tbody className="divide-y divide-slate-50">
-                        {childSubmissions.map(sub => (
-                          <tr key={sub.id} className="hover:bg-indigo-50/30 transition-colors">
-                             <td className="px-8 py-6 font-bold text-slate-800 text-base">{sub.assignments?.title}</td>
-                             <td className="px-8 py-6 text-center font-black text-2xl text-slate-900">{sub.total_score}</td>
-                             <td className="px-8 py-6 text-right text-sm font-bold text-slate-500">
-                               {new Date(sub.submitted_at).toLocaleDateString('id-ID')}
-                             </td>
+                        {childSubmissions.length > 0 ? (
+                          childSubmissions.map(sub => {
+                            const scoreVal = sub.total_score ?? sub.score ?? 0;
+                            const title = sub.assignments?.title || 'QuizKu Pilihan';
+                            return (
+                              <tr key={sub.id} className="hover:bg-indigo-50/30 transition-colors">
+                                 <td className="px-8 py-6 font-bold text-slate-800 text-base">{title}</td>
+                                 <td className="px-8 py-6 text-center font-black text-2xl text-slate-900">{scoreVal}</td>
+                                 <td className="px-8 py-6 text-right text-sm font-bold text-slate-500">
+                                   {sub.submitted_at ? new Date(sub.submitted_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}
+                                 </td>
+                              </tr>
+                            );
+                          })
+                        ) : (
+                          <tr>
+                            <td colSpan="3" className="px-8 py-12 text-center text-slate-400 font-bold text-xs uppercase tracking-widest">
+                              Belum Ada Riwayat QuizKu
+                            </td>
                           </tr>
-                        ))}
+                        )}
                      </tbody>
                   </table>
                 </div>
