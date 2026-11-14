@@ -10,9 +10,8 @@ import StudentSidebar from '@/components/layout/StudentSidebar';
 import VoiceSettingsPanel from '@/features/accessibility/components/VoiceSettingsPanel';
 import BintangAvatar from '@/features/ai-tutor/components/BintangAvatar';
 import {
-  HiPaperAirplane, HiAcademicCap, HiTrash, HiPlus,
-  HiDotsVertical, HiUser, HiChatAlt2, HiChevronLeft,
-  HiVolumeUp, HiX
+  HiPaperAirplane, HiTrash, HiUser,
+  HiChevronLeft, HiVolumeUp, HiX, HiArrowDown
 } from 'react-icons/hi';
 import { useNavigate } from 'react-router-dom';
 
@@ -25,10 +24,15 @@ const TanyaAI = () => {
 
   const [input, setInput] = useState('');
   const [showVoiceSettingsModal, setShowVoiceSettingsModal] = useState(false);
+  const [isScrolledUp, setIsScrolledUp] = useState(false);
+
+  const firstName = getCleanFirstName(profile?.full_name) || 'Teman';
+
   const [messages, setMessages] = useState([
     {
+      id: 'welcome-init',
       role: 'ai',
-      content: `Halo ${profile?.full_name?.split(' ')[0] || 'Teman'}! 👋 Aku Kak Bintang. Ada yang bisa aku bantu hari ini?`,
+      content: `Halo ${firstName}! 👋 Aku Kak Bintang. Ada yang bisa aku bantu hari ini?`,
       timestamp: new Date()
     }
   ]);
@@ -36,17 +40,24 @@ const TanyaAI = () => {
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToBottom = (smooth = true) => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: smooth ? 'smooth' : 'auto'
+      });
+    }
   };
 
-  useEffect(() => {
-    if (messages.length > 0) {
-      scrollToBottom();
-    }
-  }, [messages.length]);
+  const handleScroll = () => {
+    if (!chatContainerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
+    // Consider scrolled up if more than 120px away from bottom
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+    setIsScrolledUp(distanceFromBottom > 120);
+  };
 
-  // Restore chat history on page refresh
+  // Restore chat history on page load
   useEffect(() => {
     if (!profile?.id) return;
 
@@ -62,23 +73,26 @@ const TanyaAI = () => {
         if (!error && data && data.length > 0) {
           const formatted = [
             {
+              id: 'welcome-init',
               role: 'ai',
-              content: `Halo ${getCleanFirstName(profile?.full_name) || 'Teman'}! 👋 Aku Kak Bintang. Ada yang bisa aku bantu hari ini?`,
+              content: `Halo ${firstName}! 👋 Aku Kak Bintang. Ada yang bisa aku bantu hari ini?`,
               timestamp: data[0].created_at ? new Date(data[0].created_at) : new Date()
             }
           ];
 
-          data.forEach(item => {
+          data.forEach((item, index) => {
             const itemTime = item.created_at ? new Date(item.created_at) : new Date();
 
             if (item.question) {
               formatted.push({
+                id: `hist-user-${item.id || index}`,
                 role: 'user',
                 content: item.question,
                 timestamp: itemTime
               });
             } else if (item.role === 'user' && item.content) {
               formatted.push({
+                id: `hist-user-${item.id || index}`,
                 role: 'user',
                 content: item.content,
                 timestamp: itemTime
@@ -87,12 +101,14 @@ const TanyaAI = () => {
 
             if (item.answer) {
               formatted.push({
+                id: `hist-ai-${item.id || index}`,
                 role: 'ai',
                 content: item.answer,
                 timestamp: itemTime
               });
-            } else if (item.role === 'assistant' && item.content) {
+            } else if ((item.role === 'assistant' || item.role === 'ai') && item.content) {
               formatted.push({
+                id: `hist-ai-${item.id || index}`,
                 role: 'ai',
                 content: item.content,
                 timestamp: itemTime
@@ -101,6 +117,11 @@ const TanyaAI = () => {
           });
 
           setMessages(formatted);
+
+          // Scroll to bottom once after history loads
+          setTimeout(() => {
+            scrollToBottom(false);
+          }, 150);
         }
       } catch (err) {
         console.warn("Error restoring chat history:", err);
@@ -108,7 +129,7 @@ const TanyaAI = () => {
     };
 
     fetchHistory();
-  }, [profile?.id]);
+  }, [profile?.id, firstName]);
 
   const handleSend = async (e) => {
     if (e) e.preventDefault();
@@ -117,11 +138,15 @@ const TanyaAI = () => {
     const userMessage = input.trim();
     setInput('');
 
-    setMessages(prev => [...prev, {
+    const userMsgObj = {
+      id: `user-${Date.now()}`,
       role: 'user',
       content: userMessage,
       timestamp: new Date()
-    }]);
+    };
+
+    setMessages(prev => [...prev, userMsgObj]);
+    setTimeout(() => scrollToBottom(true), 50);
 
     let aiMessageAdded = false;
 
@@ -133,12 +158,15 @@ const TanyaAI = () => {
       if (response && response.answer) {
         aiMessageAdded = true;
         setMessages(prev => [...prev, {
+          id: `ai-${Date.now()}`,
           role: 'ai',
           content: response.answer,
           timestamp: new Date()
         }]);
 
-        // Permanently record Q&A interaction in student_ai_chat_history for Teacher Monitoring (isolated try-catch)
+        setTimeout(() => scrollToBottom(true), 50);
+
+        // Permanently record Q&A interaction in student_ai_chat_history
         if (profile?.id) {
           try {
             await supabase.from('student_ai_chat_history').insert({
@@ -157,7 +185,6 @@ const TanyaAI = () => {
           }
         }
 
-        // Speak response out loud using user's voice speed, volume, and voice selection
         try {
           speak(response.answer);
         } catch (speakErr) {
@@ -167,21 +194,25 @@ const TanyaAI = () => {
         aiMessageAdded = true;
         const errorMsg = "Halo! Kak Bintang siap membantu. Coba tanyakan lagi ya! 😊";
         setMessages(prev => [...prev, {
+          id: `ai-err-${Date.now()}`,
           role: 'ai',
           content: errorMsg,
           timestamp: new Date()
         }]);
+        setTimeout(() => scrollToBottom(true), 50);
       }
     } catch (err) {
       console.error("handleSend Error:", err);
       if (!aiMessageAdded) {
         aiMessageAdded = true;
-        const failMsg = `Halo ${profile?.full_name ? profile.full_name.split(' ')[0] : 'Teman'}! Kak Bintang selalu siap membantumu belajar. Mari tanyakan lagi ya! 😊`;
+        const failMsg = `Halo ${firstName}! Kak Bintang selalu siap membantumu belajar. Mari tanyakan lagi ya! 😊`;
         setMessages(prev => [...prev, {
+          id: `ai-fail-${Date.now()}`,
           role: 'ai',
           content: failMsg,
           timestamp: new Date()
         }]);
+        setTimeout(() => scrollToBottom(true), 50);
       }
     }
   };
@@ -197,76 +228,120 @@ const TanyaAI = () => {
     }
     setMessages([
       {
+        id: `welcome-cleared-${Date.now()}`,
         role: 'ai',
-        content: `Halo ${getCleanFirstName(profile?.full_name) || 'Teman'}! 👋 Chat sudah dibersihkan. Ada lagi yang mau ditanyakan?`,
+        content: `Halo ${firstName}! 👋 Chat sudah dibersihkan. Ada lagi yang mau ditanyakan?`,
         timestamp: new Date()
       }
     ]);
   };
 
   return (
-    <div className="h-screen max-h-screen flex bg-white font-sans overflow-hidden">
+    <div className="h-screen max-h-screen flex bg-slate-50 font-sans overflow-hidden">
       <StudentSidebar />
 
-      <main className="flex-1 flex flex-col relative min-w-0 bg-white overflow-hidden rounded-none m-0 shadow-none border-0">
-        {/* Background Decorations */}
-        <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-50 rounded-full blur-[100px] pointer-events-none opacity-50" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-50 rounded-full blur-[100px] pointer-events-none opacity-50" />
+      <main className="flex-1 flex flex-col relative min-w-0 bg-white overflow-hidden shadow-none border-0">
+        {/* TOP HEADER BAR */}
+        <header className="h-16 px-4 sm:px-6 bg-white border-b border-slate-100 flex items-center justify-between z-20 shrink-0 shadow-sm">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/student/dashboard')}
+              className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl lg:hidden transition-all"
+              title="Kembali ke Beranda"
+            >
+              <HiChevronLeft className="text-xl" />
+            </button>
 
-        {/* MESSAGES AREA - FULL VERTICAL SCREEN HEIGHT (HEADER REMOVED) */}
+            <div className="flex items-center gap-3">
+              <div className="relative flex items-center justify-center">
+                <BintangAvatar
+                  size="xs"
+                  state={loading ? 'thinking' : isSpeaking ? 'speaking' : 'idle'}
+                />
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full" />
+              </div>
+              <div>
+                <h1 className="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-1.5 leading-tight">
+                  <span>Kak Bintang</span>
+                  <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase rounded-full tracking-wider border border-indigo-100 hidden sm:inline-block">
+                    AI Tutor
+                  </span>
+                </h1>
+                <p className="text-[11px] font-medium text-slate-400">
+                  {loading ? 'Sedang berpikir...' : isSpeaking ? 'Sedang berbicara...' : 'Online • Sahabat Belajar Inklusif'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowVoiceSettingsModal(true)}
+              className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-bold transition-all border border-indigo-100 flex items-center gap-1.5"
+              title="Pengaturan Suara"
+            >
+              <HiVolumeUp className="text-base text-indigo-600" />
+              <span className="hidden sm:inline">Suara Kak Bintang</span>
+            </button>
+
+            <button
+              onClick={clearChat}
+              className="p-2 sm:px-3 sm:py-1.5 bg-slate-50 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-xl text-xs font-bold transition-all border border-slate-200/60 hover:border-rose-100 flex items-center gap-1.5"
+              title="Bersihkan Percakapan Chat"
+            >
+              <HiTrash className="text-base" />
+              <span className="hidden sm:inline">Bersihkan</span>
+            </button>
+          </div>
+        </header>
+
+        {/* MESSAGES AREA */}
         <div
           ref={chatContainerRef}
-          className="flex-1 overflow-y-auto scroll-smooth custom-scrollbar overscroll-contain touch-pan-y px-3 sm:px-6 md:px-8 py-4 sm:py-6 space-y-3 sm:space-y-4 bg-slate-50/30 relative"
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto custom-scrollbar px-3 sm:px-6 md:px-8 py-4 sm:py-6 space-y-4 bg-slate-50/50 relative"
         >
           <AnimatePresence initial={false}>
-            {messages.map((msg, idx) => (
+            {messages.map((msg) => (
               <motion.div
-                key={idx}
-                initial={{ opacity: 0, y: 30, scale: 0.9 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{
-                  type: "spring",
-                  damping: 20,
-                  stiffness: 100,
-                  delay: idx === 0 ? 0.2 : 0
-                }}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} w-full items-end gap-2 md:gap-4`}
+                key={msg.id}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} w-full items-end gap-2.5 sm:gap-3`}
               >
                 {msg.role === 'ai' && (
-                  <motion.div
-                    whileHover={{ scale: 1.1, rotate: 10 }}
-                    className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white shrink-0 mb-1 hidden md:flex shadow-lg shadow-indigo-100"
-                  >
-                    <HiAcademicCap className="text-sm" />
-                  </motion.div>
+                  <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white shrink-0 mb-1 shadow-sm">
+                    <BintangAvatar size="xs" state="idle" />
+                  </div>
                 )}
 
                 <div className={`
-                  max-w-[90%] md:max-w-[75%] p-4 md:p-6 rounded-[2.2rem] shadow-sm relative group transition-all hover:shadow-md
+                  max-w-[88%] sm:max-w-[78%] md:max-w-[70%] p-3.5 sm:p-5 rounded-2xl shadow-sm relative transition-all
                   ${msg.role === 'user'
-                    ? 'bg-gradient-to-br from-indigo-600 to-violet-700 text-white rounded-br-none'
-                    : 'bg-white text-slate-700 border border-slate-100 rounded-bl-none'}
+                    ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-br-none'
+                    : 'bg-white text-slate-800 border border-slate-200/80 rounded-bl-none'}
                 `}>
-                  <p className="text-[14px] md:text-base font-medium leading-relaxed whitespace-pre-wrap tracking-tight">
+                  <p className="text-xs sm:text-sm font-medium leading-relaxed whitespace-pre-wrap tracking-normal">
                     {msg.content}
                   </p>
                   <div className={`
-                    flex items-center gap-2 mt-3
+                    flex items-center gap-2 mt-2.5
                     ${msg.role === 'user' ? 'justify-end' : 'justify-between'}
                   `}>
                     {msg.role === 'ai' && (
                       <button
                         onClick={() => speak(msg.content, 1.0, true)}
-                        className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded-lg flex items-center gap-1 transition-all border border-indigo-100"
+                        className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded-lg flex items-center gap-1 transition-all border border-indigo-100"
                         title="Dengarkan / Ulangi Suara"
                       >
                         <HiVolumeUp className="text-xs text-indigo-600" />
-                        <span>Dengarkan / Ulangi</span>
+                        <span>Dengarkan</span>
                       </button>
                     )}
 
                     <span className={`
-                      text-[9px] md:text-[10px] font-black uppercase tracking-[0.15em] opacity-40
+                      text-[9px] sm:text-[10px] font-bold uppercase tracking-wider opacity-50
                       ${msg.role === 'user' ? 'text-indigo-100' : 'text-slate-400'}
                     `}>
                       {(() => {
@@ -282,8 +357,8 @@ const TanyaAI = () => {
                 </div>
 
                 {msg.role === 'user' && (
-                  <div className="w-8 h-8 rounded-xl bg-slate-200 flex items-center justify-center text-slate-500 shrink-0 mb-1 hidden md:flex">
-                    <HiUser className="text-xs" />
+                  <div className="w-8 h-8 rounded-xl bg-slate-200 flex items-center justify-center text-slate-600 shrink-0 mb-1 font-bold text-xs">
+                    {profile?.full_name?.[0]?.toUpperCase() || <HiUser className="text-sm" />}
                   </div>
                 )}
               </motion.div>
@@ -292,172 +367,151 @@ const TanyaAI = () => {
 
           {loading && (
             <motion.div
-              initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
               className="flex justify-start items-center gap-3"
             >
-               <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white hidden md:flex animate-bounce">
-                  <HiAcademicCap className="text-sm" />
-               </div>
-               <div className="bg-white border border-slate-100 p-4 rounded-[1.5rem] rounded-bl-none shadow-sm flex items-center gap-3">
-                  <div className="flex gap-1">
-                    <motion.span animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 0.8 }} className="w-2 h-2 bg-indigo-500 rounded-full" />
-                    <motion.span animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 0.8, delay: 0.2 }} className="w-2 h-2 bg-indigo-500 rounded-full" />
-                    <motion.span animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 0.8, delay: 0.4 }} className="w-2 h-2 bg-indigo-500 rounded-full" />
-                  </div>
-                  <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest animate-pulse">Bintang sedang mengetik...</span>
-               </div>
+              <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white shrink-0">
+                <BintangAvatar size="xs" state="thinking" />
+              </div>
+              <div className="bg-white border border-slate-200/80 px-4 py-3 rounded-2xl rounded-bl-none shadow-sm flex items-center gap-3">
+                <div className="flex gap-1">
+                  <motion.span animate={{ scale: [1, 1.4, 1], opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 0.8 }} className="w-2 h-2 bg-indigo-500 rounded-full" />
+                  <motion.span animate={{ scale: [1, 1.4, 1], opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 0.8, delay: 0.2 }} className="w-2 h-2 bg-indigo-500 rounded-full" />
+                  <motion.span animate={{ scale: [1, 1.4, 1], opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 0.8, delay: 0.4 }} className="w-2 h-2 bg-indigo-500 rounded-full" />
+                </div>
+                <span className="text-xs font-bold text-indigo-600">Kak Bintang sedang mengetik...</span>
+              </div>
             </motion.div>
           )}
+
           <div ref={messagesEndRef} />
         </div>
 
-        {/* INPUT AREA WITH INTEGRATED ACTION BUTTONS */}
-        <motion.div
-          initial={{ y: 100 }}
-          animate={{ y: 0 }}
-          transition={{ type: "spring", damping: 25, stiffness: 200 }}
-          className="px-3 py-2.5 sm:px-4 sm:py-3 bg-white border-t border-slate-100 relative z-30 shrink-0"
-        >
-          {/* Animated Suggestions for Tunarungu/Tunawicara */}
+        {/* FLOATING SCROLL TO BOTTOM BUTTON */}
+        <AnimatePresence>
+          {isScrolledUp && (
+            <motion.button
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              onClick={() => scrollToBottom(true)}
+              className="absolute bottom-20 right-6 z-30 px-3.5 py-2 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 transition-all text-xs font-bold flex items-center gap-2 border border-indigo-400/30"
+            >
+              <HiArrowDown className="text-sm" />
+              <span>Pesan Terbaru</span>
+            </motion.button>
+          )}
+        </AnimatePresence>
+
+        {/* INPUT AREA */}
+        <div className="p-3 sm:p-4 bg-white border-t border-slate-100 relative z-20 shrink-0">
           {(isDeaf || isMute) && messages.length < 3 && (
-            <div className="absolute -top-10 left-0 right-0 flex gap-2 px-4 overflow-x-auto no-scrollbar pb-1">
-               {["Bantu aku belajar", "Apa itu BintangAi?", "Cara kerjakan tugas"].map((text, i) => (
-                 <motion.button
-                   key={i}
-                   initial={{ opacity: 0, x: 20 }}
-                   animate={{ opacity: 1, x: 0 }}
-                   transition={{ delay: 0.5 + (i * 0.1) }}
-                   onClick={() => setInput(text)}
-                   className="whitespace-nowrap px-3 py-1 bg-white/95 border border-indigo-100 text-indigo-600 text-[9px] font-black uppercase tracking-wider rounded-full shadow-sm hover:bg-indigo-50 transition-all"
-                 >
-                   {text}
-                 </motion.button>
-               ))}
+            <div className="mb-2 flex gap-2 overflow-x-auto no-scrollbar">
+              {["Bantu aku belajar", "Apa itu BintangAi?", "Cara kerjakan tugas"].map((text, i) => (
+                <button
+                  key={i}
+                  onClick={() => setInput(text)}
+                  className="whitespace-nowrap px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-full hover:bg-indigo-100 transition-all border border-indigo-100"
+                >
+                  {text}
+                </button>
+              ))}
             </div>
           )}
 
           <form
             onSubmit={handleSend}
-            className="relative flex items-center gap-1.5 sm:gap-2 max-w-4xl mx-auto w-full"
+            className="relative flex items-center gap-2 max-w-4xl mx-auto w-full"
           >
-            {/* Back Button on Mobile */}
-            <button
-              type="button"
-              onClick={() => navigate('/student/dashboard')}
-              className="p-2 sm:p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl lg:hidden shrink-0 transition-all"
-              title="Kembali ke Beranda"
-            >
-              <HiChevronLeft className="text-lg sm:text-xl" />
-            </button>
-
-            {/* Clear Chat Button */}
-            <button
-              type="button"
-              onClick={clearChat}
-              className="p-2 sm:p-2.5 bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-xl transition-all border border-rose-100 shrink-0"
-              title="Bersihkan Percakapan Chat"
-            >
-              <HiTrash className="text-base sm:text-lg" />
-            </button>
-
-            {/* Quick Voice Settings Button */}
-            <button
-              type="button"
-              onClick={() => setShowVoiceSettingsModal(true)}
-              className="p-2 sm:p-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl border border-indigo-100/80 transition-all shrink-0"
-              title="Pengaturan Suara"
-            >
-              <HiVolumeUp className="text-base sm:text-lg text-indigo-600" />
-            </button>
-
-            {/* Input Textarea */}
-            <div className="flex-1 relative">
-               <textarea
-                 value={input}
-                 onChange={(e) => setInput(e.target.value)}
-                 onKeyDown={(e) => {
-                   if (e.key === 'Enter' && !e.shiftKey) {
-                     e.preventDefault();
-                     handleSend();
-                   }
-                 }}
-                 placeholder="Tanya Bintang sesuatu..."
-                 className="w-full pl-3.5 pr-8 py-2 bg-slate-100 border-none rounded-xl text-xs sm:text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all resize-none min-h-[38px] max-h-[90px] custom-scrollbar"
-                 rows={1}
-               />
-               {input && (
-                 <button
-                   type="button"
-                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600"
-                   onClick={() => setInput('')}
-                 >
-                   <HiTrash className="text-xs" />
-                 </button>
-               )}
+            <div className="flex-1 relative flex items-center">
+              <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+                placeholder="Tanyakan sesuatu pada Kak Bintang..."
+                className="w-full pl-4 pr-10 py-2.5 bg-slate-100 border border-slate-200/60 rounded-xl text-xs sm:text-sm font-medium focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all resize-none min-h-[42px] max-h-[100px] custom-scrollbar"
+                rows={1}
+              />
+              {input && (
+                <button
+                  type="button"
+                  className="absolute right-3 text-slate-400 hover:text-slate-600"
+                  onClick={() => setInput('')}
+                >
+                  <HiX className="text-sm" />
+                </button>
+              )}
             </div>
 
-            {/* Send Button */}
             <button
               type="submit"
               disabled={!input.trim() || loading}
               className={`
-                w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all shadow-md shrink-0
+                h-10 px-4 rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-md shrink-0 text-xs font-bold
                 ${!input.trim() || loading
-                  ? 'bg-slate-100 text-slate-300 shadow-none'
-                  : 'bg-indigo-600 text-white shadow-indigo-200 hover:scale-105 active:scale-95'}
+                  ? 'bg-slate-100 text-slate-400 shadow-none cursor-not-allowed border border-slate-200/50'
+                  : 'bg-indigo-600 text-white shadow-indigo-200 hover:bg-indigo-700 active:scale-95'}
               `}
             >
-              <HiPaperAirplane className={`text-base ${input.trim() && !loading ? 'rotate-45 -translate-y-0.5 translate-x-0.5' : ''}`} />
+              <span>Kirim</span>
+              <HiPaperAirplane className={`text-sm ${input.trim() && !loading ? 'rotate-45 -translate-y-0.5' : ''}`} />
             </button>
           </form>
-        </motion.div>
-
-        {/* VOICE SETTINGS MODAL */}
-        <AnimatePresence>
-          {showVoiceSettingsModal && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100 max-h-[90vh] flex flex-col"
-              >
-                <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-xl shadow-md">
-                      <HiVolumeUp />
-                    </div>
-                    <div>
-                      <h3 className="font-black text-slate-800 text-base">Pengaturan Suara Kak Bintang</h3>
-                      <p className="text-xs font-medium text-slate-500">Sesuaikan kecepatan, volume & pengulangan suara</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setShowVoiceSettingsModal(false)}
-                    className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-200/50 transition-all"
-                  >
-                    <HiX className="text-xl" />
-                  </button>
-                </div>
-
-                <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
-                  <VoiceSettingsPanel compact={false} />
-                </div>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
+        </div>
 
       </main>
+
+      {/* VOICE SETTINGS MODAL */}
+      <AnimatePresence>
+        {showVoiceSettingsModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden border border-slate-100 max-h-[90vh] flex flex-col"
+            >
+              <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-xl shadow-md">
+                    <HiVolumeUp />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-800 text-sm sm:text-base">Pengaturan Suara Kak Bintang</h3>
+                    <p className="text-xs text-slate-500">Sesuaikan kecepatan, volume & pengulangan suara</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowVoiceSettingsModal(false)}
+                  className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-200/50 transition-all"
+                >
+                  <HiX className="text-xl" />
+                </button>
+              </div>
+
+              <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+                <VoiceSettingsPanel compact={false} />
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.25); border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.5); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.2); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.4); }
       `}</style>
     </div>
   );
 };
 
 export default TanyaAI;
+
