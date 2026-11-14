@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { getCleanFirstName } from '@/utils';
 import StudentSidebar from '@/components/layout/StudentSidebar';
 import VoiceSettingsPanel from '@/features/accessibility/components/VoiceSettingsPanel';
+import BintangAvatar from '@/features/ai-tutor/components/BintangAvatar';
 import {
   HiPaperAirplane, HiAcademicCap, HiTrash, HiPlus,
   HiDotsVertical, HiUser, HiChatAlt2, HiChevronLeft,
