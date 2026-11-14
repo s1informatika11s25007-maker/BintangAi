@@ -147,7 +147,7 @@ const StudentDashboard = () => {
         <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col justify-between">
 
         {/* TOP STATUS BAR */}
-        <header className={`sticky top-0 z-[50] px-6 py-4 md:px-10 md:py-5 backdrop-blur-xl border-b ${isBlind ? 'bg-indigo-950/80 border-white/10' : 'bg-white/80 border-slate-100'} flex items-center justify-between`}>
+        <header className={`sticky top-0 z-[50] px-6 py-2.5 md:px-10 md:py-3 backdrop-blur-xl border-b ${isBlind ? 'bg-indigo-950/80 border-white/10' : 'bg-white/80 border-slate-100'} flex items-center justify-between`}>
           <div className="flex items-center gap-4 md:gap-6">
             <motion.div
               whileHover={{ scale: 1.08 }}
