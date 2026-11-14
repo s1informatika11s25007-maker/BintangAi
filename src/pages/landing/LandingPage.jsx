@@ -243,10 +243,7 @@ const LandingPage = () => {
 
           <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 sm:px-8 py-12 sm:py-20 lg:grid-cols-12">
             <motion.div {...fadeInVariants} className="lg:col-span-7 space-y-6">
-              <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-white/90 px-3 py-1 text-xs font-bold text-indigo-700 shadow-2xs">
-                <div className="w-6 h-6 flex items-center justify-center shrink-0">
-                  <BintangAvatar size="xs" />
-                </div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-white/90 px-3.5 py-1.5 text-xs font-bold text-indigo-700 shadow-2xs">
                 Ruang Belajar Jarak Jauh SD Inklusif
               </div>
 
@@ -263,14 +260,14 @@ const LandingPage = () => {
                 <button
                   type="button"
                   onClick={() => go('/auth/register')}
-                  className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-6 py-3.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-indigo-200 hover:bg-indigo-700 active:scale-95 transition-all"
+                  className="inline-flex items-center justify-center min-h-[44px] rounded-xl bg-indigo-600 px-6 py-3.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-indigo-200 hover:bg-indigo-700 active:scale-95 transition-all w-full sm:w-auto"
                 >
                   Mulai Belajar Di Rumah 🚀
                 </button>
                 <button
                   type="button"
                   onClick={() => go('/auth/login')}
-                  className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-6 py-3.5 text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all"
+                  className="inline-flex items-center justify-center min-h-[44px] rounded-xl border border-slate-200 bg-white px-6 py-3.5 text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all w-full sm:w-auto"
                 >
                   Masuk / Akun Demo
                 </button>
@@ -286,19 +283,19 @@ const LandingPage = () => {
             {/* CARD INTERAKSI BELAJAR DARI RUMAH (INTERACTION DEMO CARD) */}
             <motion.div {...fadeInVariants} className="lg:col-span-5 relative">
               <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-xl space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 flex items-center justify-center shrink-0">
-                      <BintangAvatar size="xs" />
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center shrink-0">
+                      <BintangAvatar size="sm" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-slate-800 text-xs sm:text-sm">Interaksi Belajar Dari Rumah</h3>
-                      <p className="text-[10px] text-indigo-600 font-bold flex items-center gap-1">
-                        <HiHome /> Belajar Mandiri SD
+                      <h3 className="font-bold text-slate-900 text-xs sm:text-sm md:text-base">Interaksi Belajar Dari Rumah</h3>
+                      <p className="text-[10px] sm:text-xs text-indigo-600 font-bold flex items-center gap-1 mt-0.5">
+                        <HiHome className="text-xs" /> Belajar Mandiri SD
                       </p>
                     </div>
                   </div>
-                  <span className="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-bold">
+                  <span className="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full text-[10px] sm:text-xs font-bold shrink-0">
                     SD Kelas 1-6
                   </span>
                 </div>
