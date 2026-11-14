@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import TeacherSidebar from '@/components/layout/TeacherSidebar';
-import { HiCheck, HiX, HiUserAdd, HiChatAlt2, HiTrash, HiLockClosed, HiLockOpen, HiUsers, HiUserGroup, HiAcademicCap, HiSearch, HiBell } from 'react-icons/hi';
+import { HiCheck, HiX, HiUserAdd, HiUserRemove, HiLogout, HiChatAlt2, HiTrash, HiLockClosed, HiLockOpen, HiUsers, HiUserGroup, HiAcademicCap, HiSearch, HiBell } from 'react-icons/hi';
 
 const TeacherCollaboration = () => {
   const { profile } = useAuthStore();
@@ -145,7 +145,7 @@ const TeacherCollaboration = () => {
       description: `Apakah Anda yakin ingin mengeluarkan ${studentName ? `"${studentName}"` : 'siswa ini'} dari kelompok belajar "${selectedGroup?.name}"?`,
       confirmText: 'Keluarkan Siswa',
       type: 'danger',
-      icon: '🚪',
+      icon: <HiUserRemove className="text-3xl text-rose-500" />,
       onConfirm: async () => {
         const { error } = await supabase.from('group_members').delete().eq('id', memberId);
         if (!error) {
@@ -246,10 +246,10 @@ const TeacherCollaboration = () => {
 
                           <button
                             onClick={() => handleRemoveMember(m.id, m.student_id, m.profiles?.full_name)}
-                            className="px-3 py-1.5 bg-rose-50 hover:bg-rose-500 hover:text-white text-rose-600 text-[10px] font-bold rounded-xl border border-rose-100 transition-all shrink-0 flex items-center gap-1"
+                            className="px-3 py-1.5 bg-rose-50 hover:bg-rose-500 hover:text-white text-rose-600 text-[10px] font-bold rounded-xl border border-rose-100 transition-all shrink-0 flex items-center gap-1.5"
                             title="Keluarkan Siswa dari Grup"
                           >
-                            🚪 Keluarkan
+                            <HiUserRemove className="text-sm" /> Keluarkan
                           </button>
                         </div>
                       ))}

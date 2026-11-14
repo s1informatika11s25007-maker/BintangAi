@@ -10,7 +10,7 @@ import {
   HiChartBar, HiUsers, HiBookOpen, HiBell,
   HiAcademicCap, HiChevronRight, HiCheckCircle, HiExclamation,
   HiTrash, HiExternalLink, HiPlus, HiArrowLeft,
-  HiDocumentReport, HiClock, HiLightningBolt, HiSearch, HiX, HiRefresh
+  HiDocumentReport, HiClock, HiLightningBolt, HiSearch, HiX, HiRefresh, HiLogout, HiChatAlt2
 } from 'react-icons/hi';
 
 const TeacherDashboard = () => {
@@ -1268,17 +1268,17 @@ const TeacherDashboard = () => {
                               <div className="flex items-center justify-end gap-2">
                                 <button
                                   onClick={() => setChatModal({ show: true, student: s, text: '' })}
-                                  className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-[10px] font-bold rounded-xl border border-indigo-100 transition-all flex items-center gap-1"
+                                  className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-[10px] font-bold rounded-xl border border-indigo-100 transition-all flex items-center gap-1.5"
                                   title="Kirim Pesan ke Siswa"
                                 >
-                                  💬 Pesan
+                                  <HiChatAlt2 className="text-xs" /> Pesan
                                 </button>
                                 <button
                                   onClick={() => handleForceLogoutStudent(s)}
-                                  className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-[10px] font-bold rounded-xl border border-rose-100 transition-all flex items-center gap-1"
+                                  className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-[10px] font-bold rounded-xl border border-rose-100 transition-all flex items-center gap-1.5"
                                   title="Logout / Keluarkan Siswa"
                                 >
-                                  🚪 Logout
+                                  <HiLogout className="text-xs" /> Logout
                                 </button>
                               </div>
                             </td>
