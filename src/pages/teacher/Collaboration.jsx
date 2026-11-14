@@ -138,6 +138,24 @@ const TeacherCollaboration = () => {
     });
   };
 
+  const handleRemoveMember = (memberId, studentId, studentName = '') => {
+    setConfirmModal({
+      show: true,
+      title: 'Keluarkan Siswa dari Kelompok?',
+      description: `Apakah Anda yakin ingin mengeluarkan ${studentName ? `"${studentName}"` : 'siswa ini'} dari kelompok belajar "${selectedGroup?.name}"?`,
+      confirmText: 'Keluarkan Siswa',
+      type: 'danger',
+      icon: '🚪',
+      onConfirm: async () => {
+        const { error } = await supabase.from('group_members').delete().eq('id', memberId);
+        if (!error) {
+          setMembers(prev => prev.filter(m => m.id !== memberId));
+          fetchGroups();
+        }
+      }
+    });
+  };
+
   const toggleChat = async () => {
     const newVal = !selectedGroup.is_chat_disabled;
     await supabase.from('study_groups').update({ is_chat_disabled: newVal }).eq('id', selectedGroup.id);
@@ -210,14 +228,29 @@ const TeacherCollaboration = () => {
                     <button onClick={handleDeleteGroup} className="py-5 bg-slate-900 text-white rounded-[2rem] font-black text-[9px] uppercase tracking-widest">Hapus Grup</button>
                   </div>
                   <div>
-                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8">Anggota ({members.length})</h3>
-                    <div className="space-y-6">
+                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Anggota ({members.length})</h3>
+                    <div className="space-y-3">
                       {members.map(m => (
-                        <div key={m.id} className="flex items-center justify-between group">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-xs font-black uppercase text-slate-400">{m.profiles?.full_name[0]}</div>
-                            <div><p className="text-xs font-black text-slate-800">{m.profiles?.full_name}</p><p className="text-[8px] text-slate-400 font-black uppercase">{m.profiles?.disability_type || 'Umum'}</p></div>
+                        <div key={m.id} className="flex items-center justify-between p-3 bg-slate-50/70 hover:bg-slate-50 rounded-2xl border border-slate-100/60 transition-all group">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center text-xs font-black uppercase shrink-0 shadow-sm">
+                              {m.profiles?.full_name?.[0] || 'S'}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-xs font-black text-slate-800 truncate">{m.profiles?.full_name}</p>
+                              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">
+                                {m.profiles?.disability_type || 'Umum'}
+                              </span>
+                            </div>
                           </div>
+
+                          <button
+                            onClick={() => handleRemoveMember(m.id, m.student_id, m.profiles?.full_name)}
+                            className="px-3 py-1.5 bg-rose-50 hover:bg-rose-500 hover:text-white text-rose-600 text-[10px] font-bold rounded-xl border border-rose-100 transition-all shrink-0 flex items-center gap-1"
+                            title="Keluarkan Siswa dari Grup"
+                          >
+                            🚪 Keluarkan
+                          </button>
                         </div>
                       ))}
                     </div>
