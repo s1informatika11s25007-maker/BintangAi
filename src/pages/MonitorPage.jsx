@@ -333,6 +333,38 @@ const MonitorPage = () => {
           </div>
         </div>
 
+        {/* TOP PAGINATION & LOG SUMMARY BAR (PLACED DIRECTLY ABOVE TABLE FOR FAST NAV) */}
+        {filteredLogs.length > 0 && (
+          <div className="bg-white px-6 py-4 rounded-3xl border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold text-slate-600">
+            <p className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              Menampilkan <span className="text-slate-900 font-black">{(currentPage - 1) * itemsPerPage + 1}</span> - <span className="text-slate-900 font-black">{Math.min(currentPage * itemsPerPage, filteredLogs.length)}</span> dari <span className="text-indigo-600 font-black">{filteredLogs.length}</span> Log Aktivitas
+            </p>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="px-3.5 py-2 bg-slate-50 text-slate-700 rounded-xl border border-slate-200 hover:bg-indigo-600 hover:text-white disabled:opacity-30 transition-all flex items-center gap-1 shadow-xs"
+              >
+                <HiChevronLeft /> Sebelumnya
+              </button>
+
+              <div className="px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-xl text-center min-w-[70px]">
+                <span className="text-indigo-600 font-black">{currentPage}</span> / <span className="text-slate-500 font-bold">{totalPages}</span>
+              </div>
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3.5 py-2 bg-slate-50 text-slate-700 rounded-xl border border-slate-200 hover:bg-indigo-600 hover:text-white disabled:opacity-30 transition-all flex items-center gap-1 shadow-xs"
+              >
+                Berikutnya <HiChevronRight />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Real-time Activity Table */}
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
           <div className="overflow-x-auto">
