@@ -12,9 +12,9 @@ import { globalCaptionBus } from '@/features/accessibility/components/MataPintar
 import KamusIsyaratModal from '@/features/accessibility/components/KamusIsyaratModal';
 import {
   HiBookOpen, HiSearch, HiChatAlt2,
-  HiX, HiPaperAirplane, HiMenuAlt2, HiLightBulb, HiChevronRight,
+  HiX, HiPaperAirplane, HiLightBulb, HiChevronRight,
   HiExternalLink, HiChevronDown, HiChevronUp,
-  HiChevronLeft, HiVolumeUp, HiPause, HiPlay, HiRefresh,
+  HiVolumeUp, HiPause, HiPlay, HiRefresh,
   HiChevronDoubleRight, HiChevronDoubleLeft, HiArrowLeft, HiTranslate
 } from 'react-icons/hi';
 
@@ -32,7 +32,6 @@ const StudentModules = () => {
   const [selectedModule, setSelectedModule] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // Kamus Bahasa Isyarat Modal State
   const [isKamusOpen, setIsKamusOpen] = useState(false);
@@ -56,24 +55,11 @@ const StudentModules = () => {
 
   const chatEndRef = useRef(null);
 
-  // SMART PAGINATION & SUBJECT FILTER
+  // SUBJECT FILTER & SEARCH
   const [selectedSubject, setSelectedSubject] = useState('Semua');
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = isMute ? 6 : 50;
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, selectedSubject]);
 
   useEffect(() => {
     fetchModules();
-    const handleResize = () => {
-      if (window.innerWidth < 1024) setIsSidebarOpen(false);
-      else setIsSidebarOpen(true);
-    };
-    window.addEventListener('resize', handleResize);
-    handleResize();
-    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {
@@ -210,7 +196,6 @@ const StudentModules = () => {
     }
 
     if (window.innerWidth < 1024) {
-      setIsSidebarOpen(false);
       setIsChatExpanded(false);
     }
   };
@@ -220,9 +205,6 @@ const StudentModules = () => {
     stopSpeaking();
     setIsPlayingAudio(false);
     setIsAudioPaused(false);
-    if (window.innerWidth < 1024) {
-      setIsSidebarOpen(false);
-    }
   };
 
   const handleAskAI = async (e) => {
@@ -282,24 +264,6 @@ const StudentModules = () => {
     [modules, searchQuery, selectedSubject]
   );
 
-  const totalPages = Math.ceil(filteredModules.length / itemsPerPage);
-  const currentModules = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredModules.slice(start, start + itemsPerPage);
-  }, [filteredModules, currentPage, itemsPerPage]);
-
-  const nextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(prev => prev + 1);
-    }
-  };
-
-  const prevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(prev => prev - 1);
-    }
-  };
-
   return (
     <div
       className="h-screen bg-slate-50 flex font-sans overflow-hidden text-slate-800"
@@ -308,116 +272,6 @@ const StudentModules = () => {
       <StudentSidebar />
 
       <main className="flex-1 flex flex-col min-w-0 relative overflow-hidden bg-white">
-        {/* SIDEBAR MATERI (DRAWER FOR MOBILE / SIDEBAR FOR DESKTOP) */}
-        <AnimatePresence>
-          {isSidebarOpen && (
-            <motion.div
-              initial={{ x: -340 }} animate={{ x: 0 }} exit={{ x: -340 }}
-              className="absolute lg:relative inset-y-0 left-0 w-[290px] sm:w-[320px] bg-white border-r border-slate-200 flex flex-col shrink-0 z-[110] shadow-xl lg:shadow-none"
-            >
-              <div className="p-5 space-y-3 pb-2 border-b border-slate-100">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
-                    <HiBookOpen className="text-indigo-600 text-lg" /> Modul Belajar
-                  </h2>
-                  <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-2 text-slate-400 hover:text-slate-600">
-                    <HiX className="text-lg" />
-                  </button>
-                </div>
-                <div className="relative">
-                  <HiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
-                  <input
-                    type="text" placeholder="Cari judul materi..." value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 bg-slate-100 border border-slate-200/60 rounded-xl text-xs font-medium outline-none focus:bg-white focus:border-indigo-400 transition-all"
-                  />
-                </div>
-              </div>
-
-              {/* Subject Filter Pills */}
-              <div className="p-3 flex gap-1.5 overflow-x-auto no-scrollbar border-b border-slate-100">
-                {['Semua', 'IPA', 'Matematika', 'Bahasa Indonesia', 'PKn'].map((s) => {
-                  const label = s === 'Bahasa Indonesia' ? 'Indo' : s === 'Matematika' ? 'MTK' : s;
-                  const isActive = selectedSubject === s || (s === 'Bahasa Indonesia' && selectedSubject === 'Bahasa Indonesia');
-                  return (
-                    <button
-                      key={s}
-                      onClick={() => setSelectedSubject(s)}
-                      className={`px-3 py-1 text-xs font-bold rounded-lg transition-all shrink-0 border ${
-                        isActive
-                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                          : 'bg-slate-50 text-slate-600 border-slate-200/60 hover:bg-slate-100'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {totalPages > 1 && (
-                <div className="px-4 py-2 flex items-center justify-between border-b border-slate-100 bg-indigo-50/40">
-                   <button
-                     onClick={prevPage}
-                     disabled={currentPage === 1}
-                     data-gesture-prev="true"
-                     className="p-1.5 bg-white rounded-lg border border-slate-200 text-indigo-600 disabled:opacity-30"
-                     title="Halaman Sebelumnya"
-                   >
-                     <HiChevronLeft />
-                   </button>
-                   <span className="text-xs font-bold text-indigo-700">
-                     Hal {currentPage} dari {totalPages}
-                   </span>
-                   <button
-                     onClick={nextPage}
-                     disabled={currentPage === totalPages}
-                     data-gesture-next="true"
-                     className="p-1.5 bg-white rounded-lg border border-slate-200 text-indigo-600 disabled:opacity-30"
-                     title="Halaman Berikutnya"
-                   >
-                     <HiChevronRight />
-                   </button>
-                </div>
-              )}
-
-              <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2 custom-scrollbar">
-                {currentModules.length === 0 && !loading && (
-                  <p className="text-center text-xs text-slate-400 font-medium py-10">Materi tidak ditemukan</p>
-                )}
-                {currentModules.map((m) => (
-                   <button
-                    key={m.id}
-                    data-gesture-item="true"
-                    onClick={() => selectModule(m)}
-                    tabIndex={0}
-                    aria-label={`Materi ${m.title}, Pelajaran ${m.subject || 'Umum'}`}
-                    className={`w-full p-3.5 text-left rounded-xl border transition-all flex items-center gap-3 outline-none focus:ring-2 focus:ring-indigo-500/30 ${
-                      selectedModule?.id === m.id
-                        ? 'bg-indigo-600 border-indigo-600 text-white shadow-md'
-                        : 'bg-white border-slate-200/80 text-slate-700 hover:bg-slate-50'
-                    }`}
-                   >
-                     <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-base shrink-0 ${
-                       selectedModule?.id === m.id ? 'bg-white/20' : 'bg-indigo-50 text-indigo-600'
-                     }`}>
-                        📖
-                     </div>
-                     <div className="min-w-0 flex-1">
-                        <p className="font-bold text-xs truncate leading-snug">{m.title}</p>
-                        <span className={`text-[10px] font-bold uppercase tracking-wider block mt-0.5 ${
-                          selectedModule?.id === m.id ? 'text-indigo-100' : 'text-slate-400'
-                        }`}>
-                          {m.subject || 'Umum'}
-                        </span>
-                     </div>
-                   </button>
-                 ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         {/* AREA UTAMA READING VIEW / LIBRARY VIEW */}
         <div className="flex-1 flex flex-col min-w-0 relative overflow-hidden bg-white">
           {selectedModule ? (
@@ -428,19 +282,11 @@ const StudentModules = () => {
                 <div className="flex items-center gap-2.5 min-w-0">
                   <button
                     onClick={closeModule}
-                    className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all flex items-center gap-1 text-xs font-bold"
-                    title="Kembali ke Daftar Materi"
+                    className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all flex items-center gap-1.5 text-xs font-bold shrink-0"
+                    title="Kembali ke Perpustakaan Materi"
                   >
                     <HiArrowLeft className="text-base" />
-                    <span className="hidden sm:inline">Daftar Materi</span>
-                  </button>
-
-                  <button
-                    onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                    className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all hidden lg:flex"
-                    title="Buka/Tutup Sidebar"
-                  >
-                    <HiMenuAlt2 className="text-base" />
+                    <span>Daftar Materi</span>
                   </button>
 
                   <div className="min-w-0">
@@ -725,7 +571,7 @@ const StudentModules = () => {
               </div>
             </div>
           ) : (
-            /* LIBRARY VIEW (WHEN NO MODULE IS SELECTED YET) */
+            /* LIBRARY VIEW (PERPUSTAKAAN INKLUSIF SD) */
             <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-8 bg-slate-50/50">
               <div className="max-w-5xl mx-auto space-y-6">
 
@@ -851,4 +697,3 @@ const StudentModules = () => {
 };
 
 export default StudentModules;
-
