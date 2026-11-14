@@ -146,50 +146,57 @@ const StudentDashboard = () => {
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
         <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col justify-between">
 
-        {/* TOP STATUS BAR */}
-        <header className={`sticky top-0 z-[50] px-6 py-2.5 md:px-10 md:py-3 backdrop-blur-xl border-b ${isBlind ? 'bg-indigo-950/80 border-white/10' : 'bg-white/80 border-slate-100'} flex items-center justify-between`}>
-          <div className="flex items-center gap-4 md:gap-6">
-            <motion.div
-              whileHover={{ scale: 1.08 }}
-              whileTap={{ scale: 0.95 }}
-              className="relative cursor-pointer shrink-0"
-            >
-              <BintangAvatar state={avatarState} size="sm" />
-              <div className="absolute -bottom-1 -right-1 bg-white p-1 rounded-full shadow-lg z-20">
-                <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse" />
-              </div>
-            </motion.div>
-            <div>
-              <p className={`font-black text-[9px] md:text-[10px] uppercase tracking-[0.3em] mb-1 ${isBlind ? 'text-indigo-400' : 'text-indigo-600'}`}>
-                {greeting}
-              </p>
-              <h1 className={`text-2xl md:text-4xl font-black tracking-tighter truncate max-w-[180px] md:max-w-none`}>
-                {getCleanFirstName(profile?.full_name)} <span className={isBlind ? 'text-indigo-400' : 'text-indigo-600'}>.</span>
-              </h1>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className={`flex items-center gap-3 ${isBlind ? 'bg-white/10 border-white/20' : 'bg-white border-slate-50 shadow-xl shadow-indigo-100/20'} px-5 py-3 rounded-2xl border`}
-            >
-              <HiAcademicCap className="text-amber-500 text-xl md:text-2xl" />
-              <div className="text-right">
-                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Poin XP</p>
-                <p className={`text-sm md:text-lg font-black leading-none mt-1`}>{profile?.xp || 0}</p>
-              </div>
-            </motion.div>
-          </div>
-        </header>
-
         {/* CONTENT GRID */}
-        <div className="p-6 md:p-12 lg:p-16 max-w-7xl mx-auto">
+        <div className="p-6 md:p-12 lg:p-14 max-w-7xl mx-auto w-full space-y-8">
           <motion.div
             variants={containerVariants}
             initial="hidden" animate="visible"
-            className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-10"
+            className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8"
           >
+            {/* HERO BINTANG LOGO & WELCOME BANNER (4X LARGER BINTANG STAR AVATAR) */}
+            <motion.section
+              variants={itemVariants}
+              className={`lg:col-span-12 p-8 md:p-10 rounded-[2.5rem] md:rounded-[3.5rem] shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8 ${
+                isBlind ? 'bg-indigo-950 border border-white/10 text-white' : 'bg-white border border-slate-100 text-slate-800'
+              }`}
+            >
+              <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full -mr-20 -mt-20 blur-[120px] pointer-events-none" />
+
+              {/* 4X LARGER ANIMATED BLUE BINTANG AVATAR */}
+              <div className="flex items-center gap-6 md:gap-10 relative z-10 min-w-0">
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  onClick={() => navigate('/student/tanya-ai')}
+                  className="cursor-pointer shrink-0"
+                  title="Tanya Kak Bintang AI"
+                >
+                  <BintangAvatar state={avatarState} size="lg" />
+                </motion.div>
+
+                <div className="space-y-2 min-w-0">
+                  <span className="px-3.5 py-1.5 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-indigo-100 inline-block">
+                    {greeting} 👋
+                  </span>
+                  <h2 className="text-3xl md:text-5xl font-black tracking-tight leading-tight truncate">
+                    {getCleanFirstName(profile?.full_name)} <span className="text-indigo-600">.</span>
+                  </h2>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                    Kelas: {profile?.class_level || 'SD'} • Kode: {profile?.class_code || 'DEMO01'}
+                  </p>
+                </div>
+              </div>
+
+              {/* XP BADGE & STATUS */}
+              <div className="flex items-center gap-4 bg-slate-50 px-6 py-4 rounded-3xl border border-slate-100 shrink-0 relative z-10">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center text-2xl shadow-md shadow-amber-200">
+                  <HiAcademicCap />
+                </div>
+                <div>
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Poin XP Kamu</p>
+                  <p className="text-xl font-black text-slate-900 leading-none mt-1">{profile?.xp || 0} XP</p>
+                </div>
+              </div>
+            </motion.section>
 
             {/* HERO SECTION - Progress & Level */}
             <motion.section
