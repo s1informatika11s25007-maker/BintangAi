@@ -8,6 +8,7 @@ import XPBar from '@/features/gamification/components/XPBar';
 import StreakBadge from '@/features/gamification/components/StreakBadge';
 import ParentSidebar from '@/components/layout/ParentSidebar';
 import Footer from '@/components/layout/Footer';
+import { HiSparkles } from 'react-icons/hi';
 
 const ParentDashboard = () => {
   const { profile } = useAuthStore();
@@ -130,7 +131,9 @@ const ParentDashboard = () => {
 
                  <section className="bg-slate-900 p-10 rounded-[2.5rem] text-white relative overflow-hidden">
                     <div className="relative z-10 flex flex-col md:flex-row gap-8 items-center">
-                       <div className="w-16 h-16 bg-indigo-500 rounded-2xl flex items-center justify-center text-3xl shrink-0">🤖</div>
+                       <div className="w-16 h-16 bg-indigo-500 rounded-2xl flex items-center justify-center text-3xl shrink-0">
+                         <HiSparkles className="text-3xl text-white" />
+                       </div>
                        <div>
                           <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-[0.2em] mb-2">Analisis Sistem BintangAi</h4>
                           <p className="text-xl font-medium leading-relaxed italic text-indigo-50">

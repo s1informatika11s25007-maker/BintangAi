@@ -10,7 +10,7 @@ import {
   HiChartBar, HiUsers, HiBookOpen, HiBell,
   HiAcademicCap, HiChevronRight, HiCheckCircle, HiExclamation,
   HiTrash, HiExternalLink, HiPlus, HiArrowLeft,
-  HiDocumentReport, HiClock, HiLightningBolt, HiSearch, HiX, HiRefresh, HiLogout, HiChatAlt2
+  HiDocumentReport, HiClock, HiLightningBolt, HiSearch, HiX, HiRefresh, HiLogout, HiChatAlt2, HiSparkles
 } from 'react-icons/hi';
 
 const TeacherDashboard = () => {
@@ -576,7 +576,9 @@ const TeacherDashboard = () => {
                 {/* AI INSIGHT CARD */}
                 <motion.section variants={itemVariants} className="bg-slate-900 p-10 md:p-14 rounded-[3.5rem] text-white relative overflow-hidden group shadow-2xl shadow-indigo-100/20">
                     <div className="relative z-10 flex flex-col md:flex-row gap-10 items-center">
-                       <div className="w-24 h-24 bg-white/10 rounded-[2rem] flex items-center justify-center text-5xl shadow-inner border border-white/5 group-hover:rotate-12 transition-transform duration-700">🤖</div>
+                       <div className="w-24 h-24 bg-white/10 rounded-[2rem] flex items-center justify-center text-4xl shadow-inner border border-white/5 group-hover:rotate-12 transition-transform duration-700">
+                         <HiSparkles className="text-4xl text-indigo-300" />
+                       </div>
                        <div className="flex-1">
                           <div className="flex items-center gap-3 mb-4">
                             <span className="px-3 py-1 bg-indigo-500 text-[9px] font-black uppercase tracking-[0.2em] rounded-full">AI Insight</span>
