@@ -74,10 +74,10 @@ export const TeacherSidebar = ({ activeTab, onTabChange }) => {
 
   return (
     <aside className="w-64 bg-white border-r border-slate-100 flex flex-col sticky top-0 h-screen shrink-0 z-40 hidden lg:flex">
-      <div className="flex flex-col h-full px-6 py-10">
+      <div className="flex flex-col h-full justify-between px-6 pt-8 pb-5">
         {/* Logo */}
         <div
-          className="flex items-center gap-2 px-3 mb-12 cursor-pointer transition-transform active:scale-95"
+          className="flex items-center gap-2 px-3 mb-8 cursor-pointer transition-transform active:scale-95"
           onClick={() => navigate('/')}
         >
           <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">B</div>
@@ -85,9 +85,9 @@ export const TeacherSidebar = ({ activeTab, onTabChange }) => {
         </div>
 
         {/* Menu Section */}
-        <div className="flex-1 space-y-8">
+        <div className="flex-1 space-y-6">
           <div>
-            <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4">Dashboard Guru</p>
+            <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3">Dashboard Guru</p>
             <div className="space-y-1">
               {menuItems.map((item) => {
                 const isActive = location.pathname === '/teacher/dashboard' && activeTab === item.id;
@@ -95,7 +95,7 @@ export const TeacherSidebar = ({ activeTab, onTabChange }) => {
                   <button
                     key={item.id}
                     onClick={() => handleItemClick(item)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-200 group relative ${
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all duration-200 group relative ${
                       isActive
                         ? 'text-indigo-600 font-bold'
                         : 'text-slate-500 font-medium hover:text-slate-900 hover:bg-slate-50'
@@ -119,11 +119,11 @@ export const TeacherSidebar = ({ activeTab, onTabChange }) => {
           </div>
 
           <div>
-            <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4">Komunikasi</p>
+            <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3">Komunikasi</p>
             <div className="space-y-1">
               <button
                 onClick={() => navigate('/teacher/chat')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-200 group relative ${
+                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all duration-200 group relative ${
                   isChatActive
                     ? 'text-indigo-600 font-bold'
                     : 'text-slate-500 font-medium hover:text-slate-900 hover:bg-slate-50'
@@ -146,7 +146,7 @@ export const TeacherSidebar = ({ activeTab, onTabChange }) => {
 
               <button
                 onClick={() => navigate('/teacher/collaboration')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-200 group relative ${
+                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all duration-200 group relative ${
                   isCollabActive
                     ? 'text-indigo-600 font-bold'
                     : 'text-slate-500 font-medium hover:text-slate-900 hover:bg-slate-50'
@@ -171,7 +171,7 @@ export const TeacherSidebar = ({ activeTab, onTabChange }) => {
         </div>
 
         {/* Profile */}
-        <div className="pt-8 border-t border-slate-50">
+        <div className="pt-4 border-t border-slate-100">
           <button
             onClick={() => navigate('/profile')}
             className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 transition-all group"

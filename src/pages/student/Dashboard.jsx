@@ -139,15 +139,15 @@ const StudentDashboard = () => {
   };
 
   return (
-    <div className={`min-h-screen flex font-sans relative ${isBlind ? 'bg-[#0F172A] text-white' : 'bg-[#F8FAFC] text-slate-800'}`}>
+    <div className={`w-full min-h-screen flex font-sans relative ${isBlind ? 'bg-[#0F172A] text-white' : 'bg-[#F8FAFC] text-slate-800'}`}>
       <ConfettiEffect active={showConfetti} />
       <StudentSidebar />
 
-      <main className="flex-1 flex flex-col min-h-full relative overflow-hidden">
-        <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col justify-between">
+      <main className="flex-1 flex flex-col min-w-0 relative">
+        <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col justify-start">
 
         {/* CONTENT GRID - FULLY RESPONSIVE FOR ANDROID & ALL DEVICES */}
-        <div className="px-4 py-4 sm:px-6 md:px-8 lg:px-12 max-w-7xl mx-auto w-full space-y-5 sm:space-y-6">
+        <div className="px-4 pt-4 pb-8 sm:px-6 md:px-8 lg:px-10 max-w-7xl mx-auto w-full space-y-5 sm:space-y-6">
           <motion.div
             variants={containerVariants}
             initial="hidden" animate="visible"
