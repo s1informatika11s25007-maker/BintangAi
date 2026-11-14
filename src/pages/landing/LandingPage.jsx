@@ -2,14 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useReducedMotion, useScroll, useSpring, AnimatePresence } from 'framer-motion';
 import Footer from '@/components/layout/Footer';
-import BintangAvatar from '@/features/ai-tutor/components/BintangAvatar';
 import {
-  HiAcademicCap,
   HiArrowRight,
   HiBookOpen,
   HiCheckCircle,
-  HiHeart,
-  HiHome,
   HiMicrophone,
   HiChatAlt2,
   HiUserGroup,
@@ -18,15 +14,15 @@ import {
   HiSparkles,
   HiLightningBolt,
   HiAnnotation,
-  HiGlobeAlt,
-  HiBadgeCheck
+  HiHome,
+  HiAcademicCap
 } from 'react-icons/hi';
 
 const appFeatures = [
   {
     icon: HiChatAlt2,
     title: 'AI Tutor Kak Bintang',
-    description: 'Sahabat belajar pintar berkarakter ramah yang menjawab pertanyaan siswa SD kelas 1-6 dengan bahasa sederhana tanpa markdown.',
+    description: 'Sahabat belajar pintar berkarakter ramah yang menjawab pertanyaan siswa SD kelas 1-6 dengan bahasa sederhana tanpa simbol markdown.',
     tag: 'Tutor AI SD',
     color: 'bg-indigo-50 text-indigo-600 border-indigo-100',
     path: '/student/tanya-ai'
@@ -42,7 +38,7 @@ const appFeatures = [
   {
     icon: HiMicrophone,
     title: 'Mata Pintar – Live Caption',
-    description: 'Transkripsi ucapan guru dan teman kelas secara real-time menjadi teks caption jernih di layar untuk siswa tunarungu.',
+    description: 'Transkripsi ucapan arahan guru secara real-time menjadi teks caption jernih di layar untuk siswa tunarungu.',
     tag: 'Dukungan Tunarungu',
     color: 'bg-sky-50 text-sky-600 border-sky-100',
     path: '/student/live-captions'
@@ -50,23 +46,23 @@ const appFeatures = [
   {
     icon: HiLightningBolt,
     title: 'QuizKu Adaptif & Gamifikasi',
-    description: 'Kuis interaktif AI, perolehan XP belajar, Streak Harian 🔥, serta peringkat papan juara (Leaderboard) yang memotivasi.',
+    description: 'Kuis interaktif AI, perolehan XP belajar, Streak Harian 🔥, serta peringkat papan juara yang memotivasi.',
     tag: 'Kuis & XP',
     color: 'bg-amber-50 text-amber-600 border-amber-100',
     path: '/student/tasks'
   },
   {
     icon: HiAnnotation,
-    title: 'Pesan Guru Multi-Role Lintas Daerah',
-    description: 'Guru dapat mengajar & ngobrol langsung dengan siswa di kota/daerah berbeda untuk role Tunanetra (Suara), Tunarungu (Caption), dan Tunawicara (Tap Response).',
-    tag: 'Komunikasi Jarak Jauh',
+    title: 'Bimbingan Jarak Jauh Multi-Role',
+    description: 'Guru dan siswa berinteraksi jarak jauh dari rumah untuk role Tunanetra (Suara Lisan), Tunarungu (Caption Live), dan Tunawicara (Balasan Cepat).',
+    tag: 'Belajar Dari Rumah',
     color: 'bg-purple-50 text-purple-600 border-purple-100',
     path: '/student/inbox'
   },
   {
     icon: HiUserGroup,
     title: 'Monitoring Guru & Orang Tua',
-    description: 'Dashboard khusus untuk guru mengelola tugas/modul dan memantau riwayat AI siswa, serta orang tua memantau progres belajar anak di rumah.',
+    description: 'Dashboard khusus untuk guru mengelola tugas/modul, serta orang tua memantau dan mendampingi belajar mandiri anak di rumah.',
     tag: 'Pendampingan',
     color: 'bg-rose-50 text-rose-600 border-rose-100',
     path: '/teacher/dashboard'
@@ -89,7 +85,7 @@ const LandingPage = () => {
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > 300);
 
-      const sections = ['fitur-guru', 'fitur-utama', 'role-disabilitas'];
+      const sections = ['fitur-bimbingan', 'fitur-utama', 'role-disabilitas'];
       const scrollPosition = window.scrollY + 220;
 
       for (const sec of sections) {
@@ -127,18 +123,18 @@ const LandingPage = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const reveal = reduceMotion
+  const fadeInVariants = reduceMotion
     ? {}
     : {
-        initial: { opacity: 0, y: 20 },
+        initial: { opacity: 0, y: 24 },
         whileInView: { opacity: 1, y: 0 },
         viewport: { once: true, amount: 0.15 },
-        transition: { duration: 0.5, ease: 'easeOut' },
+        transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] },
       };
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-white font-sans text-slate-900 selection:bg-indigo-100 selection:text-indigo-950 relative">
-      {/* SMOOTH SCROLL PROGRESS BAR AT TOP */}
+      {/* SMOOTH SCROLL PROGRESS BAR */}
       <motion.div className="fixed top-0 left-0 right-0 h-1 bg-indigo-600 z-[1000] origin-left" style={{ scaleX }} />
 
       {/* Navigasi Sticky */}
@@ -147,54 +143,55 @@ const LandingPage = () => {
           className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-8 py-4"
           aria-label="Navigasi utama"
         >
-          {/* ENLARGED PROMINENT BINTANGAI LOGO */}
-          <button
-            type="button"
+          {/* LOGO BINTANGAI */}
+          <div
             onClick={() => go('/')}
-            className="flex items-center gap-3 rounded-2xl text-left focus:outline-none group"
-            aria-label="BintangAi, halaman utama"
+            className="flex items-center gap-3 cursor-pointer group select-none"
           >
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-700 text-white flex items-center justify-center font-black text-2xl sm:text-3xl shadow-lg shadow-indigo-200 group-hover:scale-105 transition-all">
-              B
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-700 to-violet-600 text-white flex items-center justify-center text-xl font-black shadow-md shadow-indigo-200 group-hover:scale-105 transition-transform">
+              <HiAcademicCap className="text-2xl" />
             </div>
             <div>
-              <span className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 block leading-none">
+              <span className="font-black text-slate-900 text-base sm:text-lg tracking-tight block leading-none">
                 Bintang<span className="text-indigo-600">Ai</span>
               </span>
-              <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-indigo-600 block mt-1">
-                E-Learning SD Inklusif
+              <span className="text-[10px] text-slate-500 font-bold tracking-wider uppercase">
+                Ruang Belajar SD Inklusif
               </span>
             </div>
-          </button>
+          </div>
 
-          <div className="hidden lg:flex items-center gap-6">
+          <div className="hidden items-center gap-8 lg:flex">
             <a
-              href="#fitur-guru"
-              onClick={(e) => scrollToSection(e, 'fitur-guru')}
-              className={`text-xs font-bold transition-all px-3.5 py-2 rounded-full ${
-                activeSection === 'fitur-guru' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 hover:text-indigo-600'
+              onClick={(e) => scrollToSection(e, 'fitur-bimbingan')}
+              href="#fitur-bimbingan"
+              className={`text-xs font-bold transition ${
+                activeSection === 'fitur-bimbingan' ? 'text-indigo-600' : 'text-slate-600 hover:text-indigo-600'
               }`}
             >
-              Komunikasi Guru Lintas Daerah
+              Bimbingan Jarak Jauh
             </a>
             <a
-              href="#fitur-utama"
               onClick={(e) => scrollToSection(e, 'fitur-utama')}
-              className={`text-xs font-bold transition-all px-3.5 py-2 rounded-full ${
-                activeSection === 'fitur-utama' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 hover:text-indigo-600'
+              href="#fitur-utama"
+              className={`text-xs font-bold transition ${
+                activeSection === 'fitur-utama' ? 'text-indigo-600' : 'text-slate-600 hover:text-indigo-600'
               }`}
             >
-              Fitur Aplikasi
+              Fitur Belajar Mandiri
             </a>
             <a
-              href="#role-disabilitas"
               onClick={(e) => scrollToSection(e, 'role-disabilitas')}
-              className={`text-xs font-bold transition-all px-3.5 py-2 rounded-full ${
-                activeSection === 'role-disabilitas' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 hover:text-indigo-600'
+              href="#role-disabilitas"
+              className={`text-xs font-bold transition ${
+                activeSection === 'role-disabilitas' ? 'text-indigo-600' : 'text-slate-600 hover:text-indigo-600'
               }`}
             >
-              3 Role Siswa
+              3 Role Disabilitas
             </a>
+          </div>
+
+          <div className="hidden items-center gap-3 lg:flex">
             <button
               type="button"
               onClick={() => go('/auth/login')}
@@ -224,9 +221,9 @@ const LandingPage = () => {
         {menuOpen && (
           <div className="border-t border-slate-100 bg-white px-5 py-4 shadow-lg lg:hidden">
             <div className="mx-auto flex max-w-7xl flex-col gap-3">
-              <a onClick={(e) => scrollToSection(e, 'fitur-guru')} href="#fitur-guru" className="rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-indigo-50">Komunikasi Guru Lintas Daerah</a>
-              <a onClick={(e) => scrollToSection(e, 'fitur-utama')} href="#fitur-utama" className="rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-indigo-50">Fitur Utama BintangAi</a>
-              <a onClick={(e) => scrollToSection(e, 'role-disabilitas')} href="#role-disabilitas" className="rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-indigo-50">3 Role Disabilitas Siswa</a>
+              <a onClick={(e) => scrollToSection(e, 'fitur-bimbingan')} href="#fitur-bimbingan" className="rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-indigo-50">Bimbingan Jarak Jauh</a>
+              <a onClick={(e) => scrollToSection(e, 'fitur-utama')} href="#fitur-utama" className="rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-indigo-50">Fitur Belajar Mandiri</a>
+              <a onClick={(e) => scrollToSection(e, 'role-disabilitas')} href="#role-disabilitas" className="rounded-xl px-3 py-2 text-xs font-bold text-slate-700 hover:bg-indigo-50">3 Role Disabilitas</a>
               <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
                 <button type="button" onClick={() => go('/auth/login')} className="rounded-xl border border-indigo-200 px-4 py-2.5 text-xs font-bold text-indigo-600">Masuk</button>
                 <button type="button" onClick={() => go('/auth/register')} className="rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white">Daftar</button>
@@ -242,20 +239,20 @@ const LandingPage = () => {
           <div className="pointer-events-none absolute -right-28 top-10 h-80 w-80 rounded-full bg-indigo-200/30 blur-3xl" />
           <div className="pointer-events-none absolute -left-32 bottom-0 h-72 w-72 rounded-full bg-sky-200/30 blur-3xl" />
 
-          <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-8 py-12 sm:py-20 lg:grid-cols-12">
-            <motion.div {...reveal} className="lg:col-span-7 space-y-6">
+          <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 sm:px-8 py-12 sm:py-20 lg:grid-cols-12">
+            <motion.div {...fadeInVariants} className="lg:col-span-7 space-y-6">
               <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-white/90 px-3.5 py-1.5 text-xs font-bold text-indigo-700 shadow-2xs">
                 <HiSparkles className="text-amber-500 text-sm" />
-                Rumah Belajar E-Learning SD Inklusif
+                Ruang Belajar Jarak Jauh SD Inklusif
               </div>
 
               <h1 className="text-3xl sm:text-5xl font-black leading-tight tracking-tight text-slate-900">
-                Ruang Belajar Ramah Anak SD Disabilitas,
-                <span className="text-indigo-600 block">Terhubung Dengan Guru Lintas Daerah</span>
+                Platform Belajar Dari Rumah
+                <span className="text-indigo-600 block">Ramah Anak SD Disabilitas</span>
               </h1>
 
               <p className="text-xs sm:text-base leading-relaxed text-slate-600 max-w-2xl font-normal">
-                BintangAi membantu anak SD kelas 1–6 (Tunanetra, Tunarungu, Tunawicara) belajar dari rumah dengan gembira. Guru dan siswa dapat saling berinteraksi dan mengajar meskipun berada di kota/daerah yang berbeda di seluruh Indonesia.
+                BintangAi mendampingi siswa SD kelas 1–6 (Tunanetra, Tunarungu, Tunawicara) belajar jarak jauh dari rumah dengan menyenangkan. Siswa dapat belajar mandiri secara terarah dan tetap terhubung aktif dengan guru.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
@@ -276,14 +273,14 @@ const LandingPage = () => {
               </div>
 
               <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-bold text-slate-500 pt-3">
-                <span className="inline-flex items-center gap-1.5"><HiCheckCircle className="text-indigo-600" /> Guru & Siswa Beda Daerah</span>
-                <span className="inline-flex items-center gap-1.5"><HiCheckCircle className="text-indigo-600" /> Pembelajaran Inklusif SD</span>
+                <span className="inline-flex items-center gap-1.5"><HiCheckCircle className="text-indigo-600" /> Belajar Jarak Jauh</span>
+                <span className="inline-flex items-center gap-1.5"><HiCheckCircle className="text-indigo-600" /> Pendampingan Guru & AI Tutor</span>
                 <span className="inline-flex items-center gap-1.5"><HiCheckCircle className="text-indigo-600" /> Ramah 3 Role Disabilitas</span>
               </div>
             </motion.div>
 
-            {/* Interactive Animated Classroom Card (Simulated Direct Dialogue Teacher - Student) */}
-            <motion.div {...reveal} className="lg:col-span-5 relative">
+            {/* CARD INTERAKSI BELAJAR DARI RUMAH (INTERACTION DEMO CARD) */}
+            <motion.div {...fadeInVariants} className="lg:col-span-5 relative">
               <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-xl space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-3">
@@ -291,9 +288,9 @@ const LandingPage = () => {
                       📖
                     </div>
                     <div>
-                      <h3 className="font-bold text-slate-800 text-xs sm:text-sm">BintangAi Belajar Di Rumah</h3>
+                      <h3 className="font-bold text-slate-800 text-xs sm:text-sm">Interaksi Belajar Dari Rumah</h3>
                       <p className="text-[10px] text-indigo-600 font-bold flex items-center gap-1">
-                        <HiGlobeAlt /> Lintas Daerah Indonesia
+                        <HiHome /> Belajar Mandiri SD
                       </p>
                     </div>
                   </div>
@@ -302,53 +299,53 @@ const LandingPage = () => {
                   </span>
                 </div>
 
-                {/* Simulated Dialogue Conversation Exclusively between Teacher & Student */}
+                {/* Dialog Pembelajaran Jarak Jauh Guru & Siswa */}
                 <div className="space-y-2.5 text-xs">
-                  {/* Teacher Message */}
+                  {/* Guru */}
                   <div className="p-3 bg-indigo-50/90 border border-indigo-100 rounded-2xl space-y-1">
                     <div className="flex items-center justify-between text-[10px]">
-                      <span className="font-bold text-indigo-700">👩‍🏫 Ibu Guru Ratna (Jakarta)</span>
-                      <span className="text-indigo-400 font-semibold">Guru Lintas Daerah</span>
+                      <span className="font-bold text-indigo-700">👩‍🏫 Ibu Guru Ratna</span>
+                      <span className="text-indigo-500 font-semibold">Guru Kelas</span>
                     </div>
                     <p className="font-medium text-slate-800 leading-relaxed">
-                      "Halo Bintang di Surabaya! Apakah materi IPA bab Rantai Makanan sudah kamu baca?"
+                      "Halo Bintang! Apakah materi IPA bab Rantai Makanan sudah kamu baca di rumah hari ini?"
                     </p>
                   </div>
 
-                  {/* Student Reply 1 */}
+                  {/* Siswa */}
                   <div className="p-3 bg-slate-100/80 border border-slate-200/80 rounded-2xl space-y-1 ml-4">
                     <div className="flex items-center justify-between text-[10px]">
-                      <span className="font-bold text-slate-700">👧 Bintang (Siswa - Surabaya)</span>
-                      <span className="text-slate-400">Siswa Inklusif</span>
+                      <span className="font-bold text-slate-700">👧 Bintang</span>
+                      <span className="text-slate-500">Siswa Belajar Dari Rumah</span>
                     </div>
                     <p className="font-medium text-slate-800 leading-relaxed">
                       "Sudah Ibu Guru! Saya mau bertanya, katak itu masuk konsumen tingkat kesatu atau kedua ya?"
                     </p>
                   </div>
 
-                  {/* Teacher Reply 2 */}
+                  {/* Guru Penjelasan */}
                   <div className="p-3 bg-indigo-50/90 border border-indigo-100 rounded-2xl space-y-1">
                     <div className="flex items-center justify-between text-[10px]">
-                      <span className="font-bold text-indigo-700">👩‍🏫 Ibu Guru Ratna (Jakarta)</span>
+                      <span className="font-bold text-indigo-700">👩‍🏫 Ibu Guru Ratna</span>
                     </div>
                     <p className="font-medium text-slate-800 leading-relaxed">
-                      "Pertanyaan bagus Bintang! Katak memakan belalang (pemakan tumbuhan), jadi katak masuk konsumen tingkat dua ya!"
+                      "Pertanyaan bagus Bintang! Katak memakan belalang (pemakan tumbuhan), jadi katak termasuk konsumen tingkat dua ya!"
                     </p>
                   </div>
 
-                  {/* Student Reply 2 */}
+                  {/* Siswa Paham */}
                   <div className="p-3 bg-emerald-50/90 border border-emerald-200/80 rounded-2xl space-y-1 ml-4">
                     <div className="flex items-center justify-between text-[10px]">
-                      <span className="font-bold text-emerald-800">👧 Bintang (Siswa - Surabaya)</span>
+                      <span className="font-bold text-emerald-800">👧 Bintang</span>
                       <span className="text-emerald-600 font-bold">Paham Pembelajaran</span>
                     </div>
                     <p className="font-medium text-emerald-950 leading-relaxed">
-                      "Wah, terima kasih banyak Ibu Guru Ratna! Sekarang Bintang sudah sangat paham!"
+                      "Wah, terima kasih banyak Ibu Guru Ratna! Sekarang Bintang sudah paham!"
                     </p>
                   </div>
                 </div>
 
-                {/* Disability Role Badges */}
+                {/* Badge Role Disabilitas */}
                 <div className="pt-2 border-t border-slate-100 grid grid-cols-3 gap-1.5 text-center">
                   <div className="p-2 bg-amber-50 border border-amber-200/60 rounded-xl text-[10px] font-bold text-amber-800">
                     👁️ Tunanetra
@@ -365,18 +362,18 @@ const LandingPage = () => {
           </div>
         </section>
 
-        {/* FEATURE HIGHLIGHT: GURU NGOBROL DENGAN SISWA LINTAS DAERAH MULTI-ROLE */}
-        <section id="fitur-guru" className="scroll-mt-24 px-4 sm:px-8 py-16 sm:py-24 bg-slate-50/60 border-y border-slate-100">
+        {/* FEATURE HIGHLIGHT: BIMBINGAN JARAK JAUH DARI RUMAH */}
+        <section id="fitur-bimbingan" className="scroll-mt-24 px-4 sm:px-8 py-16 sm:py-24 bg-slate-50/60 border-y border-slate-100">
           <div className="max-w-7xl mx-auto space-y-12">
             <div className="max-w-3xl mx-auto text-center space-y-3">
               <span className="px-3 py-1 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 w-fit mx-auto">
-                <HiGlobeAlt className="text-sm" /> Komunikasi Jarak Jauh Lintas Daerah
+                <HiHome className="text-sm" /> Pembelajaran Jarak Jauh Inklusif
               </span>
               <h2 className="text-2xl sm:text-4xl font-black text-slate-900 leading-snug">
-                Guru Dapat Ngobrol & Mengajar Siswa Meskipun Berada di Berbeda Daerah
+                Pendampingan Guru & Interaksi Belajar Dari Rumah
               </h2>
               <p className="text-xs sm:text-sm text-slate-600 font-normal leading-relaxed">
-                Guru di Jakarta, Bandung, atau Medan dapat berkomunikasi secara langsung dan mengirimkan materi/tugas ke siswa disabilitas di daerah mana pun di Indonesia. Sistem BintangAi secara otomatis menyesuaikan tampilan pesan berdasarkan role disabilitas siswa.
+                Guru dapat memberikan bimbingan mandiri, menyiarkan arahan suara, dan membagikan modul belajar langsung ke rumah siswa. Sistem BintangAi menyesuaikan format tampilan interaksi secara otomatis berdasarkan kebutuhan siswa.
               </p>
             </div>
 
@@ -425,15 +422,15 @@ const LandingPage = () => {
                         <span className="text-[10px] font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-md">Suara Lisan TTS</span>
                       </div>
                       <p className="text-xs text-amber-900 font-medium leading-relaxed">
-                        Pesan dan petunjuk dari Guru Lintas Daerah langsung dibacakan lisan (TTS) secara otomatis oleh sistem dengan tombol pengatur kecepatan suara.
+                        Pesan dan petunjuk dari guru dibacakan lisan (TTS) secara otomatis dengan sistem antrean suara otomatis yang rapi.
                       </p>
                     </div>
 
                     <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                      <p className="text-xs font-bold text-slate-700">Contoh Pesan Lintas Daerah (Guru di Jakarta ➔ Siswa Tunanetra di Bali):</p>
+                      <p className="text-xs font-bold text-slate-700">Contoh Instruksi Bimbingan Jarak Jauh (Guru ➔ Siswa Tunanetra):</p>
                       <div className="space-y-2 text-xs">
                         <div className="p-2.5 bg-white border border-slate-200 rounded-xl font-medium">
-                          <strong>Guru (Jakarta):</strong> "Bintang, hari ini coba dengarkan pembacaan materi IPA bab 2 ya!"
+                          <strong>Guru:</strong> "Bintang, hari ini coba dengarkan pembacaan materi IPA bab 2 ya!"
                         </div>
                         <div className="p-2.5 bg-indigo-50 border border-indigo-100 rounded-xl text-indigo-900 font-medium flex items-center gap-2">
                           <HiVolumeUp className="text-indigo-600 text-base shrink-0" />
@@ -458,12 +455,12 @@ const LandingPage = () => {
                         <span className="text-[10px] font-bold bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-md">Mata Pintar HUD</span>
                       </div>
                       <p className="text-xs text-emerald-900 font-medium leading-relaxed">
-                        Ucapan langsung dari guru saat mengajar jarak jauh ditranskripsi menjadi teks caption jernih pada HUD Mata Pintar di layar siswa tunarungu.
+                        Ucapan arahan dari guru saat bimbingan jarak jauh ditranskripsi menjadi teks caption jernih pada HUD Mata Pintar di layar siswa.
                       </p>
                     </div>
 
                     <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                      <p className="text-xs font-bold text-slate-700">Contoh Live Caption Jarak Jauh (Guru di Bandung ➔ Siswa Tunarungu di Medan):</p>
+                      <p className="text-xs font-bold text-slate-700">Contoh Live Caption Bimbingan Jarak Jauh (Guru ➔ Siswa Tunarungu):</p>
                       <div className="space-y-2 text-xs">
                         <div className="p-2.5 bg-white border border-slate-200 rounded-xl font-medium">
                           <strong>Guru Bicara di Mikrofon:</strong> "Anak-anak, hari ini kita belajar tentang perkalian bilangan."
@@ -491,12 +488,12 @@ const LandingPage = () => {
                         <span className="text-[10px] font-bold bg-purple-200 text-purple-900 px-2 py-0.5 rounded-md">Balasan Cepat 1-Ketuk</span>
                       </div>
                       <p className="text-xs text-purple-900 font-medium leading-relaxed">
-                        Siswa tunawicara (bisu) dapat membalas pesan dari guru lintas daerah secara cepat dengan 1 ketukan tanpa perlu mengetik teks panjang.
+                        Siswa tunawicara dapat membalas pesan arahan dari guru secara cepat cukup dengan 1 ketukan tombol tanpa mengetik teks panjang.
                       </p>
                     </div>
 
                     <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                      <p className="text-xs font-bold text-slate-700">Contoh Tombol Balasan Cepat (Siswa Tunawicara di Papua ➔ Guru di Surabaya):</p>
+                      <p className="text-xs font-bold text-slate-700">Contoh Respon Balasan Cepat (Siswa Tunawicara ➔ Guru):</p>
                       <div className="flex flex-wrap gap-2 pt-1">
                         <span className="px-3 py-1.5 bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-xl">
                           👍 Siap Ibu, Saya Paham
@@ -635,10 +632,10 @@ const LandingPage = () => {
                 Mari Bergabung Bersama BintangAi
               </span>
               <h2 className="text-2xl sm:text-4xl font-bold leading-tight">
-                Siap Mendukung Pembelajaran Inklusif Anak Anda Di Rumah?
+                Siap Mendukung Pembelajaran Jarak Jauh Anak Anda Di Rumah?
               </h2>
               <p className="text-xs sm:text-sm font-normal text-indigo-100/90 leading-relaxed">
-                Daftarkan akun siswa, guru, atau orang tua secara gratis dan rasakan kemudahan belajar bersama Kak Bintang & Guru Lintas Daerah.
+                Daftarkan akun siswa, guru, atau orang tua secara gratis dan rasakan kemudahan belajar mandiri dari rumah bersama Kak Bintang.
               </p>
             </div>
 
