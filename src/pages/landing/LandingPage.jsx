@@ -144,23 +144,24 @@ const LandingPage = () => {
       {/* Navigasi Sticky */}
       <header className="sticky top-0 z-50 border-b border-slate-100 bg-white/90 backdrop-blur-xl transition-all duration-300">
         <nav
-          className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-8 py-3.5"
+          className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-8 py-4"
           aria-label="Navigasi utama"
         >
+          {/* ENLARGED PROMINENT BINTANGAI LOGO */}
           <button
             type="button"
             onClick={() => go('/')}
-            className="flex items-center gap-2.5 rounded-xl text-left focus:outline-none"
+            className="flex items-center gap-3 rounded-2xl text-left focus:outline-none group"
             aria-label="BintangAi, halaman utama"
           >
-            <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-indigo-100">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-700 text-white flex items-center justify-center font-black text-2xl sm:text-3xl shadow-lg shadow-indigo-200 group-hover:scale-105 transition-all">
               B
             </div>
             <div>
-              <span className="text-lg sm:text-xl font-black tracking-tight text-slate-900 block leading-tight">
+              <span className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 block leading-none">
                 Bintang<span className="text-indigo-600">Ai</span>
               </span>
-              <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">
+              <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-indigo-600 block mt-1">
                 E-Learning SD Inklusif
               </span>
             </div>
@@ -170,7 +171,7 @@ const LandingPage = () => {
             <a
               href="#fitur-guru"
               onClick={(e) => scrollToSection(e, 'fitur-guru')}
-              className={`text-xs font-bold transition-all px-3 py-1.5 rounded-full ${
+              className={`text-xs font-bold transition-all px-3.5 py-2 rounded-full ${
                 activeSection === 'fitur-guru' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 hover:text-indigo-600'
               }`}
             >
@@ -179,7 +180,7 @@ const LandingPage = () => {
             <a
               href="#fitur-utama"
               onClick={(e) => scrollToSection(e, 'fitur-utama')}
-              className={`text-xs font-bold transition-all px-3 py-1.5 rounded-full ${
+              className={`text-xs font-bold transition-all px-3.5 py-2 rounded-full ${
                 activeSection === 'fitur-utama' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 hover:text-indigo-600'
               }`}
             >
@@ -188,7 +189,7 @@ const LandingPage = () => {
             <a
               href="#role-disabilitas"
               onClick={(e) => scrollToSection(e, 'role-disabilitas')}
-              className={`text-xs font-bold transition-all px-3 py-1.5 rounded-full ${
+              className={`text-xs font-bold transition-all px-3.5 py-2 rounded-full ${
                 activeSection === 'role-disabilitas' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 hover:text-indigo-600'
               }`}
             >
@@ -212,7 +213,7 @@ const LandingPage = () => {
 
           <button
             type="button"
-            className="rounded-xl border border-slate-200 p-2 text-slate-700 lg:hidden"
+            className="rounded-xl border border-slate-200 p-2.5 text-slate-700 lg:hidden"
             onClick={() => setMenuOpen((open) => !open)}
             aria-label={menuOpen ? 'Tutup menu' : 'Buka menu'}
           >
@@ -281,9 +282,9 @@ const LandingPage = () => {
               </div>
             </motion.div>
 
-            {/* Interactive Animated Character & Classroom Card */}
+            {/* Interactive Animated Classroom Card (Simulated Direct Dialogue) */}
             <motion.div {...reveal} className="lg:col-span-5 relative">
-              <div className="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xl space-y-4">
+              <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-xl space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-3">
                     <BintangAvatar size="xs" state="idle" />
@@ -299,25 +300,50 @@ const LandingPage = () => {
                   </span>
                 </div>
 
-                {/* Simulated Distance Learning Message */}
-                <div className="space-y-3 text-xs">
-                  <div className="p-3 bg-indigo-50/80 border border-indigo-100 rounded-2xl space-y-1">
+                {/* Simulated Dialogue Conversation between Teacher & Student */}
+                <div className="space-y-2.5 text-xs">
+                  {/* Teacher Message */}
+                  <div className="p-3 bg-indigo-50/90 border border-indigo-100 rounded-2xl space-y-1">
                     <div className="flex items-center justify-between text-[10px]">
-                      <span className="font-bold text-indigo-600">👩‍🏫 Ibu Guru Ratna (Jakarta)</span>
-                      <span className="text-slate-400">Guru Jarak Jauh</span>
+                      <span className="font-bold text-indigo-700">👩‍🏫 Ibu Guru Ratna (Jakarta)</span>
+                      <span className="text-indigo-400 font-semibold">Guru Lintas Daerah</span>
                     </div>
-                    <p className="font-medium text-slate-800">
-                      "Halo Bintang di Surabaya! Ibu sudah kirim materi IPA baru ya!"
+                    <p className="font-medium text-slate-800 leading-relaxed">
+                      "Halo Bintang di Surabaya! Apakah materi IPA bab Rantai Makanan sudah kamu baca?"
                     </p>
                   </div>
 
-                  <div className="p-3 bg-white border border-slate-200/80 rounded-2xl space-y-1 shadow-2xs">
+                  {/* Student Message */}
+                  <div className="p-3 bg-slate-100/80 border border-slate-200/80 rounded-2xl space-y-1 ml-4">
                     <div className="flex items-center justify-between text-[10px]">
-                      <span className="font-bold text-indigo-600">🤖 Kak Bintang AI Tutor</span>
-                      <span className="text-emerald-600 font-bold">Sahabat Belajar</span>
+                      <span className="font-bold text-slate-700">👧 Bintang (Siswa - Surabaya)</span>
+                      <span className="text-slate-400">Siswa Inklusif</span>
                     </div>
-                    <p className="font-medium text-slate-800">
-                      "Mari kita baca materi IPA dari Ibu Guru Ratna bersama-sama!"
+                    <p className="font-medium text-slate-800 leading-relaxed">
+                      "Sudah Ibu Guru! Saya mau bertanya, katak itu masuk konsumen tingkat kesatu atau kedua ya?"
+                    </p>
+                  </div>
+
+                  {/* Teacher Reply */}
+                  <div className="p-3 bg-indigo-50/90 border border-indigo-100 rounded-2xl space-y-1">
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="font-bold text-indigo-700">👩‍🏫 Ibu Guru Ratna (Jakarta)</span>
+                    </div>
+                    <p className="font-medium text-slate-800 leading-relaxed">
+                      "Pertanyaan bagus Bintang! Katak memakan belalang (pemakan tumbuhan), jadi katak masuk konsumen tingkat dua ya!"
+                    </p>
+                  </div>
+
+                  {/* Kak Bintang AI Companion */}
+                  <div className="p-3 bg-amber-50/70 border border-amber-200/60 rounded-2xl space-y-1">
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="font-bold text-amber-900 flex items-center gap-1">
+                        🤖 Kak Bintang AI Tutor
+                      </span>
+                      <span className="text-amber-700 font-bold">Sahabat Belajar</span>
+                    </div>
+                    <p className="font-medium text-amber-950 leading-relaxed">
+                      "Penjelasan Ibu Guru Ratna sangat jelas! Bintang mau Kak Bintang bacakan paragrafnya lagi?"
                     </p>
                   </div>
                 </div>
