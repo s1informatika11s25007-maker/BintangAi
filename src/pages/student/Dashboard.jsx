@@ -143,11 +143,11 @@ const StudentDashboard = () => {
       <ConfettiEffect active={showConfetti} />
       <StudentSidebar />
 
-      <main className="flex-1 flex flex-col min-h-0 relative overflow-hidden">
-        <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col justify-between pb-28 lg:pb-12">
+      <main className="flex-1 flex flex-col min-h-full relative overflow-hidden">
+        <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col justify-between">
 
         {/* CONTENT GRID - FULLY RESPONSIVE FOR ANDROID & ALL DEVICES */}
-        <div className="px-4 py-6 sm:px-8 md:px-10 lg:px-12 max-w-7xl mx-auto w-full space-y-6 sm:space-y-8">
+        <div className="px-4 py-4 sm:px-6 md:px-8 lg:px-12 max-w-7xl mx-auto w-full space-y-5 sm:space-y-6">
           <motion.div
             variants={containerVariants}
             initial="hidden" animate="visible"
