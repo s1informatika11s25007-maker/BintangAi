@@ -322,7 +322,16 @@ const StudentCollaboration = () => {
               </div>
             </div>
           </div>
-          {selectedGroup && <button onClick={() => setShowMemberPanel(!showMemberPanel)} className="p-3 text-slate-400 hover:text-indigo-600 rounded-2xl transition-all"><HiDotsVertical className="text-xl" /></button>}
+          {selectedGroup && (
+            <button
+              onClick={() => setShowMemberPanel(!showMemberPanel)}
+              className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-2xl border border-indigo-100 flex items-center gap-2 transition-all shadow-sm"
+              title="Lihat Daftar Anggota Kelompok"
+            >
+              <HiUsers className="text-base" />
+              <span>Anggota ({members.length})</span>
+            </button>
+          )}
         </header>
 
         <div className="flex-1 flex overflow-hidden">
@@ -431,6 +440,89 @@ const StudentCollaboration = () => {
                     <button type="submit" disabled={isJoining} className="flex-1 py-5 font-black text-[10px] uppercase bg-indigo-600 text-white rounded-[2rem] shadow-xl">{isJoining ? '...' : 'Gabung'}</button>
                   </div>
                 </form>
+              </motion.div>
+            </div>
+          )}
+
+          {showMemberPanel && selectedGroup && (
+            <div className="fixed inset-0 z-[1000] flex items-center justify-end p-4 md:p-6">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowMemberPanel(false)}
+                className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ x: '100%', opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: '100%', opacity: 0 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                className="relative bg-white w-full max-w-sm h-full max-h-[90vh] rounded-[2.5rem] shadow-2xl p-6 md:p-8 border border-slate-100 flex flex-col z-10 overflow-hidden"
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between pb-5 border-b border-slate-100 shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl font-bold">
+                      <HiUsers />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-black text-slate-900 tracking-tight">Anggota Kelompok</h3>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                        {members.length} Siswa Terhubung
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowMemberPanel(false)}
+                    className="p-2 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-all"
+                  >
+                    <HiX className="text-xl" />
+                  </button>
+                </div>
+
+                {/* Member List */}
+                <div className="flex-1 overflow-y-auto py-5 space-y-3 custom-scrollbar">
+                  {members.map((m) => (
+                    <div
+                      key={m.id}
+                      className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-100/70 flex items-center justify-between transition-all"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white font-black flex items-center justify-center text-xs uppercase shrink-0 shadow-sm">
+                          {m.profiles?.full_name?.[0] || 'S'}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-black text-slate-800 truncate">
+                            {m.profiles?.full_name} {m.student_id === profile.id && <span className="text-indigo-600 font-bold">(Saya)</span>}
+                          </p>
+                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">
+                            {m.profiles?.disability_type || 'Umum'}
+                          </span>
+                        </div>
+                      </div>
+                      {m.role === 'leader' && (
+                        <span className="px-2 py-0.5 bg-amber-50 text-amber-600 text-[9px] font-black uppercase rounded-lg border border-amber-100 shrink-0">
+                          Ketua
+                        </span>
+                      )}
+                    </div>
+                  ))}
+
+                  {members.length === 0 && (
+                    <div className="py-12 text-center text-slate-400 text-xs font-bold">
+                      Belum ada anggota di kelompok ini.
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer button */}
+                <button
+                  onClick={() => setShowMemberPanel(false)}
+                  className="w-full py-3.5 bg-slate-900 text-white rounded-2xl font-bold text-xs hover:bg-slate-800 transition-all shrink-0 mt-3"
+                >
+                  Tutup
+                </button>
               </motion.div>
             </div>
           )}
