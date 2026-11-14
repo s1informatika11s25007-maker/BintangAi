@@ -7,9 +7,10 @@ Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
     if (req.method !== 'POST') throw new HttpError('Method not allowed.', 405);
-    const { client, user, profile } = await getVerifiedProfile(req);
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     if (body?.ping === true) return jsonResponse({ success: true, service: 'BintangAi Tutor' });
+
+    const { client, user, profile } = await getVerifiedProfile(req);
 
     const message = String(body?.message || '').trim();
     if (!message || message.length > 5000) throw new HttpError('Pertanyaan wajib diisi dan maksimal 5.000 karakter.', 400);

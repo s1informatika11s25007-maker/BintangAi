@@ -372,8 +372,76 @@ const MonitorPage = () => {
           </div>
         )}
 
-        {/* Real-time Activity Table - Responsive Overflow */}
-        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden flex flex-col w-full">
+        {/* Mobile View Card List (Android / Small Devices) */}
+        <div className="block md:hidden space-y-3">
+          {currentLogs.map((log) => {
+            const dateObj = new Date(log.created_at);
+            const formattedDate = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+            const formattedTime = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+            return (
+              <div
+                key={log.id}
+                className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3 transition-all"
+              >
+                <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase border shrink-0 ${
+                      log.user_role === 'guru'
+                        ? 'bg-purple-50 text-purple-600 border-purple-100'
+                        : log.user_role === 'siswa'
+                          ? 'bg-indigo-50 text-indigo-600 border-indigo-100'
+                          : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                    }`}>
+                      {log.user_role}
+                    </span>
+                    <span className="font-black text-slate-900 text-xs truncate">
+                      {log.user_name}
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => handleDeleteLog(log.id)}
+                    className="p-1.5 bg-rose-50 text-rose-500 rounded-lg border border-rose-100 text-xs shrink-0"
+                  >
+                    <HiTrash />
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] font-bold">
+                  <span className="text-indigo-600 font-black truncate max-w-[180px]">{log.feature_name}</span>
+                  <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase text-white shrink-0 ${
+                    log.action_type === 'LOGIN'
+                      ? 'bg-emerald-500'
+                      : log.action_type === 'KLIK_TOMBOL'
+                        ? 'bg-amber-500'
+                        : 'bg-slate-800'
+                  }`}>
+                    {log.action_type}
+                  </span>
+                </div>
+
+                <p className="text-xs font-medium text-slate-600 leading-snug">
+                  {log.description || '-'}
+                </p>
+
+                <div className="text-[10px] font-mono text-slate-400 pt-1 border-t border-slate-50 flex items-center justify-between">
+                  <span>{formattedDate} • {formattedTime}</span>
+                  {log.class_code && <span className="bg-slate-100 px-2 py-0.5 rounded font-sans font-bold text-slate-500">Kelas: {log.class_code}</span>}
+                </div>
+              </div>
+            );
+          })}
+
+          {filteredLogs.length === 0 && (
+            <div className="bg-white p-8 rounded-2xl border border-slate-100 text-center text-slate-400 text-xs font-bold">
+              Tidak ada log aktivitas yang ditemukan.
+            </div>
+          )}
+        </div>
+
+        {/* Desktop / Laptop Table View (Hidden on Mobile, Visible on md+) */}
+        <div className="hidden md:flex bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden flex-col w-full">
           <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left border-collapse min-w-[700px]">
               <thead>
