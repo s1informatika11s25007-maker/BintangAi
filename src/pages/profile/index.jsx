@@ -131,7 +131,7 @@ const Profile = () => {
       : (userProfile?.disability_type ? [userProfile.disability_type] : ['tidak_ada']);
 
     const validList = list.filter(d => d !== 'tidak_ada');
-    if (validList.length === 0) return 'UMUM';
+    if (validList.length === 0) return 'UMUM / TANPA HAMBATAN';
 
     const labels = {
       tunanetra: '👁️ TUNANETRA',
@@ -140,45 +140,6 @@ const Profile = () => {
     };
 
     return validList.map(d => labels[d] || d.toUpperCase()).join(' • ');
-  };
-
-  const handleToggleDisabilityInProfile = async (disabilityId) => {
-    if (!profile?.id || saving) return;
-
-    const currentList = Array.isArray(profile.disabilities) && profile.disabilities.length > 0
-      ? profile.disabilities.filter(d => d !== 'tidak_ada')
-      : (profile.disability_type && profile.disability_type !== 'tidak_ada' ? [profile.disability_type] : []);
-
-    let updated = [];
-    if (currentList.includes(disabilityId)) {
-      updated = currentList.filter(d => d !== disabilityId);
-    } else {
-      updated = [...currentList, disabilityId];
-    }
-
-    const primary = updated[0] || 'tidak_ada';
-    setSaving(true);
-
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          disabilities: updated.length > 0 ? updated : ['tidak_ada'],
-          disability_type: primary
-        })
-        .eq('id', profile.id);
-
-      if (error) throw error;
-
-      setProfile({ ...profile, disabilities: updated.length > 0 ? updated : ['tidak_ada'], disability_type: primary });
-      showSubtitle('✅ Kebutuhan disabilitas berhasil diperbarui!', 'success');
-      setMessage({ type: 'success', text: 'Kebutuhan disabilitas berhasil diperbarui!' });
-    } catch (err) {
-      console.error('Error updating disabilities:', err);
-      setMessage({ type: 'error', text: 'Gagal memperbarui disabilitas' });
-    } finally {
-      setSaving(false);
-    }
   };
 
   const handleUpdateClassLevel = async (newLevel) => {
@@ -354,57 +315,33 @@ const Profile = () => {
                         </p>
                       </div>
 
-                      <div className="space-y-3 md:col-span-2">
-                        <div className="flex items-center justify-between">
-                          <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest ml-1">
-                            Disabilitas & Kebutuhan Belajar Siswa (Bisa Lebih Dari Satu)
-                          </label>
-                          {profile?.role === 'siswa' && (
-                            <span className="text-[9px] font-black bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full border border-indigo-200 uppercase tracking-wider">
-                              ✨ Multi-Select Enabled
-                            </span>
-                          )}
-                        </div>
+                      <div className="space-y-2 md:col-span-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                          Disabilitas & Kebutuhan Belajar Siswa
+                        </label>
+                        <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex flex-wrap items-center gap-2">
+                          {(() => {
+                            const list = Array.isArray(profile?.disabilities) && profile.disabilities.length > 0
+                              ? profile.disabilities.filter(d => d !== 'tidak_ada')
+                              : (profile?.disability_type && profile?.disability_type !== 'tidak_ada' ? [profile.disability_type] : []);
 
-                        {profile?.role === 'siswa' ? (
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                            {[
-                              { id: 'tunanetra', label: 'Tunanetra 👁️', desc: 'Audio Reader & Voice' },
-                              { id: 'tunarungu', label: 'Tunarungu 🤟', desc: 'Visual Captions & Subtitle' },
-                              { id: 'tunawicara', label: 'Tunawicara 💬', desc: 'Isyarat & Pilihan Cepat' }
-                            ].map((d) => {
-                              const activeList = Array.isArray(profile?.disabilities) && profile.disabilities.length > 0
-                                ? profile.disabilities
-                                : (profile?.disability_type ? [profile.disability_type] : []);
-                              const isSelected = activeList.includes(d.id);
-                              return (
-                                <button
-                                  key={d.id}
-                                  type="button"
-                                  disabled={saving}
-                                  onClick={() => handleToggleDisabilityInProfile(d.id)}
-                                  className={`p-3.5 rounded-2xl border-2 text-left transition-all flex items-center justify-between gap-2 ${
-                                    isSelected
-                                      ? 'border-indigo-600 bg-indigo-50/80 text-indigo-950 font-black shadow-sm ring-2 ring-indigo-500/20'
-                                      : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-indigo-200 font-bold'
-                                  }`}
-                                >
-                                  <div>
-                                    <p className="text-xs">{d.label}</p>
-                                    <p className="text-[9px] opacity-75 font-medium">{d.desc}</p>
-                                  </div>
-                                  <div className={`w-5 h-5 rounded-md border flex items-center justify-center text-xs font-black shrink-0 transition-all ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-white'}`}>
-                                    {isSelected ? '✓' : ''}
-                                  </div>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-800">
-                            {getDisabilityText(profile)}
-                          </div>
-                        )}
+                            if (list.length === 0) {
+                              return <span className="font-extrabold text-slate-700 text-xs">UMUM / TANPA HAMBATAN</span>;
+                            }
+
+                            const labels = {
+                              tunanetra: { label: '👁️ TUNANETRA', color: 'bg-purple-100 text-purple-900 border-purple-200' },
+                              tunarungu: { label: '🤟 TUNARUNGU', color: 'bg-cyan-100 text-cyan-900 border-cyan-200' },
+                              tunawicara: { label: '💬 TUNAWICARA', color: 'bg-emerald-100 text-emerald-900 border-emerald-200' }
+                            };
+
+                            return list.map(d => (
+                              <span key={d} className={`px-3 py-1.5 rounded-xl border text-xs font-black uppercase tracking-wider ${labels[d]?.color || 'bg-indigo-100 text-indigo-900 border-indigo-200'}`}>
+                                {labels[d]?.label || d.toUpperCase()}
+                              </span>
+                            ));
+                          })()}
+                        </div>
                       </div>
 
                       <div className="space-y-2 md:col-span-2">
