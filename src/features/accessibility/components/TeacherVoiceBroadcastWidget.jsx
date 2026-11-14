@@ -358,7 +358,8 @@ export default function TeacherVoiceBroadcastWidget() {
               <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-2">
                 {filteredStudents.map((student) => {
                   const isSelected = targetStudentIds === 'all' || (Array.isArray(targetStudentIds) && targetStudentIds.includes(student.id));
-                  const roleBadge = student.disability_type === 'tunanetra' ? '👁️ Tunanetra' : student.disability_type === 'tunarungu' ? '🧏 Tunarungu' : student.disability_type === 'tunawicara' ? '🖐️ Tunawicara' : '👦 Umum';
+                  const list = Array.isArray(student.disabilities) && student.disabilities.length > 0 ? student.disabilities : [student.disability_type];
+                  const roleBadge = list.map(d => d === 'tunanetra' ? '👁️ Tunanetra' : d === 'tunarungu' ? '🧏 Tunarungu' : d === 'tunawicara' ? '🖐️ Tunawicara' : '👦 Umum').join(' • ');
 
                   return (
                     <div

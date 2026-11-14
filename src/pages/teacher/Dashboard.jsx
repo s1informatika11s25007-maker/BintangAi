@@ -799,7 +799,9 @@ const TeacherDashboard = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-50">
-                        {students.filter(s => filterDisability === 'all' || s.disability_type === filterDisability).map(student => (
+                        {students.filter(s => filterDisability === 'all' || (Array.isArray(s.disabilities) && s.disabilities.length > 0 ? s.disabilities.includes(filterDisability) : s.disability_type === filterDisability)).map(student => {
+                          const badgeText = (Array.isArray(student.disabilities) && student.disabilities.length > 0) ? student.disabilities.join(' • ') : (student.disability_type || 'Umum');
+                          return (
                           <tr key={student.id} onClick={() => fetchStudentDetail(student)} className="hover:bg-indigo-50/30 cursor-pointer transition-all duration-300 group">
                             <td className="px-10 py-8">
                                <div className="flex items-center gap-4">
@@ -808,7 +810,7 @@ const TeacherDashboard = () => {
                                </div>
                             </td>
                             <td className="px-10 py-8 text-center">
-                               <span className="px-4 py-1.5 bg-slate-50 text-slate-500 rounded-full font-black text-[9px] uppercase tracking-widest">{student.disability_type || 'Umum'}</span>
+                               <span className="px-4 py-1.5 bg-slate-50 text-slate-500 rounded-full font-black text-[9px] uppercase tracking-widest">{badgeText}</span>
                             </td>
                             <td className="px-10 py-8 text-center">
                                <div className="flex items-center justify-center gap-2">
@@ -823,7 +825,8 @@ const TeacherDashboard = () => {
                               </span>
                             </td>
                           </tr>
-                        ))}
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>

@@ -125,6 +125,62 @@ const Profile = () => {
     await logout('/auth/login');
   };
 
+  const getDisabilityText = (userProfile) => {
+    const list = Array.isArray(userProfile?.disabilities) && userProfile.disabilities.length > 0
+      ? userProfile.disabilities
+      : (userProfile?.disability_type ? [userProfile.disability_type] : ['tidak_ada']);
+
+    const validList = list.filter(d => d !== 'tidak_ada');
+    if (validList.length === 0) return 'UMUM';
+
+    const labels = {
+      tunanetra: '👁️ TUNANETRA',
+      tunarungu: '🤟 TUNARUNGU',
+      tunawicara: '💬 TUNAWICARA'
+    };
+
+    return validList.map(d => labels[d] || d.toUpperCase()).join(' • ');
+  };
+
+  const handleToggleDisabilityInProfile = async (disabilityId) => {
+    if (!profile?.id || saving) return;
+
+    const currentList = Array.isArray(profile.disabilities) && profile.disabilities.length > 0
+      ? profile.disabilities.filter(d => d !== 'tidak_ada')
+      : (profile.disability_type && profile.disability_type !== 'tidak_ada' ? [profile.disability_type] : []);
+
+    let updated = [];
+    if (currentList.includes(disabilityId)) {
+      updated = currentList.filter(d => d !== disabilityId);
+    } else {
+      updated = [...currentList, disabilityId];
+    }
+
+    const primary = updated[0] || 'tidak_ada';
+    setSaving(true);
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          disabilities: updated.length > 0 ? updated : ['tidak_ada'],
+          disability_type: primary
+        })
+        .eq('id', profile.id);
+
+      if (error) throw error;
+
+      setProfile({ ...profile, disabilities: updated.length > 0 ? updated : ['tidak_ada'], disability_type: primary });
+      showSubtitle('✅ Kebutuhan disabilitas berhasil diperbarui!', 'success');
+      setMessage({ type: 'success', text: 'Kebutuhan disabilitas berhasil diperbarui!' });
+    } catch (err) {
+      console.error('Error updating disabilities:', err);
+      setMessage({ type: 'error', text: 'Gagal memperbarui disabilitas' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleUpdateClassLevel = async (newLevel) => {
     if (!profile?.id) return;
     setSaving(true);
@@ -298,11 +354,57 @@ const Profile = () => {
                         </p>
                       </div>
 
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Disabilitas</label>
-                        <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-800">
-                          {profile?.disability_type?.toUpperCase() || 'UMUM'}
+                      <div className="space-y-3 md:col-span-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest ml-1">
+                            Disabilitas & Kebutuhan Belajar Siswa (Bisa Lebih Dari Satu)
+                          </label>
+                          {profile?.role === 'siswa' && (
+                            <span className="text-[9px] font-black bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full border border-indigo-200 uppercase tracking-wider">
+                              ✨ Multi-Select Enabled
+                            </span>
+                          )}
                         </div>
+
+                        {profile?.role === 'siswa' ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                            {[
+                              { id: 'tunanetra', label: 'Tunanetra 👁️', desc: 'Audio Reader & Voice' },
+                              { id: 'tunarungu', label: 'Tunarungu 🤟', desc: 'Visual Captions & Subtitle' },
+                              { id: 'tunawicara', label: 'Tunawicara 💬', desc: 'Isyarat & Pilihan Cepat' }
+                            ].map((d) => {
+                              const activeList = Array.isArray(profile?.disabilities) && profile.disabilities.length > 0
+                                ? profile.disabilities
+                                : (profile?.disability_type ? [profile.disability_type] : []);
+                              const isSelected = activeList.includes(d.id);
+                              return (
+                                <button
+                                  key={d.id}
+                                  type="button"
+                                  disabled={saving}
+                                  onClick={() => handleToggleDisabilityInProfile(d.id)}
+                                  className={`p-3.5 rounded-2xl border-2 text-left transition-all flex items-center justify-between gap-2 ${
+                                    isSelected
+                                      ? 'border-indigo-600 bg-indigo-50/80 text-indigo-950 font-black shadow-sm ring-2 ring-indigo-500/20'
+                                      : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-indigo-200 font-bold'
+                                  }`}
+                                >
+                                  <div>
+                                    <p className="text-xs">{d.label}</p>
+                                    <p className="text-[9px] opacity-75 font-medium">{d.desc}</p>
+                                  </div>
+                                  <div className={`w-5 h-5 rounded-md border flex items-center justify-center text-xs font-black shrink-0 transition-all ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-white'}`}>
+                                    {isSelected ? '✓' : ''}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl font-bold text-slate-800">
+                            {getDisabilityText(profile)}
+                          </div>
+                        )}
                       </div>
 
                       <div className="space-y-2 md:col-span-2">
@@ -458,7 +560,7 @@ const Profile = () => {
                               {linkedStudent?.full_name || 'Siswa SD BintangAi (Terhubung)'}
                             </p>
                             <p className="text-xs font-bold text-indigo-600">
-                              Tingkat: {linkedStudent?.class_level || profile?.class_level || 'Kelas 4 SD'} • Disabilitas: {linkedStudent?.disability_type?.toUpperCase() || 'UMUM'}
+                              Tingkat: {linkedStudent?.class_level || profile?.class_level || 'Kelas 4 SD'} • Disabilitas: {getDisabilityText(linkedStudent)}
                             </p>
                             <p className="text-[10px] font-bold text-slate-400">
                               Kode Kelas: {linkedStudent?.class_code || profile?.class_code || '-'}
@@ -501,7 +603,7 @@ const Profile = () => {
                         </p>
                         {linkedStudent && (
                           <p className="text-xs font-bold text-indigo-600 mt-1">
-                            Tingkat: {linkedStudent.class_level || 'Kelas 4 SD'} • Disabilitas: {linkedStudent.disability_type?.toUpperCase() || 'UMUM'} • Kode Kelas: {linkedStudent.class_code || '-'}
+                            Tingkat: {linkedStudent.class_level || 'Kelas 4 SD'} • Disabilitas: {getDisabilityText(linkedStudent)} • Kode Kelas: {linkedStudent.class_code || '-'}
                           </p>
                         )}
                       </div>
