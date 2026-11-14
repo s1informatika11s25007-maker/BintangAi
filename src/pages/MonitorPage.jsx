@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
 import {
   HiLockClosed, HiShieldCheck, HiSearch, HiRefresh,
-  HiClock, HiUserGroup, HiLightningBolt, HiFilter, HiX, HiCheckCircle, HiTrash
+  HiClock, HiUserGroup, HiLightningBolt, HiFilter, HiX,
+  HiCheckCircle, HiTrash, HiChevronLeft, HiChevronRight
 } from 'react-icons/hi';
 
 const MonitorPage = () => {
@@ -17,7 +18,12 @@ const MonitorPage = () => {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
+  const [userFilter, setUserFilter] = useState('all');
   const [actionFilter, setActionFilter] = useState('all');
+
+  // Pagination State for scalable performance
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 15;
 
   const handlePasswordSubmit = (e) => {
     e.preventDefault();
@@ -43,7 +49,7 @@ const MonitorPage = () => {
         .from('user_activity_logs')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(300);
+        .limit(500);
 
       if (error) throw error;
       setLogs(data || []);
@@ -70,12 +76,13 @@ const MonitorPage = () => {
       const { error } = await supabase.from('user_activity_logs').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       if (error) throw error;
       setLogs([]);
+      setCurrentPage(1);
     } catch (err) {
       console.error("Clear all logs error:", err);
     }
   };
 
-  // Real-time listener + 4-second auto-polling fallback for live activity logs
+  // Real-time listener + 3-second auto-polling fallback for live activity logs
   useEffect(() => {
     if (!isAuthenticated) return;
 
@@ -83,7 +90,7 @@ const MonitorPage = () => {
 
     const interval = setInterval(() => {
       fetchLogs();
-    }, 4000);
+    }, 3000);
 
     const channelName = `monitor_logs_${Date.now()}`;
     const channel = supabase.channel(channelName)
@@ -102,17 +109,42 @@ const MonitorPage = () => {
     };
   }, [isAuthenticated]);
 
-  const filteredLogs = logs.filter(log => {
-    const matchesSearch =
-      (log.user_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (log.feature_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (log.description || '').toLowerCase().includes(searchQuery.toLowerCase());
+  // Extract unique user names dynamically for filter dropdown
+  const uniqueUserNames = useMemo(() => {
+    const set = new Set();
+    logs.forEach(l => {
+      if (l.user_name) set.add(l.user_name);
+    });
+    return Array.from(set).sort();
+  }, [logs]);
 
-    const matchesRole = roleFilter === 'all' || log.user_role === roleFilter;
-    const matchesAction = actionFilter === 'all' || log.action_type === actionFilter;
+  // Filter logs by search, role, user name, and action type
+  const filteredLogs = useMemo(() => {
+    return logs.filter(log => {
+      const matchesSearch =
+        (log.user_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (log.feature_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (log.description || '').toLowerCase().includes(searchQuery.toLowerCase());
 
-    return matchesSearch && matchesRole && matchesAction;
-  });
+      const matchesRole = roleFilter === 'all' || log.user_role === roleFilter;
+      const matchesUser = userFilter === 'all' || log.user_name === userFilter;
+      const matchesAction = actionFilter === 'all' || log.action_type === actionFilter;
+
+      return matchesSearch && matchesRole && matchesUser && matchesAction;
+    });
+  }, [logs, searchQuery, roleFilter, userFilter, actionFilter]);
+
+  // Reset page number on filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, roleFilter, userFilter, actionFilter]);
+
+  // Calculate Pagination
+  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage) || 1;
+  const currentLogs = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredLogs.slice(start, start + itemsPerPage);
+  }, [filteredLogs, currentPage, itemsPerPage]);
 
   const totalLogins = logs.filter(l => l.action_type === 'LOGIN').length;
   const totalClicks = logs.filter(l => l.action_type === 'KLIK_TOMBOL').length;
@@ -244,7 +276,7 @@ const MonitorPage = () => {
             </div>
             <div>
               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Status Monitor</p>
-              <p className="text-sm font-black text-blue-600 leading-none mt-1">🔴 Live Tracking</p>
+              <p className="text-sm font-black text-blue-600 leading-none mt-1">🔴 Live Realtime</p>
             </div>
           </div>
         </div>
@@ -257,12 +289,25 @@ const MonitorPage = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari berdasarkan nama pengguna, tombol, atau fitur..."
+              placeholder="Cari nama pengguna, tombol, atau rincian..."
               className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold outline-none focus:border-indigo-500"
             />
           </div>
 
           <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            {/* User Name Filter Dropdown */}
+            <select
+              value={userFilter}
+              onChange={(e) => setUserFilter(e.target.value)}
+              className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 outline-none max-w-[200px]"
+            >
+              <option value="all">Semua Pengguna ({uniqueUserNames.length})</option>
+              {uniqueUserNames.map(name => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </select>
+
+            {/* Role Filter Dropdown */}
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
@@ -274,6 +319,7 @@ const MonitorPage = () => {
               <option value="ortu">Orang Tua</option>
             </select>
 
+            {/* Action Filter Dropdown */}
             <select
               value={actionFilter}
               onChange={(e) => setActionFilter(e.target.value)}
@@ -288,83 +334,116 @@ const MonitorPage = () => {
         </div>
 
         {/* Real-time Activity Table */}
-        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-black uppercase tracking-wider text-slate-400">
-                <th className="px-6 py-4">Waktu & Tanggal</th>
-                <th className="px-6 py-4">Nama Pengguna</th>
-                <th className="px-6 py-4">Peran</th>
-                <th className="px-6 py-4">Tindakan</th>
-                <th className="px-6 py-4">Fitur / Tombol</th>
-                <th className="px-6 py-4">Rincian Deskripsi</th>
-                <th className="px-6 py-4 text-right">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-xs font-bold">
-              {filteredLogs.map((log) => {
-                const dateObj = new Date(log.created_at);
-                const formattedDate = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-                const formattedTime = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-black uppercase tracking-wider text-slate-400">
+                  <th className="px-6 py-4">Waktu & Tanggal</th>
+                  <th className="px-6 py-4">Nama Pengguna</th>
+                  <th className="px-6 py-4">Peran</th>
+                  <th className="px-6 py-4">Tindakan</th>
+                  <th className="px-6 py-4">Fitur / Tombol</th>
+                  <th className="px-6 py-4">Rincian Deskripsi</th>
+                  <th className="px-6 py-4 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs font-bold">
+                {currentLogs.map((log) => {
+                  const dateObj = new Date(log.created_at);
+                  const formattedDate = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+                  const formattedTime = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-                return (
-                  <tr key={log.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-slate-500 font-mono text-[11px]">
-                      {formattedDate} • {formattedTime}
-                    </td>
-                    <td className="px-6 py-4 font-black text-slate-900">
-                      {log.user_name}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase border ${
-                        log.user_role === 'guru'
-                          ? 'bg-purple-50 text-purple-600 border-purple-100'
-                          : log.user_role === 'siswa'
-                            ? 'bg-indigo-50 text-indigo-600 border-indigo-100'
-                            : 'bg-emerald-50 text-emerald-600 border-emerald-100'
-                      }`}>
-                        {log.user_role}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase ${
-                        log.action_type === 'LOGIN'
-                          ? 'bg-emerald-500 text-white'
-                          : log.action_type === 'KLIK_TOMBOL'
-                            ? 'bg-amber-500 text-white'
-                            : 'bg-slate-800 text-white'
-                      }`}>
-                        {log.action_type}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-indigo-600 font-black">
-                      {log.feature_name}
-                    </td>
-                    <td className="px-6 py-4 text-slate-600 font-medium">
-                      {log.description || '-'}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() => handleDeleteLog(log.id)}
-                        className="p-2 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all border border-rose-100"
-                        title="Hapus Log Ini"
-                      >
-                        <HiTrash />
-                      </button>
+                  return (
+                    <tr key={log.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-slate-500 font-mono text-[11px]">
+                        {formattedDate} • {formattedTime}
+                      </td>
+                      <td className="px-6 py-4 font-black text-slate-900">
+                        {log.user_name}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase border ${
+                          log.user_role === 'guru'
+                            ? 'bg-purple-50 text-purple-600 border-purple-100'
+                            : log.user_role === 'siswa'
+                              ? 'bg-indigo-50 text-indigo-600 border-indigo-100'
+                              : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                        }`}>
+                          {log.user_role}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase ${
+                          log.action_type === 'LOGIN'
+                            ? 'bg-emerald-500 text-white'
+                            : log.action_type === 'KLIK_TOMBOL'
+                              ? 'bg-amber-500 text-white'
+                              : 'bg-slate-800 text-white'
+                        }`}>
+                          {log.action_type}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-indigo-600 font-black">
+                        {log.feature_name}
+                      </td>
+                      <td className="px-6 py-4 text-slate-600 font-medium">
+                        {log.description || '-'}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          onClick={() => handleDeleteLog(log.id)}
+                          className="p-2 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all border border-rose-100"
+                          title="Hapus Log Ini"
+                        >
+                          <HiTrash />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+
+                {filteredLogs.length === 0 && (
+                  <tr>
+                    <td colSpan="7" className="px-6 py-12 text-center text-slate-400 font-bold">
+                      Tidak ada log aktivitas yang ditemukan.
                     </td>
                   </tr>
-                );
-              })}
+                )}
+              </tbody>
+            </table>
+          </div>
 
-              {filteredLogs.length === 0 && (
-                <tr>
-                  <td colSpan="7" className="px-6 py-12 text-center text-slate-400 font-bold">
-                    Tidak ada log aktivitas yang ditemukan.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+          {/* Clean & Responsive Pagination Controls */}
+          {filteredLogs.length > 0 && (
+            <div className="px-6 py-4 bg-slate-50/80 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold text-slate-500">
+              <p>
+                Menampilkan <span className="text-slate-900 font-black">{(currentPage - 1) * itemsPerPage + 1}</span> - <span className="text-slate-900 font-black">{Math.min(currentPage * itemsPerPage, filteredLogs.length)}</span> dari <span className="text-indigo-600 font-black">{filteredLogs.length}</span> Log Aktivitas
+              </p>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3.5 py-2 bg-white text-slate-700 rounded-xl border border-slate-200 hover:bg-indigo-50 hover:text-indigo-600 disabled:opacity-30 transition-all flex items-center gap-1 shadow-xs"
+                >
+                  <HiChevronLeft /> Sebelumnya
+                </button>
+
+                <div className="px-3 text-center min-w-[70px]">
+                  <span className="text-indigo-600 font-black">{currentPage}</span> / <span className="text-slate-500 font-bold">{totalPages}</span>
+                </div>
+
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3.5 py-2 bg-white text-slate-700 rounded-xl border border-slate-200 hover:bg-indigo-50 hover:text-indigo-600 disabled:opacity-30 transition-all flex items-center gap-1 shadow-xs"
+                >
+                  Berikutnya <HiChevronRight />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </div>
