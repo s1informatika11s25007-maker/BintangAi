@@ -213,22 +213,20 @@ const TanyaAI = () => {
         <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-50 rounded-full blur-[100px] pointer-events-none opacity-50" />
 
         {/* HEADER */}
-        <header className="px-4 py-4 md:px-8 md:py-6 border-b border-slate-100 flex items-center justify-between bg-white/95 backdrop-blur-xl sticky top-0 z-[40] shadow-sm">
-          <div className="flex items-center gap-4">
+        <header className="px-4 py-3 md:px-8 md:py-4 border-b border-slate-100 flex items-center justify-between bg-white/95 backdrop-blur-xl sticky top-0 z-[40] shadow-sm shrink-0">
+          <div className="flex items-center gap-3 md:gap-4">
              <button
                onClick={() => navigate('/student/dashboard')}
                className="p-2 hover:bg-slate-100 rounded-xl lg:hidden text-slate-500"
              >
                <HiChevronLeft className="text-2xl" />
              </button>
-             <div className="relative">
-                <div className="w-10 h-10 md:w-12 md:h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-100 ring-2 ring-indigo-50/50">
-                  <HiChatAlt2 className="text-xl md:text-2xl" />
-                </div>
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full" />
+             <div className="relative cursor-pointer shrink-0" onClick={() => navigate('/student/dashboard')}>
+                <BintangAvatar state="idle" size="sm" />
+                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full" />
              </div>
              <div>
-                <h2 className="text-sm md:text-base font-black text-slate-800 tracking-tight leading-tight">Tanya Kak Bintang</h2>
+                <h2 className="text-sm md:text-base font-black text-slate-800 tracking-tight leading-tight">Tanya Bintang</h2>
                 <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Online • Asisten AI</p>
              </div>
           </div>
@@ -246,13 +244,10 @@ const TanyaAI = () => {
 
             <button
               onClick={clearChat}
-              className="p-3 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+              className="p-2.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
               title="Bersihkan Chat"
             >
-              <HiTrash className="text-xl" />
-            </button>
-            <button className="p-3 text-slate-400 hover:bg-slate-50 rounded-xl transition-all lg:hidden">
-              <HiDotsVertical className="text-xl" />
+              <HiTrash className="text-lg" />
             </button>
           </div>
         </header>
@@ -260,7 +255,7 @@ const TanyaAI = () => {
         {/* MESSAGES AREA - BUTTERY SMOOTH 60FPS SCROLLING */}
         <div
           ref={chatContainerRef}
-          className="flex-1 overflow-y-auto scroll-smooth custom-scrollbar overscroll-contain touch-pan-y px-3 sm:px-6 md:px-8 py-4 sm:py-6 space-y-3 sm:space-y-4 bg-slate-50/30 relative"
+          className="flex-1 overflow-y-auto scroll-smooth custom-scrollbar overscroll-contain touch-pan-y px-3 sm:px-6 md:px-8 pt-6 pb-6 sm:pt-8 sm:pb-8 space-y-3 sm:space-y-4 bg-slate-50/30 relative"
         >
 
           <AnimatePresence initial={false}>
