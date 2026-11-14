@@ -26,7 +26,8 @@ Berikan 3-5 poin dengan bahasa positif dan faktual.`;
     const reportText = await guardPotentiallySensitiveAnswer(generated);
     const { data: report, error: insertError } = await client.from('student_reports').insert({
       student_id: studentId, teacher_id: user.id, report_type: 'Kemajuan Belajar',
-      title: `Ringkasan perkembangan ${student.full_name}`, content: { summary: reportText, model_id: model, generated_at: new Date().toISOString() },
+      title: `Ringkasan perkembangan ${student.full_name}`, content: reportText, summary: reportText,
+      recommendation: 'Pertahankan motivasi belajar dan berikan apresiasi secara rutin.',
     }).select().single();
     if (insertError) throw new HttpError('Laporan gagal disimpan.', 500);
     return jsonResponse({ success: true, report, content: reportText, model_id: model });
