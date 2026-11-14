@@ -22,6 +22,15 @@ const TeacherCollaboration = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [confirmModal, setConfirmModal] = useState({
+    show: false,
+    title: '',
+    description: '',
+    confirmText: '',
+    type: 'danger',
+    icon: '❓',
+    onConfirm: null
+  });
 
   const [groupForm, setGroupForm] = useState({
     name: '',
@@ -97,18 +106,36 @@ const TeacherCollaboration = () => {
     fetchGroups();
   };
 
-  const handleReject = async (requestId) => {
-    if (window.confirm('Tolak permintaan?')) {
-      await supabase.from('group_join_requests').delete().eq('id', requestId);
-      fetchGroups();
-    }
+  const handleReject = (requestId, studentName = '') => {
+    setConfirmModal({
+      show: true,
+      title: 'Tolak Permintaan Siswa?',
+      description: `Apakah Anda yakin ingin menolak permintaan bergabung ${studentName ? `dari ${studentName}` : 'siswa ini'} ke kelompok belajar?`,
+      confirmText: 'Tolak Permintaan',
+      type: 'danger',
+      icon: '🚫',
+      onConfirm: async () => {
+        await supabase.from('group_join_requests').delete().eq('id', requestId);
+        fetchGroups();
+      }
+    });
   };
 
-  const handleDeleteGroup = async () => {
-    if (!selectedGroup || !window.confirm('Hapus grup permanen?')) return;
-    await supabase.from('study_groups').delete().eq('id', selectedGroup.id);
-    navigate('/teacher/collaboration');
-    fetchGroups();
+  const handleDeleteGroup = () => {
+    if (!selectedGroup) return;
+    setConfirmModal({
+      show: true,
+      title: 'Hapus Kelompok Belajar?',
+      description: `Kelompok "${selectedGroup.name}" beserta seluruh riwayat percakapan di dalamnya akan dihapus secara permanen.`,
+      confirmText: 'Hapus Permanen',
+      type: 'danger',
+      icon: '🗑️',
+      onConfirm: async () => {
+        await supabase.from('study_groups').delete().eq('id', selectedGroup.id);
+        navigate('/teacher/collaboration');
+        fetchGroups();
+      }
+    });
   };
 
   const toggleChat = async () => {
@@ -172,7 +199,7 @@ const TeacherCollaboration = () => {
                         {requests.map(req => (
                           <div key={req.id} className="p-5 bg-white rounded-[2rem] flex items-center justify-between shadow-sm">
                             <span className="text-xs font-black text-slate-700 truncate mr-4">{req.profiles?.full_name}</span>
-                            <div className="flex gap-2"><button onClick={() => handleApprove(req.id, req.student_id)} className="w-10 h-10 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shadow-lg"><HiCheck /></button><button onClick={() => handleReject(req.id)} className="w-10 h-10 bg-rose-500 text-white rounded-2xl flex items-center justify-center shadow-lg"><HiX /></button></div>
+                            <div className="flex gap-2"><button onClick={() => handleApprove(req.id, req.student_id)} className="w-10 h-10 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shadow-lg"><HiCheck /></button><button onClick={() => handleReject(req.id, req.profiles?.full_name)} className="w-10 h-10 bg-rose-500 text-white rounded-2xl flex items-center justify-center shadow-lg"><HiX /></button></div>
                           </div>
                         ))}
                       </div>
@@ -216,6 +243,65 @@ const TeacherCollaboration = () => {
                 <label className="flex items-center gap-4 p-4 bg-indigo-50 rounded-3xl border border-indigo-100 cursor-pointer"><input type="checkbox" checked={groupForm.requires_approval} onChange={e => setGroupForm({...groupForm, requires_approval: e.target.checked})} className="w-6 h-6 rounded-xl border-slate-300 text-indigo-600" /><span className="text-[10px] font-black text-indigo-700 uppercase tracking-widest">Sistem Persetujuan</span></label>
                 <div className="flex gap-4 pt-6"><button type="button" onClick={() => setShowCreateModal(false)} className="flex-1 py-5 font-black text-[10px] uppercase bg-slate-100 text-slate-400 rounded-[2rem]">Batal</button><button type="submit" className="flex-1 py-5 font-black text-[10px] uppercase bg-indigo-600 text-white rounded-[2rem] shadow-xl shadow-indigo-200">Buat Sekarang</button></div>
               </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Custom Clean & Elegant Confirmation Card Modal */}
+        {confirmModal.show && (
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 sm:p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setConfirmModal({ ...confirmModal, show: false })}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative bg-white w-full max-w-sm md:max-w-md rounded-[2.5rem] shadow-2xl p-7 md:p-8 border border-slate-100 flex flex-col items-center text-center overflow-hidden z-10"
+            >
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-4 shadow-lg ${
+                confirmModal.type === 'danger'
+                  ? 'bg-rose-50 text-rose-500 shadow-rose-100 border border-rose-100'
+                  : 'bg-indigo-50 text-indigo-600 shadow-indigo-100 border border-indigo-100'
+              }`}>
+                {confirmModal.icon}
+              </div>
+
+              <h3 className="text-xl font-black text-slate-900 tracking-tight mb-2">
+                {confirmModal.title}
+              </h3>
+
+              <p className="text-xs font-bold text-slate-500 leading-relaxed mb-8 px-2">
+                {confirmModal.description}
+              </p>
+
+              <div className="flex items-center gap-3 w-full">
+                <button
+                  type="button"
+                  onClick={() => setConfirmModal({ ...confirmModal, show: false })}
+                  className="flex-1 py-3.5 bg-slate-100 text-slate-600 rounded-2xl font-bold text-xs hover:bg-slate-200 transition-all"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (confirmModal.onConfirm) confirmModal.onConfirm();
+                    setConfirmModal({ ...confirmModal, show: false });
+                  }}
+                  className={`flex-1 py-3.5 text-white rounded-2xl font-bold text-xs shadow-lg transition-all ${
+                    confirmModal.type === 'danger'
+                      ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-200'
+                      : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'
+                  }`}
+                >
+                  {confirmModal.confirmText}
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

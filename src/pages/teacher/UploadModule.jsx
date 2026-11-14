@@ -22,9 +22,12 @@ const loadPdfJs = () => {
   });
 };
 
+import { useNotification } from '@/hooks/useNotification';
+
 const TeacherUploadModule = () => {
   const { profile } = useAuthStore();
   const navigate = useNavigate();
+  const { showToast } = useNotification();
 
   const [file, setFile] = useState(null);
   const [title, setTitle] = useState('');
@@ -142,11 +145,11 @@ const TeacherUploadModule = () => {
 
       if (dbError) throw dbError;
 
-      alert("Modul berhasil dipublikasikan secara spesifik! 🚀");
+      showToast("Modul berhasil dipublikasikan secara spesifik! 🚀");
       navigate('/teacher/dashboard');
     } catch (err) {
       console.error("Upload Error:", err);
-      alert("Gagal mengirim modul. " + err.message);
+      showToast("Gagal mengirim modul. " + err.message, "error");
     } finally {
       setLoading(false);
     }

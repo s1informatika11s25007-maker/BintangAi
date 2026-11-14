@@ -244,7 +244,7 @@ const StudentCollaboration = () => {
 
       if (joiningGroup.requires_approval) {
         await supabase.from('group_join_requests').insert({ group_id: joiningGroup.id, student_id: profile.id });
-        alert("Permintaan dikirim!");
+        showSubtitle("Permintaan bergabung telah dikirim ke Guru", "success");
         fetchMyRequests();
       } else {
         await supabase.from('group_members').insert({ group_id: joiningGroup.id, student_id: profile.id, role: 'member' });

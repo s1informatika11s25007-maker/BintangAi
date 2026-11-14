@@ -55,6 +55,15 @@ const TeacherDashboard = () => {
   const [reportStudentId, setReportStudentId] = useState('');
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [chatSearch, setChatSearch] = useState('');
+  const [confirmModal, setConfirmModal] = useState({
+    show: false,
+    title: '',
+    description: '',
+    confirmText: '',
+    type: 'danger',
+    icon: '❓',
+    onConfirm: null
+  });
 
   const queryParams = new URLSearchParams(location.search);
   const initialTab = queryParams.get('tab') || 'summary';
@@ -342,35 +351,53 @@ const TeacherDashboard = () => {
     }
   };
 
-  const handleDeleteModule = async (moduleId) => {
-    if (!window.confirm('Apakah Anda yakin ingin menghapus modul ini?')) return;
-    setDeleteLoading(moduleId);
-    try {
-      const { error: dbError } = await supabase.from('modules').delete().eq('id', moduleId);
-      if (dbError) throw dbError;
-      setMyModules(prev => prev.filter(m => m.id !== moduleId));
-      showToast("Modul berhasil dihapus.");
-    } catch (error) {
-      showToast('Gagal menghapus: ' + error.message, 'error');
-    } finally {
-      setDeleteLoading(null);
-    }
+  const handleDeleteModule = (moduleId, moduleTitle = '') => {
+    setConfirmModal({
+      show: true,
+      title: 'Hapus Modul Pembelajaran?',
+      description: `Modul "${moduleTitle || 'ini'}" akan dihapus secara permanen dari perpustakaan materi.`,
+      confirmText: 'Hapus Modul',
+      type: 'danger',
+      icon: '📚',
+      onConfirm: async () => {
+        setDeleteLoading(moduleId);
+        try {
+          const { error: dbError } = await supabase.from('modules').delete().eq('id', moduleId);
+          if (dbError) throw dbError;
+          setMyModules(prev => prev.filter(m => m.id !== moduleId));
+          showToast("Modul berhasil dihapus.");
+        } catch (error) {
+          showToast('Gagal menghapus: ' + error.message, 'error');
+        } finally {
+          setDeleteLoading(null);
+        }
+      }
+    });
   };
 
-  const handleDeleteAssignment = async (id) => {
-    if (!window.confirm('Hapus QuizKu ini? Semua data jawaban siswa juga akan terhapus.')) return;
-    setDeleteLoading(id);
-    try {
-      const { error } = await supabase.from('assignments').delete().eq('id', id);
-      if (error) throw error;
-      setMyAssignments(prev => prev.filter(a => a.id !== id));
-      fetchStats();
-      showToast("QuizKu berhasil dihapus.");
-    } catch (error) {
-      showToast('Gagal menghapus QuizKu: ' + error.message, 'error');
-    } finally {
-      setDeleteLoading(null);
-    }
+  const handleDeleteAssignment = (id, assignmentTitle = '') => {
+    setConfirmModal({
+      show: true,
+      title: 'Hapus QuizKu?',
+      description: `QuizKu "${assignmentTitle || 'ini'}" beserta semua data jawaban siswa akan dihapus secara permanen.`,
+      confirmText: 'Hapus QuizKu',
+      type: 'danger',
+      icon: '⚡',
+      onConfirm: async () => {
+        setDeleteLoading(id);
+        try {
+          const { error } = await supabase.from('assignments').delete().eq('id', id);
+          if (error) throw error;
+          setMyAssignments(prev => prev.filter(a => a.id !== id));
+          fetchStats();
+          showToast("QuizKu berhasil dihapus.");
+        } catch (error) {
+          showToast('Gagal menghapus QuizKu: ' + error.message, 'error');
+        } finally {
+          setDeleteLoading(null);
+        }
+      }
+    });
   };
 
   const handleForceLogoutStudent = async (student) => {
@@ -789,7 +816,7 @@ const TeacherDashboard = () => {
                            Hasil Kelas <HiChevronRight />
                          </button>
                          <button
-                          onClick={() => handleDeleteAssignment(a.id)}
+                          onClick={() => handleDeleteAssignment(a.id, a.title)}
                           className="p-4 bg-rose-50 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all border border-rose-100"
                          >
                            <HiTrash className="text-xl" />
@@ -877,7 +904,7 @@ const TeacherDashboard = () => {
                          <div className="w-16 h-16 bg-slate-50 text-indigo-600 rounded-2xl flex items-center justify-center text-3xl shadow-inner border border-slate-100 group-hover:bg-indigo-600 group-hover:text-white transition-all">
                             <HiBookOpen />
                          </div>
-                         <button onClick={() => handleDeleteModule(m.id)} className="p-3 text-slate-300 hover:text-rose-500 transition-colors">
+                         <button onClick={() => handleDeleteModule(m.id, m.title)} className="p-3 text-slate-300 hover:text-rose-500 transition-colors">
                             <HiTrash size={22} />
                          </button>
                       </div>
@@ -1659,6 +1686,67 @@ const TeacherDashboard = () => {
                     className="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl text-xs hover:bg-indigo-700 transition-all disabled:opacity-40 flex items-center gap-2 shadow-md"
                   >
                     {sendingMsg ? 'Sending...' : 'Kirim Pesan 🚀'}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Custom Clean & Elegant Confirmation Card Modal */}
+        <AnimatePresence>
+          {confirmModal.show && (
+            <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 sm:p-6">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setConfirmModal({ ...confirmModal, show: false })}
+                className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+              />
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                className="relative bg-white w-full max-w-sm md:max-w-md rounded-[2.5rem] shadow-2xl p-7 md:p-8 border border-slate-100 flex flex-col items-center text-center overflow-hidden z-10"
+              >
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-4 shadow-lg ${
+                  confirmModal.type === 'danger'
+                    ? 'bg-rose-50 text-rose-500 shadow-rose-100 border border-rose-100'
+                    : 'bg-indigo-50 text-indigo-600 shadow-indigo-100 border border-indigo-100'
+                }`}>
+                  {confirmModal.icon}
+                </div>
+
+                <h3 className="text-xl font-black text-slate-900 tracking-tight mb-2">
+                  {confirmModal.title}
+                </h3>
+
+                <p className="text-xs font-bold text-slate-500 leading-relaxed mb-8 px-2">
+                  {confirmModal.description}
+                </p>
+
+                <div className="flex items-center gap-3 w-full">
+                  <button
+                    type="button"
+                    onClick={() => setConfirmModal({ ...confirmModal, show: false })}
+                    className="flex-1 py-3.5 bg-slate-100 text-slate-600 rounded-2xl font-bold text-xs hover:bg-slate-200 transition-all"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (confirmModal.onConfirm) confirmModal.onConfirm();
+                      setConfirmModal({ ...confirmModal, show: false });
+                    }}
+                    className={`flex-1 py-3.5 text-white rounded-2xl font-bold text-xs shadow-lg transition-all ${
+                      confirmModal.type === 'danger'
+                        ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-200'
+                        : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'
+                    }`}
+                  >
+                    {confirmModal.confirmText}
                   </button>
                 </div>
               </motion.div>
