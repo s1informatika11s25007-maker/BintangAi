@@ -22,6 +22,11 @@ export default defineConfig({
     },
     VitePWA({
       registerType: 'autoUpdate',
+      workbox: {
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true
+      },
       manifest: {
         name: 'BintangAi',
         short_name: 'BintangAi',

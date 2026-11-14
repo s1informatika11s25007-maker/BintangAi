@@ -4,6 +4,17 @@ import App from './App'
 import './styles/globals.css'
 import './styles/adaptive.css'
 
+// Automatically clear outdated Workbox / PWA asset caches on reload
+if (typeof window !== 'undefined' && 'caches' in window) {
+  caches.keys().then((names) => {
+    names.forEach((name) => {
+      if (name.includes('workbox') || name.includes('vite') || name.includes('bintangai')) {
+        caches.delete(name);
+      }
+    });
+  }).catch(() => {});
+}
+
 // Reapply mode on initial load before React mounts
 // Ensures no visual leak on public pages (Landing, Login, Register)
 try {

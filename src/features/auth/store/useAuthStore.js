@@ -62,16 +62,29 @@ export const useAuthStore = create(
         }
       },
 
-      // Verification of session and role accuracy on initialization
+      // Verification & auto-refresh of session (JWT 15m / Refresh Token 7d) on initialization
       initializeAuth: async () => {
         set({ loading: true });
         try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user) {
-            set({ user: session.user });
-            await get().fetchProfile(session.user.id, false);
+          // Attempt automatic session token refresh on page load / refresh
+          let activeSession = null;
+          try {
+            const { data: refreshData } = await supabase.auth.refreshSession();
+            if (refreshData?.session?.user) {
+              activeSession = refreshData.session;
+            }
+          } catch (e) {}
+
+          if (!activeSession) {
+            const { data: { session } } = await supabase.auth.getSession();
+            activeSession = session;
+          }
+
+          if (activeSession?.user) {
+            set({ user: activeSession.user });
+            await get().fetchProfile(activeSession.user.id, false);
           } else {
-            // If no active Supabase Auth session, clear user state
+            // No active session in Supabase Auth -> Clear user state
             set({ user: null, profile: null, loading: false });
           }
         } catch (error) {
