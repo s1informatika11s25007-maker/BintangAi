@@ -12,7 +12,7 @@ import { useSubtitle } from '@/features/accessibility/components/Subtitles';
 import { useAccessibility } from '@/features/accessibility/hooks/useAccessibility';
 import {
   HiLightningBolt, HiCheckCircle, HiChevronRight,
-  HiClock, HiAcademicCap, HiInformationCircle, HiChevronLeft
+  HiClock, HiAcademicCap, HiInformationCircle, HiChevronLeft, HiSparkles, HiVolumeUp
 } from 'react-icons/hi';
 
 const StudentTaskDetail = () => {
@@ -161,15 +161,15 @@ const StudentTaskDetail = () => {
     return (
       <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center p-4 md:p-6 pt-12 overflow-y-auto pb-32">
         <ConfettiEffect active={showConfetti} />
-        <header className="text-center mb-8 md:mb-16 space-y-4">
+        <header className="text-center mb-8 md:mb-12 space-y-4">
            <div className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-[2rem] md:rounded-3xl shadow-xl flex items-center justify-center text-4xl md:text-5xl mx-auto border border-slate-50">🏆</div>
            <h2 className="text-2xl md:text-4xl font-black text-slate-900 uppercase tracking-tighter">Hasil Petualanganmu</h2>
            <p className="text-[8px] md:text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] md:tracking-[0.4em]">{task?.title}</p>
         </header>
 
-        <div className="w-full max-w-4xl bg-white rounded-[2.5rem] md:rounded-[3.5rem] p-8 md:p-12 shadow-2xl shadow-indigo-100/50 text-center relative overflow-hidden mb-12 border border-slate-50">
+        <div className="w-full max-w-4xl bg-white rounded-[2.5rem] md:rounded-[3.5rem] p-8 md:p-12 shadow-2xl shadow-indigo-100/50 text-center relative overflow-hidden mb-10 border border-slate-50">
            <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 md:mb-6">Skor Akhir</p>
-           <p className="text-7xl md:text-[10rem] font-black text-indigo-600 leading-none mb-8 md:mb-10">{submissionRecord.total_score}</p>
+           <p className="text-7xl md:text-[9rem] font-black text-indigo-600 leading-none mb-8 md:mb-10">{submissionRecord.total_score}</p>
            <button
             onClick={() => navigate('/student/tasks')}
             data-gesture-item="true"
@@ -177,6 +177,119 @@ const StudentTaskDetail = () => {
            >
              Kembali ke Daftar
            </button>
+        </div>
+
+        {/* Kunci Jawaban & Pembahasan Section */}
+        <div className="w-full max-w-4xl space-y-6">
+          <div className="flex items-center justify-between pb-4 border-b border-slate-200">
+            <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight flex items-center gap-2">
+              <HiAcademicCap className="text-indigo-600 text-2xl" /> Kunci Jawaban & Pembahasan
+            </h3>
+            <span className="text-xs font-bold text-slate-500 bg-white px-3 py-1 rounded-xl border border-slate-200">
+              {submissionDetails.filter(d => d.is_correct).length} / {submissionDetails.length} Benar
+            </span>
+          </div>
+
+          <div className="space-y-6">
+            {submissionDetails.map((detail, index) => {
+              const q = detail.question || detail.assignment_questions;
+              const options = q?.assignment_question_options || [];
+              const isCorrect = detail.is_correct;
+              const explanation = q?.ai_explanation || q?.ai_feedback_wrong || 'Pembahasan telah diverifikasi oleh AI Tutor.';
+
+              return (
+                <div
+                  key={detail.id || index}
+                  className={`bg-white rounded-3xl p-6 md:p-8 shadow-sm border transition-all ${
+                    isCorrect ? 'border-emerald-100' : 'border-rose-100'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-4 mb-4">
+                    <div className="flex items-center gap-3">
+                      <span className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs text-white shrink-0 ${
+                        isCorrect ? 'bg-emerald-500' : 'bg-rose-500'
+                      }`}>
+                        {index + 1}
+                      </span>
+                      <h4 className="font-bold text-slate-900 text-sm md:text-base leading-snug">
+                        {q?.question_text || `Soal Nomor ${index + 1}`}
+                      </h4>
+                    </div>
+
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase shrink-0 border ${
+                      isCorrect
+                        ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                        : 'bg-rose-50 text-rose-600 border-rose-100'
+                    }`}>
+                      {isCorrect ? '✅ Benar' : '❌ Salah'}
+                    </span>
+                  </div>
+
+                  {/* Options List */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 my-4">
+                    {options.map((opt, oi) => {
+                      const isSelected = detail.selected_option_id === opt.id;
+                      const isOptionCorrect = opt.is_correct;
+
+                      return (
+                        <div
+                          key={opt.id || oi}
+                          className={`p-3.5 rounded-2xl border text-xs font-bold flex items-center justify-between gap-3 ${
+                            isOptionCorrect
+                              ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                              : isSelected
+                                ? 'bg-rose-50 border-rose-200 text-rose-900'
+                                : 'bg-slate-50 border-slate-100 text-slate-600'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black shrink-0 ${
+                              isOptionCorrect
+                                ? 'bg-emerald-600 text-white'
+                                : isSelected
+                                  ? 'bg-rose-600 text-white'
+                                  : 'bg-slate-200 text-slate-600'
+                            }`}>
+                              {String.fromCharCode(65 + oi)}
+                            </span>
+                            <span className="truncate">{opt.option_text}</span>
+                          </div>
+
+                          {isOptionCorrect && (
+                            <span className="text-[9px] font-black uppercase text-emerald-600 bg-white px-2 py-0.5 rounded border border-emerald-200 shrink-0">
+                              Kunci
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Pembahasan / AI Explanation */}
+                  <div className="mt-4 p-4 bg-indigo-50/70 border border-indigo-100 rounded-2xl flex items-start gap-3">
+                    <HiSparkles className="text-indigo-600 text-lg shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600">
+                          Pembahasan AI
+                        </span>
+                        <button
+                          onClick={() => speak(explanation, 1.0, true)}
+                          className="p-1 bg-white hover:bg-indigo-100 text-indigo-600 rounded-lg text-xs transition-all shadow-xs"
+                          title="Dengarkan Pembahasan"
+                        >
+                          <HiVolumeUp className="text-xs" />
+                        </button>
+                      </div>
+                      <p className="text-xs font-bold text-slate-700 leading-relaxed">
+                        {explanation}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     );

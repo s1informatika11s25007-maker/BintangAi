@@ -400,6 +400,33 @@ const TeacherDashboard = () => {
     });
   };
 
+  const handleAllowRetake = (submission) => {
+    const studentName = submission.profiles?.full_name || 'Siswa';
+    const assignmentTitle = selectedAssignment?.title || 'QuizKu';
+
+    setConfirmModal({
+      show: true,
+      title: 'Izinkan Kerjakan Ulang?',
+      description: `Apakah Anda yakin ingin mengizinkan ${studentName} untuk mengerjakan ulang "${assignmentTitle}"? Hasil dan jawaban sebelumnya akan direset.`,
+      confirmText: 'Izinkan Ulang',
+      type: 'info',
+      icon: <HiRefresh className="text-3xl text-indigo-600" />,
+      onConfirm: async () => {
+        try {
+          await supabase.from('submission_answers').delete().eq('submission_id', submission.id);
+          const { error } = await supabase.from('submissions').delete().eq('id', submission.id);
+          if (error) throw error;
+
+          setAssignmentSubmissions(prev => prev.filter(s => s.id !== submission.id));
+          fetchStats();
+          showToast(`Siswa ${studentName} diizinkan mengerjakan ulang ${assignmentTitle}!`);
+        } catch (err) {
+          showToast(`Gagal meriset pengerjaan: ${err.message}`, 'error');
+        }
+      }
+    });
+  };
+
   const handleForceLogoutStudent = async (student) => {
     if (!student?.id) return;
     try {
@@ -873,12 +900,21 @@ const TeacherDashboard = () => {
                                    </div>
                                 </td>
                                 <td className="px-10 py-8 text-right">
-                                      <button
-                                        onClick={() => setXpModal({ show: true, student: sub.profiles, amount: 10 })}
-                                        className="px-6 py-3 bg-amber-50 text-amber-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all flex items-center gap-2 ml-auto"
-                                      >
-                                        <HiAcademicCap /> Bonus XP
-                                      </button>
+                                  <div className="flex items-center justify-end gap-3">
+                                    <button
+                                      onClick={() => handleAllowRetake(sub)}
+                                      className="px-4 py-2.5 bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-600 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5 border border-indigo-100"
+                                      title="Izinkan Siswa Mengerjakan Ulang"
+                                    >
+                                      <HiRefresh className="text-sm" /> Izinkan Ulang
+                                    </button>
+                                    <button
+                                      onClick={() => setXpModal({ show: true, student: sub.profiles, amount: 10 })}
+                                      className="px-4 py-2.5 bg-amber-50 hover:bg-amber-500 hover:text-white text-amber-600 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5 border border-amber-100"
+                                    >
+                                      <HiAcademicCap className="text-sm" /> Bonus XP
+                                    </button>
+                                  </div>
                                 </td>
                              </tr>
                          ))}
