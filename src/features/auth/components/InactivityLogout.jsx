@@ -53,7 +53,10 @@ const InactivityLogout = ({ children }) => {
   }, [user, handleAutoLogout]);
 
   useEffect(() => {
-    if (!user?.id) return;
+    const publicPaths = ['/', '/auth/login', '/auth/register'];
+    const isPublicRoute = typeof window !== 'undefined' && publicPaths.includes(window.location.pathname);
+
+    if (!user?.id || isPublicRoute) return;
 
     // Set online on mount & heartbeat every 30s for max precision
     updateOnlineStatus(true);

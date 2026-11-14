@@ -69,22 +69,18 @@ export const useAuthStore = create(
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.user) {
             set({ user: session.user });
-            await get().fetchProfile(session.user.id);
+            await get().fetchProfile(session.user.id, false);
           } else {
-            const persistedUser = get().user;
-            if (persistedUser?.id) {
-              await get().fetchProfile(persistedUser.id);
-            } else {
-              set({ user: null, profile: null, loading: false });
-            }
+            // If no active Supabase Auth session, clear user state
+            set({ user: null, profile: null, loading: false });
           }
         } catch (error) {
           console.error("Auth init error:", error);
-          set({ loading: false });
+          set({ user: null, profile: null, loading: false });
         }
       },
 
-      fetchProfile: async (userId) => {
+      fetchProfile: async (userId, setOnline = false) => {
         if (!userId) {
           set({ loading: false });
           return null;
@@ -100,16 +96,18 @@ export const useAuthStore = create(
           if (profileError) throw profileError;
 
           if (profileData) {
-            // Guarantee online status is set to true on profile fetch & session restore
-            try {
-              const todayDate = new Date().toISOString().split('T')[0];
-              await supabase.from('profiles').update({
-                is_online: true,
-                last_active_at: new Date().toISOString(),
-                last_active: todayDate
-              }).eq('id', userId);
-              profileData.is_online = true;
-            } catch (e) {}
+            // ONLY set is_online = true if explicitly requested (e.g. on fresh login)
+            if (setOnline) {
+              try {
+                const todayDate = new Date().toISOString().split('T')[0];
+                await supabase.from('profiles').update({
+                  is_online: true,
+                  last_active_at: new Date().toISOString(),
+                  last_active: todayDate
+                }).eq('id', userId);
+                profileData.is_online = true;
+              } catch (e) {}
+            }
 
             get().subscribeToProfile(userId);
             useAccessibilityStore.getState().setModeFromProfile(profileData);
@@ -141,7 +139,6 @@ export const useAuthStore = create(
 
       /**
        * 🛡️ COMPLETE LOGOUT, CACHE CLEAR & REDIRECT TO LOGIN PAGE ('/auth/login')
-       * Shows pure circular loading spinner without text, cancels speech, clears all DOM mode classes, deletes all localStorage & sessionStorage caches, and hard refreshes to login page.
        */
       logout: async (targetUrl = '/auth/login') => {
         set({ isLoggingOut: true, loading: true });
@@ -149,6 +146,10 @@ export const useAuthStore = create(
         const currentProfile = get().profile;
         const currentUser = get().user;
         const targetUserId = currentProfile?.id || currentUser?.id;
+
+        try {
+          get().unsubscribeFromProfile();
+        } catch (e) {}
 
         if (targetUserId) {
           try {
@@ -184,26 +185,24 @@ export const useAuthStore = create(
           await supabase.auth.signOut();
         } catch (e) {}
 
-        // 5. Delete ALL cache keys from localStorage and sessionStorage
+        // 5. Clear state
+        set({ user: null, profile: null, loading: false });
+
+        // 6. Delete ALL cache keys from localStorage and sessionStorage
         if (typeof window !== 'undefined') {
           try {
+            localStorage.removeItem('bintangai-auth-storage');
             localStorage.clear();
             sessionStorage.clear();
           } catch (e) {}
         }
 
-        try {
-          get().unsubscribeFromProfile();
-        } catch (e) {}
-
-        set({ user: null, profile: null, loading: false });
-
-        // 6. Hard redirect to login page ('/auth/login') cleanly
+        // 7. Hard redirect to login page ('/auth/login') cleanly
         setTimeout(() => {
           if (typeof window !== 'undefined') {
             window.location.href = targetUrl || '/auth/login';
           }
-        }, 400);
+        }, 300);
       }
     }),
     {
