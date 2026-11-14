@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabaseClient';
 import {
   HiLockClosed, HiShieldCheck, HiSearch, HiRefresh,
   HiClock, HiUserGroup, HiLightningBolt, HiFilter, HiX,
-  HiCheckCircle, HiTrash, HiChevronLeft, HiChevronRight
+  HiCheckCircle, HiTrash, HiChevronLeft, HiChevronRight, HiSparkles
 } from 'react-icons/hi';
 
 const MonitorPage = () => {
@@ -20,6 +20,9 @@ const MonitorPage = () => {
   const [roleFilter, setRoleFilter] = useState('all');
   const [userFilter, setUserFilter] = useState('all');
   const [actionFilter, setActionFilter] = useState('all');
+
+  // Confirmation Modal State for Clear All Logs
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   // Pagination State for scalable performance
   const [currentPage, setCurrentPage] = useState(1);
@@ -70,13 +73,13 @@ const MonitorPage = () => {
     }
   };
 
-  const handleClearAllLogs = async () => {
-    if (!window.confirm("Apakah Anda yakin ingin menghapus SELURUH riwayat log aktivitas pengguna?")) return;
+  const executeClearAllLogs = async () => {
     try {
       const { error } = await supabase.from('user_activity_logs').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       if (error) throw error;
       setLogs([]);
       setCurrentPage(1);
+      setShowClearConfirm(false);
     } catch (err) {
       console.error("Clear all logs error:", err);
     }
@@ -151,19 +154,19 @@ const MonitorPage = () => {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#0F172A] flex items-center justify-center p-6 font-sans text-white relative overflow-hidden">
+      <div className="min-h-screen bg-[#0F172A] flex items-center justify-center p-4 sm:p-6 font-sans text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
 
         <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          className="bg-slate-900 border border-slate-800 p-8 md:p-12 rounded-[3rem] w-full max-w-md shadow-2xl relative z-10 text-center"
+          className="bg-slate-900 border border-slate-800 p-7 sm:p-10 md:p-12 rounded-[2.5rem] md:rounded-[3rem] w-full max-w-md shadow-2xl relative z-10 text-center"
         >
-          <div className="w-20 h-20 bg-indigo-600/20 text-indigo-400 rounded-3xl flex items-center justify-center text-4xl mx-auto mb-6 border border-indigo-500/30 shadow-lg">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-indigo-600/20 text-indigo-400 rounded-3xl flex items-center justify-center text-3xl sm:text-4xl mx-auto mb-6 border border-indigo-500/30 shadow-lg">
             <HiLockClosed />
           </div>
 
-          <h1 className="text-2xl font-black uppercase tracking-tight mb-2">Halaman Monitor Khusus</h1>
+          <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tight mb-2">Halaman Monitor Khusus</h1>
           <p className="text-xs text-slate-400 font-bold leading-relaxed mb-8">
             Masukkan kata sandi untuk melihat seluruh log aktivitas pengguna, login, dan penekanan tombol fitur secara real-time.
           </p>
@@ -176,7 +179,7 @@ const MonitorPage = () => {
                 value={passwordInput}
                 onChange={(e) => setPasswordInput(e.target.value)}
                 placeholder="Masukkan Sandi Akses..."
-                className="w-full px-6 py-4 bg-slate-950 border border-slate-800 rounded-2xl text-center text-sm font-bold tracking-widest text-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                className="w-full px-5 sm:px-6 py-3.5 sm:py-4 bg-slate-950 border border-slate-800 rounded-2xl text-center text-sm font-bold tracking-widest text-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
                 autoFocus
               />
             </div>
@@ -187,7 +190,7 @@ const MonitorPage = () => {
 
             <button
               type="submit"
-              className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-indigo-600/20"
+              className="w-full py-3.5 sm:py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-indigo-600/20"
             >
               Buka Akses Monitor 🚀
             </button>
@@ -198,91 +201,95 @@ const MonitorPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-800 flex flex-col">
-      {/* Header */}
-      <header className="bg-slate-900 text-white px-6 md:px-12 py-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-2xl text-white shadow-lg">
+    <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-800 flex flex-col w-full">
+      {/* Header - Edge to Edge Edge Responsive */}
+      <header className="bg-slate-900 text-white px-4 sm:px-8 md:px-12 py-5 sm:py-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl shrink-0 w-full">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-xl sm:text-2xl text-white shadow-lg shrink-0">
             <HiShieldCheck />
           </div>
-          <div>
-            <h1 className="text-xl font-black tracking-tight uppercase">Portal Monitor & Log Aktivitas Sistem</h1>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+          <div className="min-w-0">
+            <h1 className="text-base sm:text-xl font-black tracking-tight uppercase truncate">Portal Monitor & Log Aktivitas Sistem</h1>
+            <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-widest truncate">
               Pencatatan Real-time Nama, Waktu, Tanggal, dan Klik Fitur Pengguna
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 shrink-0">
           <button
             onClick={fetchLogs}
-            className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl flex items-center gap-2 transition-all border border-slate-700"
+            className="px-3.5 sm:px-4 py-2 sm:py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all border border-slate-700"
           >
-            <HiRefresh className={loading ? 'animate-spin' : ''} /> Refresh Logs
+            <HiRefresh className={loading ? 'animate-spin' : ''} /> <span className="hidden sm:inline">Refresh Logs</span>
           </button>
           <button
-            onClick={handleClearAllLogs}
-            className="px-4 py-2.5 bg-rose-900/40 hover:bg-rose-600 text-rose-300 hover:text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all border border-rose-500/30"
+            onClick={() => setShowClearConfirm(true)}
+            className="px-3.5 sm:px-4 py-2 sm:py-2.5 bg-rose-900/40 hover:bg-rose-600 text-rose-300 hover:text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all border border-rose-500/30"
             title="Hapus Seluruh Log"
           >
-            <HiTrash /> Hapus Semua Log
+            <HiTrash /> <span>Hapus Semua Log</span>
           </button>
           <button
             onClick={handleLockAccess}
-            className="px-4 py-2.5 bg-rose-600/20 text-rose-400 font-bold text-xs rounded-xl hover:bg-rose-600 hover:text-white transition-all border border-rose-500/30"
+            className="px-3.5 sm:px-4 py-2 sm:py-2.5 bg-rose-600/20 text-rose-400 font-bold text-xs rounded-xl hover:bg-rose-600 hover:text-white transition-all border border-rose-500/30"
           >
             Kunci Akses
           </button>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 p-6 md:p-10 max-w-7xl mx-auto w-full space-y-8">
+      {/* Main Content - Full Edge-to-Edge Responsive Container */}
+      <main className="flex-1 p-4 sm:p-6 md:p-8 lg:p-10 w-full space-y-6 md:space-y-8">
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-2xl font-black">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl sm:text-2xl font-black shrink-0">
               <HiClock />
             </div>
-            <div>
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Total Log Catatan</p>
-              <p className="text-2xl font-black text-slate-900 leading-none mt-1">{logs.length}</p>
+            <div className="min-w-0">
+              <p className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-widest truncate">Total Log Catatan</p>
+              <p className="text-xl sm:text-2xl font-black text-slate-900 leading-none mt-1">{logs.length}</p>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl font-black">
+          <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl sm:text-2xl font-black shrink-0">
               <HiCheckCircle />
             </div>
-            <div>
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Aktivitas Login</p>
-              <p className="text-2xl font-black text-emerald-600 leading-none mt-1">{totalLogins}</p>
+            <div className="min-w-0">
+              <p className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-widest truncate">Aktivitas Login</p>
+              <p className="text-xl sm:text-2xl font-black text-emerald-600 leading-none mt-1">{totalLogins}</p>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl font-black">
+          <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl sm:text-2xl font-black shrink-0">
               <HiLightningBolt />
             </div>
-            <div>
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Klik Fitur & Tombol</p>
-              <p className="text-2xl font-black text-amber-600 leading-none mt-1">{totalClicks}</p>
+            <div className="min-w-0">
+              <p className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-widest truncate">Klik Fitur & Tombol</p>
+              <p className="text-xl sm:text-2xl font-black text-amber-600 leading-none mt-1">{totalClicks}</p>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl font-black">
-              <HiUserGroup />
+          {/* Professional Live Status Icon (No text emojis) */}
+          <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl sm:text-2xl font-black shrink-0">
+              <HiShieldCheck />
             </div>
-            <div>
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Status Monitor</p>
-              <p className="text-sm font-black text-blue-600 leading-none mt-1">🔴 Live Realtime</p>
+            <div className="min-w-0">
+              <p className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-widest truncate">Status Monitor</p>
+              <div className="flex items-center gap-1.5 mt-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                <span className="text-xs sm:text-sm font-black text-emerald-600 uppercase tracking-wider truncate">Live Tracking</span>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Filter & Search Bar */}
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col md:flex-row gap-3 sm:gap-4 items-center justify-between">
           <div className="relative flex-1 w-full">
             <HiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
@@ -294,12 +301,12 @@ const MonitorPage = () => {
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full md:w-auto">
             {/* User Name Filter Dropdown */}
             <select
               value={userFilter}
               onChange={(e) => setUserFilter(e.target.value)}
-              className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 outline-none max-w-[200px]"
+              className="px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 outline-none max-w-[180px] sm:max-w-[200px]"
             >
               <option value="all">Semua Pengguna ({uniqueUserNames.length})</option>
               {uniqueUserNames.map(name => (
@@ -311,7 +318,7 @@ const MonitorPage = () => {
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 outline-none"
+              className="px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 outline-none"
             >
               <option value="all">Semua Peran</option>
               <option value="siswa">Siswa</option>
@@ -323,7 +330,7 @@ const MonitorPage = () => {
             <select
               value={actionFilter}
               onChange={(e) => setActionFilter(e.target.value)}
-              className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 outline-none"
+              className="px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 outline-none"
             >
               <option value="all">Semua Tindakan</option>
               <option value="LOGIN">LOGIN</option>
@@ -335,9 +342,9 @@ const MonitorPage = () => {
 
         {/* TOP PAGINATION & LOG SUMMARY BAR (PLACED DIRECTLY ABOVE TABLE FOR FAST NAV) */}
         {filteredLogs.length > 0 && (
-          <div className="bg-white px-6 py-4 rounded-3xl border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold text-slate-600">
+          <div className="bg-white px-4 sm:px-6 py-4 rounded-3xl border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold text-slate-600">
             <p className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
               Menampilkan <span className="text-slate-900 font-black">{(currentPage - 1) * itemsPerPage + 1}</span> - <span className="text-slate-900 font-black">{Math.min(currentPage * itemsPerPage, filteredLogs.length)}</span> dari <span className="text-indigo-600 font-black">{filteredLogs.length}</span> Log Aktivitas
             </p>
 
@@ -347,10 +354,10 @@ const MonitorPage = () => {
                 disabled={currentPage === 1}
                 className="px-3.5 py-2 bg-slate-50 text-slate-700 rounded-xl border border-slate-200 hover:bg-indigo-600 hover:text-white disabled:opacity-30 transition-all flex items-center gap-1 shadow-xs"
               >
-                <HiChevronLeft /> Sebelumnya
+                <HiChevronLeft /> <span>Sebelumnya</span>
               </button>
 
-              <div className="px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-xl text-center min-w-[70px]">
+              <div className="px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-xl text-center min-w-[60px]">
                 <span className="text-indigo-600 font-black">{currentPage}</span> / <span className="text-slate-500 font-bold">{totalPages}</span>
               </div>
 
@@ -359,25 +366,25 @@ const MonitorPage = () => {
                 disabled={currentPage === totalPages}
                 className="px-3.5 py-2 bg-slate-50 text-slate-700 rounded-xl border border-slate-200 hover:bg-indigo-600 hover:text-white disabled:opacity-30 transition-all flex items-center gap-1 shadow-xs"
               >
-                Berikutnya <HiChevronRight />
+                <span>Berikutnya</span> <HiChevronRight />
               </button>
             </div>
           </div>
         )}
 
-        {/* Real-time Activity Table */}
-        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
+        {/* Real-time Activity Table - Responsive Overflow */}
+        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden flex flex-col w-full">
+          <div className="overflow-x-auto custom-scrollbar">
+            <table className="w-full text-left border-collapse min-w-[700px]">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-black uppercase tracking-wider text-slate-400">
-                  <th className="px-6 py-4">Waktu & Tanggal</th>
-                  <th className="px-6 py-4">Nama Pengguna</th>
-                  <th className="px-6 py-4">Peran</th>
-                  <th className="px-6 py-4">Tindakan</th>
-                  <th className="px-6 py-4">Fitur / Tombol</th>
-                  <th className="px-6 py-4">Rincian Deskripsi</th>
-                  <th className="px-6 py-4 text-right">Aksi</th>
+                  <th className="px-5 py-4">Waktu & Tanggal</th>
+                  <th className="px-5 py-4">Nama Pengguna</th>
+                  <th className="px-5 py-4">Peran</th>
+                  <th className="px-5 py-4">Tindakan</th>
+                  <th className="px-5 py-4">Fitur / Tombol</th>
+                  <th className="px-5 py-4">Rincian Deskripsi</th>
+                  <th className="px-5 py-4 text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs font-bold">
@@ -388,13 +395,13 @@ const MonitorPage = () => {
 
                   return (
                     <tr key={log.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap text-slate-500 font-mono text-[11px]">
+                      <td className="px-5 py-4 whitespace-nowrap text-slate-500 font-mono text-[11px]">
                         {formattedDate} • {formattedTime}
                       </td>
-                      <td className="px-6 py-4 font-black text-slate-900">
+                      <td className="px-5 py-4 font-black text-slate-900">
                         {log.user_name}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-5 py-4">
                         <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase border ${
                           log.user_role === 'guru'
                             ? 'bg-purple-50 text-purple-600 border-purple-100'
@@ -405,7 +412,7 @@ const MonitorPage = () => {
                           {log.user_role}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-5 py-4">
                         <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase ${
                           log.action_type === 'LOGIN'
                             ? 'bg-emerald-500 text-white'
@@ -416,13 +423,13 @@ const MonitorPage = () => {
                           {log.action_type}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-indigo-600 font-black">
+                      <td className="px-5 py-4 text-indigo-600 font-black">
                         {log.feature_name}
                       </td>
-                      <td className="px-6 py-4 text-slate-600 font-medium">
+                      <td className="px-5 py-4 text-slate-600 font-medium">
                         {log.description || '-'}
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-5 py-4 text-right">
                         <button
                           onClick={() => handleDeleteLog(log.id)}
                           className="p-2 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all border border-rose-100"
@@ -445,39 +452,58 @@ const MonitorPage = () => {
               </tbody>
             </table>
           </div>
-
-          {/* Clean & Responsive Pagination Controls */}
-          {filteredLogs.length > 0 && (
-            <div className="px-6 py-4 bg-slate-50/80 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold text-slate-500">
-              <p>
-                Menampilkan <span className="text-slate-900 font-black">{(currentPage - 1) * itemsPerPage + 1}</span> - <span className="text-slate-900 font-black">{Math.min(currentPage * itemsPerPage, filteredLogs.length)}</span> dari <span className="text-indigo-600 font-black">{filteredLogs.length}</span> Log Aktivitas
-              </p>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                  className="px-3.5 py-2 bg-white text-slate-700 rounded-xl border border-slate-200 hover:bg-indigo-50 hover:text-indigo-600 disabled:opacity-30 transition-all flex items-center gap-1 shadow-xs"
-                >
-                  <HiChevronLeft /> Sebelumnya
-                </button>
-
-                <div className="px-3 text-center min-w-[70px]">
-                  <span className="text-indigo-600 font-black">{currentPage}</span> / <span className="text-slate-500 font-bold">{totalPages}</span>
-                </div>
-
-                <button
-                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                  disabled={currentPage === totalPages}
-                  className="px-3.5 py-2 bg-white text-slate-700 rounded-xl border border-slate-200 hover:bg-indigo-50 hover:text-indigo-600 disabled:opacity-30 transition-all flex items-center gap-1 shadow-xs"
-                >
-                  Berikutnya <HiChevronRight />
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </main>
+
+      {/* Elegant Custom Confirmation Card Modal for Clear All Logs */}
+      <AnimatePresence>
+        {showClearConfirm && (
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 sm:p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowClearConfirm(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative bg-white w-full max-w-sm md:max-w-md rounded-[2.5rem] shadow-2xl p-7 md:p-8 border border-slate-100 flex flex-col items-center text-center overflow-hidden z-10"
+            >
+              <div className="w-16 h-16 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center text-3xl mb-4 shadow-lg shadow-rose-100 border border-rose-100">
+                <HiTrash />
+              </div>
+
+              <h3 className="text-xl font-black text-slate-900 tracking-tight mb-2">
+                Hapus Seluruh Log Aktivitas?
+              </h3>
+
+              <p className="text-xs font-bold text-slate-500 leading-relaxed mb-8 px-2">
+                Apakah Anda yakin ingin menghapus SELURUH riwayat log aktivitas pengguna dari database? Aksi ini tidak dapat dibatalkan.
+              </p>
+
+              <div className="flex items-center gap-3 w-full">
+                <button
+                  type="button"
+                  onClick={() => setShowClearConfirm(false)}
+                  className="flex-1 py-3.5 bg-slate-100 text-slate-600 rounded-2xl font-bold text-xs hover:bg-slate-200 transition-all"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={executeClearAllLogs}
+                  className="flex-1 py-3.5 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl font-bold text-xs shadow-lg shadow-rose-200 transition-all"
+                >
+                  Hapus Semua Log
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
