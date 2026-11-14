@@ -76,20 +76,22 @@ const Profile = () => {
   const handleLinkStudent = async () => {
     const cleanId = studentInputId.trim();
     if (!cleanId) {
-      setMessage({ type: 'error', text: 'Masukkan ID Siswa yang valid' });
+      setMessage({ type: 'error', text: 'Masukkan ID Belajar Siswa (6 Digit) yang valid' });
       return;
     }
     setLinkingLoading(true);
     try {
-      const { data: student, error: fetchErr } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', cleanId)
-        .eq('role', 'siswa')
-        .single();
+      let query = supabase.from('profiles').select('*').eq('role', 'siswa');
+      if (cleanId.length === 6 && /^\d+$/.test(cleanId)) {
+        query = query.eq('short_id', cleanId);
+      } else {
+        query = query.or(`id.eq.${cleanId},short_id.eq.${cleanId}`);
+      }
+
+      const { data: student, error: fetchErr } = await query.maybeSingle();
 
       if (fetchErr || !student) {
-        throw new Error('Siswa dengan ID tersebut tidak ditemukan.');
+        throw new Error('Siswa dengan ID Belajar 6 Digit tersebut tidak ditemukan. Periksa kembali kodenya.');
       }
 
       const { error: updateErr } = await supabase
@@ -102,7 +104,7 @@ const Profile = () => {
       setProfile({ ...profile, linked_student_id: student.id });
       setLinkedStudent(student);
       setStudentInputId('');
-      setMessage({ type: 'success', text: `Berhasil menghubungkan dengan siswa ${student.full_name}!` });
+      setMessage({ type: 'success', text: `Berhasil menghubungkan dengan siswa ${student.full_name} (${student.short_id || 'OK'})!` });
     } catch (err) {
       setMessage({ type: 'error', text: err.message || 'Gagal menghubungkan siswa' });
     } finally {
@@ -350,18 +352,28 @@ const Profile = () => {
 
                 {activeTab === 'id_siswa' && (
                   <div className="text-center py-10 space-y-6">
-                    <div className="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-3xl flex items-center justify-center text-4xl mx-auto mb-4">
+                    <div className="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-3xl flex items-center justify-center text-4xl mx-auto mb-4 border border-indigo-100 shadow-sm">
                       <HiFingerPrint />
                     </div>
-                    <h3 className="text-2xl font-black text-slate-800">ID Belajar Anda</h3>
-                    <p className="text-slate-500 max-w-sm mx-auto">Gunakan ID ini untuk menghubungkan akun Anda dengan Guru atau Orang Tua.</p>
-                    <div className="max-w-md mx-auto p-6 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
-                      <p className="text-xl font-black text-indigo-600 mb-6 break-all">{profile?.id}</p>
+                    <div>
+                      <h3 className="text-2xl font-black text-slate-800 tracking-tight">ID Belajar Anda</h3>
+                      <p className="text-slate-500 font-medium text-xs max-w-md mx-auto mt-1 leading-relaxed">
+                        Gunakan Kode ID 6 Digit ini untuk menghubungkan akun Anda dengan Guru atau Orang Tua secara praktis dan mudah dihafal.
+                      </p>
+                    </div>
+
+                    <div className="max-w-md mx-auto p-8 bg-indigo-50/80 rounded-3xl border-2 border-dashed border-indigo-200 space-y-4">
+                      <div className="bg-white py-4 px-6 rounded-2xl shadow-xs border border-indigo-100">
+                        <p className="text-4xl md:text-5xl font-black text-indigo-600 tracking-[0.25em] font-mono select-all">
+                          {profile?.short_id || profile?.id?.slice(0, 6)}
+                        </p>
+                      </div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Kode Unik Siswa BintangAi (6 Digit)</p>
                       <button
-                        onClick={() => copyId(profile?.id)}
-                        className="w-full py-4 bg-white border-2 border-indigo-600 text-indigo-600 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-600 hover:text-white transition-all"
+                        onClick={() => copyId(profile?.short_id || profile?.id?.slice(0, 6))}
+                        className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
                       >
-                        <HiClipboardCopy /> Salin ID Sekarang
+                        <HiClipboardCopy className="text-base" /> Salin ID Belajar 6 Digit
                       </button>
                     </div>
                   </div>
@@ -505,7 +517,7 @@ const Profile = () => {
                           type="text"
                           value={studentInputId}
                           onChange={(e) => setStudentInputId(e.target.value)}
-                          placeholder="Contoh: UUID ID Belajar Siswa..."
+                          placeholder="Contoh: 151479 (Kode ID Belajar 6 Digit)..."
                           className="flex-1 p-4 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs outline-none focus:border-indigo-600 transition-all"
                         />
                         <button
@@ -517,7 +529,7 @@ const Profile = () => {
                         </button>
                       </div>
                       <p className="text-[10px] text-slate-400 italic">
-                        * ID Belajar Siswa dapat disalin dari menu Profil ID Belajar di akun siswa.
+                        * Kode ID Belajar Siswa 6 Digit dapat disalin dari menu "ID Belajar Anda" di profil siswa.
                       </p>
                     </div>
                   </div>

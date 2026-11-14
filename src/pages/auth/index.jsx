@@ -184,14 +184,22 @@ const Auth = () => {
         let finalClassLevel = classLevel;
 
         if (role === 'ortu') {
-          if (!studentIdInput) throw new Error("ID Siswa tidak boleh kosong");
-          const { data: child, error: childError } = await supabase
+          if (!studentIdInput) throw new Error("ID Belajar Siswa 6 Digit tidak boleh kosong");
+          const cleanId = studentIdInput.trim();
+          let query = supabase
             .from('profiles')
             .select('id')
-            .eq('id', studentIdInput.trim())
-            .maybeSingle();
+            .eq('role', 'siswa');
 
-          if (childError || !child) throw new Error("ID Siswa tidak ditemukan!");
+          if (cleanId.length === 6 && /^\d+$/.test(cleanId)) {
+            query = query.eq('short_id', cleanId);
+          } else {
+            query = query.or(`id.eq.${cleanId},short_id.eq.${cleanId}`);
+          }
+
+          const { data: child, error: childError } = await query.maybeSingle();
+
+          if (childError || !child) throw new Error("ID Belajar Siswa 6 Digit tidak ditemukan!");
           linkedId = child.id;
         }
 

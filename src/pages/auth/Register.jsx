@@ -65,15 +65,23 @@ const Register = () => {
     setCheckingStudent(true);
     setStudentCheckError(null);
     try {
-      const { data: child, error } = await supabase
+      const cleanId = studentId.trim();
+      let query = supabase
         .from('profiles')
-        .select('id, full_name, class_level, disability_type, role')
-        .eq('id', studentId.trim())
-        .maybeSingle();
+        .select('id, full_name, class_level, disability_type, role, short_id')
+        .eq('role', 'siswa');
+
+      if (cleanId.length === 6 && /^\d+$/.test(cleanId)) {
+        query = query.eq('short_id', cleanId);
+      } else {
+        query = query.or(`id.eq.${cleanId},short_id.eq.${cleanId}`);
+      }
+
+      const { data: child, error } = await query.maybeSingle();
 
       if (error || !child) {
         setVerifiedStudent(null);
-        setStudentCheckError('ID Siswa tidak ditemukan. Periksa kembali ID dari anak/guru.');
+        setStudentCheckError('ID Belajar Siswa 6 Digit tidak ditemukan. Periksa kembali ID anak/guru.');
       } else {
         setVerifiedStudent(child);
         setStudentCheckError(null);
