@@ -3,12 +3,13 @@ import { getAvailableAssignments } from '../api/getAssignmentsApi';
 import { supabase } from '../../../lib/supabase';
 
 /**
- * Hook untuk mengambil daftar tugas/quiz siswa secara Real-time.
+ * Hook untuk mengambil daftar tugas/quiz siswa secara Real-time (Aktif & Riwayat Selesai).
  * @param {string} studentId - ID Siswa dari auth store.
- * @returns {Object} { tasks, loading, fetchTasks }
+ * @returns {Object} { tasks, completedTasks, loading, fetchTasks }
  */
 export const useTasks = (studentId) => {
   const [tasks, setTasks] = useState([]);
+  const [completedTasks, setCompletedTasks] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetchTasks = async () => {
@@ -17,6 +18,14 @@ export const useTasks = (studentId) => {
     try {
       const data = await getAvailableAssignments(studentId);
       setTasks(data);
+
+      const { data: subs } = await supabase
+        .from('submissions')
+        .select('*, assignment:assignments(*, modules(title))')
+        .eq('student_id', studentId)
+        .order('submitted_at', { ascending: false });
+
+      setCompletedTasks(subs || []);
     } catch (err) {
       console.error('Error fetching tasks:', err);
     } finally {
@@ -52,5 +61,5 @@ export const useTasks = (studentId) => {
     };
   }, [studentId]);
 
-  return { tasks, loading, fetchTasks };
+  return { tasks, completedTasks, loading, fetchTasks };
 };
