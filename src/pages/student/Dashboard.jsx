@@ -9,14 +9,13 @@ import { useSubtitle } from '@/features/accessibility/components/Subtitles';
 import { useAccessibility } from '@/features/accessibility/hooks/useAccessibility';
 import StudentSidebar from '@/components/layout/StudentSidebar';
 import Footer from '@/components/layout/Footer';
-import KamusIsyaratModal from '@/features/accessibility/components/KamusIsyaratModal';
 import { useAI } from '@/features/ai-tutor';
 import { getAvailableAssignments } from '@/features/quiz/api/getAssignmentsApi';
 import { getCleanFirstName } from '@/utils';
 import {
   HiFire, HiLightningBolt, HiAcademicCap, HiChevronRight,
   HiCube, HiChatAlt2, HiVariable,
-  HiEye, HiSpeakerphone, HiHeart, HiCollection, HiUsers, HiBookOpen
+  HiEye, HiSpeakerphone, HiHeart, HiCollection, HiUsers, HiBookOpen, HiStar
 } from 'react-icons/hi';
 
 const StudentDashboard = () => {
@@ -155,7 +154,9 @@ const StudentDashboard = () => {
               whileTap={{ scale: 0.9 }}
               className="relative cursor-pointer"
             >
-              <BintangAvatar state={avatarState} size={window.innerWidth < 768 ? "md" : "lg"} />
+              <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-500 text-white flex items-center justify-center shadow-lg shadow-amber-200/60 border-2 border-white">
+                <HiStar className="text-2xl md:text-3xl text-white" />
+              </div>
               <div className="absolute -bottom-1 -right-1 bg-white p-1 rounded-full shadow-lg">
                 <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse" />
               </div>
@@ -171,16 +172,6 @@ const StudentDashboard = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Kamus Bahasa Isyarat Button for Tunarungu / All Students */}
-            <button
-              onClick={() => setIsKamusOpen(true)}
-              className="px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-2xl border border-indigo-100 flex items-center gap-2 transition-all shadow-sm"
-              title="Kamus Istilah & Bahasa Isyarat SD"
-            >
-              <span className="text-base">🤟</span>
-              <span className="hidden sm:inline">Kamus Isyarat SD</span>
-            </button>
-
             <motion.div
               whileHover={{ scale: 1.05 }}
               className={`flex items-center gap-3 ${isBlind ? 'bg-white/10 border-white/20' : 'bg-white border-slate-50 shadow-xl shadow-indigo-100/20'} px-5 py-3 rounded-2xl border`}
@@ -376,9 +367,6 @@ const StudentDashboard = () => {
           <Footer />
         </div>
       </div>
-
-        {/* KAMUS ISTILAH ISYARAT MODAL */}
-        <KamusIsyaratModal isOpen={isKamusOpen} onClose={() => setIsKamusOpen(false)} />
       </main>
 
       <style>{`

@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import StudentSidebar from '@/components/layout/StudentSidebar';
-import KamusIsyaratModal from '@/features/accessibility/components/KamusIsyaratModal';
 import { useAI } from '@/features/ai-tutor/hooks/useAI';
 import { useAccessibility } from '@/features/accessibility/hooks/useAccessibility';
 import { useVoice } from '@/features/accessibility/hooks/useVoice';
@@ -318,15 +317,6 @@ const StudentModules = () => {
                     className="w-full pl-9 pr-3 py-3 bg-slate-50 border border-slate-100 rounded-xl text-[10px] font-bold outline-none focus:border-indigo-200 transition-all"
                   />
                 </div>
-
-                {/* Kamus Bahasa Isyarat SD Button */}
-                <button
-                  onClick={() => setIsKamusOpen(true)}
-                  className="w-full p-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl border border-indigo-100 flex items-center justify-center gap-2 transition-all shadow-sm"
-                >
-                  <span className="text-base">🤟</span>
-                  <span>Kamus Bahasa Isyarat SD</span>
-                </button>
               </div>
 
               {isMute && totalPages > 1 && (
@@ -590,9 +580,6 @@ const StudentModules = () => {
             </div>
           )}
         </div>
-
-        {/* MODAL KAMUS ISTILAH & BAHASA ISYARAT SD */}
-        <KamusIsyaratModal isOpen={isKamusOpen} onClose={() => setIsKamusOpen(false)} />
       </main>
 
       <style>{`
