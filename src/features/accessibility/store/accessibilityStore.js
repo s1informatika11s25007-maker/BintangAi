@@ -35,6 +35,8 @@ export const useAccessibilityStore = create(
         get().reapplyMode();
       },
 
+      setIsLiveCaptionActive: (active) => set({ isLiveCaptionActive: active }),
+
       setCaptionSettings: (settings) => {
         set((state) => ({
           captionFontSize: settings.fontSize || state.captionFontSize,

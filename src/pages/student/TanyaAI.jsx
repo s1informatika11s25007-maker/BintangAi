@@ -201,7 +201,7 @@ const TanyaAI = () => {
   };
 
   return (
-    <div className="h-[100dvh] flex bg-white font-sans overflow-hidden">
+    <div className="h-screen max-h-screen flex bg-white font-sans overflow-hidden">
       <StudentSidebar />
 
       <main className="flex-1 flex flex-col relative min-w-0 bg-white overflow-hidden rounded-none m-0 shadow-none border-0">

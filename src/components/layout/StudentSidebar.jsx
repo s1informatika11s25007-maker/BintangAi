@@ -81,6 +81,11 @@ export const StudentSidebar = () => {
                   <Link
                     key={item.label}
                     to={item.path}
+                    onClick={() => {
+                      if (item.label === 'Mata Pintar') {
+                        useAccessibilityStore.getState().setIsLiveCaptionActive(true);
+                      }
+                    }}
                     aria-label={`Menu ${item.label}${isActive ? ', aktif' : ''}`}
                     className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all duration-200 group relative ${
                       isActive

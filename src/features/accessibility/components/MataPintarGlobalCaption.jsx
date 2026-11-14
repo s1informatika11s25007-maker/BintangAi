@@ -19,6 +19,7 @@ export default function MataPintarGlobalCaption() {
   const {
     mode,
     isLiveCaptionActive,
+    setIsLiveCaptionActive,
     captionFontSize,
     captionBgColor,
     captionPosition,
@@ -222,13 +223,18 @@ export default function MataPintarGlobalCaption() {
 
   return (
     <>
-      {/* 🛡️ UNOBTRUSIVE FLOATING CAPTION DOCK (POSITIONED BELOW MOBILE TOP BAR & ABOVE MOBILE BOTTOM NAV BAR) */}
+      {/* 🛡️ DRAGGABLE FLOATING CAPTION DOCK (POSISI DAPAT DIGESER) */}
       <div
         className={`fixed left-3 right-3 sm:left-4 sm:right-4 z-[350] flex flex-col items-end pointer-events-none transition-all duration-500 ${
           captionPosition === 'bottom' ? 'bottom-20 lg:bottom-4' : 'top-16 lg:top-3'
         }`}
       >
-        <div className="w-full max-w-2xl pointer-events-auto flex flex-col gap-1">
+        <motion.div
+          drag
+          dragMomentum={false}
+          dragElastic={0.1}
+          className="w-full max-w-2xl pointer-events-auto flex flex-col gap-1 cursor-grab active:cursor-grabbing"
+        >
           {/* Header Bar */}
           <div className="flex items-center justify-between px-2.5 sm:px-3.5 py-1.5 bg-slate-950/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-xl text-white text-xs">
             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
@@ -288,6 +294,18 @@ export default function MataPintarGlobalCaption() {
                 title="Minimize ke Tombol Kecil"
               >
                 <HiMinus />
+              </button>
+
+              {/* Close Button to Close & Deactivate Dock */}
+              <button
+                onClick={() => {
+                  stopCapturing();
+                  setIsLiveCaptionActive(false);
+                }}
+                className="p-1.5 bg-rose-500/20 hover:bg-rose-500 rounded-xl text-xs transition-all text-rose-300 hover:text-white"
+                title="Tutup & Nonaktifkan Mata Pintar"
+              >
+                <HiX />
               </button>
             </div>
           </div>
