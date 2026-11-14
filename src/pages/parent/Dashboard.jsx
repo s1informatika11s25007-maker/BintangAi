@@ -107,8 +107,8 @@ const ParentDashboard = () => {
     <div className="min-h-screen bg-[#FDFDFF] flex font-sans selection:bg-indigo-100">
       <ParentSidebar activeTab={activeTab} onTabChange={onTabChange} />
 
-      <main className="flex-1 p-6 md:p-10 lg:p-14 overflow-y-auto h-screen flex flex-col print:p-0">
-        <div className="flex-1 print:hidden">
+      <main className="flex-1 overflow-y-auto h-screen flex flex-col justify-between print:p-0">
+        <div className="p-6 md:p-10 lg:p-14 space-y-10 print:hidden">
           <header className="mb-12">
              <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Halo, Pak/Bu {profile?.full_name?.split(' ')[0]}!</h2>
              <p className="text-slate-600 font-medium text-lg mt-2">Memantau progres belajar <span className="text-indigo-600 font-bold">{childData?.full_name}</span></p>
@@ -315,13 +315,10 @@ const ParentDashboard = () => {
                   {selectedReport.content}
                 </div>
               </div>
-
-              <div className="-mx-6 md:-mx-12 -mb-6 md:-mb-12 mt-16">
-                <Footer />
-              </div>
             </div>
           )}
         </div>
+        <Footer />
       </main>
     </div>
   );

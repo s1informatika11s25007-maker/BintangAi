@@ -506,7 +506,8 @@ const TeacherDashboard = () => {
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-50/50 rounded-full blur-[120px] -z-10 translate-x-1/2 -translate-y-1/2" />
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-purple-50/50 rounded-full blur-[100px] -z-10 -translate-x-1/2 translate-y-1/2" />
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-12 lg:p-16">
+        <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col justify-between">
+          <div className="p-6 md:p-12 lg:p-16">
           <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 mb-16">
             <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.8 }}>
               <div className="flex items-center gap-2 mb-3">
@@ -902,10 +903,10 @@ const TeacherDashboard = () => {
             )}
           </AnimatePresence>
 
-          {/* Unified Professional Footer flushed at the very bottom edge with zero bottom whitespace */}
-          <div className="-mx-6 md:-mx-12 lg:-mx-16 -mb-6 md:-mb-12 lg:-mb-16 mt-16">
-            <Footer />
           </div>
+
+          {/* Unified Professional Footer flushed at the very bottom edge with zero bottom whitespace */}
+          <Footer />
         </div>
 
         {/* Professional XP Modal */}
