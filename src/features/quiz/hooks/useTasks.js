@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { getAvailableAssignments } from '../api/getAssignmentsApi';
+import { supabase } from '../../../lib/supabase';
 
 /**
- * Hook untuk mengambil daftar tugas/quiz siswa.
+ * Hook untuk mengambil daftar tugas/quiz siswa secara Real-time.
  * @param {string} studentId - ID Siswa dari auth store.
  * @returns {Object} { tasks, loading, fetchTasks }
  */
@@ -24,7 +25,31 @@ export const useTasks = (studentId) => {
   };
 
   useEffect(() => {
-    fetchTasks();
+    let channel;
+    if (studentId) {
+      fetchTasks();
+
+      const channelName = `student_tasks_${studentId}_${Date.now()}`;
+      channel = supabase.channel(channelName)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'assignments' },
+          () => {
+            fetchTasks();
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'submissions', filter: `student_id=eq.${studentId}` },
+          () => {
+            fetchTasks();
+          }
+        )
+        .subscribe();
+    }
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+    };
   }, [studentId]);
 
   return { tasks, loading, fetchTasks };

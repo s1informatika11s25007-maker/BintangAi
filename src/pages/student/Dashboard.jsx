@@ -11,6 +11,7 @@ import StudentSidebar from '@/components/layout/StudentSidebar';
 import Footer from '@/components/layout/Footer';
 import KamusIsyaratModal from '@/features/accessibility/components/KamusIsyaratModal';
 import { useAI } from '@/features/ai-tutor';
+import { getAvailableAssignments } from '@/features/quiz/api/getAssignmentsApi';
 import {
   HiFire, HiLightningBolt, HiAcademicCap, HiChevronRight,
   HiCube, HiChatAlt2, HiVariable,
@@ -48,6 +49,22 @@ const StudentDashboard = () => {
       fetchModules();
       fetchGroups();
       fetchLeaderboard();
+
+      // Realtime listener (< 1s auto appear when teacher creates new QuizKu)
+      const channelName = `student_dash_assignments_${profile.id}_${Date.now()}`;
+      const channel = supabase.channel(channelName)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'assignments' },
+          () => {
+            fetchTasks();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [profile?.id]);
 
@@ -69,20 +86,8 @@ const StudentDashboard = () => {
   const fetchTasks = async () => {
     if (!profile?.id) return;
     try {
-      const { data: submissions } = await supabase.from('submissions').select('assignment_id').eq('student_id', profile.id);
-      const submittedIds = submissions?.map(s => s.assignment_id) || [];
-
-      let filterParts = ['is_public.eq.true'];
-      if (profile.class_code) {
-        const { data: teachers } = await supabase.from('profiles').select('id').eq('class_code', profile.class_code).eq('role', 'guru');
-        teachers?.forEach(t => filterParts.push(`teacher_id.eq.${t.id}`));
-      }
-
-      let query = supabase.from('assignments').select('*, modules(title)').or(filterParts.join(','));
-      if (submittedIds.length > 0) query = query.not('id', 'in', `(${submittedIds.join(',')})`);
-
-      const { data } = await query.order('deadline', { ascending: true }).limit(3);
-      setTasks(data || []);
+      const data = await getAvailableAssignments(profile.id);
+      setTasks(data.slice(0, 3));
     } catch { setTasks([]); }
   };
 
