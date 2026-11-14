@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAccessibility } from '../hooks/useAccessibility';
+import { useAuthStore } from '@/features/auth/store/useAuthStore';
 
 let subtitleListeners = [];
 
@@ -27,6 +28,7 @@ const TYPE_STYLES = {
 
 const Subtitles = () => {
   const { isSubtitleActive } = useAccessibility();
+  const { profile } = useAuthStore();
   const location = useLocation();
   const [entries, setEntries] = useState([]);
   const idRef = useRef(0);
@@ -40,7 +42,7 @@ const Subtitles = () => {
   }, [location?.pathname]);
 
   useEffect(() => {
-    if (!isSubtitleActive || isPublicPage) return;
+    if (!isSubtitleActive || isPublicPage || profile?.role !== 'siswa') return;
 
     const handler = (text, type) => {
       const id = ++idRef.current;

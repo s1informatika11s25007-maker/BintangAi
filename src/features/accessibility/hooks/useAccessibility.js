@@ -14,13 +14,15 @@ export function useAccessibility() {
     }
   }, [authProfile, setModeFromProfile]);
 
-  // Disable accessibility features on public/landing pages to avoid "contamination"
+  const isSiswa = authProfile?.role === 'siswa';
+
+  // Disable accessibility features on public/landing pages or for non-student roles
   const isPublicPage = useMemo(() => {
     const publicPaths = ['/', '/auth/login', '/auth/register'];
     return publicPaths.includes(location.pathname) || location.pathname.startsWith('/auth/');
   }, [location.pathname]);
 
-  const effectiveMode = isPublicPage ? null : mode;
+  const effectiveMode = (isPublicPage || !isSiswa) ? null : mode;
 
   const isBlind = effectiveMode === 'tunanetra';
   const isDeaf = effectiveMode === 'tunarungu';
@@ -31,8 +33,8 @@ export function useAccessibility() {
     isBlind,
     isDeaf,
     isMute,
-    isVoiceActive: isPublicPage ? false : isVoiceActive,
-    isSubtitleActive: isPublicPage ? false : isSubtitleActive,
-    isGestureActive: isPublicPage ? false : isGestureActive
+    isVoiceActive: (isPublicPage || !isSiswa) ? false : isVoiceActive,
+    isSubtitleActive: (isPublicPage || !isSiswa) ? false : isSubtitleActive,
+    isGestureActive: (isPublicPage || !isSiswa) ? false : isGestureActive
   };
 }

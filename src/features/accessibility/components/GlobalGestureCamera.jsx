@@ -19,7 +19,7 @@ const GlobalGestureCamera = () => {
   const isPublicPage = path === '/' || path.startsWith('/auth') || path === '/login' || path === '/register';
 
   // Camera enabled ONLY for Tunawicara mode on logged-in student pages
-  const isEnabled = isMute && !!profile && !isPublicPage;
+  const isEnabled = isMute && !!profile && profile.role === 'siswa' && !isPublicPage;
 
   const lastProcessedFinger = useRef(-1);
   const cooldownRef = useRef(false);

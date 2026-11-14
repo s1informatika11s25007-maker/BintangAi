@@ -26,7 +26,7 @@ export default function MataPintarGlobalCaption() {
     setCaptionSettings
   } = useAccessibilityStore();
 
-  const isDeaf = mode === 'tunarungu' || isLiveCaptionActive;
+  const isDeaf = profile?.role === 'siswa' && (mode === 'tunarungu' || isLiveCaptionActive);
 
   const [isMinimized, setIsMinimized] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);

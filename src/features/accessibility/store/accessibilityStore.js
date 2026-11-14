@@ -23,14 +23,19 @@ export const useAccessibilityStore = create(
           return;
         }
 
-        const mode = profile.disability_type;
+        // Accessibility disability modes (blind-mode, deaf-mode, mute-mode) are strictly for 'siswa' role!
+        // For 'ortu' (parent) and 'guru' (teacher), mode is ALWAYS null (standard UI).
+        const isSiswa = profile.role === 'siswa';
+        const mode = isSiswa && ['tunanetra', 'tunarungu', 'tunawicara'].includes(profile.disability_type)
+          ? profile.disability_type
+          : null;
+
         set((state) => ({
           mode,
-          isVoiceActive: mode === 'tunanetra',
-          isSubtitleActive: mode === 'tunarungu' || mode === 'tunawicara',
-          // Preserve user's manual close state if explicitly set
-          isLiveCaptionActive: state.isLiveCaptionActive !== undefined ? state.isLiveCaptionActive : (mode === 'tunarungu'),
-          isGestureActive: mode === 'tunawicara',
+          isVoiceActive: isSiswa && mode === 'tunanetra',
+          isSubtitleActive: isSiswa && (mode === 'tunarungu' || mode === 'tunawicara'),
+          isLiveCaptionActive: isSiswa && (state.isLiveCaptionActive !== undefined ? state.isLiveCaptionActive : (mode === 'tunarungu')),
+          isGestureActive: isSiswa && mode === 'tunawicara',
           profile
         }));
 
@@ -50,10 +55,11 @@ export const useAccessibilityStore = create(
 
       // Reapply mode on page load and route changes
       reapplyMode: (forceOff = false) => {
-        const { mode } = get();
+        const { mode, profile } = get();
         const root = document.documentElement;
+        const isSiswa = profile?.role === 'siswa';
 
-        if (mode && !forceOff) {
+        if (mode && isSiswa && !forceOff) {
           root.setAttribute('data-disability', mode);
 
           // Clear existing classes and add current mode class
@@ -70,7 +76,7 @@ export const useAccessibilityStore = create(
 
           localStorage.setItem('bintangai-mode-simple', mode);
         } else {
-          // Clear all accessibility visual effects & audio when forceOff is true (Landing/Login/Register)
+          // Clear all accessibility visual effects & audio when forceOff is true or non-student role
           root.setAttribute('data-disability', 'none');
           root.classList.remove('blind-mode', 'deaf-mode', 'mute-mode');
           root.style.fontSize = '100%';
@@ -79,9 +85,7 @@ export const useAccessibilityStore = create(
             window.speechSynthesis.cancel();
           }
 
-          if (!forceOff) {
-            localStorage.removeItem('bintangai-mode-simple');
-          }
+          localStorage.removeItem('bintangai-mode-simple');
         }
       },
 
