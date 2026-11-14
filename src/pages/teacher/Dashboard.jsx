@@ -629,12 +629,21 @@ const TeacherDashboard = () => {
                 <span>{isTeacherBroadcastActive ? 'Nonaktifkan Siaran' : 'Siaran Suara Guru'}</span>
               </button>
 
-              <button
-                onClick={() => navigate('/teacher/upload')}
-                className="group px-8 py-4 bg-indigo-600 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-indigo-100 hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
-              >
-                <HiPlus className="text-lg text-white group-hover:rotate-90 transition-transform" /> Modul Baru
-              </button>
+              {activeTab === 'assignments' ? (
+                <button
+                  onClick={() => navigate('/teacher/create-task')}
+                  className="group px-8 py-4 bg-indigo-600 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-indigo-100 hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
+                >
+                  <HiPlus className="text-lg text-white group-hover:rotate-90 transition-transform" /> Buat QuizKu
+                </button>
+              ) : (
+                <button
+                  onClick={() => navigate('/teacher/upload')}
+                  className="group px-8 py-4 bg-indigo-600 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-indigo-100 hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
+                >
+                  <HiPlus className="text-lg text-white group-hover:rotate-90 transition-transform" /> Modul Baru
+                </button>
+              )}
             </motion.div>
           </header>
 
