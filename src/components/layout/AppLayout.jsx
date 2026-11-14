@@ -19,7 +19,7 @@ const AppLayout = ({ children }) => {
   const getSiswaNav = () => {
     const baseNav = [
       { label: 'Home', icon: <HiHome />, path: '/student/dashboard' },
-      { label: 'AI Tutor', icon: <HiChatAlt2 className="text-indigo-600" />, path: profile?.disability_type === 'tunanetra' ? '/student/playground' : '/student/tanya-ai' },
+      { label: 'Tanya Bintang', icon: <HiChatAlt2 className="text-indigo-600" />, path: profile?.disability_type === 'tunanetra' ? '/student/playground' : '/student/tanya-ai' },
       { label: 'Quiz', icon: <HiLightningBolt />, path: '/student/tasks' },
       { label: 'Materi', icon: <HiBookOpen />, path: '/student/modules' },
       { label: 'Profil', icon: <HiUserCircle />, path: '/profile' },
