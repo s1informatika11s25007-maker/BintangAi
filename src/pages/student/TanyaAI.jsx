@@ -4,6 +4,8 @@ import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { useAI } from '@/features/ai-tutor/hooks/useAI';
 import { useAccessibility } from '@/features/accessibility/hooks/useAccessibility';
 import { useVoice } from '@/features/accessibility/hooks/useVoice';
+import { supabase } from '@/lib/supabaseClient';
+import { getCleanFirstName } from '@/utils';
 import StudentSidebar from '@/components/layout/StudentSidebar';
 import VoiceSettingsPanel from '@/features/accessibility/components/VoiceSettingsPanel';
 import {
@@ -39,6 +41,68 @@ const TanyaAI = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Restore chat history on page refresh
+  useEffect(() => {
+    if (!profile?.id) return;
+
+    const fetchHistory = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('student_ai_chat_history')
+          .select('*')
+          .eq('student_id', profile.id)
+          .order('created_at', { ascending: true })
+          .limit(100);
+
+        if (!error && data && data.length > 0) {
+          const formatted = [
+            {
+              role: 'ai',
+              content: `Halo ${getCleanFirstName(profile?.full_name) || 'Teman'}! 👋 Aku Kak Bintang. Ada yang bisa aku bantu hari ini?`,
+              timestamp: new Date(data[0].created_at)
+            }
+          ];
+
+          data.forEach(item => {
+            if (item.question) {
+              formatted.push({
+                role: 'user',
+                content: item.question,
+                timestamp: new Date(item.created_at)
+              });
+            } else if (item.role === 'user' && item.content) {
+              formatted.push({
+                role: 'user',
+                content: item.content,
+                timestamp: new Date(item.created_at)
+              });
+            }
+
+            if (item.answer) {
+              formatted.push({
+                role: 'ai',
+                content: item.answer,
+                timestamp: new Date(item.created_at)
+              });
+            } else if (item.role === 'assistant' && item.content) {
+              formatted.push({
+                role: 'ai',
+                content: item.content,
+                timestamp: new Date(item.created_at)
+              });
+            }
+          });
+
+          setMessages(formatted);
+        }
+      } catch (err) {
+        console.warn("Error restoring chat history:", err);
+      }
+    };
+
+    fetchHistory();
+  }, [profile?.id]);
 
   const handleSend = async (e) => {
     if (e) e.preventDefault();
@@ -114,12 +178,19 @@ const TanyaAI = () => {
     }
   };
 
-  const clearChat = () => {
+  const clearChat = async () => {
     stopSpeaking();
+    if (profile?.id) {
+      try {
+        await supabase.from('student_ai_chat_history').delete().eq('student_id', profile.id);
+      } catch (e) {
+        console.warn("Clear chat history error:", e);
+      }
+    }
     setMessages([
       {
         role: 'ai',
-        content: `Halo ${profile?.full_name?.split(' ')[0] || 'Teman'}! 👋 Chat sudah dibersihkan. Ada lagi yang mau ditanyakan?`,
+        content: `Halo ${getCleanFirstName(profile?.full_name) || 'Teman'}! 👋 Chat sudah dibersihkan. Ada lagi yang mau ditanyakan?`,
         timestamp: new Date()
       }
     ]);
