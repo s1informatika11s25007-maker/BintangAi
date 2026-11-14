@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useReducedMotion, useScroll, useSpring, AnimatePresence } from 'framer-motion';
 import Footer from '@/components/layout/Footer';
+import BintangAvatar from '@/features/ai-tutor/components/BintangAvatar';
 import {
   HiArrowRight,
   HiBookOpen,
@@ -242,8 +243,10 @@ const LandingPage = () => {
 
           <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 sm:px-8 py-12 sm:py-20 lg:grid-cols-12">
             <motion.div {...fadeInVariants} className="lg:col-span-7 space-y-6">
-              <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-white/90 px-3.5 py-1.5 text-xs font-bold text-indigo-700 shadow-2xs">
-                <HiStar className="text-amber-500 text-sm animate-pulse" />
+              <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-white/90 px-3 py-1 text-xs font-bold text-indigo-700 shadow-2xs">
+                <div className="w-6 h-6 flex items-center justify-center shrink-0">
+                  <BintangAvatar size="xs" />
+                </div>
                 Ruang Belajar Jarak Jauh SD Inklusif
               </div>
 
@@ -285,8 +288,8 @@ const LandingPage = () => {
               <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-xl space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-400 to-amber-500 text-white flex items-center justify-center font-black text-lg shadow-md shadow-amber-200">
-                      <HiStar className="text-2xl text-white" />
+                    <div className="w-10 h-10 flex items-center justify-center shrink-0">
+                      <BintangAvatar size="xs" />
                     </div>
                     <div>
                       <h3 className="font-bold text-slate-800 text-xs sm:text-sm">Interaksi Belajar Dari Rumah</h3>
