@@ -11,7 +11,7 @@ import StudentSidebar from '@/components/layout/StudentSidebar';
 import Footer from '@/components/layout/Footer';
 import { useAI } from '@/features/ai-tutor';
 import { getAvailableAssignments } from '@/features/quiz/api/getAssignmentsApi';
-import { getCleanFirstName } from '@/utils';
+import { getCleanFirstName, getAccurateTimeGreeting } from '@/utils';
 import {
   HiFire, HiLightningBolt, HiAcademicCap, HiChevronRight,
   HiCube, HiChatAlt2, HiVariable,
@@ -36,11 +36,7 @@ const StudentDashboard = () => {
   const hasAnnouncedRef = useRef(false);
 
   useEffect(() => {
-    const hours = new Date().getHours();
-    if (hours < 11) setGreeting('Selamat Pagi');
-    else if (hours < 15) setGreeting('Selamat Siang');
-    else if (hours < 18) setGreeting('Selamat Sore');
-    else setGreeting('Selamat Malam');
+    setGreeting(getAccurateTimeGreeting());
 
     if (profile?.id) {
       fetchProfile(profile.id);

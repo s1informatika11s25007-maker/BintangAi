@@ -21,6 +21,21 @@ export const getCleanFirstName = (fullName) => {
 };
 
 /**
+ * Returns accurate Indonesian time greeting based on 24-hour local time:
+ * 04:00 - 10:59 -> Selamat Pagi
+ * 11:00 - 14:59 -> Selamat Siang
+ * 15:00 - 17:59 -> Selamat Sore
+ * 18:00 - 03:59 -> Selamat Malam
+ */
+export const getAccurateTimeGreeting = (date = new Date()) => {
+  const hr = date.getHours();
+  if (hr >= 4 && hr < 11) return 'Selamat Pagi';
+  if (hr >= 11 && hr < 15) return 'Selamat Siang';
+  if (hr >= 15 && hr < 18) return 'Selamat Sore';
+  return 'Selamat Malam';
+};
+
+/**
  * Strips raw markdown syntax (**, *, #, -, `, etc.) from AI response text
  */
 export const cleanMarkdownText = (text) => {

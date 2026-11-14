@@ -5,6 +5,7 @@ import { useVoice } from '../hooks/useVoice';
 import { useSubtitle } from './Subtitles';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { useClassVoiceBroadcast } from '../hooks/useClassVoiceBroadcast';
+import { getAccurateTimeGreeting } from '@/utils';
 
 const AccessibilityProvider = ({ children }) => {
   const { isBlind } = useAccessibility();
@@ -38,9 +39,7 @@ const AccessibilityProvider = ({ children }) => {
     // Handle welcome message once after login
     if (!welcomeAnnounced.current && (location.pathname.startsWith('/student') || location.pathname === '/profile')) {
       const name = profile.full_name?.split(' ')[0] || 'Teman';
-
-      const hr = new Date().getHours();
-      const timeGreeting = hr < 12 ? 'Selamat Pagi' : hr < 18 ? 'Selamat Siang' : 'Selamat Malam';
+      const timeGreeting = getAccurateTimeGreeting();
       speak(`${timeGreeting}, ${name}. Nay, asisten pintar kamu, sudah aktif. Gunakan tombol Tab untuk berpindah menu, atau tekan Spasi untuk berbicara dengan Nay kapan saja.`, 1.0, true);
 
       welcomeAnnounced.current = true;
@@ -116,16 +115,16 @@ const AccessibilityProvider = ({ children }) => {
       }
 
       // Search for nearest interactive element
-      const target = e.target.closest('button, a, input, [role="button"], .clickable-item, [aria-label], select, textarea, h1, h2, h3, [tabindex]');
+      const target = e.target.closest('button, a, input, [role="button"], .clickable-item, [aria-label], select, textarea, h1, h2, h3, h4, [tabindex], [data-gesture-item="true"], [data-description]');
       if (!target) return;
 
-      let text = target.getAttribute('aria-label') || target.innerText || target.placeholder || target.getAttribute('title') || '';
+      let text = target.getAttribute('aria-label') || target.innerText || target.placeholder || target.getAttribute('title') || target.getAttribute('data-description') || '';
       text = text.replace(/\n/g, ' ').trim();
 
       if (!text) return;
 
       const now = Date.now();
-      if (target === lastFocusedElement && text === lastSpokenText && now - lastSpokenTime < 800) return;
+      if (target === lastFocusedElement && text === lastSpokenText && now - lastSpokenTime < 700) return;
 
       lastFocusedElement = target;
       lastSpokenText = text;
@@ -152,12 +151,22 @@ const AccessibilityProvider = ({ children }) => {
       speak(`${typePrefix}${spokenText}`, 1.0, true);
     };
 
+    const handleMouseMove = (e) => {
+      if (!e.clientX || !e.clientY) return;
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      if (el) {
+        handleAccessibilityFeedback({ target: el });
+      }
+    };
+
     window.addEventListener('focus', handleAccessibilityFeedback, true);
     window.addEventListener('mouseenter', handleAccessibilityFeedback, true);
+    window.addEventListener('mousemove', handleMouseMove, { passive: true, capture: true });
 
     return () => {
       window.removeEventListener('focus', handleAccessibilityFeedback, true);
       window.removeEventListener('mouseenter', handleAccessibilityFeedback, true);
+      window.removeEventListener('mousemove', handleMouseMove, { passive: true, capture: true });
     };
   }, [isPublicPage, isBlind, profile, speak]);
 
