@@ -127,6 +127,8 @@ const StudentQuiz = () => {
     } else {
       window.scrollBy({ top: stepAmount, behavior: 'smooth' });
     }
+  };
+
   // 🎯 Global Gesture Listener for Quiz Execution & Results
   useEffect(() => {
     if (!isMute) return;
