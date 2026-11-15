@@ -27,13 +27,83 @@ import {
   HiHeart
 } from 'react-icons/hi';
 
+const DEFAULT_DEMO_ACCOUNTS = [
+  {
+    key: 'guru',
+    label: 'Guru Pembimbing',
+    email: 'demo.guru@gmail.com',
+    pass: 'demo123456',
+    icon: '👨‍🏫',
+    badgeColor: 'bg-indigo-600 text-white',
+    description: 'Kelola kelas & bimbingan SD',
+    full_name: 'Ibu Rina (Guru SLB/SD)',
+    role: 'guru',
+    disability_type: 'tidak_ada'
+  },
+  {
+    key: 'tunanetra',
+    label: 'Siswa Tunanetra',
+    email: 'demo.tunanetra@gmail.com',
+    pass: 'demo123456',
+    icon: '🦯',
+    badgeColor: 'bg-purple-600 text-white',
+    description: 'Suara Audio & Kontras Tinggi',
+    full_name: 'Budi Santoso (Kelas 4 SD)',
+    role: 'siswa',
+    disability_type: 'tunanetra'
+  },
+  {
+    key: 'tunarungu',
+    label: 'Siswa Tunarungu',
+    email: 'demo.tunarungu@gmail.com',
+    pass: 'demo123456',
+    icon: '🤟',
+    badgeColor: 'bg-cyan-600 text-white',
+    description: 'Teks Visual & Subtitle Pintar',
+    full_name: 'Siti Rahma (Kelas 3 SD)',
+    role: 'siswa',
+    disability_type: 'tunarungu'
+  },
+  {
+    key: 'tunawicara',
+    label: 'Siswa Tunawicara',
+    email: 'demo.tunawicara@gmail.com',
+    pass: 'demo123456',
+    icon: '💬',
+    badgeColor: 'bg-emerald-600 text-white',
+    description: 'Gambar Isyarat & Pilihan Cepat',
+    full_name: 'Doni Pratama (Kelas 5 SD)',
+    role: 'siswa',
+    disability_type: 'tunawicara'
+  },
+  {
+    key: 'ortu',
+    label: 'Orang Tua',
+    email: 'demo.ortu@gmail.com',
+    pass: 'demo123456',
+    icon: '👪',
+    badgeColor: 'bg-rose-500 text-white',
+    description: 'Dampingi & Lihat Laporan Anak',
+    full_name: 'Pak Herman (Orang Tua)',
+    role: 'ortu',
+    disability_type: 'tidak_ada'
+  }
+];
+
 const Login = () => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState(null);
-  const [demoAccounts, setDemoAccounts] = useState([]);
+  const [demoAccounts, setDemoAccounts] = useState(() => {
+    try {
+      const cached = localStorage.getItem('bintangai_demo_accounts_cache');
+      return cached ? JSON.parse(cached) : DEFAULT_DEMO_ACCOUNTS;
+    } catch {
+      return DEFAULT_DEMO_ACCOUNTS;
+    }
+  });
   const [loadingDemo, setLoadingDemo] = useState(false);
   const [selectedDemoKey, setSelectedDemoKey] = useState(null);
 
@@ -424,7 +494,7 @@ const Login = () => {
                     <HiFingerPrint className="text-lg" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-extrabold text-indigo-950">Akses Cepat Akun Demo (Database)</h2>
+                    <h2 className="text-sm font-extrabold text-indigo-950">Akun Demo</h2>
                     <p className="text-[11px] text-indigo-700 font-semibold">Klik salah satu kartu di bawah untuk mengisi data otomatis</p>
                   </div>
                 </div>

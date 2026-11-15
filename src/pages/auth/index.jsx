@@ -338,7 +338,7 @@ const Auth = () => {
               >
                 <div className="flex items-center gap-3 mb-3">
                   <div className="h-[2px] flex-1 bg-slate-100" />
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Akun Demo (Database)</span>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Akun Demo</span>
                   <div className="h-[2px] flex-1 bg-slate-100" />
                 </div>
 
