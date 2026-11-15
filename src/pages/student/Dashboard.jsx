@@ -22,8 +22,40 @@ const StudentDashboard = () => {
   const { profile, fetchProfile } = useAuthStore();
   const navigate = useNavigate();
   const { showSubtitle } = useSubtitle();
-  const { isBlind, isDeaf } = useAccessibility();
+  const { isBlind, isDeaf, isMute } = useAccessibility();
   const { getWeakTopics, getAudioGuide } = useAI();
+
+  const [isCameraClosed, setIsCameraClosed] = useState(() => {
+    try {
+      return localStorage.getItem('gesture_camera_disabled') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    const checkCameraStatus = () => {
+      try {
+        setIsCameraClosed(localStorage.getItem('gesture_camera_disabled') === 'true');
+      } catch {}
+    };
+
+    window.addEventListener('gesture-camera-toggle', checkCameraStatus);
+    window.addEventListener('storage', checkCameraStatus);
+    return () => {
+      window.removeEventListener('gesture-camera-toggle', checkCameraStatus);
+      window.removeEventListener('storage', checkCameraStatus);
+    };
+  }, []);
+
+  const handleReenableCamera = () => {
+    try {
+      localStorage.removeItem('gesture_camera_disabled');
+      window.dispatchEvent(new CustomEvent('gesture-camera-toggle'));
+    } catch (e) {}
+    setIsCameraClosed(false);
+    showSubtitle('📷 Kamera Gestur Berhasil Diaktifkan Kembali!', 'success');
+  };
 
   const [tasks, setTasks] = useState(null);
   const [modules, setModules] = useState(null);
@@ -373,6 +405,27 @@ const StudentDashboard = () => {
         <Footer />
       </div>
       </main>
+
+      {/* FLOATING CAMERA REACTIVATION BUTTON FOR TUNAWICARA USERS */}
+      {isMute && isCameraClosed && (
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.8, opacity: 0, y: 20 }}
+          className="fixed bottom-6 right-6 z-[600]"
+        >
+          <button
+            type="button"
+            onClick={handleReenableCamera}
+            className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-full shadow-2xl border-2 border-amber-400 font-extrabold text-xs flex items-center gap-3 transition-all active:scale-95 group"
+            title="Aktifkan Kembali Kamera Gestur Isyarat Tangan"
+          >
+            <div className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+            <HiStar className="text-lg text-amber-300 group-hover:rotate-12 transition-transform" />
+            <span>Aktifkan Kamera Gestur</span>
+          </button>
+        </motion.div>
+      )}
 
       <style>{`
         @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }

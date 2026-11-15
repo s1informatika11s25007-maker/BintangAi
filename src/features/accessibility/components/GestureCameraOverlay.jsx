@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
-import { HiMinus, HiChevronUp, HiChevronDown, HiHand } from 'react-icons/hi';
+import { HiMinus, HiChevronUp, HiChevronDown, HiHand, HiX } from 'react-icons/hi';
 
 const GestureCameraOverlay = ({
   videoRef,
@@ -245,6 +245,13 @@ const GestureCameraOverlay = ({
   const borderColor = !isActive ? 'border-slate-500' :
                       handDetected ? (menuActive ? 'border-emerald-500 shadow-[0_0_25px_rgba(16,185,129,0.6)]' : (isProfilePage && totalFingers === 2 ? 'border-rose-500 shadow-[0_0_25px_rgba(244,63,94,0.6)]' : 'border-indigo-500 shadow-[0_0_20px_rgba(79,70,229,0.4)]')) : 'border-rose-500';
 
+  const handleCloseCameraPermanently = () => {
+    try {
+      localStorage.setItem('gesture_camera_disabled', 'true');
+      window.dispatchEvent(new CustomEvent('gesture-camera-toggle'));
+    } catch (e) {}
+  };
+
   return (
     <motion.div
       drag
@@ -254,25 +261,36 @@ const GestureCameraOverlay = ({
       className="fixed bottom-4 right-4 z-[999] flex flex-col items-end gap-2.5 pointer-events-auto select-none max-w-xs sm:max-w-none"
     >
       {/* DRAGGABLE & COLLAPSIBLE CAMERA FRAME */}
-      <div className={`relative transition-all duration-300 ${isOverlayMinimized ? 'w-24 h-18 rounded-2xl' : 'w-44 h-32 md:w-60 md:h-44 rounded-[2rem]'} overflow-hidden border-3 md:border-4 ${borderColor} bg-slate-900 shadow-2xl relative cursor-grab active:cursor-grabbing`}>
+      <div className={`relative transition-all duration-300 ${isOverlayMinimized ? 'w-28 h-20 rounded-2xl' : 'w-44 h-32 md:w-60 md:h-44 rounded-[2rem]'} overflow-hidden border-3 md:border-4 ${borderColor} bg-slate-900 shadow-2xl relative cursor-grab active:cursor-grabbing`}>
         <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover scale-x-[-1]" muted playsInline autoPlay />
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-10" style={{ transform: 'scaleX(-1)' }} />
 
-        {/* Camera Header: Drag Affordance & Minimize Control */}
+        {/* Camera Header: Drag Affordance, Minimize & Close Controls */}
         <div className="absolute top-1.5 inset-x-2 flex justify-between items-center z-20">
           <div className="bg-slate-900/80 backdrop-blur-md px-2 py-0.5 rounded-full text-[9px] font-black text-amber-300 flex items-center gap-1 border border-white/10">
             <HiHand className="text-amber-400 animate-bounce" />
             <span className="hidden sm:inline">Geser</span>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setIsOverlayMinimized(prev => !prev)}
-            className="p-1 bg-slate-900/80 hover:bg-slate-800 text-white rounded-lg border border-white/20 shadow-md transition-all active:scale-90"
-            title={isOverlayMinimized ? "Perbesar Kamera & Panduan" : "Kecilkan Kamera"}
-          >
-            {isOverlayMinimized ? <HiChevronUp className="text-xs" /> : <HiMinus className="text-xs" />}
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setIsOverlayMinimized(prev => !prev)}
+              className="p-1 bg-slate-900/80 hover:bg-slate-800 text-white rounded-lg border border-white/20 shadow-md transition-all active:scale-90"
+              title={isOverlayMinimized ? "Perbesar Kamera & Panduan" : "Kecilkan Tampilan Kamera"}
+            >
+              {isOverlayMinimized ? <HiChevronUp className="text-xs" /> : <HiMinus className="text-xs" />}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleCloseCameraPermanently}
+              className="p-1 bg-slate-900/80 hover:bg-rose-950 text-slate-300 hover:text-rose-400 rounded-lg border border-white/20 shadow-md transition-all active:scale-90"
+              title="Tutup & Matikan Kamera Gestur"
+            >
+              <HiX className="text-xs" />
+            </button>
+          </div>
         </div>
 
         {/* Hand Status Overlay */}

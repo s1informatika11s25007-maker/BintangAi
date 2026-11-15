@@ -18,8 +18,31 @@ const GlobalGestureCamera = () => {
 
   const isPublicPage = path === '/' || path.startsWith('/auth') || path === '/login' || path === '/register';
 
-  // Camera enabled ONLY for Tunawicara mode on logged-in student pages
-  const isEnabled = isMute && !!profile && profile.role === 'siswa' && !isPublicPage;
+  const [isCameraDisabled, setIsCameraDisabled] = useState(() => {
+    try {
+      return localStorage.getItem('gesture_camera_disabled') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    const checkDisabled = () => {
+      try {
+        setIsCameraDisabled(localStorage.getItem('gesture_camera_disabled') === 'true');
+      } catch {}
+    };
+
+    window.addEventListener('gesture-camera-toggle', checkDisabled);
+    window.addEventListener('storage', checkDisabled);
+    return () => {
+      window.removeEventListener('gesture-camera-toggle', checkDisabled);
+      window.removeEventListener('storage', checkDisabled);
+    };
+  }, []);
+
+  // Camera enabled ONLY for Tunawicara mode on logged-in student pages AND when NOT disabled in localStorage
+  const isEnabled = isMute && !!profile && profile.role === 'siswa' && !isPublicPage && !isCameraDisabled;
 
   const lastProcessedFinger = useRef(-1);
   const cooldownRef = useRef(false);
