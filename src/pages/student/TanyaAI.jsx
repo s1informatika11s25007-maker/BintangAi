@@ -301,9 +301,6 @@ const TanyaAI = () => {
               <div>
                 <h1 className="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-1.5 leading-tight">
                   <span>Kak Bintang</span>
-                  <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase rounded-full tracking-wider border border-indigo-100 hidden sm:inline-block">
-                    AI Tutor
-                  </span>
                 </h1>
                 <p className="text-[11px] font-medium text-slate-400">
                   {loading ? 'Sedang berpikir...' : isSpeaking ? 'Sedang berbicara...' : 'Online • Sahabat Belajar Inklusif'}
