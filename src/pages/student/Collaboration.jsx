@@ -7,6 +7,8 @@ import StudentSidebar from '@/components/layout/StudentSidebar';
 import { useVoice } from '@/features/accessibility/hooks/useVoice';
 import { useAccessibility } from '@/features/accessibility/hooks/useAccessibility';
 import { useSubtitle } from '@/features/accessibility/components/Subtitles';
+import { useGestureControl } from '@/features/accessibility/hooks/useGestureControl';
+import GestureCameraOverlay from '@/features/accessibility/components/GestureCameraOverlay';
 import {
   HiChatAlt2, HiUsers, HiUserGroup, HiLockClosed, HiLockOpen,
   HiPaperAirplane, HiX, HiSearch, HiCheckCircle,
@@ -205,62 +207,107 @@ const StudentCollaboration = () => {
 
   const listRef = useRef(null);
 
-  // GESTURE CONTROL FOR TUNAWICARA
-  useEffect(() => {
-    const handleGesture = (e) => {
-      if (!isMute) return;
-      const { fingers } = e.detail;
+  const lastProcessedFingerRef = useRef(-1);
+  const cooldownRef = useRef(false);
 
-      if (fingers === 1) {
-        // Scroll Down / Select Group One by One
+  const { videoRef, canvasRef, isActive: camActive, handDetected, totalFingers } = useGestureControl({
+    enabled: isMute,
+    onGesture: (fingerCount) => {
+      // Ignore if navigation menu is open
+      if (document.body.getAttribute('data-menu-active') === 'true' || window.__isNavMenuActive) {
+        return;
+      }
+
+      if (cooldownRef.current) return;
+      if (fingerCount === 0) {
+        lastProcessedFingerRef.current = -1;
+        return;
+      }
+      if (fingerCount === lastProcessedFingerRef.current) return;
+
+      lastProcessedFingerRef.current = fingerCount;
+      cooldownRef.current = true;
+      setTimeout(() => { cooldownRef.current = false; }, 800);
+
+      // 🎯 1. FISI 1 JARI: Pindah ke Tab "Grup Saya"
+      if (fingerCount === 1) {
+        setActiveTab('mine');
+        setSelectedIndex(0);
+        if (isMute) showSubtitle('☝️ 1 Jari: Membuka Tab Grup Saya', 'info');
+        return;
+      }
+
+      // 🎯 2. FISI 2 JARI: Pindah ke Tab "Cari Grup"
+      if (fingerCount === 2) {
+        setActiveTab('discover');
+        setSelectedIndex(0);
+        if (isMute) showSubtitle('✌️ 2 Jari: Membuka Tab Cari Grup', 'info');
+        return;
+      }
+
+      if (!smartGroups || smartGroups.length === 0) return;
+
+      // 🎯 3. FISI 3 JARI: Next Grup / Lanjut memilih grup
+      if (fingerCount === 3) {
         setSelectedIndex(prev => {
-          const next = (prev + 1) % smartGroups.length;
-          showSubtitle(`🧐 Memilih: ${smartGroups[next]?.name}`, 'info');
+          const nextIdx = (prev + 1) % smartGroups.length;
+          const g = smartGroups[nextIdx];
+          if (isMute) showSubtitle(`🤟 3 Jari (Lanjut): Grup "${g?.name || 'Grup'}" disorot`, 'info');
 
-          // Auto-scroll to selected item
           setTimeout(() => {
-            const el = document.querySelector(`[data-idx="${next}"]`);
+            const el = document.querySelector(`[data-idx="${nextIdx}"]`);
             el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           }, 100);
 
-          return next;
+          return nextIdx;
         });
-      } else if (fingers === 2) {
-        if (showJoinModal) {
-          // Confirm Join if Modal is open
-          submitJoin();
-          return;
-        }
+        return;
+      }
 
-        if (activeTab === 'mine') {
-          // Open Cari Grup
-          setActiveTab('discover');
-          setSelectedIndex(-1);
-          showSubtitle("🔍 Membuka Cari Grup", "success");
-        } else {
-          // Join Group
-          if (selectedIndex >= 0 && smartGroups[selectedIndex]) {
-            handleJoinGroup(smartGroups[selectedIndex]);
-            showSubtitle(`🤝 Bergabung ke ${smartGroups[selectedIndex].name}`, "success");
-          } else {
-            showSubtitle("⚠️ Pilih grup dengan 1 jari dulu!", "warning");
-          }
-        }
-      } else if (fingers === 5) {
+      // 🎯 4. FISI 4 JARI: Prev Grup / Mundur memilih grup
+      if (fingerCount === 4) {
+        setSelectedIndex(prev => {
+          const prevIdx = (prev - 1 + smartGroups.length) % smartGroups.length;
+          const g = smartGroups[prevIdx];
+          if (isMute) showSubtitle(`🖖 4 Jari (Mundur): Grup "${g?.name || 'Grup'}" disorot`, 'info');
+
+          setTimeout(() => {
+            const el = document.querySelector(`[data-idx="${prevIdx}"]`);
+            el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }, 100);
+
+          return prevIdx;
+        });
+        return;
+      }
+
+      // 🎯 5. FISI 5 JARI: Masuk / Buka grup yang disorot
+      if (fingerCount === 5) {
         if (showJoinModal) {
           setShowJoinModal(false);
-          showSubtitle("🔙 Batal Bergabung", "info");
+          if (isMute) showSubtitle('🔙 Batal Bergabung', 'info');
           return;
         }
-        // Switch to My Groups
-        setActiveTab('mine');
-        setSelectedIndex(-1);
-        showSubtitle("🏠 Kembali ke Grup Saya", "info");
-      }
-    };
 
-    window.addEventListener('gesture-detected', handleGesture);
-    return () => window.removeEventListener('gesture-detected', handleGesture);
+        const targetIdx = selectedIndex >= 0 ? selectedIndex : 0;
+        const targetGroup = smartGroups[targetIdx];
+        if (targetGroup) {
+          if (activeTab === 'mine') {
+            if (isMute) showSubtitle(`🖐️ 5 Jari: Masuk ke Grup "${targetGroup.name}"...`, 'success');
+            setTimeout(() => {
+              handleSelectGroup(targetGroup);
+            }, 300);
+          } else {
+            if (isMute) showSubtitle(`🖐️ 5 Jari: Bergabung ke Grup "${targetGroup.name}"...`, 'success');
+            setTimeout(() => {
+              handleJoinGroup(targetGroup);
+            }, 300);
+          }
+        }
+        return;
+      }
+    }
+  });
   }, [isMute, activeTab, smartGroups, selectedIndex, showJoinModal, joiningGroup]);
 
   const handleSendMessage = async (e) => {
@@ -377,12 +424,12 @@ const StudentCollaboration = () => {
              <div ref={listRef} className="flex-1 overflow-y-auto px-4 pb-6 space-y-2 custom-scrollbar">
                 {smartGroups.map((g, idx) => {
                   const isPending = myRequests.some(r => r.group_id === g.id);
-                  const isGestureSelected = selectedIndex === idx;
+                  const isGestureSelected = isMute && selectedIndex === idx;
                   return (
                     <motion.button key={g.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}
                       onClick={() => isPending ? null : (activeTab === 'mine' ? handleSelectGroup(g) : handleJoinGroup(g))}
                       data-idx={idx}
-                      className={`w-full p-4 text-left flex items-center gap-4 transition-all rounded-3xl group ${selectedGroup?.id === g.id ? 'bg-indigo-600 text-white shadow-xl' : (isGestureSelected ? 'bg-indigo-50 border-2 border-indigo-200 shadow-md' : 'hover:bg-slate-50')} ${isPending ? 'opacity-50' : ''}`}
+                      className={`w-full p-4 text-left flex items-center gap-4 transition-all rounded-3xl group ${selectedGroup?.id === g.id ? 'bg-indigo-600 text-white shadow-xl' : (isGestureSelected ? 'bg-indigo-50 border-2 border-indigo-600 shadow-md ring-4 ring-indigo-500/20' : 'hover:bg-slate-50')} ${isPending ? 'opacity-50' : ''}`}
                     >
                       <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg ${selectedGroup?.id === g.id ? 'bg-white/20 text-white' : (isGestureSelected ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-600 border border-indigo-100')}`}>
                         {renderGroupIcon(g.icon)}
@@ -392,8 +439,8 @@ const StudentCollaboration = () => {
                          <p className={`text-[11px] truncate ${selectedGroup?.id === g.id ? 'text-indigo-100' : 'text-slate-400'}`}>{isPending ? 'Menunggu izin' : g.description || 'Yuk kolaborasi!'}</p>
                       </div>
                       {isGestureSelected && isMute && (
-                         <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-[10px] font-black animate-bounce">
-                            JARI 2
+                         <div className="px-2.5 py-1 rounded-full bg-indigo-600 text-white text-[9px] font-black uppercase animate-pulse shadow-md shrink-0">
+                            👉 Disorot (5 Jari Masuk)
                          </div>
                       )}
                     </motion.button>
@@ -558,16 +605,25 @@ const StudentCollaboration = () => {
              </div>
              <div className="flex gap-10 items-center">
                 <div className="flex gap-6">
-                   <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest"><span className="text-white bg-indigo-600 px-2 py-0.5 rounded mr-1">1</span> Pilih Satu-Satu</p>
-                   {activeTab === 'mine' ? (
-                     <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest"><span className="text-white bg-emerald-600 px-2 py-0.5 rounded mr-1">2</span> Cari Grup</p>
-                   ) : (
-                     <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest"><span className="text-white bg-emerald-600 px-2 py-0.5 rounded mr-1">2</span> Gabung Grup</p>
-                   )}
-                   <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest"><span className="text-white bg-slate-700 px-2 py-0.5 rounded mr-1">5</span> Grup Saya</p>
+                   <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest"><span className="text-white bg-indigo-600 px-2 py-0.5 rounded mr-1">1</span> Grup Saya</p>
+                   <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest"><span className="text-white bg-emerald-600 px-2 py-0.5 rounded mr-1">2</span> Cari Grup</p>
+                   <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest"><span className="text-white bg-indigo-600 px-2 py-0.5 rounded mr-1">3</span> Lanjut</p>
+                   <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest"><span className="text-white bg-indigo-600 px-2 py-0.5 rounded mr-1">4</span> Mundur</p>
+                   <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest"><span className="text-white bg-slate-700 px-2 py-0.5 rounded mr-1">5</span> Masuk</p>
                 </div>
              </div>
           </div>
+        )}
+
+        {/* Gesture Camera Overlay for Tunawicara Mode */}
+        {isMute && (
+          <GestureCameraOverlay
+            videoRef={videoRef}
+            canvasRef={canvasRef}
+            isActive={camActive}
+            handDetected={handDetected}
+            totalFingers={totalFingers}
+          />
         )}
       </main>
     </div>
