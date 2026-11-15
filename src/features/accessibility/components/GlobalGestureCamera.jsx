@@ -316,7 +316,7 @@ const GlobalGestureCamera = () => {
     // PROFILE LOGOUT (2 Jari)
     if (isProfilePage && totalFingers === 2) {
       showSubtitle('👋 Melakukan Logout...', 'info');
-      setTimeout(() => { logout('/auth/login'); }, 600);
+      setTimeout(() => { logout('/'); }, 600);
       triggerCooldown();
       return;
     }

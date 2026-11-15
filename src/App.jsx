@@ -141,11 +141,14 @@ function AppContent() {
       <StudentBroadcastReceiverOverlay />
       <AppLayout>
         <Routes>
-          {/* Public Routes */}
+          {/* Public Landing Page Route */}
           <Route path="/" element={<LandingPage />} />
-          <Route path="/auth" element={<Navigate to="/auth/login" replace />} />
-          <Route path="/auth/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
-          <Route path="/auth/register" element={<PublicOnlyRoute><Register /></PublicOnlyRoute>} />
+          <Route path="/landing" element={<LandingPage />} />
+          <Route path="/auth" element={<Navigate to="/" replace />} />
+          <Route path="/auth/login" element={<Navigate to="/" replace />} />
+          <Route path="/auth/register" element={<Navigate to="/" replace />} />
+          <Route path="/login" element={<Navigate to="/" replace />} />
+          <Route path="/register" element={<Navigate to="/" replace />} />
 
           {/* Dedicated Hidden Monitor Route (Protected by Password: Bintang123) */}
           <Route path="/monitor" element={<MonitorPage />} />

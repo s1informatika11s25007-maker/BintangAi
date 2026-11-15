@@ -45,7 +45,7 @@ export const useAuthStore = create(
                 new Date(payload.new.last_active_at).getTime() === 0;
 
               if (isTeacherForcedLogout && get().user?.id === userId && payload.new.role === 'siswa') {
-                get().logout('/auth/login?reason=teacher_logout');
+                get().logout('/?reason=teacher_logout');
               }
             }
           )
@@ -151,9 +151,9 @@ export const useAuthStore = create(
       },
 
       /**
-       * 🛡️ COMPLETE LOGOUT, CACHE CLEAR & REDIRECT TO LOGIN PAGE ('/auth/login')
+       * 🛡️ COMPLETE LOGOUT, CACHE CLEAR & REDIRECT TO LANDING PAGE ('/')
        */
-      logout: async (targetUrl = '/auth/login') => {
+      logout: async (targetUrl = '/') => {
         set({ isLoggingOut: true, loading: true });
 
         const currentProfile = get().profile;

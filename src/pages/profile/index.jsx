@@ -122,7 +122,7 @@ const Profile = () => {
   };
 
   const handleLogout = async () => {
-    await logout('/auth/login');
+    await logout('/');
   };
 
   const getDisabilityText = (userProfile) => {

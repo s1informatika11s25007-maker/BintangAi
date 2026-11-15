@@ -44,7 +44,7 @@ const InactivityLogout = ({ children }) => {
       const profile = useAuthStore.getState().profile;
       await logUserActivity('AUTO_LOGOUT', 'Auto Logout Sesi', 'Pengguna otomatis keluar (logout) karena inaktif selama 15 menit', profile);
       await updateOnlineStatus(false);
-      await logout('/auth/login?reason=inactivity');
+      await logout('/?reason=inactivity');
     } catch (error) {
       console.error('Auto-logout failed:', error);
     }
