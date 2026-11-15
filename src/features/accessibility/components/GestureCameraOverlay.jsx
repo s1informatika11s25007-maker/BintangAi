@@ -134,13 +134,15 @@ const GestureCameraOverlay = ({
     { icon: '🖐️', label: 'Aktif (5)' },
   ];
 
-  // 7. Perintah Membaca Modul (Reader View)
+  // 7. Perintah Membaca Modul (Reader View: Teks & PDF)
   const readingCommands = [
     { icon: '☝️', label: 'Scroll ↓ (1)' },
     { icon: '✌️', label: 'Scroll ↑ (2)' },
     { icon: '🤟', label: 'Suara (3)' },
     { icon: '🖖', label: 'Lanjut (4)' },
     { icon: '🖐️', label: 'Tutup (5)' },
+    { icon: '6️⃣', label: 'PDF (6)' },
+    { icon: '7️⃣', label: 'Teks (7)' },
   ];
 
   // 8. Perintah Halaman Perpustakaan Materi / Modul (📚 Pilih Materi)
@@ -209,7 +211,7 @@ const GestureCameraOverlay = ({
     title = '📖 Membaca Materi';
     accentColor = 'text-emerald-400';
     activeDot = 'bg-emerald-500';
-    footerHint = '1 = Scroll ↓ | 2 = Scroll ↑ | 3 = Suara | 4 = Lanjut | 5 = Tutup';
+    footerHint = '1=Scroll ↓ | 2=Scroll ↑ | 3=Suara | 4=Lanjut | 5=Tutup | 6=PDF | 7=Teks';
   } else if (isModulesList) {
     currentCommands = modulePageCommands;
     title = '📚 Pilih Materi';

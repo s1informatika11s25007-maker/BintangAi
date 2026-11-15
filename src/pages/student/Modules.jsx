@@ -300,7 +300,7 @@ const StudentModules = () => {
   // Selected Card Index for Tunawicara Gestures (Highlighting)
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const scrollToEdge = (direction) => {
+  const scrollStep = (direction) => {
     if (typeof document === 'undefined') return;
     const candidateSelectors = ['.overflow-y-auto', 'main', 'body', '#root'];
     let scrollTarget = null;
@@ -312,25 +312,22 @@ const StudentModules = () => {
       }
     }
     if (!scrollTarget) scrollTarget = document.documentElement || document.body || window;
-    const isWin = scrollTarget === window || scrollTarget === document.documentElement || scrollTarget === document.body;
-    const maxScroll = isWin ? Math.max(document.body.scrollHeight, document.documentElement.scrollHeight) - window.innerHeight : scrollTarget.scrollHeight - scrollTarget.clientHeight;
-    const targetY = direction === 'down' ? Math.max(0, maxScroll) : 0;
-    const startY = isWin ? (window.pageYOffset || document.documentElement.scrollTop) : scrollTarget.scrollTop;
-    const distance = targetY - startY;
-    if (Math.abs(distance) < 5) return;
-    const duration = 1300;
-    let startTime = null;
-    const easeInOutCubic = (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-    const step = (timestamp) => {
-      if (!startTime) startTime = timestamp;
-      const elapsed = timestamp - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const currentY = startY + (distance * easeInOutCubic(progress));
-      if (isWin) window.scrollTo(0, currentY); else scrollTarget.scrollTop = currentY;
-      if (progress < 1) requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
+    const stepAmount = direction === 'down' ? 160 : -160;
+    if (scrollTarget && typeof scrollTarget.scrollBy === 'function') {
+      try {
+        scrollTarget.scrollBy({ top: stepAmount, behavior: 'smooth' });
+      } catch (e) {
+        scrollTarget.scrollTop += stepAmount;
+      }
+    } else if (scrollTarget && scrollTarget !== window) {
+      scrollTarget.scrollTop += stepAmount;
+    } else {
+      window.scrollBy({ top: stepAmount, behavior: 'smooth' });
+    }
   };
+
+  const lastProcessedFingerRef = useRef(-1);
+  const cooldownRef = useRef(false);
 
   const { videoRef, canvasRef, isActive: camActive, handDetected, totalFingers } = useGestureControl({
     enabled: isMute,
@@ -340,15 +337,57 @@ const StudentModules = () => {
         return;
       }
 
-      // 1. Mode Membaca Materi (Reader View)
+      // 1. Mode Membaca Materi (Reader View: Teks & PDF)
       if (selectedModule) {
+        // A. KETIKA SANGAT DENGAN TAB PDF DOKUMEN (activeTab === 'pdf')
+        if (activeTab === 'pdf') {
+          if (fingerCount === 1) {
+            scrollStep('down');
+            if (isMute) showSubtitle('⬇️ 1 Jari: Scroll Kebawah Dokumen PDF', 'info');
+            return;
+          } else if (fingerCount === 3) {
+            scrollStep('up');
+            if (isMute) showSubtitle('⬆️ 3 Jari: Scroll Keatas Dokumen PDF', 'info');
+            return;
+          } else if (fingerCount === 6) {
+            setActiveTab('pdf');
+            if (isMute) showSubtitle('📄 6 Jari: Berada di Dokumen PDF', 'info');
+            return;
+          } else if (fingerCount === 7) {
+            setActiveTab('text');
+            if (isMute) showSubtitle('📖 7 Jari: Kembali ke Teks Pelajaran', 'success');
+            return;
+          } else if (fingerCount === 5) {
+            closeModule();
+            if (isMute) showSubtitle('🖐️ 5 Jari: Menutup Materi', 'info');
+            return;
+          }
+          return;
+        }
+
+        // B. KETIKA BERADA DI TAB TEKS PELAJARAN (activeTab === 'text')
         if (fingerCount === 1) {
-          scrollToEdge('down');
-          if (isMute) showSubtitle('⬇️ 1 Jari: Scroll Kebawah (Membaca)', 'info');
+          scrollStep('down');
+          if (isMute) showSubtitle('⬇️ 1 Jari: Scroll Kebawah Teks Pelajaran', 'info');
+          return;
         } else if (fingerCount === 2) {
-          scrollToEdge('up');
-          if (isMute) showSubtitle('⬆️ 2 Jari: Scroll Keatas', 'info');
-        } else if (fingerCount === 3) {
+          scrollStep('up');
+          if (isMute) showSubtitle('⬆️ 2 Jari: Scroll Keatas Teks Pelajaran', 'info');
+          return;
+        }
+
+        // Single trigger gestures for 3, 4, 5, 6, 7
+        if (cooldownRef.current) return;
+        if (fingerCount === 0) {
+          lastProcessedFingerRef.current = -1;
+          return;
+        }
+        if (fingerCount === lastProcessedFingerRef.current) return;
+        lastProcessedFingerRef.current = fingerCount;
+        cooldownRef.current = true;
+        setTimeout(() => { cooldownRef.current = false; }, 800);
+
+        if (fingerCount === 3) {
           if (isPlayingAudio && !isAudioPaused) {
             pauseReadingModule();
           } else {
@@ -359,12 +398,32 @@ const StudentModules = () => {
         } else if (fingerCount === 5) {
           closeModule();
           if (isMute) showSubtitle('🖐️ 5 Jari: Menutup Materi', 'info');
+        } else if (fingerCount === 6) {
+          if (selectedModule.pdf_url) {
+            setActiveTab('pdf');
+            if (isMute) showSubtitle('📄 6 Jari: Membuka Fitur Dokumen PDF', 'success');
+          } else {
+            if (isMute) showSubtitle('⚠️ Dokumen PDF belum tersedia untuk materi ini', 'warning');
+          }
+        } else if (fingerCount === 7) {
+          setActiveTab('text');
+          if (isMute) showSubtitle('📖 7 Jari: Kembali ke Teks Pelajaran', 'success');
         }
         return;
       }
 
       // 2. Mode Perpustakaan (📚 Pilih Materi)
       if (!filteredModules || filteredModules.length === 0) return;
+
+      if (cooldownRef.current) return;
+      if (fingerCount === 0) {
+        lastProcessedFingerRef.current = -1;
+        return;
+      }
+      if (fingerCount === lastProcessedFingerRef.current) return;
+      lastProcessedFingerRef.current = fingerCount;
+      cooldownRef.current = true;
+      setTimeout(() => { cooldownRef.current = false; }, 800);
 
       if (fingerCount === 1) {
         setSelectedIndex(prev => {
