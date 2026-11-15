@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useVoice } from '@/features/accessibility/hooks/useVoice';
 import { useAccessibilityStore } from '@/features/accessibility/store/accessibilityStore';
+import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import {
   HiVolumeUp,
   HiChevronDown,
@@ -14,19 +15,29 @@ export const AuthHeaderAccessibilityBar = ({
   onReadPage = null
 }) => {
   const { speak, stopSpeaking, isSpeaking } = useVoice();
-  const { mode, setManualMode } = useAccessibilityStore();
+  const { profile } = useAuthStore();
+  const { mode, isManualSelection, setManualMode } = useAccessibilityStore();
 
-  const [selectedDisability, setSelectedDisability] = useState(mode || 'tidak_ada');
+  const [selectedDisability, setSelectedDisability] = useState(() => {
+    if (!profile && !isManualSelection) return 'tidak_ada';
+    return mode || 'tidak_ada';
+  });
+
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [fontSizeLevel, setFontSizeLevel] = useState(100);
   const [isHighContrast, setIsHighContrast] = useState(false);
 
   const dropdownRef = useRef(null);
 
-  // Sync with global store mode
+  // Sync with global store mode, defaulting unauthenticated visits to 'tidak_ada'
   useEffect(() => {
-    setSelectedDisability(mode || 'tidak_ada');
-  }, [mode]);
+    if (!profile && !isManualSelection) {
+      useAccessibilityStore.getState().reset();
+      setSelectedDisability('tidak_ada');
+    } else {
+      setSelectedDisability(mode || 'tidak_ada');
+    }
+  }, [mode, profile, isManualSelection]);
 
   // Sync high contrast status from DOM
   useEffect(() => {

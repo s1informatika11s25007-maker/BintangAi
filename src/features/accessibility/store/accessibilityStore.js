@@ -138,9 +138,13 @@ export const useAccessibilityStore = create(
       reset: () => {
         const root = document.documentElement;
         root.setAttribute('data-disability', 'none');
+        root.setAttribute('data-disabilities', 'none');
         root.classList.remove('blind-mode', 'deaf-mode', 'mute-mode');
         root.style.fontSize = '100%';
-        localStorage.removeItem('bintangai-mode-simple');
+        try {
+          localStorage.removeItem('bintangai-mode-simple');
+          localStorage.removeItem('gesture_camera_disabled');
+        } catch (e) {}
 
         if (typeof window !== 'undefined' && window.speechSynthesis) {
           window.speechSynthesis.cancel();
@@ -148,6 +152,10 @@ export const useAccessibilityStore = create(
 
         set({
           mode: null,
+          modes: [],
+          isBlind: false,
+          isDeaf: false,
+          isMute: false,
           isManualSelection: false,
           isVoiceActive: false,
           isSubtitleActive: false,
