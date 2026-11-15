@@ -115,16 +115,16 @@ const GestureCameraOverlay = ({
     title = '🔓 Menu Utama';
     accentColor = 'text-emerald-400';
     activeDot = 'bg-emerald-500';
-  } else if (isSubmissionView) {
-    currentCommands = pembahasanCommands;
-    title = '📖 Pembahasan Quiz';
-    accentColor = 'text-indigo-400';
-    activeDot = 'bg-indigo-500';
   } else if (isResultScreen) {
     currentCommands = quizResultCommands;
     title = '🏆 Hasil Petualanganmu';
     accentColor = 'text-emerald-400';
     activeDot = 'bg-emerald-500';
+  } else if (isSubmissionView) {
+    currentCommands = pembahasanCommands;
+    title = '📖 Pembahasan Quiz';
+    accentColor = 'text-indigo-400';
+    activeDot = 'bg-indigo-500';
   } else if (isTaskDetail || isQuizPage) {
     currentCommands = quizDetailCommands;
     title = '🎯 Fokus Quiz';
@@ -194,10 +194,10 @@ const GestureCameraOverlay = ({
             } else if (menuActive) {
               const navFingerMap = [1, 2, 3, 4, 5, 6, 7];
               isMatch = totalFingers === navFingerMap[i];
-            } else if (isSubmissionView) {
-              isMatch = (i === 0 && totalFingers === 1);
             } else if (isResultScreen) {
               isMatch = totalFingers >= 1 && totalFingers <= 5 && totalFingers === (i + 1);
+            } else if (isSubmissionView) {
+              isMatch = (i === 0 && totalFingers === 1);
             } else if (isTaskDetail) {
               isMatch = totalFingers === (i + 1);
             } else if (isQuizList) {
