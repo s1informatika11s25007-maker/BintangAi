@@ -41,6 +41,16 @@ const StudentTasks = () => {
   const { videoRef, canvasRef, isActive: camActive, handDetected, totalFingers } = useGestureControl({
     enabled: isMute,
     onGesture: (fingerCount) => {
+      if (fingerCount === 4) {
+        setTabFilter('completed');
+        if (isMute) showSubtitle('🖖 4 Jari: Membuka Tab Riwayat & Kunci Jawaban', 'info');
+        return;
+      } else if (fingerCount === 5) {
+        setTabFilter('active');
+        if (isMute) showSubtitle('🖐️ 5 Jari: Membuka Tab QuizKu Aktif', 'info');
+        return;
+      }
+
       if (!currentItems || currentItems.length === 0) return;
 
       if (fingerCount === 1) {
@@ -60,9 +70,10 @@ const StudentTasks = () => {
       } else if (fingerCount === 3) {
         const selectedItem = currentItems[selectedIndex];
         if (selectedItem) {
-          if (isMute) showSubtitle(`🤟 3 Jari: Membuka Kuis "${selectedItem.title}"...`, 'success');
+          const targetId = tabFilter === 'completed' ? (selectedItem.assignment_id || selectedItem.id) : selectedItem.id;
+          if (isMute) showSubtitle(`🤟 3 Jari: Membuka Kuis "${selectedItem.title || selectedItem.assignment?.title || 'Kuis'}"...`, 'success');
           setTimeout(() => {
-            navigate(`/student/task/${selectedItem.id}`);
+            navigate(`/student/task/${targetId}`);
           }, 300);
         }
       }
@@ -322,10 +333,12 @@ const StudentTasks = () => {
               <HiLightningBolt className="text-amber-400" />
               <span>Kontrol Jari Tunawicara Aktif</span>
             </div>
-            <div className="flex gap-6">
-              <span><strong className="bg-white/20 px-2 py-0.5 rounded">1 Jari</strong> Lanjut Sorot</span>
-              <span><strong className="bg-white/20 px-2 py-0.5 rounded">2 Jari</strong> Mundur Sorot</span>
-              <span><strong className="bg-white/20 px-2 py-0.5 rounded">3 Jari</strong> Masuk Kuis</span>
+            <div className="flex gap-4 md:gap-6 text-[11px]">
+              <span><strong className="bg-white/20 px-2 py-0.5 rounded">1</strong> Lanjut</span>
+              <span><strong className="bg-white/20 px-2 py-0.5 rounded">2</strong> Mundur</span>
+              <span><strong className="bg-white/20 px-2 py-0.5 rounded">3</strong> Masuk</span>
+              <span><strong className="bg-white/20 px-2 py-0.5 rounded">4</strong> Riwayat</span>
+              <span><strong className="bg-white/20 px-2 py-0.5 rounded">5</strong> Aktif</span>
             </div>
           </div>
         )}

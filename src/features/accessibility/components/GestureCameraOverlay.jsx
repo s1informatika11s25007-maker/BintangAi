@@ -58,7 +58,9 @@ const GestureCameraOverlay = ({
   const quizPageCommands = [
     { icon: '☝️', label: 'Lanjut (1)' },
     { icon: '✌️', label: 'Mundur (2)' },
-    { icon: '🤟', label: 'Masuk Kuis (3)' },
+    { icon: '🤟', label: 'Masuk (3)' },
+    { icon: '🖖', label: 'Riwayat (4)' },
+    { icon: '🖐️', label: 'Aktif (5)' },
   ];
 
   // 6. Perintah Khusus Halaman Pembahasan
@@ -177,7 +179,7 @@ const GestureCameraOverlay = ({
             } else if (isTaskDetail) {
               isMatch = totalFingers === (i + 1);
             } else if (isQuizList) {
-              isMatch = (i === 0 && totalFingers === 1) || (i === 1 && totalFingers === 2) || (i === 2 && totalFingers === 3);
+              isMatch = (i === 0 && totalFingers === 1) || (i === 1 && totalFingers === 2) || (i === 2 && totalFingers === 3) || (i === 3 && totalFingers === 4) || (i === 4 && totalFingers === 5);
             } else if (isDashboardPage) {
               isMatch = (i === 0 && totalFingers === 1) || (i === 1 && totalFingers === 2);
             } else if (isModulesList && isModuleSelected) {
@@ -210,7 +212,7 @@ const GestureCameraOverlay = ({
             </p>
           ) : isQuizList ? (
             <p className="text-[7px] font-extrabold text-amber-300 uppercase tracking-widest">
-              1 = Lanjut | 2 = Mundur | 3 = Masuk Kuis | 10 = Menu
+              1 = Lanjut | 2 = Mundur | 3 = Masuk | 4 = Riwayat | 5 = Aktif | 10 = Menu
             </p>
           ) : isSubmissionView ? (
             <p className="text-[7px] font-extrabold text-indigo-300 uppercase tracking-widest">
