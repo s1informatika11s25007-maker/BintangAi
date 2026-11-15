@@ -10,13 +10,14 @@ let isRecognitionActive = false;
 export function useGlobalVoiceNav() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { mode, isVoiceActive } = useAccessibilityStore();
+  const { mode } = useAccessibilityStore();
   const { showSubtitle } = useSubtitle();
   const isBlind = mode === 'tunanetra';
   const activeRef = useRef(false);
   const synthRef = useRef(window.speechSynthesis);
   const lastSpokenRef = useRef('');
-  const menuAnnouncedRef = useRef(false);
+  const lastCommandTimeRef = useRef(0);
+
   const [aiListening, setAiListening] = useState(false);
   const [aiTranscript, setAiTranscript] = useState('');
   const aiRecognitionRef = useRef(null);
@@ -76,7 +77,7 @@ export function useGlobalVoiceNav() {
 
     recognition.onstart = () => {
       setAiListening(true);
-      speak('Mikrofon aktif. Silakan bicara sekarang. Untuk mengirim pertanyaan, katakan OK');
+      speak('Mikrofon aktif. Silakan bicara sekarang.');
     };
 
     recognition.onresult = (event) => {
@@ -138,76 +139,87 @@ export function useGlobalVoiceNav() {
     speak(`Membacakan konten halaman: ${mainText.slice(0, 1000)}`);
   }, [speak]);
 
-  // Voice Command Processing for Siswa Tunanetra
+  // Voice Command Processing for Siswa Tunanetra (Native Browser Speech Engine)
   const processCommand = useCallback((transcript) => {
     const t = transcript.toLowerCase().trim();
     if (!t) return;
 
+    // Cooldown check (prevent command spamming within 1.2s)
+    const now = Date.now();
+    if (now - lastCommandTimeRef.current < 1200) return;
+
     const isQuizPage = location.pathname.includes('/student/quiz/');
     if (isQuizPage) {
       if (t.includes('keluar') || t.includes('tutup kuis') || t.includes('kembali ke beranda')) {
+        lastCommandTimeRef.current = now;
         navigate('/student/dashboard');
         speak('Kembali ke Beranda Utama');
       }
       return;
     }
 
-    // Navigation Commands - Auto Direct Routing (< 300ms)
-    if (t.includes('masuk') || t.includes('login') || t.includes('halaman masuk')) {
+    // ⚡ PUBLIC & AUTH NAVIGATION COMMANDS - INSTANT BROWSER VOICE ROUTING (< 50ms)
+    if (t.includes('masuk') || t.includes('login') || t.includes('halaman masuk') || t.includes('ke masuk') || t.includes('mau masuk')) {
+      lastCommandTimeRef.current = now;
       navigate('/auth/login');
       speak('Membuka halaman masuk akun');
+      showSubtitle('🚀 Membuka Halaman Masuk Akun', 'success');
       return;
     }
 
-    if (t.includes('daftar') || t.includes('register') || t.includes('buat akun') || t.includes('pendaftaran')) {
+    if (t.includes('daftar') || t.includes('register') || t.includes('buat akun') || t.includes('pendaftaran') || t.includes('ke daftar')) {
+      lastCommandTimeRef.current = now;
       navigate('/auth/register');
       speak('Membuka halaman pendaftaran akun baru');
+      showSubtitle('🚀 Membuka Halaman Pendaftaran Akun', 'success');
       return;
     }
 
-    if (t.includes('beranda') || t.includes('landing') || t.includes('utama') || t.includes('home')) {
+    if (t.includes('beranda') || t.includes('landing') || t.includes('utama') || t.includes('home') || t.includes('ke beranda')) {
+      lastCommandTimeRef.current = now;
       navigate('/');
       speak('Membuka halaman utama SambungJaga');
+      showSubtitle('🚀 Membuka Halaman Utama', 'success');
       return;
     }
 
     if (t.includes('kembali') || t.includes('back')) {
+      lastCommandTimeRef.current = now;
       navigate(-1);
       speak('Kembali ke halaman sebelumnya');
       return;
     }
 
-    if (t.includes('beranda') || t.includes('dashboard') || t.includes('bantu navigasi') || t.includes('navigasi')) {
-      navigate('/student/dashboard');
-      speak('Membuka Beranda Utama');
-      return;
-    }
-
     if (t.includes('tugas') || t.includes('kuis') || t.includes('quiz') || t.includes('mulai quiz') || t.includes('mulai kuis')) {
+      lastCommandTimeRef.current = now;
       navigate('/student/tasks');
       speak('Membuka Halaman QuizKu');
       return;
     }
 
     if (t.includes('materi') || t.includes('modul') || t.includes('perpustakaan') || t.includes('pelajaran') || t.includes('buku')) {
+      lastCommandTimeRef.current = now;
       navigate('/student/modules');
       speak('Membuka Halaman Materi Belajar');
       return;
     }
 
     if (t.includes('grup') || t.includes('kolaborasi') || t.includes('mabar') || t.includes('diskusi') || t.includes('teman')) {
+      lastCommandTimeRef.current = now;
       navigate('/student/collaboration');
       speak('Membuka Grup Belajar');
       return;
     }
 
     if (t.includes('pesan') || t.includes('inbox') || t.includes('guru')) {
+      lastCommandTimeRef.current = now;
       navigate('/student/inbox');
       speak('Membuka Pesan Guru');
       return;
     }
 
     if (t.includes('tanya') || t.includes('playground') || t.includes('obrol') || t.includes('bintang') || t.includes('asisten')) {
+      lastCommandTimeRef.current = now;
       const target = isBlind ? '/student/playground' : '/student/tanya-ai';
       navigate(target);
       speak('Membuka Tanya Kak Bintang');
@@ -215,12 +227,14 @@ export function useGlobalVoiceNav() {
     }
 
     if (t.includes('mata pintar') || t.includes('caption') || t.includes('subtitle')) {
+      lastCommandTimeRef.current = now;
       navigate('/student/live-captions');
       speak('Membuka Mata Pintar');
       return;
     }
 
     if (t.includes('profil') || t.includes('pengaturan') || t.includes('akun')) {
+      lastCommandTimeRef.current = now;
       navigate('/profile');
       speak('Membuka Halaman Profil Saya');
       return;
@@ -262,7 +276,7 @@ export function useGlobalVoiceNav() {
       speak('Volume suara diatur ke 50 persen.', 1.0, true);
       return;
     }
-  }, [navigate, speak, readPageContent, location.pathname]);
+  }, [navigate, speak, readPageContent, location.pathname, isBlind, showSubtitle]);
 
   const startGlobalListening = useCallback(() => {
     const isQuizPage = location.pathname.includes('/student/quiz/');
@@ -273,14 +287,15 @@ export function useGlobalVoiceNav() {
       if (!SR) return;
       sharedRecognition = new SR();
       sharedRecognition.continuous = true;
-      sharedRecognition.interimResults = false;
+      sharedRecognition.interimResults = true; // ⚡ Realtime Stream
       sharedRecognition.lang = 'id-ID';
     }
 
     sharedRecognition.onresult = (e) => {
       for (let i = e.resultIndex; i < e.results.length; i++) {
-        if (e.results[i].isFinal) {
-          processCommand(e.results[i][0].transcript);
+        const text = e.results[i][0].transcript;
+        if (text) {
+          processCommand(text);
         }
       }
     };
@@ -292,7 +307,7 @@ export function useGlobalVoiceNav() {
           if (activeRef.current && !aiListening) {
             try { sharedRecognition.start(); isRecognitionActive = true; } catch (e) {}
           }
-        }, 500);
+        }, 300);
       }
     };
 
@@ -301,7 +316,7 @@ export function useGlobalVoiceNav() {
     } else {
       activeRef.current = true;
     }
-  }, [isBlind, isVoiceActive, processCommand, aiListening]);
+  }, [isBlind, processCommand, aiListening, location.pathname]);
 
   const stopGlobalListening = useCallback(() => {
     activeRef.current = false;
@@ -311,11 +326,11 @@ export function useGlobalVoiceNav() {
   }, []);
 
   useEffect(() => {
-    if (isBlind && isVoiceActive) {
+    if (isBlind) {
       startGlobalListening();
       return () => stopGlobalListening();
     }
-  }, [isBlind, isVoiceActive, startGlobalListening, stopGlobalListening]);
+  }, [isBlind, startGlobalListening, stopGlobalListening]);
 
   return {
     speak,

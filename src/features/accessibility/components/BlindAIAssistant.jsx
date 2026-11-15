@@ -137,21 +137,15 @@ const BlindAIAssistant = () => {
           if (parent) target = parent;
         }
 
-        const href = target.getAttribute('href') || target.getAttribute('data-nav-target');
-        if (href && href.startsWith('/')) {
-          navigate(href);
-          return { clicked: true, label: text };
-        }
-
         target.scrollIntoView({ behavior: 'smooth', block: 'center' });
         setTimeout(() => {
           try { target.click(); } catch(e) {}
         }, 100);
-        return { clicked: true, label: text };
+        return true;
       }
     }
     return false;
-  }, [navigate]);
+  }, []);
 
   // Improved context gathering - detect items on page
   const getPageContent = () => {
@@ -401,30 +395,11 @@ const BlindAIAssistant = () => {
           if (text) {
             setLiveTranscript(text);
             lastTranscriptRef.current = text;
-
-            // ⚡ REALTIME INSTANT VOICE COMMAND STREAM MATCH (< 50ms Direct Routing)
-            const clean = text.toLowerCase().trim();
-            if (clean.includes('masuk') || clean.includes('login') || clean.includes('halaman masuk')) {
-              stopRecording();
-              stopListening();
-              speak("Membuka halaman masuk akun.", 1.0, true);
-              navigate('/auth/login');
-            } else if (clean.includes('daftar') || clean.includes('register') || clean.includes('buat akun') || clean.includes('pendaftaran')) {
-              stopRecording();
-              stopListening();
-              speak("Membuka halaman pendaftaran akun baru.", 1.0, true);
-              navigate('/auth/register');
-            } else if (clean.includes('beranda') || clean.includes('landing') || clean.includes('home') || clean.includes('utama')) {
-              stopRecording();
-              stopListening();
-              speak("Membuka halaman utama SambungJaga.", 1.0, true);
-              navigate('/');
-            }
           }
         });
       }, 400);
     }
-  }, [isRecording, isProcessing, startRecording, stopRecording, startListening, stopListening, speak, stopSpeaking, navigate]);
+  }, [isRecording, isProcessing, startRecording, stopRecording, startListening, stopListening, speak, stopSpeaking]);
 
   useEffect(() => {
     if (!isBlind) return;
@@ -440,7 +415,7 @@ const BlindAIAssistant = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isBlind, handleMicClick]);
 
-  if (!isBlind || isPlaygroundPage) return null;
+  if (!isBlind || isPlaygroundPage || isPublicPage) return null;
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-[500] flex flex-col items-center pointer-events-none pb-6 md:pb-12">
