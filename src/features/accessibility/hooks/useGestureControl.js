@@ -171,14 +171,42 @@ export function useGestureControl({ onGesture, onScroll, enabled } = {}) {
     } catch (e) { console.error(e); }
   }, [initHands]);
 
-  useEffect(() => {
-    if (isActiveMode) startCamera();
-    else {
-      setIsActive(false);
-      if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+  const stopCamera = useCallback(() => {
+    setIsActive(false);
+    setHandDetected(false);
+    setTotalFingers(0);
+
+    if (streamRef.current) {
+      try {
+        streamRef.current.getTracks().forEach(track => {
+          track.stop(); // ⚡ Hardware camera LED turned off in 0ms!
+        });
+      } catch (e) {}
       streamRef.current = null;
     }
-  }, [isActiveMode, startCamera]);
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+
+    if (handsRef.current) {
+      try {
+        handsRef.current.close();
+      } catch (e) {}
+      handsRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isActiveMode) {
+      startCamera();
+    } else {
+      stopCamera();
+    }
+    return () => {
+      stopCamera();
+    };
+  }, [isActiveMode, startCamera, stopCamera]);
 
   useEffect(() => {
     let m = true;

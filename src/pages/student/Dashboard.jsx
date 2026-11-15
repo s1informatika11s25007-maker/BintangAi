@@ -15,7 +15,7 @@ import { getCleanFirstName, getAccurateTimeGreeting } from '@/utils';
 import {
   HiFire, HiLightningBolt, HiAcademicCap, HiChevronRight,
   HiCube, HiChatAlt2, HiVariable,
-  HiEye, HiSpeakerphone, HiHeart, HiCollection, HiUsers, HiBookOpen, HiStar
+  HiEye, HiSpeakerphone, HiHeart, HiCollection, HiUsers, HiBookOpen, HiStar, HiHand
 } from 'react-icons/hi';
 
 const StudentDashboard = () => {
@@ -234,22 +234,22 @@ const StudentDashboard = () => {
               </div>
             </motion.section>
 
-            {/* INLINE GESTURE CAMERA ACTIVATION BANNER (TUNAWICARA MODE - NOT FLOATING) */}
+            {/* INLINE GESTURE CAMERA ACTIVATION BANNER (TUNAWICARA FEATURE - CLEAN & PROFESSIONAL) */}
             {isMute && isCameraClosed && (
               <motion.section
                 variants={itemVariants}
-                className="lg:col-span-12 p-5 sm:p-6 rounded-3xl bg-slate-900 text-white border-2 border-amber-400/80 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4"
+                className="lg:col-span-12 p-5 sm:p-6 rounded-3xl bg-slate-900 text-white border border-slate-700 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4"
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-amber-400/20 text-amber-300 border border-amber-400/30 flex items-center justify-center text-2xl shrink-0">
-                    📷
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 flex items-center justify-center text-2xl shrink-0 font-extrabold">
+                    ✋
                   </div>
                   <div>
                     <h3 className="font-extrabold text-sm sm:text-base text-white flex items-center gap-2">
-                      Kamera Gestur Isyarat Tangan <span className="text-[10px] bg-rose-500/30 text-rose-300 border border-rose-400/30 px-2 py-0.5 rounded-full uppercase font-bold">Sedang Nonaktif</span>
+                      Kamera Gestur Isyarat Tangan <span className="text-[10px] bg-slate-800 text-amber-300 border border-slate-700 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">Nonaktif</span>
                     </h3>
-                    <p className="text-xs text-slate-300 font-medium mt-0.5">
-                      Klik tombol di samping untuk mengaktifkan kembali kontrol kamera gestur jari tangan di seluruh halaman.
+                    <p className="text-xs text-slate-300 font-medium mt-1">
+                      Klik tombol di samping untuk mengaktifkan kembali kamera gestur isyarat tangan untuk kontrol navigasi.
                     </p>
                   </div>
                 </div>
@@ -257,9 +257,9 @@ const StudentDashboard = () => {
                 <button
                   type="button"
                   onClick={handleReenableCamera}
-                  className="w-full sm:w-auto px-6 py-3 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-2xl font-black text-xs uppercase tracking-wider shadow-xl transition-all active:scale-95 shrink-0 flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg transition-all active:scale-95 shrink-0 flex items-center justify-center gap-2 border border-indigo-400/30"
                 >
-                  <HiStar className="text-base text-slate-950" />
+                  <HiHand className="text-base text-indigo-200" />
                   <span>Aktifkan Kamera Gestur</span>
                 </button>
               </motion.section>
