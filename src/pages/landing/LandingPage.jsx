@@ -7,8 +7,14 @@ import { login } from '@/features/auth/api/sessionApi';
 import { supabase } from '@/lib/supabaseClient';
 import { logUserActivity } from '@/utils/logger';
 
-// Akun demo mengikuti akun yang sudah disediakan pada proyek.
-// Urutan dibuat berdasarkan pengguna utama: siswa, guru, kemudian orang tua.
+/*
+ * Bintang AI — Landing Page untuk siswa kelas 1–6 SD.
+ * Catatan:
+ * - Alur autentikasi, pendaftaran, akun simulasi, dan integrasi store tetap dipertahankan.
+ * - Akun DEMO_ACCOUNTS memang merupakan akun simulasi yang disediakan proyek.
+ * - Seluruh ilustrasi dekoratif menggunakan emoji/CSS agar tidak membutuhkan aset eksternal.
+ */
+
 const DEMO_ACCOUNTS = [
   {
     key: 'tunanetra',
@@ -17,7 +23,9 @@ const DEMO_ACCOUNTS = [
     email: 'demo.tunanetra@gmail.com',
     pass: 'demo123456',
     description: 'Budi Santoso · Kelas 4 SD',
-    support: 'Suara lisan dan kontras tinggi',
+    support: 'Panduan suara, pembaca layar, dan deskripsi gambar',
+    icon: '🎧',
+    color: 'from-violet-100 to-purple-50',
   },
   {
     key: 'tunarungu',
@@ -26,7 +34,9 @@ const DEMO_ACCOUNTS = [
     email: 'demo.tunarungu@gmail.com',
     pass: 'demo123456',
     description: 'Siti Rahma · Kelas 3 SD',
-    support: 'Teks visual dan subtitle',
+    support: 'Teks yang jelas, subtitle, dan petunjuk visual',
+    icon: '💬',
+    color: 'from-sky-100 to-cyan-50',
   },
   {
     key: 'tunawicara',
@@ -35,7 +45,9 @@ const DEMO_ACCOUNTS = [
     email: 'demo.tunawicara@gmail.com',
     pass: 'demo123456',
     description: 'Doni Pratama · Kelas 5 SD',
-    support: 'Pilihan komunikasi dan panduan singkat',
+    support: 'Komunikasi dengan tulisan, gambar, dan simbol',
+    icon: '🧩',
+    color: 'from-emerald-100 to-green-50',
   },
   {
     key: 'guru',
@@ -44,7 +56,9 @@ const DEMO_ACCOUNTS = [
     email: 'demo.guru@gmail.com',
     pass: 'demo123456',
     description: 'Ibu Rina · Guru SLB/SD',
-    support: 'Kelola kelas dan modul SD',
+    support: 'Kelola kelas dan materi belajar',
+    icon: '👩‍🏫',
+    color: 'from-amber-100 to-yellow-50',
   },
   {
     key: 'ortu',
@@ -54,6 +68,8 @@ const DEMO_ACCOUNTS = [
     pass: 'demo123456',
     description: 'Pak Herman · Orang tua',
     support: 'Dampingi dan lihat laporan anak',
+    icon: '👨‍👧',
+    color: 'from-rose-100 to-pink-50',
   },
 ];
 
@@ -62,35 +78,39 @@ const LEARNING_MODES = [
     id: 'tunanetra',
     title: 'Tunanetra',
     note: 'Hambatan penglihatan',
-    description: 'Panduan suara, pembaca layar, navigasi yang dapat digunakan tanpa melihat, dan deskripsi gambar.',
+    description: 'Dengarkan materi, gunakan pembaca layar, dan dengarkan deskripsi gambar.',
+    icon: '🎧',
     tone: 'violet',
   },
   {
     id: 'tunarungu',
     title: 'Tunarungu',
     note: 'Hambatan pendengaran',
-    description: 'Teks yang jelas, subtitle, transkrip ucapan, dan petunjuk visual.',
-    tone: 'cyan',
+    description: 'Baca teks yang jelas, lihat subtitle, dan ikuti petunjuk bergambar.',
+    icon: '💬',
+    tone: 'sky',
   },
   {
     id: 'tunawicara',
     title: 'Tunawicara',
     note: 'Hambatan bicara',
-    description: 'Pilihan komunikasi melalui tulisan, gambar, simbol, kalimat cepat, dan suara teks bila diperlukan.',
+    description: 'Gunakan tulisan, gambar, dan simbol untuk menyampaikan jawaban.',
+    icon: '🧩',
     tone: 'emerald',
-  },
-  {
-    id: 'tidak_ada',
-    title: 'Umum / Standar SD',
-    note: 'Mode belajar umum',
-    description: 'Tampilan belajar sederhana yang tetap menyediakan pengaturan teks, suara, dan kontras.',
-    tone: 'slate',
   },
 ];
 
-// Setiap slide mempunyai karakter transisi sendiri: tirai, lipatan 3D,
-// iris, buku terbuka, tumpukan kertas, rana, spotlight, dan lipatan map.
-// Dengan begitu presentasi terasa seperti rangkaian adegan, bukan carousel biasa.
+const SLIDE_LABELS = [
+  'Sambutan',
+  'Mengapa Bintang AI',
+  'Cara belajar',
+  'Fitur utama',
+  'Alur pengguna',
+  'Coba simulasi',
+  'Mulai belajar',
+  'Masuk dan daftar',
+];
+
 const SLIDE_MOTIONS = [
   {
     initial: { opacity: 0, clipPath: 'polygon(50% 0%, 50% 0%, 50% 100%, 50% 100%)', scale: 1.04 },
@@ -150,23 +170,55 @@ const SLIDE_MOTIONS = [
   },
 ];
 
-const SLIDE_LABELS = [
-  'Sambutan',
-  'Mengapa Bintang AI',
-  'Cara belajar',
-  'Fitur utama',
-  'Alur pengguna',
-  'Coba simulasi',
-  'Mulai belajar',
-  'Masuk dan daftar',
-];
-
-// Durasi otomatis tiap slide. Slide demo diberi waktu baca lebih panjang.
 const TOUR_DURATIONS = [0, 7200, 7600, 7600, 7600, 10500, 7000, 0];
 
-const fieldClass = 'w-full min-h-12 rounded-xl border border-blue-200 bg-white px-4 py-3 text-sm font-medium text-blue-950 placeholder:text-blue-300 outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-100';
-const primaryButton = 'inline-flex min-h-12 items-center justify-center rounded-xl bg-blue-700 px-6 py-3 text-sm font-bold text-white transition hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-200 disabled:cursor-not-allowed disabled:opacity-60';
-const secondaryButton = 'inline-flex min-h-12 items-center justify-center rounded-xl border border-blue-200 bg-white px-6 py-3 text-sm font-semibold text-blue-800 transition hover:border-blue-400 hover:bg-blue-50 focus:outline-none focus:ring-4 focus:ring-blue-100';
+const inputClass =
+  'min-h-[52px] w-full rounded-2xl border-2 border-sky-100 bg-white px-4 py-3 text-base font-semibold text-slate-800 placeholder:text-slate-400 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100';
+const primaryButton =
+  'inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-sky-600 px-6 py-3 text-base font-extrabold text-white shadow-[0_5px_0_#075985] transition hover:-translate-y-0.5 hover:bg-sky-700 hover:shadow-[0_7px_0_#075985] active:translate-y-1 active:shadow-none focus:outline-none focus:ring-4 focus:ring-sky-200 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0';
+const secondaryButton =
+  'inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl border-2 border-sky-200 bg-white px-6 py-3 text-base font-extrabold text-sky-800 transition hover:-translate-y-0.5 hover:border-sky-400 hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-sky-100 disabled:cursor-not-allowed disabled:opacity-60';
+
+const toneStyles = {
+  violet: 'border-violet-200 bg-violet-50',
+  sky: 'border-sky-200 bg-sky-50',
+  emerald: 'border-emerald-200 bg-emerald-50',
+  amber: 'border-amber-200 bg-amber-50',
+};
+
+function SlideHeading({ eyebrow, title, description }) {
+  return (
+    <div className="mx-auto max-w-3xl text-center">
+      {eyebrow && (
+        <p className="inline-flex rounded-full bg-amber-100 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-amber-800">
+          {eyebrow}
+        </p>
+      )}
+      <h2 className="mt-4 text-3xl font-black leading-tight tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
+        {title}
+      </h2>
+      {description && (
+        <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+          {description}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function BrandMark({ light = false }) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="grid h-11 w-11 place-items-center rounded-2xl bg-amber-300 text-2xl shadow-[0_4px_0_#d97706]" aria-hidden="true">
+        ⭐
+      </span>
+      <span>
+        <span className={`block text-lg font-black leading-tight ${light ? 'text-white' : 'text-slate-900'}`}>Bintang AI</span>
+        <span className={`block text-xs font-semibold ${light ? 'text-sky-100' : 'text-slate-500'}`}>Teman Belajar Kita</span>
+      </span>
+    </div>
+  );
+}
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -175,9 +227,9 @@ const LandingPage = () => {
   const { setUser, fetchProfile } = useAuthStore();
   const prefersReducedMotion = useReducedMotion();
 
-  const normalizedMode = mode === 'standar' ? 'tidak_ada' : (mode || 'tidak_ada');
+  const validLearningModes = ['tunanetra', 'tunarungu', 'tunawicara'];
+  const normalizedMode = validLearningModes.includes(mode) ? mode : '';
 
-  // Presentasi berbentuk slide, bukan halaman panjang yang harus digulir.
   const [activeSlide, setActiveSlide] = useState(0);
   const [slideDirection, setSlideDirection] = useState(1);
   const slideContentRef = useRef(null);
@@ -186,12 +238,10 @@ const LandingPage = () => {
   const [selectedUserRole, setSelectedUserRole] = useState(normalizedMode);
   const [roleFeedback, setRoleFeedback] = useState('');
 
-  // Tur otomatis per slide, dengan panduan awal dan kontrol jeda untuk desktop/Android.
   const [showTourGuide, setShowTourGuide] = useState(false);
   const [tourActive, setTourActive] = useState(false);
   const [tourPaused, setTourPaused] = useState(false);
 
-  // Auth state.
   const [authTab, setAuthTab] = useState('login');
   const [regStep, setRegStep] = useState(1);
   const [loginEmail, setLoginEmail] = useState('');
@@ -200,7 +250,6 @@ const LandingPage = () => {
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginMessage, setLoginMessage] = useState(null);
 
-  // Registration state.
   const [regFullName, setRegFullName] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
@@ -219,7 +268,6 @@ const LandingPage = () => {
   const [regLoading, setRegLoading] = useState(false);
   const [regMessage, setRegMessage] = useState(null);
 
-  // Audio is optional; it never starts automatically when a mode is selected.
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
 
   const speakText = useCallback((text) => {
@@ -227,8 +275,8 @@ const LandingPage = () => {
     window.speechSynthesis.cancel();
     const utterance = new window.SpeechSynthesisUtterance(text);
     utterance.lang = 'id-ID';
-    utterance.rate = 0.95;
-    utterance.pitch = 1;
+    utterance.rate = 0.92;
+    utterance.pitch = 1.05;
     utterance.onend = () => setIsPlayingAudio(false);
     utterance.onerror = () => setIsPlayingAudio(false);
     setIsPlayingAudio(true);
@@ -247,22 +295,11 @@ const LandingPage = () => {
     setSlideDirection(safeIndex >= activeSlide ? 1 : -1);
     setActiveSlide(safeIndex);
     stopAudio();
-
-    // Navigasi manual menghentikan tur agar tidak bertabrakan dengan pilihan pengguna.
     if (options.manual !== false) {
       setTourActive(false);
       setTourPaused(false);
     }
   }, [activeSlide, stopAudio]);
-
-  const requestExplore = () => setShowTourGuide(true);
-
-  const startExploreTour = () => {
-    setShowTourGuide(false);
-    setTourActive(true);
-    setTourPaused(false);
-    goToSlide(1, { manual: false });
-  };
 
   const openAuth = (tab) => {
     setAuthTab(tab);
@@ -272,7 +309,6 @@ const LandingPage = () => {
     goToSlide(7);
   };
 
-  // Deep links /?mode=login and /?mode=register tetap didukung.
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const modeParam = params.get('mode');
@@ -286,13 +322,10 @@ const LandingPage = () => {
     }
   }, [location.search]);
 
-  // Tur otomatis: tunggu slide selesai masuk, lalu gulir isi yang panjang
-  // secara perlahan sampai bagian paling bawah sebelum berpindah ke slide berikutnya.
-  // Pada perangkat sentuh (termasuk Android), kecepatan dibuat lebih pelan.
-  // Saat dijeda, requestAnimationFrame dihentikan dan posisi scroll dipertahankan.
+  // Tur otomatis mengikuti gaya versi awal: konten panjang digulir perlahan,
+  // lalu slide berpindah dengan transisi khasnya. Pengguna tetap dapat menjeda tur.
   useEffect(() => {
     if (!tourActive || tourPaused) return undefined;
-
     if (activeSlide >= 7) {
       setTourActive(false);
       setTourPaused(false);
@@ -308,28 +341,22 @@ const LandingPage = () => {
     let cancelled = false;
 
     const advance = () => {
-      if (cancelled) return;
-      goToSlide(activeSlide + 1, { manual: false });
+      if (!cancelled) goToSlide(activeSlide + 1, { manual: false });
     };
 
-    // Beri waktu untuk animasi transisi slide selesai sebelum mengukur konten.
     entryTimer = window.setTimeout(() => {
       if (cancelled) return;
-
       const maxScrollTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
       const startScrollTop = Math.min(scroller.scrollTop, maxScrollTop);
       const distance = Math.max(0, maxScrollTop - startScrollTop);
       const baseDuration = TOUR_DURATIONS[activeSlide] || 7200;
 
-      // Slide pendek tetap diberi waktu baca. Slide panjang digulir perlahan.
       if (distance < 8) {
         advanceTimer = window.setTimeout(advance, baseDuration);
         return;
       }
 
-      const isTouchDevice = typeof window !== 'undefined'
-        && window.matchMedia
-        && window.matchMedia('(pointer: coarse)').matches;
+      const isTouchDevice = window.matchMedia?.('(pointer: coarse)').matches;
       const pixelsPerSecond = prefersReducedMotion ? 10000 : (isTouchDevice ? 46 : 76);
       const scrollDuration = Math.max(baseDuration, (distance / pixelsPerSecond) * 1000);
       const startedAt = performance.now();
@@ -337,17 +364,13 @@ const LandingPage = () => {
       const animateScroll = (now) => {
         if (cancelled) return;
         const progress = Math.min(1, (now - startedAt) / scrollDuration);
-        // Gerak linear menjaga laju gulir stabil dan mudah diikuti.
-        scroller.scrollTop = startScrollTop + (distance * progress);
-
+        scroller.scrollTop = startScrollTop + distance * progress;
         if (progress < 1) {
           animationFrame = window.requestAnimationFrame(animateScroll);
         } else {
-          // Tahan sebentar di bagian akhir agar konten terakhir sempat dibaca.
           advanceTimer = window.setTimeout(advance, 1100);
         }
       };
-
       animationFrame = window.requestAnimationFrame(animateScroll);
     }, prefersReducedMotion ? 80 : 850);
 
@@ -359,13 +382,11 @@ const LandingPage = () => {
     };
   }, [tourActive, tourPaused, activeSlide, goToSlide, prefersReducedMotion]);
 
-  // Navigasi keyboard: PageUp / PageDown, serta Spasi untuk jeda/lanjutkan tur.
   useEffect(() => {
     const handleKeyDown = (event) => {
       const target = event.target;
       const isTyping = target instanceof HTMLElement && (
-        target.isContentEditable ||
-        ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)
+        target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)
       );
       if (isTyping) return;
 
@@ -374,50 +395,32 @@ const LandingPage = () => {
         setTourPaused((paused) => !paused);
         return;
       }
-
       if (event.key === 'PageDown' || (event.altKey && event.key === 'ArrowRight')) {
         event.preventDefault();
-        setTourActive(false);
-        setTourPaused(false);
-        setActiveSlide((current) => {
-          const next = Math.min(7, current + 1);
-          setSlideDirection(1);
-          return next;
-        });
-        stopAudio();
+        goToSlide(activeSlide + 1);
       } else if (event.key === 'PageUp' || (event.altKey && event.key === 'ArrowLeft')) {
         event.preventDefault();
-        setTourActive(false);
-        setTourPaused(false);
-        setActiveSlide((current) => {
-          const next = Math.max(0, current - 1);
-          setSlideDirection(-1);
-          return next;
-        });
-        stopAudio();
+        goToSlide(activeSlide - 1);
+      } else if (event.key === 'Escape' && activeSlide === 7) {
+        goToSlide(0);
       }
     };
-
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [stopAudio, tourActive]);
+  }, [activeSlide, goToSlide, tourActive]);
 
-  // Roda mouse/trackpad berpindah slide hanya ketika konten slide sudah
-  // mencapai tepi atas/bawah. Konten panjang seperti formulir tetap bisa digulir.
   const handleWheel = useCallback((event) => {
-    if (Math.abs(event.deltaY) < 42) return;
+    if (Math.abs(event.deltaY) < 45) return;
     const scroller = slideContentRef.current;
     if (!scroller || wheelLockRef.current) return;
-
     const atTop = scroller.scrollTop <= 4;
     const atBottom = scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 5;
     const movingDown = event.deltaY > 0;
     if ((movingDown && !atBottom) || (!movingDown && !atTop)) return;
-
     event.preventDefault();
     wheelLockRef.current = true;
     goToSlide(activeSlide + (movingDown ? 1 : -1));
-    window.setTimeout(() => { wheelLockRef.current = false; }, 920);
+    window.setTimeout(() => { wheelLockRef.current = false; }, 700);
   }, [activeSlide, goToSlide]);
 
   const handleTouchStart = (event) => {
@@ -430,11 +433,9 @@ const LandingPage = () => {
     const touch = event.changedTouches?.[0];
     touchStartRef.current = null;
     if (!start || !touch) return;
-
     const deltaX = touch.clientX - start.x;
     const deltaY = touch.clientY - start.y;
-    // Geser horizontal untuk mengganti slide; geser vertikal tetap menggulir isi.
-    if (Math.abs(deltaX) > 72 && Math.abs(deltaX) > Math.abs(deltaY) * 1.25) {
+    if (Math.abs(deltaX) > 80 && Math.abs(deltaX) > Math.abs(deltaY) * 1.3) {
       goToSlide(activeSlide + (deltaX < 0 ? 1 : -1));
     }
   };
@@ -470,50 +471,39 @@ const LandingPage = () => {
       const { data: child, error } = await query.maybeSingle();
       if (error || !child) {
         setVerifiedChild(null);
-        setChildCheckError('ID Belajar Siswa tidak ditemukan. Periksa kembali ID anak.');
+        setChildCheckError('ID Belajar Siswa belum ditemukan. Periksa kembali ID dari anak.');
       } else {
         setVerifiedChild(child);
         setChildCheckError(null);
       }
     } catch (error) {
       setVerifiedChild(null);
-      setChildCheckError('Gagal memverifikasi ID siswa. Silakan coba lagi.');
+      setChildCheckError('Belum dapat memeriksa ID siswa. Silakan coba lagi.');
     } finally {
       setCheckingChild(false);
     }
   }, []);
 
   useEffect(() => {
-    if (regRole !== 'ortu') {
+    if (regRole !== 'ortu' || !regStudentIdInput.trim()) {
       setVerifiedChild(null);
       setChildCheckError(null);
       return undefined;
     }
-
-    if (!regStudentIdInput.trim()) {
-      setVerifiedChild(null);
-      setChildCheckError(null);
-      return undefined;
-    }
-
-    const timer = window.setTimeout(() => {
-      checkChildProfile(regStudentIdInput.trim());
-    }, 500);
+    const timer = window.setTimeout(() => checkChildProfile(regStudentIdInput.trim()), 500);
     return () => window.clearTimeout(timer);
   }, [regRole, regStudentIdInput, checkChildProfile]);
 
   const handleSelectRoleInitial = (roleId) => {
     setSelectedUserRole(roleId);
     setRegDisability(roleId);
-    setManualMode(roleId === 'tidak_ada' ? 'standar' : roleId);
-
+    setManualMode(roleId);
     const labels = {
-      tunanetra: 'Mode Tunanetra',
-      tunarungu: 'Mode Tunarungu',
-      tunawicara: 'Mode Tunawicara',
-      tidak_ada: 'Mode Umum / Standar SD',
+      tunanetra: 'Cara belajar dengan suara',
+      tunarungu: 'Cara belajar dengan teks',
+      tunawicara: 'Cara belajar dengan simbol',
     };
-    setRoleFeedback(`${labels[roleId] || 'Pilihan belajar'} dipilih. Pengaturan ini dapat diubah kembali nanti.`);
+    setRoleFeedback(`${labels[roleId] || 'Pilihan belajar'} dipilih. Kamu bisa mengubahnya lagi nanti.`);
   };
 
   const getTargetPath = (role) => {
@@ -523,19 +513,15 @@ const LandingPage = () => {
   };
 
   const handleDemoLogin = async (demoAccount) => {
+    if (!demoAccount) return;
     setLoginLoading(true);
     setLoginMessage(null);
     stopAudio();
-
     try {
       const data = await login(demoAccount.email, demoAccount.pass);
       setUser(data.user);
-
       const profileData = await fetchProfile(data.user.id);
-      if (!profileData) {
-        throw new Error('Akun demo berhasil dikenali, tetapi profilnya belum tersedia di database.');
-      }
-
+      if (!profileData) throw new Error('Profil akun simulasi belum tersedia di database.');
       await logUserActivity(
         'LOGIN',
         'Masuk Simulasi Peran',
@@ -546,7 +532,7 @@ const LandingPage = () => {
       speakText(`Selamat mencoba simulasi ${demoAccount.label}.`);
       window.setTimeout(() => navigate(getTargetPath(profileData.role)), 500);
     } catch (error) {
-      const message = error?.message || 'Gagal masuk ke akun simulasi.';
+      const message = error?.message || 'Belum berhasil masuk ke akun simulasi.';
       setLoginMessage({ type: 'error', text: message });
       speakText(message);
     } finally {
@@ -559,23 +545,19 @@ const LandingPage = () => {
     setLoginLoading(true);
     setLoginMessage(null);
     stopAudio();
-
     try {
-      if (!loginEmail.trim()) throw new Error('Silakan masukkan alamat email.');
-      if (!loginPassword) throw new Error('Silakan masukkan kata sandi.');
-
+      if (!loginEmail.trim()) throw new Error('Masukkan alamat email terlebih dahulu.');
+      if (!loginPassword) throw new Error('Masukkan kata sandi terlebih dahulu.');
       const data = await login(loginEmail.trim(), loginPassword);
       setUser(data.user);
-
       const profileData = await fetchProfile(data.user.id);
-      if (!profileData) throw new Error('Profil akun belum ditemukan di database.');
-
+      if (!profileData) throw new Error('Profil akun belum ditemukan. Hubungi guru atau pengelola aplikasi.');
       await logUserActivity('LOGIN', 'Masuk Aplikasi', `Pengguna ${profileData.full_name} masuk`, profileData);
       setModeFromProfile(profileData);
       speakText(`Selamat datang kembali, ${profileData.full_name}.`);
       window.setTimeout(() => navigate(getTargetPath(profileData.role)), 500);
     } catch (error) {
-      const message = error?.message || 'Masuk akun gagal. Periksa email dan kata sandi Anda.';
+      const message = error?.message || 'Belum berhasil masuk. Periksa email dan kata sandi.';
       setLoginMessage({ type: 'error', text: message });
       speakText(message);
     } finally {
@@ -585,14 +567,13 @@ const LandingPage = () => {
 
   const handleRegisterNext = () => {
     setRegMessage(null);
-
     if (regStep === 1) {
       if (!regRole) {
-        setRegMessage({ type: 'error', text: 'Silakan pilih peran pengguna terlebih dahulu.' });
+        setRegMessage({ type: 'error', text: 'Pilih peran pengguna terlebih dahulu.' });
         return;
       }
       if (regRole === 'siswa' && !regDisability) {
-        setRegMessage({ type: 'error', text: 'Silakan pilih kebutuhan belajar siswa.' });
+        setRegMessage({ type: 'error', text: 'Pilih cara belajar yang paling nyaman.' });
         return;
       }
       setRegStep(2);
@@ -602,41 +583,38 @@ const LandingPage = () => {
     if (regStep === 2) {
       if (regRole === 'siswa') {
         if (!regClassLevel) {
-          setRegMessage({ type: 'error', text: 'Tingkat kelas SD wajib dipilih.' });
+          setRegMessage({ type: 'error', text: 'Pilih kelas SD terlebih dahulu.' });
           return;
         }
         if (!regClassCode.trim()) {
-          setRegMessage({ type: 'error', text: 'Kode kelas dari guru wajib diisi.' });
+          setRegMessage({ type: 'error', text: 'Masukkan kode kelas dari guru.' });
           return;
         }
       }
-
       if (regRole === 'guru') {
         if (!regSlbName.trim()) {
-          setRegMessage({ type: 'error', text: 'Nama sekolah atau SLB wajib diisi.' });
+          setRegMessage({ type: 'error', text: 'Masukkan nama sekolah atau SLB.' });
           return;
         }
         if (!regClassLevel) {
-          setRegMessage({ type: 'error', text: 'Kelas yang diampu wajib dipilih.' });
+          setRegMessage({ type: 'error', text: 'Pilih kelas yang diampu.' });
           return;
         }
       }
-
       if (regRole === 'ortu') {
         if (!regStudentIdInput.trim()) {
-          setRegMessage({ type: 'error', text: 'ID Belajar Siswa anak wajib diisi.' });
+          setRegMessage({ type: 'error', text: 'Masukkan ID Belajar Siswa anak.' });
           return;
         }
         if (checkingChild) {
-          setRegMessage({ type: 'error', text: 'Sedang memeriksa ID siswa. Silakan tunggu sebentar.' });
+          setRegMessage({ type: 'error', text: 'ID siswa sedang diperiksa. Tunggu sebentar, ya.' });
           return;
         }
         if (!verifiedChild || childCheckError) {
-          setRegMessage({ type: 'error', text: childCheckError || 'ID siswa belum berhasil diverifikasi.' });
+          setRegMessage({ type: 'error', text: childCheckError || 'ID siswa belum berhasil diperiksa.' });
           return;
         }
       }
-
       setRegStep(3);
     }
   };
@@ -646,12 +624,11 @@ const LandingPage = () => {
     setRegLoading(true);
     setRegMessage(null);
     stopAudio();
-
     try {
-      if (!regFullName.trim()) throw new Error('Nama lengkap wajib diisi.');
-      if (!regEmail.trim()) throw new Error('Alamat email wajib diisi.');
+      if (!regFullName.trim()) throw new Error('Nama lengkap perlu diisi.');
+      if (!regEmail.trim()) throw new Error('Alamat email perlu diisi.');
       if (regPassword.length < 8) throw new Error('Kata sandi minimal 8 karakter.');
-      if (regPassword !== regConfirmPassword) throw new Error('Konfirmasi kata sandi tidak cocok dengan kata sandi.');
+      if (regPassword !== regConfirmPassword) throw new Error('Kata sandi dan pengulangannya belum sama.');
 
       let linkedId = null;
       let finalClassCode = regClassCode.trim().toUpperCase();
@@ -659,23 +636,21 @@ const LandingPage = () => {
       let finalClassLevel = regClassLevel;
 
       if (regRole === 'siswa') {
-        if (!regClassLevel) throw new Error('Tingkat kelas SD (1–6 SD) wajib dipilih.');
-        if (!finalClassCode) throw new Error('Kode kelas dari guru wajib diisi.');
+        if (!regClassLevel) throw new Error('Kelas SD (1–6) perlu dipilih.');
+        if (!finalClassCode) throw new Error('Kode kelas dari guru perlu diisi.');
       }
-
       if (regRole === 'ortu') {
-        if (!regStudentIdInput.trim()) throw new Error('ID Belajar Siswa anak wajib diisi.');
+        if (!regStudentIdInput.trim()) throw new Error('ID Belajar Siswa anak perlu diisi.');
         if (checkingChild || !verifiedChild || childCheckError) {
           throw new Error('ID siswa belum berhasil diverifikasi. Periksa kembali ID anak.');
         }
         linkedId = verifiedChild.id;
         if (verifiedChild.class_level) finalClassLevel = verifiedChild.class_level;
       }
-
       if (regRole === 'guru') {
         finalClassCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-        if (!finalSlbName) throw new Error('Nama sekolah / SLB wajib diisi untuk Guru.');
-        if (!finalClassLevel) throw new Error('Kelas yang diampu wajib dipilih.');
+        if (!finalSlbName) throw new Error('Nama sekolah / SLB perlu diisi.');
+        if (!finalClassLevel) throw new Error('Kelas yang diampu perlu dipilih.');
       }
 
       const { data, error } = await supabase.auth.signUp({
@@ -685,7 +660,7 @@ const LandingPage = () => {
           data: {
             full_name: regFullName.trim(),
             role: regRole,
-            disability_type: regDisability,
+            disability_type: regRole === 'siswa' ? regDisability : null,
             slb_name: finalSlbName,
             class_level: finalClassLevel,
             class_code: finalClassCode,
@@ -694,23 +669,22 @@ const LandingPage = () => {
           },
         },
       });
-
       if (error) throw error;
 
       if (data.user) {
         const successText = regRole === 'guru'
-          ? `Pendaftaran berhasil. Kode kelas Anda: ${finalClassCode}. Silakan masuk setelah proses konfirmasi akun selesai.`
-          : 'Pendaftaran berhasil. Silakan masuk setelah proses konfirmasi akun selesai.';
+          ? `Pendaftaran berhasil. Kode kelas kamu: ${finalClassCode}. Silakan masuk setelah konfirmasi akun selesai.`
+          : 'Pendaftaran berhasil. Silakan masuk setelah konfirmasi akun selesai.';
         setRegMessage({ type: 'success', text: successText });
         speakText(successText);
         window.setTimeout(() => {
           setAuthTab('login');
           setLoginEmail(regEmail);
           setLoginPassword('');
-        }, 2200);
+        }, 2500);
       }
     } catch (error) {
-      const message = error?.message || 'Pendaftaran gagal. Periksa kembali data Anda.';
+      const message = error?.message || 'Pendaftaran belum berhasil. Periksa kembali data yang diisi.';
       setRegMessage({ type: 'error', text: message });
       speakText(message);
     } finally {
@@ -718,22 +692,29 @@ const LandingPage = () => {
     }
   };
 
-  const SlideHeading = ({ eyebrow, title, description }) => (
-    <div className="max-w-3xl space-y-3">
-      <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-700">{eyebrow}</p>
-      <h2 className="text-3xl font-black leading-tight tracking-tight text-slate-950 sm:text-5xl">{title}</h2>
-      {description && <p className="max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">{description}</p>}
-    </div>
-  );
-
-  const renderModeCard = (item) => {
+  const renderModeCard = (item, compact = false) => {
     const selected = selectedUserRole === item.id;
-    const toneClasses = {
-      violet: 'border-blue-200 bg-blue-50 text-blue-950',
-      cyan: 'border-blue-200 bg-white text-blue-950',
-      emerald: 'border-blue-300 bg-[#f2f7ff] text-blue-950',
-      slate: 'border-slate-200 bg-white text-slate-950',
-    };
+    const baseClass = `group relative flex rounded-[26px] border-2 text-left transition duration-200 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-sky-200 ${toneStyles[item.tone]} ${selected ? 'border-sky-600 shadow-lg ring-4 ring-sky-100' : 'border-transparent'}`;
+
+    if (compact) {
+      return (
+        <button
+          key={item.id}
+          type="button"
+          onClick={() => handleSelectRoleInitial(item.id)}
+          aria-pressed={selected}
+          className={`${baseClass} min-h-[112px] w-full items-center gap-4 p-4 sm:p-5`}
+        >
+          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-white text-3xl shadow-sm" aria-hidden="true">{item.icon}</span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-xs font-extrabold uppercase tracking-[0.08em] text-slate-500">{item.note}</span>
+            <span className="mt-1 block text-xl font-black leading-tight text-slate-900">{item.title}</span>
+            <span className="mt-1 block text-sm leading-5 text-slate-600">{item.description}</span>
+          </span>
+          <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-sm font-black ${selected ? 'bg-sky-600 text-white' : 'bg-white text-sky-700'}`} aria-hidden="true">{selected ? '✓' : '→'}</span>
+        </button>
+      );
+    }
 
     return (
       <button
@@ -741,51 +722,68 @@ const LandingPage = () => {
         type="button"
         onClick={() => handleSelectRoleInitial(item.id)}
         aria-pressed={selected}
-        className={`group flex min-h-36 flex-col justify-between rounded-2xl border-2 p-4 text-left transition duration-200 hover:-translate-y-1 hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-200 sm:p-5 ${toneClasses[item.tone]} ${selected ? 'border-blue-700 ring-2 ring-blue-200 shadow-md' : ''}`}
+        className={`${baseClass} min-h-[220px] flex-col items-start p-5 sm:p-6`}
       >
-        <span className="text-[11px] font-bold uppercase tracking-[0.14em] opacity-70">{item.note}</span>
-        <span>
-          <span className="block text-lg font-extrabold">{item.title}</span>
-          <span className="mt-2 block text-xs leading-5 opacity-80">{item.description}</span>
-        </span>
-        <span className="mt-3 flex items-center justify-between text-xs font-bold">
-          <span>{selected ? 'Mode dipilih' : 'Pilih mode'}</span>
-          <span aria-hidden="true" className="text-base">{selected ? '✓' : '→'}</span>
+        <span className="grid h-16 w-16 place-items-center rounded-2xl bg-white text-4xl shadow-sm" aria-hidden="true">{item.icon}</span>
+        <span className="mt-5 text-xs font-extrabold uppercase tracking-[0.1em] text-slate-500">{item.note}</span>
+        <span className="mt-1 text-2xl font-black leading-tight text-slate-900">{item.title}</span>
+        <span className="mt-2 text-sm leading-6 text-slate-600">{item.description}</span>
+        <span className="mt-auto flex w-full items-center justify-between pt-5 text-sm font-extrabold text-sky-800">
+          {selected ? 'Mode dipilih ✓' : 'Pilih mode ini'}
+          <span className="text-lg" aria-hidden="true">{selected ? '✓' : '→'}</span>
         </span>
       </button>
     );
   };
 
   const renderDemoCard = (account) => (
-    <article key={account.key} className="flex h-full flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-blue-300 hover:shadow-lg">
-      <div>
-        <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-700">{account.label}</p>
-        <h3 className="mt-3 text-lg font-extrabold text-slate-950">{account.description}</h3>
-        <p className="mt-2 text-sm leading-6 text-slate-600">{account.support}</p>
+    <article key={account.key} className={`flex h-full flex-col rounded-[26px] border border-white/80 bg-gradient-to-br ${account.color} p-5 shadow-[0_8px_24px_rgba(15,23,42,0.07)]`}>
+      <div className="flex items-start gap-4">
+        <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-white text-3xl shadow-sm" aria-hidden="true">{account.icon}</span>
+        <div className="min-w-0">
+          <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-600">{account.label}</p>
+          <h3 className="mt-1 text-lg font-black leading-snug text-slate-900">{account.description}</h3>
+        </div>
       </div>
-      <button
-        type="button"
-        disabled={loginLoading}
-        onClick={() => handleDemoLogin(account)}
-        className={`${primaryButton} mt-5 w-full`}
-      >
-        {loginLoading ? 'Memproses…' : 'Masuk ke simulasi'}
+      <p className="mt-4 text-sm leading-6 text-slate-700">{account.support}</p>
+      <button type="button" disabled={loginLoading} onClick={() => handleDemoLogin(account)} className={`${primaryButton} mt-5 w-full text-sm`}>
+        {loginLoading ? 'Sedang membuka…' : 'Coba akun ini'} <span aria-hidden="true">→</span>
       </button>
     </article>
   );
 
   const demoStudents = DEMO_ACCOUNTS.filter((account) => account.group === 'siswa');
-  const demoAdults = DEMO_ACCOUNTS.filter((account) => account.group !== 'siswa');
+  const demoTeacher = DEMO_ACCOUNTS.find((account) => account.group === 'guru');
+  const demoParent = DEMO_ACCOUNTS.find((account) => account.group === 'ortu');
+
+  const requestExplore = () => setShowTourGuide(true);
+
+  const startExploreTour = () => {
+    setShowTourGuide(false);
+    setTourActive(true);
+    setTourPaused(false);
+    goToSlide(1, { manual: false });
+  };
 
   const currentMotion = SLIDE_MOTIONS[activeSlide];
-  const initialMotion = prefersReducedMotion ? { opacity: 0 } : (typeof currentMotion.initial === 'function' ? currentMotion.initial(slideDirection) : currentMotion.initial);
-  const exitMotion = prefersReducedMotion ? { opacity: 0 } : (typeof currentMotion.exit === 'function' ? currentMotion.exit(slideDirection) : currentMotion.exit);
+  const initialMotion = prefersReducedMotion
+    ? { opacity: 0 }
+    : (typeof currentMotion.initial === 'function' ? currentMotion.initial(slideDirection) : currentMotion.initial);
+  const exitMotion = prefersReducedMotion
+    ? { opacity: 0 }
+    : (typeof currentMotion.exit === 'function' ? currentMotion.exit(slideDirection) : currentMotion.exit);
 
   return (
-    <div className="relative h-screen h-[100dvh] w-screen overflow-hidden bg-[#f7f9fc] font-sans text-slate-900 selection:bg-blue-200">
-      {/* Kanvas presentasi penuh layar. Tidak ada navbar/header maupun footer. */}
+    <div className="relative min-h-[100dvh] overflow-hidden bg-[#f4f9ff] font-sans text-slate-900 selection:bg-amber-200">
+      {/* Latar dekoratif yang lembut; tidak mengganggu keterbacaan. */}
+      <div aria-hidden="true" className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -left-28 -top-28 h-80 w-80 rounded-full bg-sky-200/40 blur-3xl" />
+        <div className="absolute -right-24 top-1/3 h-80 w-80 rounded-full bg-amber-200/30 blur-3xl" />
+        <div className="absolute -bottom-36 left-1/3 h-96 w-96 rounded-full bg-violet-200/30 blur-3xl" />
+      </div>
+
       <div
-        className="absolute inset-0 overflow-hidden"
+        className="relative min-h-[100dvh]"
         onWheel={handleWheel}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
@@ -804,334 +802,355 @@ const LandingPage = () => {
               WebkitOverflowScrolling: 'touch',
               touchAction: 'pan-y',
             }}
-            className={`absolute inset-0 overflow-x-hidden overflow-y-auto overscroll-contain px-0 pb-24 [scrollbar-width:thin] [scrollbar-color:#93c5fd_transparent] sm:pb-20 ${activeSlide === 7 ? 'pr-4 sm:pr-8' : 'pr-12 sm:pr-16'}`}
+            className={`relative h-[100dvh] overflow-x-hidden overflow-y-auto overscroll-contain ${activeSlide === 7 ? 'pb-8' : 'pr-12 sm:pr-16'}`}
           >
-            {/* SLIDE 1 — WELCOME & PREFERENSI AKSESIBILITAS */}
+            {/* SLIDE 1 — HALO DAN PILIH CARA BELAJAR */}
             {activeSlide === 0 && (
-              <section className="mx-auto flex min-h-full w-full max-w-7xl flex-col justify-center gap-8 px-5 py-8 sm:px-10 lg:flex-row lg:items-center lg:gap-14 lg:px-16">
-                <div className="max-w-xl space-y-6">
-                  <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-700">Kenalan dengan Bintang AI · Kelas 1–6 SD</p>
-                  <h1 className="text-4xl font-black leading-[1.08] tracking-tight text-slate-950 sm:text-6xl">Halo, Teman Bintang.</h1>
-                  <p className="max-w-lg text-lg leading-8 text-slate-600 sm:text-xl">Bintang AI adalah ruang belajar SD inklusif yang membantu anak belajar dengan cara yang lebih sesuai dan nyaman.</p>
-                  <p className="max-w-lg text-sm leading-7 text-slate-500">Di sini, siswa dapat mempelajari modul, bertanya kepada Kak Bintang, dan berlatih. Guru serta orang tua ikut mendampingi perjalanan belajar anak.</p>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <button type="button" onClick={() => speakText('Halo, Teman Bintang. Bintang AI adalah ruang belajar SD inklusif untuk siswa, guru, dan orang tua. Pilih cara belajar yang nyaman, lalu jelajahi fitur yang tersedia.')} className={secondaryButton}>
-                      {isPlayingAudio ? 'Suara sedang diputar' : 'Dengarkan pengenalan'}
-                    </button>
-                    {isPlayingAudio && <button type="button" onClick={stopAudio} className="text-sm font-semibold text-blue-700 underline">Hentikan suara</button>}
-                    <button type="button" onClick={requestExplore} className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-200">
-                      Jelajahi Bintang AI <span aria-hidden="true">↗</span>
-                    </button>
+              <section className="mx-auto flex min-h-[100dvh] w-full max-w-7xl flex-col px-4 pb-8 pt-5 sm:px-7 lg:px-10">
+                <header className="flex items-center justify-between gap-3">
+                  <BrandMark />
+                  <div className="flex items-center gap-2">
+                    <button type="button" onClick={() => openAuth('login')} className={`${secondaryButton} min-h-11 px-4 py-2 text-sm`}>Masuk</button>
+                    <button type="button" onClick={() => openAuth('register')} className={`${primaryButton} min-h-11 px-4 py-2 text-sm`}>Daftar</button>
                   </div>
-                  <p role="status" aria-live="polite" className="min-h-5 text-sm font-semibold text-blue-800">{roleFeedback}</p>
-                </div>
+                </header>
 
-                <div className="w-full max-w-2xl space-y-4">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Mulai dari sini</p>
-                      <h2 className="mt-1 text-xl font-extrabold text-slate-950 sm:text-2xl">Cara belajar yang nyaman</h2>
+                <div className="grid flex-1 items-center gap-8 py-8 lg:grid-cols-[0.95fr_1.05fr] lg:gap-12 lg:py-10">
+                  <div className="relative mx-auto w-full max-w-xl text-center lg:mx-0 lg:text-left">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-extrabold text-amber-800">
+                      <span aria-hidden="true">✨</span> Untuk teman kelas 1–6 SD
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      <button type="button" onClick={() => openAuth('login')} className={`${secondaryButton} min-h-10 px-4 py-2 text-xs`}>Masuk</button>
-                      <button type="button" onClick={() => openAuth('register')} className={`${primaryButton} min-h-10 px-4 py-2 text-xs`}>Daftar</button>
+                    <h1 className="mt-6 text-[2.65rem] font-black leading-[1.08] tracking-tight text-slate-900 sm:text-6xl">
+                      Halo, <span className="text-sky-600">Teman Bintang!</span>
+                    </h1>
+                    <p className="mx-auto mt-5 max-w-lg text-lg leading-8 text-slate-600 sm:text-xl lg:mx-0">
+                      Yuk, belajar, bertanya, dan mencoba hal baru bersama Kak Bintang.
+                    </p>
+                    <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
+                      <button type="button" onClick={requestExplore} className={`${primaryButton} sm:min-w-52`}>
+                        Ayo Jelajahi <span aria-hidden="true">🚀</span>
+                      </button>
+                      <button type="button" onClick={() => speakText('Halo, Teman Bintang. Yuk belajar dan bertanya bersama Kak Bintang. Pilih cara belajar yang paling nyaman untukmu.')} className={`${secondaryButton} sm:min-w-52`}>
+                        {isPlayingAudio ? 'Suara diputar…' : 'Dengarkan sapaan 🔊'}
+                      </button>
+                    </div>
+                    {isPlayingAudio && (
+                      <button type="button" onClick={stopAudio} className="mt-3 text-sm font-bold text-sky-700 underline underline-offset-4">Hentikan suara</button>
+                    )}
+                    <p role="status" aria-live="polite" className="mt-4 min-h-6 text-sm font-bold text-emerald-700">{roleFeedback}</p>
+
+                    <div className="mt-5 rounded-2xl border border-sky-100 bg-white/90 p-4 shadow-sm lg:max-w-md">
+                      <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Ruang khusus pendamping</p>
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        <div className="flex items-center gap-2 rounded-xl bg-sky-50 px-3 py-3">
+                          <span className="text-2xl" aria-hidden="true">👩‍🏫</span>
+                          <span className="text-sm font-extrabold text-slate-800">Guru</span>
+                        </div>
+                        <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-3 py-3">
+                          <span className="text-2xl" aria-hidden="true">👨‍👩‍👧</span>
+                          <span className="text-sm font-extrabold text-slate-800">Orang tua / wali</span>
+                        </div>
+                      </div>
+                      <p className="mt-2 text-xs leading-5 text-slate-500">Guru dan orang tua memiliki pilihan peran tersendiri saat membuat akun.</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    {LEARNING_MODES.map(renderModeCard)}
+
+                  <div className="relative mx-auto w-full max-w-2xl">
+                    <div className="absolute -right-2 -top-5 z-10 grid h-16 w-16 rotate-12 place-items-center rounded-3xl bg-amber-300 text-4xl shadow-lg sm:-right-4 sm:h-20 sm:w-20" aria-hidden="true">⭐</div>
+                    <div className="rounded-[34px] border border-white bg-white/90 p-4 shadow-[0_22px_70px_rgba(14,116,144,0.12)] sm:p-6">
+                      <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                          <p className="text-sm font-black uppercase tracking-[0.12em] text-sky-600">Mulai dari sini</p>
+                          <h2 className="mt-1 text-2xl font-black text-slate-900 sm:text-3xl">Pilih cara belajarmu</h2>
+                        </div>
+                        <span className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-extrabold text-emerald-800">Bisa diubah nanti</span>
+                      </div>
+                      <div className="grid grid-cols-1 gap-3">
+                        {LEARNING_MODES.map((item) => renderModeCard(item, true))}
+                      </div>
+                      <p className="mt-4 text-sm leading-6 text-slate-500">Pilih cara belajar yang paling nyaman. Guru dan orang tua dapat membantu menyiapkan akunmu.</p>
+                    </div>
                   </div>
-                  <p className="text-xs leading-5 text-slate-500">Catatan: kebutuhan setiap anak berbeda. Semua anak tetap dapat menggunakan pengaturan dasar seperti ukuran teks, kontras, dan suara.</p>
                 </div>
               </section>
             )}
 
-            {/* SLIDE 2 — ALASAN / SOLUSI */}
+            {/* SLIDE 2 — MANFAAT */}
             {activeSlide === 1 && (
-              <section className="mx-auto flex min-h-full w-full max-w-7xl flex-col justify-center gap-10 px-5 py-10 sm:px-10 lg:px-16">
+              <section className="mx-auto flex min-h-[100dvh] w-full max-w-7xl flex-col justify-center gap-9 px-4 py-12 sm:px-7 lg:px-10">
                 <SlideHeading
-                  eyebrow="Mengapa Bintang AI hadir?"
-                  title="Setiap anak berhak belajar dengan cara yang dapat diakses."
-                  description="Bintang AI dirancang sebagai ruang belajar SD yang menghubungkan siswa, guru, dan orang tua dalam pengalaman belajar yang lebih mudah dijangkau."
+                  eyebrow="Kenapa Bintang AI?"
+                  title="Belajar harus terasa menyenangkan dan mudah diikuti."
+                  description="Di Bintang AI, setiap anak bisa belajar dengan cara yang lebih nyaman. Tidak harus sama dengan teman yang lain."
                 />
-                <div className="grid gap-4 md:grid-cols-2">
-                  <article className="rounded-3xl border border-blue-100 bg-white p-6 sm:p-9">
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-700">Untuk siswa</p>
-                    <h3 className="mt-4 text-2xl font-extrabold text-slate-950">Materi yang lebih mudah diikuti.</h3>
-                    <p className="mt-4 max-w-xl text-sm leading-7 text-slate-600">Siswa dapat mempelajari materi melalui teks, suara, visual, dan pilihan komunikasi yang sesuai. Siswa juga dapat bertanya kepada Kak Bintang dengan bahasa yang sederhana.</p>
+                <div className="grid gap-5 md:grid-cols-2">
+                  <article className="rounded-[30px] border-2 border-sky-100 bg-white p-6 shadow-sm sm:p-8">
+                    <span className="grid h-16 w-16 place-items-center rounded-3xl bg-sky-100 text-4xl" aria-hidden="true">📚</span>
+                    <h3 className="mt-5 text-2xl font-black text-slate-900">Untuk Teman Siswa</h3>
+                    <p className="mt-3 text-base leading-7 text-slate-600">Baca materi, dengarkan penjelasan, lihat gambar, lalu bertanya kepada Kak Bintang saat ada yang belum dipahami.</p>
+                    <div className="mt-5 flex flex-wrap gap-2">
+                      {['Materi SD', 'Tanya jawab', 'Latihan seru'].map((tag) => <span key={tag} className="rounded-full bg-sky-50 px-3 py-2 text-sm font-bold text-sky-800">{tag}</span>)}
+                    </div>
                   </article>
-                  <article className="rounded-3xl border border-slate-200 bg-[#eef3f9] p-6 sm:p-9">
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-600">Untuk pendamping</p>
-                    <h3 className="mt-4 text-2xl font-extrabold text-slate-950">Belajar yang saling terhubung.</h3>
-                    <p className="mt-4 max-w-xl text-sm leading-7 text-slate-600">Guru menyiapkan kelas dan materi. Orang tua mendampingi kegiatan belajar serta melihat perkembangan anak sesuai data yang tersedia di platform.</p>
+                  <article className="rounded-[30px] border-2 border-amber-100 bg-amber-50 p-6 shadow-sm sm:p-8">
+                    <span className="grid h-16 w-16 place-items-center rounded-3xl bg-amber-200 text-4xl" aria-hidden="true">🧑‍🏫</span>
+                    <h3 className="mt-5 text-2xl font-black text-slate-900">Untuk Guru dan Keluarga</h3>
+                    <p className="mt-3 text-base leading-7 text-slate-600">Guru membantu menyiapkan kelas dan materi. Orang tua dapat menemani anak serta melihat perkembangan belajarnya.</p>
+                    <div className="mt-5 flex flex-wrap gap-2">
+                      {['Kelas', 'Pendampingan', 'Laporan belajar'].map((tag) => <span key={tag} className="rounded-full bg-white px-3 py-2 text-sm font-bold text-amber-800">{tag}</span>)}
+                    </div>
                   </article>
                 </div>
-                <p className="max-w-3xl border-l-4 border-blue-700 pl-4 text-sm leading-7 text-slate-600">Prinsipnya sederhana: teknologi membantu anak belajar, bukan membuat anak harus menyesuaikan diri dengan teknologi.</p>
+                <p className="mx-auto max-w-3xl rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-center text-base font-bold leading-7 text-emerald-900">
+                  🌟 Semua anak berhak belajar, mencoba, dan tumbuh dengan caranya sendiri.
+                </p>
               </section>
             )}
 
-            {/* SLIDE 3 — PILIHAN AKSESIBILITAS */}
+            {/* SLIDE 3 — CARA BELAJAR */}
             {activeSlide === 2 && (
-              <section className="mx-auto flex min-h-full w-full max-w-7xl flex-col justify-center gap-8 px-5 py-8 sm:px-10 lg:px-16">
+              <section className="mx-auto flex min-h-[100dvh] w-full max-w-7xl flex-col justify-center gap-8 px-4 py-12 sm:px-7 lg:px-10">
                 <SlideHeading
-                  eyebrow="Pilihan cara belajar"
-                  title="Satu ruang belajar, beberapa cara untuk memahami."
-                  description="Pilih mode sebagai titik awal. Fitur aksesibilitas sebaiknya tetap dapat diatur sesuai kebutuhan masing-masing anak."
+                  eyebrow="Pilih yang nyaman"
+                  title="Ada banyak cara untuk memahami pelajaran."
+                  description="Pilih satu cara untuk memulai. Pengaturan dapat disesuaikan lagi kapan saja."
                 />
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {LEARNING_MODES.map(renderModeCard)}
+                <div className="grid gap-4 md:grid-cols-3">
+                  {LEARNING_MODES.map((item) => renderModeCard(item))}
                 </div>
-                <p role="status" aria-live="polite" className="text-sm font-semibold text-blue-800">{roleFeedback || 'Belum memilih? Kamu dapat melanjutkan tanpa menentukan mode.'}</p>
+                <p className="mx-auto max-w-3xl rounded-2xl border border-sky-100 bg-white px-5 py-4 text-center text-sm font-semibold leading-6 text-slate-600 shadow-sm">
+                  Cara belajar dapat disesuaikan kembali bersama guru atau orang tua.
+                </p>
               </section>
             )}
 
-            {/* SLIDE 4 — FITUR UTAMA */}
+            {/* SLIDE 4 — FITUR */}
             {activeSlide === 3 && (
-              <section className="mx-auto flex min-h-full w-full max-w-7xl flex-col justify-center gap-10 px-5 py-10 sm:px-10 lg:px-16">
+              <section className="mx-auto flex min-h-[100dvh] w-full max-w-7xl flex-col justify-center gap-9 px-4 py-12 sm:px-7 lg:px-10">
                 <SlideHeading
-                  eyebrow="Fitur utama"
-                  title="Belajar dalam empat langkah yang mudah dikenali."
-                  description="Materi, pendamping tanya jawab, latihan, dan pengajaran realtime disusun agar siswa dapat belajar secara bertahap dan inklusif."
+                  eyebrow="Yang bisa kamu lakukan"
+                  title="Empat kegiatan seru di Bintang AI."
+                  description="Belajar sedikit demi sedikit. Kalau belum paham, kamu boleh mencoba lagi."
                 />
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                  <article className="flex min-h-64 flex-col justify-between rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
-                    <span className="text-sm font-bold tracking-[0.16em] text-blue-700">01 / MATERI</span>
-                    <div>
-                      <h3 className="text-2xl font-extrabold text-slate-950">Modul Belajar SD</h3>
-                      <p className="mt-3 text-sm leading-7 text-slate-600">Materi kelas 1–6 dengan pengaturan ukuran teks dan pembacaan paragraf bila tersedia.</p>
-                    </div>
-                  </article>
-                  <article className="flex min-h-64 flex-col justify-between rounded-3xl bg-[#eaf2ff] p-6 sm:p-8">
-                    <span className="text-sm font-bold tracking-[0.16em] text-blue-800">02 / BERTANYA</span>
-                    <div>
-                      <h3 className="text-2xl font-extrabold text-slate-950">Tanya Kak Bintang</h3>
-                      <p className="mt-3 text-sm leading-7 text-slate-700">Tutor belajar yang membantu menjelaskan materi dengan kalimat sederhana dan langkah yang mudah diikuti.</p>
-                    </div>
-                  </article>
-                  <article className="flex min-h-64 flex-col justify-between rounded-3xl bg-[#f1f3f5] p-6 sm:p-8">
-                    <span className="text-sm font-bold tracking-[0.16em] text-slate-600">03 / BERLATIH</span>
-                    <div>
-                      <h3 className="text-2xl font-extrabold text-slate-950">Kuis dan Poin</h3>
-                      <p className="mt-3 text-sm leading-7 text-slate-600">Latihan interaktif dan poin belajar untuk membantu siswa melihat kemajuan dari waktu ke waktu.</p>
-                    </div>
-                  </article>
-                  <article className="flex min-h-64 flex-col justify-between rounded-3xl bg-[#f8fafc] p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
-                    <span className="text-sm font-bold tracking-[0.16em] text-blue-700">04 / REALTIME</span>
-                    <div>
-                      <h3 className="text-2xl font-extrabold text-slate-950">Pengajaran Realtime</h3>
-                      <p className="mt-3 text-sm leading-7 text-slate-600">Guru mengajar secara realtime dengan penyampaian suara untuk Tunanetra, teks untuk Tunarungu, dan Tunawicara membalas dengan teks.</p>
-                    </div>
-                  </article>
+                  {[
+                    { icon: '📖', number: '01', title: 'Baca Materi', text: 'Pelajari materi kelas 1 sampai 6 dengan tampilan yang mudah dibaca.', color: 'bg-sky-50 border-sky-100' },
+                    { icon: '🤖', number: '02', title: 'Tanya Kak Bintang', text: 'Tanyakan pelajaran dan dapatkan penjelasan dengan bahasa sederhana.', color: 'bg-violet-50 border-violet-100' },
+                    { icon: '🎯', number: '03', title: 'Kerjakan Latihan', text: 'Jawab kuis dan lihat hasil latihanmu. Terus semangat mencoba!', color: 'bg-amber-50 border-amber-100' },
+                    { icon: '👩‍🏫', number: '04', title: 'Belajar Bersama', text: 'Ikuti kegiatan belajar bersama guru dengan dukungan aksesibilitas.', color: 'bg-emerald-50 border-emerald-100' },
+                  ].map((feature) => (
+                    <article key={feature.number} className={`flex min-h-[270px] flex-col rounded-[28px] border-2 p-6 transition hover:-translate-y-1 hover:shadow-lg ${feature.color}`}>
+                      <div className="flex items-center justify-between">
+                        <span className="grid h-16 w-16 place-items-center rounded-2xl bg-white text-4xl shadow-sm" aria-hidden="true">{feature.icon}</span>
+                        <span className="text-sm font-black tracking-widest text-slate-400">{feature.number}</span>
+                      </div>
+                      <h3 className="mt-6 text-xl font-black text-slate-900">{feature.title}</h3>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">{feature.text}</p>
+                    </article>
+                  ))}
                 </div>
               </section>
             )}
 
-            {/* SLIDE 5 — ALUR PENGGUNA */}
+            {/* SLIDE 5 — PERAN */}
             {activeSlide === 4 && (
-              <section className="mx-auto flex min-h-full w-full max-w-7xl flex-col justify-center gap-10 px-5 py-10 sm:px-10 lg:px-16">
+              <section className="mx-auto flex min-h-[100dvh] w-full max-w-7xl flex-col justify-center gap-9 px-4 py-12 sm:px-7 lg:px-10">
                 <SlideHeading
-                  eyebrow="Pengguna platform"
-                  title="Tiga peran, satu perjalanan belajar."
-                  description="Setiap peran memiliki tugas yang berbeda. Alurnya saling terhubung agar pembelajaran anak mendapat dukungan di sekolah dan di rumah."
+                  eyebrow="Kita belajar bersama"
+                  title="Ada tiga teman dalam perjalanan belajar."
+                  description="Siswa, guru, dan orang tua punya tugas masing-masing. Semuanya saling membantu."
                 />
-                <div className="grid gap-3 md:grid-cols-3">
-                  <article className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-7">
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-700">01 · Menyiapkan</p>
-                    <h3 className="mt-5 text-2xl font-extrabold">Guru Pembimbing</h3>
-                    <p className="mt-3 text-sm leading-7 text-slate-600">Membuat kelas, membagikan kode kelas, menyiapkan modul, dan memantau tugas siswa.</p>
+                <div className="grid gap-5 md:grid-cols-3">
+                  <article className="rounded-[30px] border-2 border-amber-100 bg-amber-50 p-6 text-center sm:p-8">
+                    <span className="mx-auto grid h-24 w-24 place-items-center rounded-[30px] bg-white text-6xl shadow-sm" aria-hidden="true">👩‍🏫</span>
+                    <p className="mt-5 text-xs font-black uppercase tracking-widest text-amber-800">Menyiapkan</p>
+                    <h3 className="mt-2 text-2xl font-black text-slate-900">Guru</h3>
+                    <p className="mt-3 text-sm leading-6 text-slate-600">Menyiapkan kelas, membagikan kode kelas, membuat materi, dan melihat tugas.</p>
                   </article>
-                  <article className="rounded-3xl border-2 border-blue-700 bg-blue-50 p-6 sm:p-7">
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-800">02 · Belajar</p>
-                    <h3 className="mt-5 text-2xl font-extrabold">Siswa SD</h3>
-                    <p className="mt-3 text-sm leading-7 text-slate-700">Membuka materi, bertanya kepada Kak Bintang, dan mengerjakan latihan sesuai kelasnya.</p>
+                  <article className="rounded-[30px] border-2 border-sky-200 bg-sky-50 p-6 text-center shadow-lg sm:p-8">
+                    <span className="mx-auto grid h-24 w-24 place-items-center rounded-[30px] bg-white text-6xl shadow-sm" aria-hidden="true">🧒</span>
+                    <p className="mt-5 text-xs font-black uppercase tracking-widest text-sky-800">Belajar</p>
+                    <h3 className="mt-2 text-2xl font-black text-slate-900">Siswa</h3>
+                    <p className="mt-3 text-sm leading-6 text-slate-600">Membaca materi, bertanya kepada Kak Bintang, dan mengerjakan latihan.</p>
                   </article>
-                  <article className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-7">
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-600">03 · Mendampingi</p>
-                    <h3 className="mt-5 text-2xl font-extrabold">Orang Tua / Wali</h3>
-                    <p className="mt-3 text-sm leading-7 text-slate-600">Melihat laporan belajar dan mendampingi anak berdasarkan perkembangan yang tercatat.</p>
+                  <article className="rounded-[30px] border-2 border-rose-100 bg-rose-50 p-6 text-center sm:p-8">
+                    <span className="mx-auto grid h-24 w-24 place-items-center rounded-[30px] bg-white text-6xl shadow-sm" aria-hidden="true">👨‍👧</span>
+                    <p className="mt-5 text-xs font-black uppercase tracking-widest text-rose-800">Mendampingi</p>
+                    <h3 className="mt-2 text-2xl font-black text-slate-900">Orang Tua</h3>
+                    <p className="mt-3 text-sm leading-6 text-slate-600">Menemani anak belajar dan melihat laporan perkembangan yang tersedia.</p>
                   </article>
                 </div>
-                <p className="text-sm text-slate-500">Alur operasional: Guru menyiapkan kelas → Siswa belajar → Orang tua mendampingi.</p>
+                <div className="mx-auto flex flex-wrap items-center justify-center gap-2 text-sm font-extrabold text-slate-600">
+                  <span className="rounded-full bg-amber-100 px-4 py-2">Guru menyiapkan</span><span aria-hidden="true">→</span>
+                  <span className="rounded-full bg-sky-100 px-4 py-2">Siswa belajar</span><span aria-hidden="true">→</span>
+                  <span className="rounded-full bg-rose-100 px-4 py-2">Keluarga mendampingi</span>
+                </div>
               </section>
             )}
 
             {/* SLIDE 6 — DEMO */}
             {activeSlide === 5 && (
-              <section className="mx-auto flex min-h-full w-full max-w-7xl flex-col justify-center gap-8 px-5 py-8 sm:px-10 lg:px-16">
+              <section className="mx-auto flex min-h-[100dvh] w-full max-w-7xl flex-col gap-8 px-4 py-10 sm:px-7 lg:px-10">
                 <SlideHeading
-                  eyebrow="Coba simulasi"
-                  title="Lihat pengalaman dari sisi setiap pengguna."
-                  description="Pilih akun contoh untuk masuk otomatis ke ruang simulasi. Siswa ditampilkan lebih dahulu karena siswa adalah pengguna utama ruang belajar."
+                  eyebrow="Yuk, coba!"
+                  title="Pilih pengalaman yang ingin kamu lihat."
+                  description="Tekan tombol untuk membuka akun simulasi. Kamu bisa melihat Bintang AI dari sisi siswa, guru, atau orang tua."
                 />
                 {loginMessage && (
-                  <div role="alert" className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-800">{loginMessage.text}</div>
+                  <div role="alert" className="mx-auto w-full max-w-3xl rounded-2xl border-2 border-rose-200 bg-rose-50 px-5 py-4 text-sm font-bold text-rose-800">{loginMessage.text}</div>
                 )}
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <span className="text-xs font-bold uppercase tracking-[0.18em] text-blue-700">A · Siswa SD</span>
-                    <span className="h-px flex-1 bg-slate-200" />
+                    <span className="rounded-full bg-sky-100 px-4 py-2 text-sm font-black text-sky-800">🧒 A. Akun Siswa</span>
+                    <span className="h-px flex-1 bg-sky-100" />
                   </div>
-                  <div className="grid gap-3 md:grid-cols-3">{demoStudents.map(renderDemoCard)}</div>
-                  <article className="mt-3 flex flex-col justify-between gap-4 rounded-2xl border border-dashed border-slate-300 bg-white/70 p-5 sm:flex-row sm:items-center">
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-600">Mode Umum / Standar SD</p>
-                      <h3 className="mt-2 text-base font-extrabold text-slate-950">Gunakan akun siswa yang sudah terdaftar.</h3>
-                      <p className="mt-1 text-sm leading-6 text-slate-600">Belum tersedia akun simulasi terpisah untuk mode umum. Pilihan mode tetap dapat diatur sebelum masuk.</p>
-                    </div>
-                    <button type="button" onClick={() => { handleSelectRoleInitial('tidak_ada'); openAuth('login'); }} className={secondaryButton}>Masuk sebagai siswa</button>
-                  </article>
+                  <div className="grid gap-4 md:grid-cols-3">{demoStudents.map(renderDemoCard)}</div>
                 </div>
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-5 md:grid-cols-2">
                   <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-600">B · Guru</span>
-                      <span className="h-px flex-1 bg-slate-200" />
-                    </div>
-                    {renderDemoCard(demoAdults.find((account) => account.group === 'guru'))}
+                    <div className="flex items-center gap-3"><span className="rounded-full bg-amber-100 px-4 py-2 text-sm font-black text-amber-800">👩‍🏫 B. Akun Guru</span><span className="h-px flex-1 bg-amber-100" /></div>
+                    {renderDemoCard(demoTeacher)}
                   </div>
                   <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-600">C · Orang tua / wali</span>
-                      <span className="h-px flex-1 bg-slate-200" />
-                    </div>
-                    {renderDemoCard(demoAdults.find((account) => account.group === 'ortu'))}
+                    <div className="flex items-center gap-3"><span className="rounded-full bg-rose-100 px-4 py-2 text-sm font-black text-rose-800">👨‍👧 C. Akun Orang Tua</span><span className="h-px flex-1 bg-rose-100" /></div>
+                    {renderDemoCard(demoParent)}
                   </div>
                 </div>
-                <p className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs leading-6 text-blue-900">Catatan: tombol ini melakukan login otomatis menggunakan akun simulasi yang dikonfigurasi pada aplikasi. Jadi, demo bukan sesi anonim tanpa autentikasi.</p>
+                <p className="mx-auto max-w-3xl rounded-2xl bg-slate-100 px-5 py-4 text-xs leading-6 text-slate-600">
+                  Catatan untuk pendamping: tombol simulasi menggunakan akun demo yang telah dikonfigurasi pada aplikasi dan tetap melalui proses autentikasi.
+                </p>
               </section>
             )}
 
-            {/* SLIDE 7 — CTA */}
+            {/* SLIDE 7 — AJAKAN MULAI */}
             {activeSlide === 6 && (
-              <section className="mx-auto flex min-h-full w-full max-w-6xl flex-col items-center justify-center px-5 py-12 text-center sm:px-10">
-                <p className="text-xs font-bold uppercase tracking-[0.24em] text-blue-700">Bintang AI · Ruang Belajar SD Inklusif</p>
-                <h2 className="mt-6 max-w-4xl text-4xl font-black leading-tight tracking-tight text-slate-950 sm:text-6xl">Setiap anak punya cara untuk bersinar.</h2>
-                <p className="mt-6 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">Mulai dari mencoba simulasi, membuat akun, atau masuk untuk melanjutkan kegiatan belajar.</p>
-                <div className="mt-9 flex w-full max-w-lg flex-col gap-3 sm:flex-row">
-                  <button type="button" onClick={() => openAuth('register')} className={`${primaryButton} flex-1`}>Daftar akun</button>
+              <section className="relative mx-auto flex min-h-[100dvh] w-full max-w-6xl flex-col items-center justify-center overflow-hidden px-5 py-16 text-center">
+                <span className="absolute left-[10%] top-[18%] rotate-[-12deg] text-5xl" aria-hidden="true">✨</span>
+                <span className="absolute right-[10%] top-[22%] rotate-12 text-5xl" aria-hidden="true">🌈</span>
+                <span className="grid h-28 w-28 place-items-center rounded-[36px] bg-amber-300 text-7xl shadow-[0_10px_0_#d97706]" aria-hidden="true">⭐</span>
+                <p className="mt-9 rounded-full bg-sky-100 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-sky-800">Bintang AI · Ruang Belajar SD</p>
+                <h2 className="mt-6 max-w-4xl text-4xl font-black leading-tight tracking-tight text-slate-900 sm:text-6xl">Setiap anak punya kesempatan untuk bersinar!</h2>
+                <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">Ayo mulai petualangan belajar. Kamu bisa membuat akun atau masuk ke akun yang sudah ada.</p>
+                <div className="mt-9 flex w-full max-w-xl flex-col gap-4 sm:flex-row">
+                  <button type="button" onClick={() => openAuth('register')} className={`${primaryButton} flex-1`}>🌟 Buat akun</button>
                   <button type="button" onClick={() => openAuth('login')} className={`${secondaryButton} flex-1`}>Masuk ke akun</button>
                 </div>
-                <button type="button" onClick={() => goToSlide(5)} className="mt-5 text-sm font-semibold text-blue-700 underline underline-offset-4">Kembali mencoba demo</button>
+                <button type="button" onClick={() => goToSlide(5)} className="mt-7 text-sm font-extrabold text-sky-700 underline decoration-sky-300 underline-offset-4">Aku mau coba demo dulu</button>
               </section>
             )}
 
-            {/* SLIDE 8 — LOGIN / REGISTER: SPLIT SCREEN, BLUE & WHITE */}
+            {/* SLIDE 8 — LOGIN / REGISTER */}
             {activeSlide === 7 && (
-              <section className="flex min-h-full w-full flex-col bg-white lg:min-h-[100dvh] lg:flex-row">
-                {/* Panel kiri: pengenalan singkat yang mengisi ruang dan ramah anak. */}
-                <aside className="relative flex w-full shrink-0 flex-col justify-between overflow-hidden bg-gradient-to-br from-blue-800 via-blue-700 to-blue-600 px-5 py-6 text-white sm:px-8 sm:py-8 lg:min-h-[100dvh] lg:w-[40%] lg:px-10 lg:py-10 xl:w-[38%] xl:px-12">
-                  <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full border-[28px] border-white/10" />
-                  <div aria-hidden="true" className="pointer-events-none absolute -bottom-20 -left-16 h-72 w-72 rounded-full border-[34px] border-white/10" />
+              <section className="mx-auto flex min-h-[100dvh] w-full max-w-[1500px] flex-col p-3 sm:p-5 lg:flex-row lg:gap-5 lg:p-6">
+                <aside className="relative flex w-full shrink-0 flex-col justify-between overflow-hidden rounded-[30px] bg-gradient-to-br from-sky-700 via-blue-700 to-indigo-700 p-6 text-white shadow-xl sm:p-8 lg:min-h-[calc(100dvh-3rem)] lg:w-[38%] xl:p-10">
+                  <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full border-[30px] border-white/10" />
+                  <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 -left-20 h-72 w-72 rounded-full border-[34px] border-white/10" />
                   <div className="relative z-10">
-                    <div className="inline-flex items-center rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-[11px] font-bold tracking-[0.14em] text-blue-50">
-                      RUANG BELAJAR SD INKLUSIF
-                    </div>
-                    <p className="mt-7 text-sm font-semibold text-blue-100 sm:mt-10">Halo, Teman Bintang!</p>
-                    <h2 className="mt-2 max-w-xl text-3xl font-black leading-tight tracking-tight text-white sm:text-4xl xl:text-5xl">
-                      {authTab === 'login' ? 'Senang bertemu kembali.' : 'Yuk, mulai perjalanan belajarmu.'}
+                    <button type="button" onClick={() => goToSlide(0)} className="mb-7 inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-3 py-2 text-sm font-bold text-white transition hover:bg-white/20 focus:outline-none focus:ring-4 focus:ring-white/20">
+                      <span aria-hidden="true">←</span> Kembali ke halaman awal
+                    </button>
+                    <BrandMark light />
+                    <p className="mt-9 text-sm font-bold text-sky-100">Halo, Teman Bintang!</p>
+                    <h2 className="mt-3 max-w-xl text-3xl font-black leading-tight sm:text-4xl xl:text-5xl">
+                      {authTab === 'login' ? 'Senang bertemu lagi!' : 'Yuk, bergabung bersama kami!'}
                     </h2>
-                    <p className="mt-4 max-w-lg text-sm leading-7 text-blue-50 sm:text-base">
+                    <p className="mt-4 max-w-lg text-base leading-7 text-sky-50">
                       {authTab === 'login'
-                        ? 'Masuk untuk melanjutkan belajar, membuka modul, bertanya kepada Kak Bintang, dan melihat kegiatan kelas.'
-                        : 'Buat akun bersama guru atau orang tua. Pilih peran dan cara belajar yang paling nyaman untukmu.'}
+                        ? 'Masuk untuk melanjutkan belajar, membuka modul, dan bertanya kepada Kak Bintang.'
+                        : 'Buat akun bersama guru atau orang tua agar kamu bisa mulai belajar.'}
                     </p>
                   </div>
 
-                  <div className="relative z-10 mt-7 grid grid-cols-3 gap-2 sm:mt-9 sm:gap-3 lg:mt-12">
-                    {['Kelas 1', 'Kelas 2', 'Kelas 3', 'Kelas 4', 'Kelas 5', 'Kelas 6'].map((grade, index) => (
-                      <div key={grade} className="rounded-xl border border-white/20 bg-white/10 px-2 py-3 text-center backdrop-blur-sm sm:py-4">
-                        <span className="block text-[10px] font-semibold uppercase tracking-wider text-blue-100">{grade}</span>
-                        <span className="mt-1 block text-xl font-black text-white">{index + 1}</span>
+                  <div className="relative z-10 mt-8">
+                    <div className="rounded-3xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm">
+                      <p className="text-sm font-extrabold text-white">Petualangan kelas 1–6 SD</p>
+                      <div className="mt-4 grid grid-cols-6 gap-2">
+                        {['1', '2', '3', '4', '5', '6'].map((grade) => (
+                          <div key={grade} className="grid aspect-square place-items-center rounded-xl bg-white text-lg font-black text-sky-800 shadow-sm">{grade}</div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-
-                  <div className="relative z-10 mt-6 flex flex-col gap-2 border-t border-white/20 pt-5 sm:flex-row sm:items-center sm:justify-between lg:mt-10">
-                    <p className="text-xs leading-5 text-blue-100">Belajar dengan cara yang nyaman, satu langkah setiap hari.</p>
+                    </div>
                     {authTab === 'register' && (
-                      <span className="inline-flex w-fit items-center rounded-full bg-white px-3 py-1.5 text-xs font-extrabold text-blue-800">
-                        Langkah {regStep} dari 3
-                      </span>
+                      <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-amber-300 px-4 py-2 text-sm font-black text-amber-950">
+                        Langkah {regStep} dari 3 <span aria-hidden="true">⭐</span>
+                      </div>
                     )}
                   </div>
                 </aside>
 
-                {/* Panel kanan: form mengisi sisi kanan, tidak menjadi kartu kecil di tengah. */}
-                <div className="flex min-w-0 flex-1 flex-col bg-[#f4f8ff] px-4 py-6 sm:px-7 sm:py-8 lg:min-h-[100dvh] lg:px-8 lg:py-9 xl:px-12">
-                  <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center">
-                    <div className="mb-6 flex flex-col gap-4 border-b border-blue-100 pb-5 sm:mb-7 sm:flex-row sm:items-end sm:justify-between">
+                <div className="flex min-w-0 flex-1 flex-col rounded-[30px] bg-white p-4 shadow-xl sm:p-7 lg:min-h-[calc(100dvh-3rem)] lg:p-8 xl:p-10">
+                  <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col justify-center py-4">
+                    <div className="mb-6 flex flex-col gap-4 border-b border-sky-100 pb-5 sm:flex-row sm:items-end sm:justify-between">
                       <div>
-                        <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-blue-600">Bintang AI</p>
-                        <h3 className="mt-2 text-2xl font-black tracking-tight text-blue-950 sm:text-3xl">
-                          {authTab === 'login' ? 'Masuk ke akun' : 'Daftar akun baru'}
-                        </h3>
-                        <p className="mt-2 max-w-xl text-sm leading-6 text-blue-700/80">
-                          {authTab === 'login' ? 'Gunakan email dan kata sandi akunmu.' : 'Isi informasi secara bertahap. Data yang diminta menyesuaikan peran.'}
-                        </p>
+                        <p className="text-sm font-black uppercase tracking-[0.15em] text-sky-600">Ayo mulai!</p>
+                        <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">{authTab === 'login' ? 'Masuk ke akun' : 'Daftar akun baru'}</h3>
+                        <p className="mt-2 text-sm leading-6 text-slate-500">{authTab === 'login' ? 'Masukkan email dan kata sandi akunmu.' : 'Isi data secara bertahap. Minta bantuan orang tua atau guru bila perlu.'}</p>
                       </div>
-                      <div className="grid w-full grid-cols-2 rounded-xl border border-blue-200 bg-white p-1 sm:w-auto sm:min-w-[230px]">
-                        <button type="button" onClick={() => { setAuthTab('login'); setLoginMessage(null); }} aria-pressed={authTab === 'login'} className={`min-h-11 rounded-lg px-5 py-2.5 text-sm font-extrabold transition focus:outline-none focus:ring-4 focus:ring-blue-100 ${authTab === 'login' ? 'bg-blue-700 text-white shadow-sm' : 'text-blue-700 hover:bg-blue-50'}`}>Masuk</button>
-                        <button type="button" onClick={() => { setAuthTab('register'); setRegStep(1); setRegMessage(null); }} aria-pressed={authTab === 'register'} className={`min-h-11 rounded-lg px-5 py-2.5 text-sm font-extrabold transition focus:outline-none focus:ring-4 focus:ring-blue-100 ${authTab === 'register' ? 'bg-blue-700 text-white shadow-sm' : 'text-blue-700 hover:bg-blue-50'}`}>Daftar</button>
+                      <div className="grid w-full grid-cols-2 rounded-2xl bg-sky-50 p-1.5 sm:w-auto sm:min-w-[240px]">
+                        <button type="button" onClick={() => { setAuthTab('login'); setLoginMessage(null); }} aria-pressed={authTab === 'login'} className={`min-h-12 rounded-xl px-5 text-sm font-black transition focus:outline-none focus:ring-4 focus:ring-sky-100 ${authTab === 'login' ? 'bg-sky-600 text-white shadow' : 'text-sky-800 hover:bg-white'}`}>Masuk</button>
+                        <button type="button" onClick={() => { setAuthTab('register'); setRegStep(1); setRegMessage(null); }} aria-pressed={authTab === 'register'} className={`min-h-12 rounded-xl px-5 text-sm font-black transition focus:outline-none focus:ring-4 focus:ring-sky-100 ${authTab === 'register' ? 'bg-sky-600 text-white shadow' : 'text-sky-800 hover:bg-white'}`}>Daftar</button>
                       </div>
                     </div>
 
                     {authTab === 'login' && (
-                      <div className="w-full rounded-2xl border border-blue-100 bg-white p-4 shadow-[0_12px_36px_rgba(37,99,235,0.08)] sm:rounded-3xl sm:p-7 lg:p-8">
+                      <div className="w-full">
                         {loginMessage && (
-                          <div role="alert" className={`mb-5 rounded-xl border px-4 py-3 text-sm font-semibold ${loginMessage.type === 'error' ? 'border-blue-200 bg-blue-50 text-blue-900' : 'border-blue-200 bg-[#eef5ff] text-blue-900'}`}>{loginMessage.text}</div>
+                          <div role="alert" className="mb-5 rounded-2xl border-2 border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-800">{loginMessage.text}</div>
                         )}
-                        <form onSubmit={handleLoginSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
-                          <div className="min-w-0">
-                            <label htmlFor="landing-login-email" className="mb-2 block text-sm font-extrabold text-blue-900">Email</label>
-                            <input id="landing-login-email" type="email" autoComplete="email" required value={loginEmail} onChange={(event) => setLoginEmail(event.target.value)} placeholder="nama@email.com" className={fieldClass} />
+                        <form onSubmit={handleLoginSubmit} className="space-y-5">
+                          <div>
+                            <label htmlFor="landing-login-email" className="mb-2 block text-base font-extrabold text-slate-800">Alamat email</label>
+                            <input id="landing-login-email" type="email" autoComplete="email" required value={loginEmail} onChange={(event) => setLoginEmail(event.target.value)} placeholder="nama@email.com" className={inputClass} />
                           </div>
-                          <div className="min-w-0">
-                            <label htmlFor="landing-login-password" className="mb-2 block text-sm font-extrabold text-blue-900">Kata sandi</label>
+                          <div>
+                            <label htmlFor="landing-login-password" className="mb-2 block text-base font-extrabold text-slate-800">Kata sandi</label>
                             <div className="relative">
-                              <input id="landing-login-password" type={showLoginPassword ? 'text' : 'password'} autoComplete="current-password" required value={loginPassword} onChange={(event) => setLoginPassword(event.target.value)} placeholder="Masukkan kata sandi" className={`${fieldClass} pr-24`} />
-                              <button type="button" onClick={() => setShowLoginPassword((value) => !value)} className="absolute inset-y-0 right-2 my-auto h-9 rounded-lg px-2 text-xs font-extrabold text-blue-700 hover:bg-blue-50" aria-label={showLoginPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}>{showLoginPassword ? 'Sembunyikan' : 'Tampilkan'}</button>
+                              <input id="landing-login-password" type={showLoginPassword ? 'text' : 'password'} autoComplete="current-password" required value={loginPassword} onChange={(event) => setLoginPassword(event.target.value)} placeholder="Masukkan kata sandi" className={`${inputClass} pr-28`} />
+                              <button type="button" onClick={() => setShowLoginPassword((value) => !value)} className="absolute inset-y-0 right-2 my-auto h-10 rounded-xl px-3 text-xs font-black text-sky-700 hover:bg-sky-50" aria-label={showLoginPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}>{showLoginPassword ? 'Sembunyikan' : 'Tampilkan'}</button>
                             </div>
                           </div>
-                          <div className="sm:col-span-2">
-                            <button type="submit" disabled={loginLoading} className={`${primaryButton} w-full rounded-xl py-3.5 text-base`}>{loginLoading ? 'Memeriksa akun…' : 'Masuk ke Bintang AI'}</button>
-                          </div>
+                          <button type="submit" disabled={loginLoading} className={`${primaryButton} w-full text-lg`}>
+                            {loginLoading ? 'Sedang memeriksa…' : 'Masuk dan mulai belajar'} <span aria-hidden="true">🚀</span>
+                          </button>
                         </form>
-                        <div className="mt-5 flex flex-col gap-2 border-t border-blue-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
-                          <p className="text-sm text-blue-800">Belum punya akun?</p>
-                          <button type="button" onClick={() => { setAuthTab('register'); setRegStep(1); setRegMessage(null); }} className="w-fit text-sm font-extrabold text-blue-700 underline decoration-blue-300 underline-offset-4 hover:text-blue-900">Daftar sekarang</button>
+                        <div className="mt-6 flex flex-col gap-2 border-t border-sky-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                          <p className="text-sm text-slate-600">Belum punya akun?</p>
+                          <button type="button" onClick={() => { setAuthTab('register'); setRegStep(1); setRegMessage(null); }} className="w-fit text-sm font-black text-sky-700 underline decoration-sky-300 underline-offset-4">Daftar sekarang</button>
                         </div>
                       </div>
                     )}
 
                     {authTab === 'register' && (
-                      <div className="w-full rounded-2xl border border-blue-100 bg-white p-4 shadow-[0_12px_36px_rgba(37,99,235,0.08)] sm:rounded-3xl sm:p-6 lg:p-8">
+                      <div className="w-full">
                         <div className="mb-6">
                           <div className="mb-3 flex items-center justify-between gap-3">
-                            <p className="text-sm font-extrabold text-blue-900">Langkah {regStep} dari 3</p>
-                            <p className="text-xs font-bold text-blue-600">{['Peran pengguna', 'Detail sekolah', 'Data akun'][regStep - 1]}</p>
+                            <p className="text-sm font-black text-slate-800">Langkah {regStep} dari 3</p>
+                            <p className="text-xs font-bold text-sky-700">{['Pilih peran', 'Detail kelas', 'Data akun'][regStep - 1]}</p>
                           </div>
                           <div className="grid grid-cols-3 gap-2" aria-label="Progres pendaftaran">
-                            {[1, 2, 3].map((step) => <div key={step} className={`h-2 rounded-full ${step <= regStep ? 'bg-blue-700' : 'bg-blue-100'}`} />)}
+                            {[1, 2, 3].map((step) => <div key={step} className={`h-3 rounded-full ${step <= regStep ? 'bg-amber-400' : 'bg-sky-100'}`} />)}
                           </div>
                         </div>
 
                         {regMessage && (
-                          <div role="alert" className={`mb-5 rounded-xl border px-4 py-3 text-sm font-semibold ${regMessage.type === 'error' ? 'border-blue-200 bg-blue-50 text-blue-900' : 'border-blue-200 bg-[#eef5ff] text-blue-900'}`}>{regMessage.text}</div>
+                          <div role="alert" className={`mb-5 rounded-2xl border-2 px-4 py-3 text-sm font-bold ${regMessage.type === 'error' ? 'border-rose-200 bg-rose-50 text-rose-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>{regMessage.text}</div>
                         )}
 
-                        <form onSubmit={handleRegisterSubmit} className="w-full space-y-5">
+                        <form onSubmit={handleRegisterSubmit} className="space-y-5">
                           {regStep === 1 && (
                             <div className="space-y-5">
                               <fieldset>
-                                <legend className="mb-3 text-sm font-extrabold text-blue-900">Pilih peran pengguna</legend>
+                                <legend className="mb-3 text-base font-black text-slate-800">Kamu mendaftar sebagai…</legend>
                                 <div className="grid gap-3 sm:grid-cols-3">
                                   {[
-                                    { id: 'siswa', label: 'Siswa SD', description: 'Untuk anak kelas 1–6' },
-                                    { id: 'guru', label: 'Guru SLB/SD', description: 'Untuk pengajar' },
-                                    { id: 'ortu', label: 'Orang tua / wali', description: 'Untuk pendamping anak' },
+                                    { id: 'siswa', label: 'Siswa SD', description: 'Aku ingin belajar', icon: '🧒' },
+                                    { id: 'guru', label: 'Guru Pembimbing', description: 'Mengelola kelas dan materi siswa', icon: '👩‍🏫' },
+                                    { id: 'ortu', label: 'Orang Tua / Wali', description: 'Mendampingi anak dan melihat perkembangan', icon: '👨‍👩‍👧' },
                                   ].map((role) => (
-                                    <button key={role.id} type="button" onClick={() => { setRegRole(role.id); setRegMessage(null); }} aria-pressed={regRole === role.id} className={`min-h-24 rounded-xl border-2 p-4 text-left transition focus:outline-none focus:ring-4 focus:ring-blue-100 ${regRole === role.id ? 'border-blue-700 bg-blue-50 shadow-sm' : 'border-blue-100 bg-white hover:border-blue-300 hover:bg-blue-50/60'}`}>
-                                      <span className="block text-sm font-extrabold text-blue-900">{role.label}</span>
-                                      <span className="mt-1 block text-xs leading-5 text-blue-700/80">{role.description}</span>
+                                    <button key={role.id} type="button" onClick={() => { setRegRole(role.id); setRegMessage(null); }} aria-pressed={regRole === role.id} className={`min-h-32 rounded-2xl border-2 p-4 text-left transition focus:outline-none focus:ring-4 focus:ring-sky-100 ${regRole === role.id ? 'border-sky-500 bg-sky-50 shadow-md' : 'border-slate-200 bg-white hover:border-sky-300 hover:bg-sky-50/50'}`}>
+                                      <span className="text-3xl" aria-hidden="true">{role.icon}</span>
+                                      <span className="mt-2 block text-base font-black text-slate-900">{role.label}</span>
+                                      <span className="mt-1 block text-sm text-slate-500">{role.description}</span>
                                     </button>
                                   ))}
                                 </div>
@@ -1139,18 +1158,18 @@ const LandingPage = () => {
 
                               {regRole === 'siswa' && (
                                 <div>
-                                  <label htmlFor="landing-reg-disability" className="mb-2 block text-sm font-extrabold text-blue-900">Preferensi cara belajar</label>
-                                  <select id="landing-reg-disability" value={regDisability} onChange={(event) => setRegDisability(event.target.value)} className={fieldClass}>
+                                  <label htmlFor="landing-reg-disability" className="mb-2 block text-base font-extrabold text-slate-800">Cara belajar yang nyaman</label>
+                                  <select id="landing-reg-disability" value={regDisability} onChange={(event) => setRegDisability(event.target.value)} className={inputClass}>
+                                    <option value="" disabled>Pilih kebutuhan belajar</option>
                                     <option value="tunanetra">Tunanetra — suara dan pembaca layar</option>
-                                    <option value="tunarungu">Tunarungu — teks dan subtitle</option>
-                                    <option value="tunawicara">Tunawicara — pilihan komunikasi</option>
-                                    <option value="tidak_ada">Umum / Standar SD</option>
+                                    <option value="tunarungu">Tunarungu — teks dan petunjuk visual</option>
+                                    <option value="tunawicara">Tunawicara — tulisan, gambar, dan simbol</option>
                                   </select>
-                                  <p className="mt-2 text-xs leading-5 text-blue-600">Pilihan ini dapat diubah lagi nanti. Fitur aksesibilitas dasar tetap tersedia untuk semua siswa.</p>
+                                  <p className="mt-2 text-sm leading-6 text-slate-500">Ini hanya pilihan awal. Kamu bisa mengubah pengaturan nanti.</p>
                                 </div>
                               )}
                               <div className="flex justify-end">
-                                <button type="button" onClick={handleRegisterNext} className={`${primaryButton} min-w-44`}>Lanjut ke detail</button>
+                                <button type="button" onClick={handleRegisterNext} className={`${primaryButton} w-full sm:w-auto`}>Lanjut <span aria-hidden="true">→</span></button>
                               </div>
                             </div>
                           )}
@@ -1160,14 +1179,14 @@ const LandingPage = () => {
                               {regRole === 'siswa' && (
                                 <div className="grid gap-4 sm:grid-cols-2">
                                   <div>
-                                    <label htmlFor="landing-reg-class" className="mb-2 block text-sm font-extrabold text-blue-900">Kelas SD</label>
-                                    <select id="landing-reg-class" required value={regClassLevel} onChange={(event) => setRegClassLevel(event.target.value)} className={fieldClass}>
+                                    <label htmlFor="landing-reg-class" className="mb-2 block text-base font-extrabold text-slate-800">Kelas SD</label>
+                                    <select id="landing-reg-class" required value={regClassLevel} onChange={(event) => setRegClassLevel(event.target.value)} className={inputClass}>
                                       {['1 SD', '2 SD', '3 SD', '4 SD', '5 SD', '6 SD'].map((level) => <option key={level} value={level}>{level}</option>)}
                                     </select>
                                   </div>
                                   <div>
-                                    <label htmlFor="landing-reg-class-code" className="mb-2 block text-sm font-extrabold text-blue-900">Kode kelas dari guru</label>
-                                    <input id="landing-reg-class-code" required value={regClassCode} onChange={(event) => setRegClassCode(event.target.value.toUpperCase())} placeholder="Contoh: X8J2K1" className={fieldClass} />
+                                    <label htmlFor="landing-reg-class-code" className="mb-2 block text-base font-extrabold text-slate-800">Kode kelas dari guru</label>
+                                    <input id="landing-reg-class-code" required value={regClassCode} onChange={(event) => setRegClassCode(event.target.value.toUpperCase())} placeholder="Contoh: X8J2K1" className={inputClass} />
                                   </div>
                                 </div>
                               )}
@@ -1175,18 +1194,18 @@ const LandingPage = () => {
                               {regRole === 'guru' && (
                                 <div className="grid gap-4 sm:grid-cols-2">
                                   <div>
-                                    <label htmlFor="landing-reg-school" className="mb-2 block text-sm font-extrabold text-blue-900">Nama sekolah / SLB</label>
-                                    <input id="landing-reg-school" required value={regSlbName} onChange={(event) => setRegSlbName(event.target.value)} placeholder="Nama sekolah atau SLB" className={fieldClass} />
+                                    <label htmlFor="landing-reg-school" className="mb-2 block text-base font-extrabold text-slate-800">Nama sekolah / SLB</label>
+                                    <input id="landing-reg-school" required value={regSlbName} onChange={(event) => setRegSlbName(event.target.value)} placeholder="Nama sekolah atau SLB" className={inputClass} />
                                   </div>
                                   <div>
-                                    <label htmlFor="landing-reg-teacher-class" className="mb-2 block text-sm font-extrabold text-blue-900">Kelas yang diampu</label>
-                                    <select id="landing-reg-teacher-class" required value={regClassLevel} onChange={(event) => setRegClassLevel(event.target.value)} className={fieldClass}>
+                                    <label htmlFor="landing-reg-teacher-class" className="mb-2 block text-base font-extrabold text-slate-800">Kelas yang diampu</label>
+                                    <select id="landing-reg-teacher-class" required value={regClassLevel} onChange={(event) => setRegClassLevel(event.target.value)} className={inputClass}>
                                       {['1 SD', '2 SD', '3 SD', '4 SD', '5 SD', '6 SD'].map((level) => <option key={level} value={level}>{level}</option>)}
                                     </select>
                                   </div>
                                   <div className="sm:col-span-2">
-                                    <label htmlFor="landing-reg-subject" className="mb-2 block text-sm font-extrabold text-blue-900">Mata pelajaran utama</label>
-                                    <select id="landing-reg-subject" value={regSubject} onChange={(event) => setRegSubject(event.target.value)} className={fieldClass}>
+                                    <label htmlFor="landing-reg-subject" className="mb-2 block text-base font-extrabold text-slate-800">Mata pelajaran utama</label>
+                                    <select id="landing-reg-subject" value={regSubject} onChange={(event) => setRegSubject(event.target.value)} className={inputClass}>
                                       {['Matematika', 'Bahasa Indonesia', 'IPAS', 'Pendidikan Pancasila', 'Bahasa Inggris', 'Lainnya'].map((subject) => <option key={subject} value={subject}>{subject}</option>)}
                                     </select>
                                   </div>
@@ -1195,17 +1214,16 @@ const LandingPage = () => {
 
                               {regRole === 'ortu' && (
                                 <div>
-                                  <label htmlFor="landing-reg-child-id" className="mb-2 block text-sm font-extrabold text-blue-900">ID Belajar Siswa anak</label>
-                                  <input id="landing-reg-child-id" required value={regStudentIdInput} onChange={(event) => setRegStudentIdInput(event.target.value)} placeholder="Masukkan ID yang diberikan kepada siswa" className={fieldClass} />
-                                  {checkingChild && <p role="status" className="mt-2 text-xs font-semibold text-blue-700">Sedang memeriksa ID siswa…</p>}
-                                  {verifiedChild && <p role="status" className="mt-2 rounded-lg bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-800">Profil ditemukan: {verifiedChild.full_name} · {verifiedChild.class_level || 'Kelas SD'}</p>}
-                                  {childCheckError && <p role="alert" className="mt-2 text-xs font-semibold text-blue-700">{childCheckError}</p>}
+                                  <label htmlFor="landing-reg-child-id" className="mb-2 block text-base font-extrabold text-slate-800">ID Belajar Siswa anak</label>
+                                  <input id="landing-reg-child-id" required value={regStudentIdInput} onChange={(event) => setRegStudentIdInput(event.target.value)} placeholder="Masukkan ID dari anak" className={inputClass} />
+                                  {checkingChild && <p role="status" className="mt-2 text-sm font-bold text-sky-700">Sedang memeriksa ID siswa…</p>}
+                                  {verifiedChild && <p role="status" className="mt-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">✓ Profil ditemukan: {verifiedChild.full_name} · {verifiedChild.class_level || 'Kelas SD'}</p>}
+                                  {childCheckError && <p role="alert" className="mt-2 rounded-xl bg-rose-50 px-4 py-3 text-sm font-bold text-rose-800">{childCheckError}</p>}
                                 </div>
                               )}
-
-                              <div className="flex justify-between gap-3">
-                                <button type="button" onClick={() => { setRegStep(1); setRegMessage(null); }} className={secondaryButton}>Kembali</button>
-                                <button type="button" onClick={handleRegisterNext} className={primaryButton}>Lanjut ke data akun</button>
+                              <div className="flex flex-col-reverse justify-between gap-3 sm:flex-row">
+                                <button type="button" onClick={() => { setRegStep(1); setRegMessage(null); }} className={secondaryButton}>← Kembali</button>
+                                <button type="button" onClick={handleRegisterNext} className={primaryButton}>Lanjut <span aria-hidden="true">→</span></button>
                               </div>
                             </div>
                           )}
@@ -1214,30 +1232,32 @@ const LandingPage = () => {
                             <div className="space-y-5">
                               <div className="grid gap-4 sm:grid-cols-2">
                                 <div>
-                                  <label htmlFor="landing-reg-name" className="mb-2 block text-sm font-extrabold text-blue-900">Nama lengkap</label>
-                                  <input id="landing-reg-name" autoComplete="name" required value={regFullName} onChange={(event) => setRegFullName(event.target.value)} placeholder="Masukkan nama lengkap" className={fieldClass} />
+                                  <label htmlFor="landing-reg-name" className="mb-2 block text-base font-extrabold text-slate-800">Nama lengkap</label>
+                                  <input id="landing-reg-name" autoComplete="name" required value={regFullName} onChange={(event) => setRegFullName(event.target.value)} placeholder="Nama lengkap" className={inputClass} />
                                 </div>
                                 <div>
-                                  <label htmlFor="landing-reg-email" className="mb-2 block text-sm font-extrabold text-blue-900">Email</label>
-                                  <input id="landing-reg-email" type="email" autoComplete="email" required value={regEmail} onChange={(event) => setRegEmail(event.target.value)} placeholder="nama@email.com" className={fieldClass} />
+                                  <label htmlFor="landing-reg-email" className="mb-2 block text-base font-extrabold text-slate-800">Alamat email</label>
+                                  <input id="landing-reg-email" type="email" autoComplete="email" required value={regEmail} onChange={(event) => setRegEmail(event.target.value)} placeholder="nama@email.com" className={inputClass} />
                                 </div>
                               </div>
                               <div className="grid gap-4 sm:grid-cols-2">
                                 <div>
-                                  <label htmlFor="landing-reg-password" className="mb-2 block text-sm font-extrabold text-blue-900">Kata sandi</label>
+                                  <label htmlFor="landing-reg-password" className="mb-2 block text-base font-extrabold text-slate-800">Kata sandi</label>
                                   <div className="relative">
-                                    <input id="landing-reg-password" type={showRegPassword ? 'text' : 'password'} autoComplete="new-password" required minLength={8} value={regPassword} onChange={(event) => setRegPassword(event.target.value)} placeholder="Minimal 8 karakter" className={`${fieldClass} pr-24`} />
-                                    <button type="button" onClick={() => setShowRegPassword((value) => !value)} className="absolute inset-y-0 right-2 my-auto h-9 rounded-lg px-2 text-xs font-extrabold text-blue-700 hover:bg-blue-50">{showRegPassword ? 'Sembunyikan' : 'Tampilkan'}</button>
+                                    <input id="landing-reg-password" type={showRegPassword ? 'text' : 'password'} autoComplete="new-password" required minLength={8} value={regPassword} onChange={(event) => setRegPassword(event.target.value)} placeholder="Minimal 8 karakter" className={`${inputClass} pr-28`} />
+                                    <button type="button" onClick={() => setShowRegPassword((value) => !value)} className="absolute inset-y-0 right-2 my-auto h-10 rounded-xl px-3 text-xs font-black text-sky-700 hover:bg-sky-50">{showRegPassword ? 'Sembunyikan' : 'Tampilkan'}</button>
                                   </div>
                                 </div>
                                 <div>
-                                  <label htmlFor="landing-reg-confirm" className="mb-2 block text-sm font-extrabold text-blue-900">Ulangi kata sandi</label>
-                                  <input id="landing-reg-confirm" type={showRegPassword ? 'text' : 'password'} autoComplete="new-password" required value={regConfirmPassword} onChange={(event) => setRegConfirmPassword(event.target.value)} placeholder="Ulangi kata sandi" className={fieldClass} />
+                                  <label htmlFor="landing-reg-confirm" className="mb-2 block text-base font-extrabold text-slate-800">Ulangi kata sandi</label>
+                                  <input id="landing-reg-confirm" type={showRegPassword ? 'text' : 'password'} autoComplete="new-password" required value={regConfirmPassword} onChange={(event) => setRegConfirmPassword(event.target.value)} placeholder="Ulangi kata sandi" className={inputClass} />
                                 </div>
                               </div>
-                              <div className="flex justify-between gap-3">
-                                <button type="button" onClick={() => { setRegStep(2); setRegMessage(null); }} className={secondaryButton}>Kembali</button>
-                                <button type="submit" disabled={regLoading} className={`${primaryButton} flex-1`}>{regLoading ? 'Membuat akun…' : 'Daftar akun Bintang AI'}</button>
+                              <div className="flex flex-col-reverse justify-between gap-3 sm:flex-row">
+                                <button type="button" onClick={() => { setRegStep(2); setRegMessage(null); }} className={secondaryButton}>← Kembali</button>
+                                <button type="submit" disabled={regLoading} className={`${primaryButton} sm:min-w-64`}>
+                                  {regLoading ? 'Membuat akun…' : 'Buat akun Bintang AI'} <span aria-hidden="true">⭐</span>
+                                </button>
                               </div>
                             </div>
                           )}
@@ -1245,7 +1265,7 @@ const LandingPage = () => {
                       </div>
                     )}
                   </div>
-                  <p className="mt-5 text-center text-[11px] font-semibold text-blue-500">Bintang AI · Belajar bersama, tumbuh bersama.</p>
+                  <p className="mt-5 text-center text-xs font-semibold text-slate-400">Bintang AI · Belajar bersama, tumbuh bersama.</p>
                 </div>
               </section>
             )}
@@ -1253,91 +1273,73 @@ const LandingPage = () => {
         </AnimatePresence>
       </div>
 
-      {/* Panduan sebelum tur otomatis dimulai. */}
+      {/* Panduan tur */}
       <AnimatePresence>
         {showTourGuide && (
           <motion.div
-            className="absolute inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             role="presentation"
             onClick={(event) => { if (event.target === event.currentTarget) setShowTourGuide(false); }}
           >
             <motion.section
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="bintang-tour-title"
-              className="w-full max-w-lg rounded-3xl border border-white/70 bg-white p-6 shadow-2xl sm:p-8"
-              initial={{ opacity: 0, y: 28, scale: 0.94, rotateX: 8 }}
-              animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
-              exit={{ opacity: 0, y: 16, scale: 0.97 }}
-              transition={{ duration: prefersReducedMotion ? 0.01 : 0.42, ease: [0.2, 0.8, 0.2, 1] }}
+              role="dialog" aria-modal="true" aria-labelledby="bintang-tour-title"
+              className="w-full max-w-lg rounded-[30px] border-4 border-white bg-white p-6 shadow-2xl sm:p-8"
+              initial={{ opacity: 0, y: 20, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 12, scale: 0.98 }}
+              transition={{ duration: prefersReducedMotion ? 0.01 : 0.25 }}
             >
-              <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-blue-700">Sebelum mulai</p>
-              <h2 id="bintang-tour-title" className="mt-3 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">Jelajahi Bintang AI</h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">Slide akan bergerak otomatis satu per satu sampai bagian terakhir. Kamu tidak perlu menekan tombol Lanjut berulang kali.</p>
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl bg-blue-50 p-4">
-                  <p className="text-sm font-extrabold text-slate-900">Di komputer</p>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">Tekan tombol <kbd className="rounded-md border border-slate-300 bg-white px-2 py-1 font-bold text-slate-800">Spasi</kbd> untuk jeda atau lanjutkan.</p>
-                </div>
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-sm font-extrabold text-slate-900">Di Android</p>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">Gunakan tombol Jeda yang muncul di bagian bawah layar.</p>
-                </div>
+              <span className="grid h-16 w-16 place-items-center rounded-2xl bg-amber-100 text-4xl" aria-hidden="true">🧭</span>
+              <p className="mt-5 text-xs font-black uppercase tracking-[0.16em] text-sky-700">Tur pengenalan</p>
+              <h2 id="bintang-tour-title" className="mt-2 text-3xl font-black text-slate-900">Jelajahi Bintang AI</h2>
+              <p className="mt-3 text-base leading-7 text-slate-600">Halaman akan berpindah sendiri agar kamu bisa melihat fitur-fitur Bintang AI. Kamu tetap bisa menjeda atau memilih halaman sendiri.</p>
+              <div className="mt-5 rounded-2xl bg-sky-50 p-4 text-sm leading-6 text-sky-900">
+                <strong>Tips:</strong> Tekan tombol Jeda untuk berhenti sebentar. Di komputer, kamu juga bisa memakai tombol Spasi.
               </div>
               <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                 <button type="button" onClick={() => setShowTourGuide(false)} className={secondaryButton}>Nanti saja</button>
-                <button type="button" onClick={startExploreTour} className={primaryButton}>Mulai jelajah</button>
+                <button type="button" onClick={startExploreTour} className={primaryButton}>Mulai jelajah 🚀</button>
               </div>
             </motion.section>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Kontrol jeda selalu mudah disentuh selama tur berjalan, termasuk di Android. */}
+      {/* Tombol jeda tur */}
       <AnimatePresence>
-        {tourActive && (
+        {tourActive && activeSlide < 7 && (
           <motion.div
-            className="absolute bottom-4 left-4 z-40 flex items-center gap-2 rounded-2xl border border-white/80 bg-white/90 p-2 shadow-lg backdrop-blur-md sm:bottom-6 sm:left-6"
-            initial={{ opacity: 0, y: 18, scale: 0.94 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 12, scale: 0.96 }}
+            className="fixed bottom-5 left-4 z-40 sm:bottom-6 sm:left-6"
+            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
           >
-            <button
-              type="button"
-              onClick={() => setTourPaused((paused) => !paused)}
-              aria-pressed={tourPaused}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-200"
-            >
-              <span aria-hidden="true">{tourPaused ? '▶' : 'Ⅱ'}</span>
-              {tourPaused ? 'Lanjutkan' : 'Jeda'}
+            <button type="button" onClick={() => setTourPaused((paused) => !paused)} aria-pressed={tourPaused} className="inline-flex min-h-12 items-center gap-2 rounded-2xl border-2 border-white bg-slate-900 px-5 py-3 text-sm font-black text-white shadow-xl hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">
+              <span aria-hidden="true">{tourPaused ? '▶' : 'Ⅱ'}</span>{tourPaused ? 'Lanjutkan tur' : 'Jeda tur'}
             </button>
-            <span className="hidden pr-2 text-xs font-semibold text-slate-500 sm:inline">{tourPaused ? 'Tur dijeda' : 'Spasi untuk jeda'}</span>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <p className="sr-only" role="status" aria-live="polite">{tourActive ? (tourPaused ? 'Jelajah Bintang AI dijeda.' : `Jelajah Bintang AI, slide ${activeSlide + 1} dari 8.`) : ''}</p>
+      {/* Navigasi bab vertikal seperti versi awal; tidak memakai footer atau tombol 1/7–Lanjut. */}
+      {activeSlide !== 7 && (
+        <nav aria-label="Navigasi bab presentasi" className="fixed right-2 top-1/2 z-30 flex -translate-y-1/2 flex-col items-center gap-2 rounded-full border border-sky-100 bg-white/90 px-2 py-3 shadow-md backdrop-blur-md sm:right-5 sm:gap-2.5 sm:px-2.5">
+          {SLIDE_LABELS.map((label, index) => (
+            <button
+              key={label}
+              type="button"
+              onClick={() => goToSlide(index)}
+              aria-label={`Buka halaman ${index + 1}: ${label}`}
+              aria-current={activeSlide === index ? 'step' : undefined}
+              title={label}
+              className={`rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 ${activeSlide === index ? 'h-7 w-2.5 bg-sky-600' : 'h-2.5 w-2.5 bg-slate-300 hover:bg-sky-400'}`}
+            />
+          ))}
+        </nav>
+      )}
 
-      {/* Penanda bab kecil di sisi kanan: tidak mengambil ruang header/footer. */}
-      <nav aria-label="Navigasi bab presentasi" className={`absolute right-3 top-1/2 z-30 -translate-y-1/2 flex-col items-center gap-2 rounded-full border border-blue-100 bg-white/90 px-2 py-3 shadow-sm backdrop-blur-md sm:right-6 sm:gap-2.5 sm:px-2.5 ${activeSlide === 7 ? 'hidden' : 'flex'}`}>
-        {SLIDE_LABELS.map((label, index) => (
-          <button
-            key={label}
-            type="button"
-            onClick={() => goToSlide(index)}
-            aria-label={`Buka slide ${index + 1}: ${label}`}
-            aria-current={activeSlide === index ? 'step' : undefined}
-            title={label}
-            className={`rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${activeSlide === index ? 'h-7 w-2 bg-blue-700' : 'h-2 w-2 bg-slate-400/70 hover:bg-blue-500'}`}
-          />
-        ))}
-      </nav>
+      <p className="sr-only" role="status" aria-live="polite">
+        {tourActive ? (tourPaused ? 'Tur Bintang AI dijeda.' : `Tur Bintang AI, halaman ${activeSlide + 1} dari 7.`) : ''}
+      </p>
     </div>
   );
 };
 
 export default LandingPage;
-
