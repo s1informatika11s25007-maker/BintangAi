@@ -72,6 +72,21 @@ const GlobalGestureCamera = () => {
   const isProfilePage = path === '/profile';
   const [isModuleSelected, setIsModuleSelected] = useState(false);
 
+  // Synchronize menuActive state with DOM attribute & global window flag
+  useEffect(() => {
+    if (menuActive) {
+      document.body.setAttribute('data-menu-active', 'true');
+      window.__isNavMenuActive = true;
+    } else {
+      document.body.removeAttribute('data-menu-active');
+      window.__isNavMenuActive = false;
+    }
+    return () => {
+      document.body.removeAttribute('data-menu-active');
+      window.__isNavMenuActive = false;
+    };
+  }, [menuActive]);
+
   useEffect(() => {
     if (!isEnabled) return;
     const checkModule = () => {

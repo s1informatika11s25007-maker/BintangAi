@@ -139,6 +139,11 @@ const StudentQuiz = () => {
   } = useGestureControl({
     enabled: isMute,
     onGesture: (fingerCount) => {
+      // 🎯 ABAIKAN GESTUR HALAMAN SAAT MENU UTAMA NAVIGASI SEDANG TERBUKA
+      if (document.body.getAttribute('data-menu-active') === 'true' || window.__isNavMenuActive) {
+        return;
+      }
+
       if (fingerCount === 0) {
         lastProcessedFingerRef.current = -1;
         return;
