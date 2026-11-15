@@ -1109,34 +1109,43 @@ const LandingPage = () => {
               </section>
             )}
 
-            {/* SLIDE 2 — MANFAAT */}
+            {/* SLIDE 2 — MASALAH DAN SOLUSI */}
             {activeSlide === 1 && (
               <section className="mx-auto flex bintang-screen-section min-h-[100dvh] w-full max-w-7xl flex-col justify-center gap-9 px-4 py-12 sm:px-7 lg:px-10">
                 <SlideHeading
-                  eyebrow="Kenapa Bintang AI?"
-                  title="Belajar harus terasa menyenangkan dan mudah diikuti."
-                  description="Di Bintang AI, setiap anak bisa belajar dengan cara yang lebih nyaman. Tidak harus sama dengan teman yang lain."
+                  eyebrow="Masalah dan solusi"
+                  title="Mengapa Bintang AI dibuat?"
+                  description="Bintang AI dibuat khusus membantu siswa SD disabilitas (Tunanetra, Tunarungu, Tunawicara) kelas 1–6 agar dapat belajar mandiri dari rumah dengan mudah, aman, dan ceria."
                 />
                 <div className="grid gap-5 md:grid-cols-2">
-                  <article className="rounded-[30px] border-2 border-sky-100 bg-white p-6 shadow-sm sm:p-8">
-                    <span className="grid h-16 w-16 place-items-center rounded-3xl bg-sky-100 text-4xl" aria-hidden="true">📚</span>
-                    <h3 className="mt-5 text-2xl font-black text-slate-900">Untuk Teman Siswa</h3>
-                    <p className="mt-3 text-base leading-7 text-slate-600">Baca materi, dengarkan penjelasan, lihat gambar, lalu bertanya kepada Kak Bintang saat ada yang belum dipahami.</p>
+                  <article className="rounded-[30px] border-2 border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+                    <span className="inline-block rounded-full bg-slate-100 px-3.5 py-1 text-xs font-bold text-slate-800">Tantangan Siswa Disabilitas</span>
+                    <h3 className="mt-4 text-2xl font-black text-slate-900">Hambatan Belajar Siswa SD</h3>
+                    <p className="mt-3 text-base leading-7 text-slate-600">
+                      Siswa Tunanetra kesulitan membaca teks modul, Siswa Tunarungu tidak dapat mendengar suara penjelasan guru, dan Siswa Tunawicara kesulitan menyampaikan jawaban saat belajar di rumah.
+                    </p>
                     <div className="mt-5 flex flex-wrap gap-2">
-                      {['Materi SD', 'Tanya jawab', 'Latihan seru'].map((tag) => <span key={tag} className="rounded-full bg-sky-50 px-3 py-2 text-sm font-bold text-sky-800">{tag}</span>)}
+                      {['Hambatan penglihatan', 'Hambatan pendengaran', 'Hambatan bicara'].map((tag) => (
+                        <span key={tag} className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-800">{tag}</span>
+                      ))}
                     </div>
                   </article>
-                  <article className="rounded-[30px] border-2 border-blue-100 bg-blue-50 p-6 shadow-sm sm:p-8">
-                    <span className="grid h-16 w-16 place-items-center rounded-3xl bg-blue-100 text-4xl" aria-hidden="true">🧑‍🏫</span>
-                    <h3 className="mt-5 text-2xl font-black text-slate-900">Untuk Guru dan Keluarga</h3>
-                    <p className="mt-3 text-base leading-7 text-slate-600">Guru membantu menyiapkan kelas dan materi. Orang tua dapat menemani anak serta melihat perkembangan belajarnya.</p>
+
+                  <article className="rounded-[30px] border-2 border-blue-200 bg-blue-50/60 p-6 shadow-sm sm:p-8">
+                    <span className="inline-block rounded-full bg-blue-200 px-3.5 py-1 text-xs font-bold text-blue-900">Solusi Aksesibilitas SD</span>
+                    <h3 className="mt-4 text-2xl font-black text-slate-900">Bintang AI Siap Membantu Belajar</h3>
+                    <p className="mt-3 text-base leading-7 text-slate-700">
+                      Suara lisan otomatis untuk Tunanetra, teks subtitle visual untuk Tunarungu, serta kamera gestur isyarat & balasan teks untuk Tunawicara kelas 1–6 SD, didampingi Guru dan Orang Tua.
+                    </p>
                     <div className="mt-5 flex flex-wrap gap-2">
-                      {['Kelas', 'Pendampingan', 'Laporan belajar'].map((tag) => <span key={tag} className="rounded-full bg-white px-3 py-2 text-sm font-bold text-blue-800">{tag}</span>)}
+                      {['Suara Tunanetra', 'Subtitle Tunarungu', 'Gestur Tunawicara'].map((tag) => (
+                        <span key={tag} className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-blue-900">{tag}</span>
+                      ))}
                     </div>
                   </article>
                 </div>
                 <p className="mx-auto max-w-3xl rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 text-center text-base font-bold leading-7 text-blue-900">
-                  Semua anak berhak belajar, mencoba, dan tumbuh dengan caranya sendiri.
+                  Setiap anak SD disabilitas kelas 1–6 berhak mendapat ruang belajar yang mudah, aman, dan penuh kegembiraan.
                 </p>
               </section>
             )}
