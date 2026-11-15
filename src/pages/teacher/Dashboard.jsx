@@ -346,21 +346,35 @@ const TeacherDashboard = () => {
     if (!error) setMyAssignments(data || []);
   };
 
-  // Real-time synchronization for Teacher Dashboard (< 1s update for modules, assignments & submissions)
+  // Real-time synchronization for Teacher Dashboard (< 1s Quad-Layer Sync)
   useEffect(() => {
     if (!profile?.id) return;
 
     fetchMyModules();
     fetchMyAssignments();
 
-    const channelName = `teacher_dashboard_sync_${profile.id}_${Date.now()}`;
+    const channelName = `teacher_dashboard_sync_${profile.id}`;
     const channel = supabase.channel(channelName)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'modules' }, (payload) => {
         if (payload.eventType === 'DELETE') {
           setMyModules(prev => prev.filter(m => m.id !== payload.old?.id));
+        } else if (payload.eventType === 'INSERT' && payload.new) {
+          setMyModules(prev => {
+            const exists = prev.some(m => m.id === payload.new.id);
+            if (exists) return prev;
+            return [payload.new, ...prev];
+          });
+          fetchMyModules();
         } else {
           fetchMyModules();
         }
+      })
+      .on('broadcast', { event: 'module_added' }, () => { fetchMyModules(); })
+      .on('broadcast', { event: 'module_deleted' }, (payload) => {
+        if (payload.payload?.id) {
+          setMyModules(prev => prev.filter(m => m.id !== payload.payload.id));
+        }
+        fetchMyModules();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'assignments' }, () => {
         fetchMyAssignments();
@@ -372,7 +386,20 @@ const TeacherDashboard = () => {
       })
       .subscribe();
 
+    const handleLocalUpdate = () => {
+      fetchMyModules();
+      fetchMyAssignments();
+    };
+    window.addEventListener('modules-updated', handleLocalUpdate);
+
+    const pollInterval = setInterval(() => {
+      fetchMyModules();
+      fetchMyAssignments();
+    }, 3000);
+
     return () => {
+      clearInterval(pollInterval);
+      window.removeEventListener('modules-updated', handleLocalUpdate);
       supabase.removeChannel(channel);
     };
   }, [profile?.id, selectedAssignment?.id]);
@@ -436,6 +463,19 @@ const TeacherDashboard = () => {
           const { error: dbError } = await supabase.from('modules').delete().eq('id', moduleId);
           if (dbError) throw dbError;
           setMyModules(prev => prev.filter(m => m.id !== moduleId));
+
+          // Broadcast real-time deletion event across all clients & windows
+          try {
+            const bChannel = supabase.channel('realtime_modules_global');
+            await bChannel.subscribe();
+            await bChannel.send({
+              type: 'broadcast',
+              event: 'module_deleted',
+              payload: { id: moduleId }
+            });
+          } catch (e) {}
+          window.dispatchEvent(new CustomEvent('modules-updated'));
+
           showToast("Modul berhasil dihapus.");
         } catch (error) {
           showToast('Gagal menghapus: ' + error.message, 'error');

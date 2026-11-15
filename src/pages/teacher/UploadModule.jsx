@@ -217,6 +217,18 @@ const TeacherUploadModule = () => {
 
       await withTimeout(dbPromise, 6000, true);
 
+      // Broadcast real-time module addition event across all clients & windows
+      try {
+        const bChannel = supabase.channel('realtime_modules_global');
+        await bChannel.subscribe();
+        await bChannel.send({
+          type: 'broadcast',
+          event: 'module_added',
+          payload: { title: title.trim() }
+        });
+      } catch (e) {}
+      window.dispatchEvent(new CustomEvent('modules-updated'));
+
       showToast("Modul berhasil dipublikasikan secara cepat! 🚀");
       navigate('/teacher/dashboard');
     } catch (err) {

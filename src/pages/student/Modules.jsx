@@ -80,11 +80,12 @@ const StudentModules = () => {
     }
   };
 
-  // Fetch & Real-time Sync Modules (< 1s Instant Smooth Update on INSERT/DELETE/UPDATE)
+  // Fetch & Real-time Sync Modules (< 1s Quad-Layer Instant Sync)
   useEffect(() => {
     fetchModules(true);
 
-    const channelName = `realtime_modules_student_${profile?.id || 'guest'}_${Date.now()}`;
+    // 1. Supabase Realtime Channel for Postgres Changes & Broadcasts
+    const channelName = `realtime_modules_student_${profile?.id || 'guest'}`;
     const channel = supabase.channel(channelName)
       .on(
         'postgres_changes',
@@ -97,14 +98,48 @@ const StudentModules = () => {
               setSelectedModule(null);
               showSubtitle("⚠️ Materi ini telah dihapus oleh Pengajar.", "warning");
             }
+          } else if (payload.eventType === 'INSERT' && payload.new) {
+            setModules(prev => {
+              const exists = prev.some(m => m.id === payload.new.id);
+              if (exists) return prev;
+              return [payload.new, ...prev];
+            });
+            fetchModules(false);
           } else {
             fetchModules(false);
           }
         }
       )
+      .on('broadcast', { event: 'module_added' }, () => {
+        fetchModules(false);
+      })
+      .on('broadcast', { event: 'module_deleted' }, (payload) => {
+        const deletedId = payload.payload?.id;
+        if (deletedId) {
+          setModules(prev => prev.filter(m => m.id !== deletedId));
+          if (selectedModule?.id === deletedId) {
+            setSelectedModule(null);
+            showSubtitle("⚠️ Materi ini telah dihapus oleh Pengajar.", "warning");
+          }
+        }
+        fetchModules(false);
+      })
       .subscribe();
 
+    // 2. Custom Event Listener (Same Window / Tab Sync)
+    const handleLocalUpdate = () => {
+      fetchModules(false);
+    };
+    window.addEventListener('modules-updated', handleLocalUpdate);
+
+    // 3. Fast 3-second background polling fallback
+    const pollInterval = setInterval(() => {
+      fetchModules(false);
+    }, 3000);
+
     return () => {
+      clearInterval(pollInterval);
+      window.removeEventListener('modules-updated', handleLocalUpdate);
       supabase.removeChannel(channel);
     };
   }, [profile?.id, selectedModule?.id]);
