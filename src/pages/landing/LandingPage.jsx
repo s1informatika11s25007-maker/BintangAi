@@ -1,919 +1,1230 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion';
-import Footer from '@/components/layout/Footer';
-import BintangAvatar from '@/features/ai-tutor/components/BintangAvatar';
-import AuthHeaderAccessibilityBar from '@/components/ui/AuthHeaderAccessibilityBar';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useAccessibilityStore } from '@/features/accessibility/store/accessibilityStore';
-import {
-  HiArrowRight,
-  HiBookOpen,
-  HiCheckCircle,
-  HiMicrophone,
-  HiChatAlt2,
-  HiUserGroup,
-  HiVolumeUp,
-  HiVolumeOff,
-  HiChevronUp,
-  HiSparkles,
-  HiStar,
-  HiLightningBolt,
-  HiAnnotation,
-  HiHome,
-  HiAcademicCap,
-  HiEye,
-  HiPlay,
-  HiPause,
-  HiThumbUp,
-  HiQuestionMarkCircle,
-  HiHeart,
-  HiRefresh,
-  HiBadgeCheck,
-  HiSun
-} from 'react-icons/hi';
+import { useAuthStore } from '@/features/auth/store/useAuthStore';
+import { login } from '@/features/auth/api/sessionApi';
+import { supabase } from '@/lib/supabaseClient';
+import { logUserActivity } from '@/utils/logger';
 
-const appFeatures = [
+// Akun demo mengikuti akun yang sudah disediakan pada proyek.
+// Urutan dibuat berdasarkan pengguna utama: siswa, guru, kemudian orang tua.
+const DEMO_ACCOUNTS = [
   {
-    id: 'ai-tutor',
-    icon: HiChatAlt2,
-    title: 'AI Tutor Kak Bintang',
-    description: 'Sahabat belajar pintar berkarakter ramah yang menjawab pertanyaan siswa SD kelas 1-6 dengan bahasa sederhana tanpa simbol markdown rumit.',
-    tag: 'Tutor AI SD',
-    color: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-    path: '/student/tanya-ai',
-    targetDisability: 'Semua Siswa SD'
+    key: 'tunanetra',
+    group: 'siswa',
+    label: 'Siswa Tunanetra',
+    email: 'demo.tunanetra@gmail.com',
+    pass: 'demo123456',
+    description: 'Budi Santoso · Kelas 4 SD',
+    support: 'Suara lisan dan kontras tinggi',
   },
   {
-    id: 'modules',
-    icon: HiBookOpen,
-    title: 'Materi Belajar Interaktif',
-    description: 'Perpustakaan modul SD dengan pembacaan suara paragraf W3C, pengubah ukuran teks (S/M/L/XL), dan tombol Tap-to-Ask 1-ketuk.',
-    tag: 'Modul SD',
-    color: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    path: '/student/modules',
-    targetDisability: 'Tunanetra & Tunarungu'
+    key: 'tunarungu',
+    group: 'siswa',
+    label: 'Siswa Tunarungu',
+    email: 'demo.tunarungu@gmail.com',
+    pass: 'demo123456',
+    description: 'Siti Rahma · Kelas 3 SD',
+    support: 'Teks visual dan subtitle',
   },
   {
-    id: 'live-captions',
-    icon: HiMicrophone,
-    title: 'Mata Pintar – Live Caption',
-    description: 'Transkripsi ucapan arahan guru secara real-time menjadi teks caption jernih pada HUD layar untuk siswa tunarungu.',
-    tag: 'Dukungan Tunarungu',
-    color: 'bg-sky-50 text-sky-700 border-sky-200',
-    path: '/student/live-captions',
-    targetDisability: 'Siswa Tunarungu'
+    key: 'tunawicara',
+    group: 'siswa',
+    label: 'Siswa Tunawicara',
+    email: 'demo.tunawicara@gmail.com',
+    pass: 'demo123456',
+    description: 'Doni Pratama · Kelas 5 SD',
+    support: 'Pilihan komunikasi dan panduan singkat',
   },
   {
-    id: 'quiz-gamification',
-    icon: HiLightningBolt,
-    title: 'QuizKu Adaptif & Gesture Hand',
-    description: 'Kuis interaktif AI dengan input isyarat tangan (Gesture Camera), perolehan XP belajar, dan Streak Harian 🔥 yang memotivasi.',
-    tag: 'Kuis & Gesture',
-    color: 'bg-amber-50 text-amber-700 border-amber-200',
-    path: '/student/tasks',
-    targetDisability: 'Tunawicara & All SD'
+    key: 'guru',
+    group: 'guru',
+    label: 'Guru Pembimbing',
+    email: 'demo.guru@gmail.com',
+    pass: 'demo123456',
+    description: 'Ibu Rina · Guru SLB/SD',
+    support: 'Kelola kelas dan modul SD',
   },
   {
-    id: 'inbox-aac',
-    icon: HiAnnotation,
-    title: 'Bimbingan Jarak Jauh & AAC',
-    description: 'Guru dan siswa berinteraksi dari rumah. Dilengkapi Papan Simbol Balasan Cepat (AAC) untuk komunikasi siswa tunawicara.',
-    tag: 'AAC & Papan Simbol',
-    color: 'bg-purple-50 text-purple-700 border-purple-200',
-    path: '/student/inbox',
-    targetDisability: 'Siswa Tunawicara'
+    key: 'ortu',
+    group: 'ortu',
+    label: 'Orang Tua / Wali',
+    email: 'demo.ortu@gmail.com',
+    pass: 'demo123456',
+    description: 'Pak Herman · Orang tua',
+    support: 'Dampingi dan lihat laporan anak',
   },
-  {
-    id: 'teacher-parent-monitor',
-    icon: HiUserGroup,
-    title: 'Monitoring Guru & Orang Tua',
-    description: 'Dashboard khusus untuk guru mengelola kelas inklusif, serta orang tua memantau perkembangan belajar mandiri anak di rumah.',
-    tag: 'Pendampingan Ortu',
-    color: 'bg-rose-50 text-rose-700 border-rose-200',
-    path: '/teacher/dashboard',
-    targetDisability: 'Guru & Orang Tua'
-  }
 ];
 
-const sampleAACSymbols = [
-  { text: 'Saya Paham 👍', icon: '👍', bg: 'bg-emerald-100 text-emerald-900 border-emerald-300' },
-  { text: 'Mohon Jelaskan ❓', icon: '❓', bg: 'bg-amber-100 text-amber-900 border-amber-300' },
-  { text: 'Sudah Selesai ⭐', icon: '⭐', bg: 'bg-indigo-100 text-indigo-900 border-indigo-300' },
-  { text: 'Butuh Bantuan 🙋', icon: '🙋', bg: 'bg-rose-100 text-rose-900 border-rose-300' }
+const LEARNING_MODES = [
+  {
+    id: 'tunanetra',
+    title: 'Tunanetra',
+    note: 'Hambatan penglihatan',
+    description: 'Panduan suara, pembaca layar, navigasi yang dapat digunakan tanpa melihat, dan deskripsi gambar.',
+    tone: 'violet',
+  },
+  {
+    id: 'tunarungu',
+    title: 'Tunarungu',
+    note: 'Hambatan pendengaran',
+    description: 'Teks yang jelas, subtitle, transkrip ucapan, dan petunjuk visual.',
+    tone: 'cyan',
+  },
+  {
+    id: 'tunawicara',
+    title: 'Tunawicara',
+    note: 'Hambatan bicara',
+    description: 'Pilihan komunikasi melalui tulisan, gambar, simbol, kalimat cepat, dan suara teks bila diperlukan.',
+    tone: 'emerald',
+  },
+  {
+    id: 'tidak_ada',
+    title: 'Umum / Standar SD',
+    note: 'Mode belajar umum',
+    description: 'Tampilan belajar sederhana yang tetap menyediakan pengaturan teks, suara, dan kontras.',
+    tone: 'slate',
+  },
 ];
+
+// Setiap slide mempunyai karakter transisi sendiri: tirai, lipatan 3D,
+// iris, buku terbuka, tumpukan kertas, rana, spotlight, dan lipatan map.
+// Dengan begitu presentasi terasa seperti rangkaian adegan, bukan carousel biasa.
+const SLIDE_MOTIONS = [
+  {
+    initial: { opacity: 0, clipPath: 'polygon(50% 0%, 50% 0%, 50% 100%, 50% 100%)', scale: 1.04 },
+    animate: { opacity: 1, clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)', scale: 1 },
+    exit: { opacity: 0, clipPath: 'polygon(50% 0%, 50% 0%, 50% 100%, 50% 100%)', scale: 0.97 },
+    transition: { duration: 0.82, ease: [0.76, 0, 0.24, 1] },
+    style: { transformPerspective: 1600, transformOrigin: 'center center' },
+  },
+  {
+    initial: (direction) => ({ opacity: 0, rotateY: direction > 0 ? 34 : -34, x: direction > 0 ? 100 : -100, scale: 0.94 }),
+    animate: { opacity: 1, rotateY: 0, x: 0, scale: 1 },
+    exit: (direction) => ({ opacity: 0, rotateY: direction > 0 ? -30 : 30, x: direction > 0 ? -80 : 80, scale: 0.96 }),
+    transition: { duration: 0.74, ease: [0.2, 0.8, 0.2, 1] },
+    style: { transformPerspective: 1500, transformOrigin: 'center center' },
+  },
+  {
+    initial: { opacity: 0, clipPath: 'circle(0% at 50% 48%)', scale: 0.96 },
+    animate: { opacity: 1, clipPath: 'circle(145% at 50% 48%)', scale: 1 },
+    exit: { opacity: 0, clipPath: 'circle(0% at 50% 48%)', scale: 1.03 },
+    transition: { duration: 0.88, ease: [0.16, 1, 0.3, 1] },
+    style: { transformPerspective: 1400, transformOrigin: 'center center' },
+  },
+  {
+    initial: { opacity: 0, scaleX: 0.08, rotateY: 24, x: -40 },
+    animate: { opacity: 1, scaleX: 1, rotateY: 0, x: 0 },
+    exit: { opacity: 0, scaleX: 0.08, rotateY: -24, x: 40 },
+    transition: { duration: 0.78, ease: [0.65, 0, 0.35, 1] },
+    style: { transformPerspective: 1700, transformOrigin: 'left center' },
+  },
+  {
+    initial: { opacity: 0, y: 110, rotateZ: 6, scale: 0.86, filter: 'blur(10px)' },
+    animate: { opacity: 1, y: 0, rotateZ: 0, scale: 1, filter: 'blur(0px)' },
+    exit: { opacity: 0, y: -90, rotateZ: -5, scale: 0.91, filter: 'blur(8px)' },
+    transition: { duration: 0.76, ease: [0.22, 1, 0.36, 1] },
+    style: { transformPerspective: 1400, transformOrigin: 'center center' },
+  },
+  {
+    initial: { opacity: 0, clipPath: 'inset(48% 0% 48% 0% round 28px)', scale: 1.04 },
+    animate: { opacity: 1, clipPath: 'inset(0% 0% 0% 0% round 0px)', scale: 1 },
+    exit: { opacity: 0, clipPath: 'inset(48% 0% 48% 0% round 28px)', scale: 0.98 },
+    transition: { duration: 0.8, ease: [0.7, 0, 0.2, 1] },
+    style: { transformPerspective: 1400, transformOrigin: 'center center' },
+  },
+  {
+    initial: { opacity: 0, scale: 0.68, y: 55, filter: 'blur(18px)' },
+    animate: { opacity: 1, scale: 1, y: 0, filter: 'blur(0px)' },
+    exit: { opacity: 0, scale: 1.22, y: -24, filter: 'blur(16px)' },
+    transition: { duration: 0.9, ease: [0.16, 1, 0.3, 1] },
+    style: { transformPerspective: 1300, transformOrigin: 'center center' },
+  },
+  {
+    initial: { opacity: 0, rotateX: 82, y: 70, scale: 0.96 },
+    animate: { opacity: 1, rotateX: 0, y: 0, scale: 1 },
+    exit: { opacity: 0, rotateX: -76, y: -45, scale: 0.96 },
+    transition: { duration: 0.86, ease: [0.2, 0.9, 0.25, 1] },
+    style: { transformPerspective: 1300, transformOrigin: 'bottom center' },
+  },
+];
+
+const SLIDE_LABELS = [
+  'Sambutan',
+  'Mengapa Bintang AI',
+  'Cara belajar',
+  'Fitur utama',
+  'Alur pengguna',
+  'Coba simulasi',
+  'Mulai belajar',
+  'Masuk dan daftar',
+];
+
+// Durasi otomatis tiap slide. Slide demo diberi waktu baca lebih panjang.
+const TOUR_DURATIONS = [0, 7200, 7600, 7600, 7600, 10500, 7000, 0];
+
+const fieldClass = 'w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100';
+const primaryButton = 'inline-flex min-h-12 items-center justify-center rounded-xl bg-blue-700 px-6 py-3 text-sm font-bold text-white transition hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-200 disabled:cursor-not-allowed disabled:opacity-60';
+const secondaryButton = 'inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 transition hover:border-slate-500 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100';
 
 const LandingPage = () => {
   const navigate = useNavigate();
-  const { mode, setManualMode } = useAccessibilityStore();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [showScrollTop, setShowScrollTop] = useState(false);
-  const [activeSection, setActiveSection] = useState('hero');
-  const [activeRoleTab, setActiveRoleTab] = useState(mode || 'tunanetra');
-  const [sdClassTab, setSdClassTab] = useState('rendah'); // 'rendah' (1-3) or 'tinggi' (4-6)
+  const location = useLocation();
+  const { mode, setManualMode, setModeFromProfile } = useAccessibilityStore();
+  const { setUser, fetchProfile } = useAuthStore();
+  const prefersReducedMotion = useReducedMotion();
 
-  // Sync active role tab and simulator with global accessibility mode
-  useEffect(() => {
-    if (mode && ['tunanetra', 'tunarungu', 'tunawicara'].includes(mode)) {
-      setActiveRoleTab(mode);
-    }
-  }, [mode]);
+  const normalizedMode = mode === 'standar' ? 'tidak_ada' : (mode || 'tidak_ada');
 
-  const handleRoleTabSelect = (role) => {
-    setActiveRoleTab(role);
-    setManualMode(role);
-  };
+  // Presentasi berbentuk slide, bukan halaman panjang yang harus digulir.
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [slideDirection, setSlideDirection] = useState(1);
+  const slideContentRef = useRef(null);
+  const touchStartRef = useRef(null);
+  const wheelLockRef = useRef(false);
+  const [selectedUserRole, setSelectedUserRole] = useState(normalizedMode);
+  const [roleFeedback, setRoleFeedback] = useState('');
 
-  // ACCESSIBILITY TOOLBAR STATES (FOR SD & DISABILITIES)
-  const [fontSizeScale, setFontSizeScale] = useState(1); // 1 = Normal, 1.15 = Large, 1.3 = XL
-  const [highContrast, setHighContrast] = useState(false);
-  const [isPlayingLandingAudio, setIsPlayingLandingAudio] = useState(false);
-  const [aacToast, setAacToast] = useState(null);
+  // Tur otomatis per slide, dengan panduan awal dan kontrol jeda untuk desktop/Android.
+  const [showTourGuide, setShowTourGuide] = useState(false);
+  const [tourActive, setTourActive] = useState(false);
+  const [tourPaused, setTourPaused] = useState(false);
 
-  // SIMULATOR INTERAKTIF DEMO STATES
-  const [simTunanetraPlaying, setSimTunanetraPlaying] = useState(false);
-  const [simTunarunguCaption, setSimTunarunguCaption] = useState('Ibu Guru: "Anak-anak, mari buka materi Bab 2 tentang Ekosistem ya!"');
-  const [simTunarunguFont, setSimTunarunguFont] = useState('text-sm');
+  // Auth state.
+  const [authTab, setAuthTab] = useState('login');
+  const [regStep, setRegStep] = useState(1);
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginMessage, setLoginMessage] = useState(null);
 
-  // Scroll Progress Bar
-  const { scrollYProgress } = useScroll();
-  const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
+  // Registration state.
+  const [regFullName, setRegFullName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regConfirmPassword, setRegConfirmPassword] = useState('');
+  const [showRegPassword, setShowRegPassword] = useState(false);
+  const [regRole, setRegRole] = useState('siswa');
+  const [regDisability, setRegDisability] = useState(normalizedMode);
+  const [regClassLevel, setRegClassLevel] = useState('4 SD');
+  const [regClassCode, setRegClassCode] = useState('');
+  const [regSlbName, setRegSlbName] = useState('');
+  const [regSubject, setRegSubject] = useState('Matematika');
+  const [regStudentIdInput, setRegStudentIdInput] = useState('');
+  const [checkingChild, setCheckingChild] = useState(false);
+  const [verifiedChild, setVerifiedChild] = useState(null);
+  const [childCheckError, setChildCheckError] = useState(null);
+  const [regLoading, setRegLoading] = useState(false);
+  const [regMessage, setRegMessage] = useState(null);
 
-  // Web Speech Synthesis (Read-Aloud Helper)
-  const synthRef = useRef(null);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      synthRef.current = window.speechSynthesis;
-    }
-  }, []);
+  // Audio is optional; it never starts automatically when a mode is selected.
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
 
   const speakText = useCallback((text) => {
-    if (!synthRef.current) return;
-    synthRef.current.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new window.SpeechSynthesisUtterance(text);
     utterance.lang = 'id-ID';
-    utterance.rate = 0.95; // Slightly slower & clearer for SD children
-    utterance.pitch = 1.05; // Warm, friendly tone
-    utterance.onend = () => setIsPlayingLandingAudio(false);
-    utterance.onerror = () => setIsPlayingLandingAudio(false);
-    setIsPlayingLandingAudio(true);
-    synthRef.current.speak(utterance);
+    utterance.rate = 0.95;
+    utterance.pitch = 1;
+    utterance.onend = () => setIsPlayingAudio(false);
+    utterance.onerror = () => setIsPlayingAudio(false);
+    setIsPlayingAudio(true);
+    window.speechSynthesis.speak(utterance);
   }, []);
 
   const stopAudio = useCallback(() => {
-    if (synthRef.current) {
-      synthRef.current.cancel();
-      setIsPlayingLandingAudio(false);
-      setSimTunanetraPlaying(false);
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
     }
+    setIsPlayingAudio(false);
   }, []);
 
-  const handleReadLandingPage = () => {
-    if (isPlayingLandingAudio) {
-      stopAudio();
-    } else {
-      speakText(
-        'Selamat datang di Bintang AI, Ruang Belajar Jarak Jauh SD Inklusif untuk kelas 1 sampai 6. Platform ini ramah untuk siswa Tunanetra dengan arahan suara lisan, siswa Tunarungu dengan teks caption visual, dan siswa Tunawicara dengan tombol balasan cepat. Silakan pilih tombol Daftar untuk bergabung gratis.'
-      );
+  const goToSlide = useCallback((nextIndex, options = {}) => {
+    const safeIndex = Math.max(0, Math.min(7, nextIndex));
+    setSlideDirection(safeIndex >= activeSlide ? 1 : -1);
+    setActiveSlide(safeIndex);
+    stopAudio();
+
+    // Navigasi manual menghentikan tur agar tidak bertabrakan dengan pilihan pengguna.
+    if (options.manual !== false) {
+      setTourActive(false);
+      setTourPaused(false);
     }
+  }, [activeSlide, stopAudio]);
+
+  const requestExplore = () => setShowTourGuide(true);
+
+  const startExploreTour = () => {
+    setShowTourGuide(false);
+    setTourActive(true);
+    setTourPaused(false);
+    goToSlide(1, { manual: false });
   };
 
+  const openAuth = (tab) => {
+    setAuthTab(tab);
+    setLoginMessage(null);
+    setRegMessage(null);
+    if (tab === 'register') setRegStep(1);
+    goToSlide(7);
+  };
+
+  // Deep links /?mode=login and /?mode=register tetap didukung.
   useEffect(() => {
-    const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 300);
+    const params = new URLSearchParams(location.search);
+    const modeParam = params.get('mode');
+    if (modeParam === 'register') {
+      setAuthTab('register');
+      setRegStep(1);
+      setActiveSlide(7);
+    } else if (modeParam === 'login') {
+      setAuthTab('login');
+      setActiveSlide(7);
+    }
+  }, [location.search]);
 
-      const sections = ['fitur-bimbingan', 'fitur-utama', 'sandbox-disabilitas', 'kesesuaian-sd', 'role-disabilitas'];
-      const scrollPosition = window.scrollY + 220;
+  // Tur bergerak otomatis dari slide pengenalan sampai slide terakhir.
+  // Tekan Spasi atau tombol Jeda untuk menghentikan sementara; navigasi manual menghentikan tur.
+  useEffect(() => {
+    if (!tourActive || tourPaused) return undefined;
 
-      for (const sec of sections) {
-        const el = document.getElementById(sec);
-        if (el) {
-          const top = el.offsetTop;
-          const height = el.offsetHeight;
-          if (scrollPosition >= top && scrollPosition < top + height) {
-            setActiveSection(sec);
-            break;
-          }
-        }
+    if (activeSlide >= 7) {
+      setTourActive(false);
+      setTourPaused(false);
+      return undefined;
+    }
+
+    const duration = TOUR_DURATIONS[activeSlide] || 7200;
+    const timer = window.setTimeout(() => {
+      goToSlide(activeSlide + 1, { manual: false });
+    }, duration);
+
+    return () => window.clearTimeout(timer);
+  }, [tourActive, tourPaused, activeSlide, goToSlide]);
+
+  // Navigasi keyboard: PageUp / PageDown, serta Spasi untuk jeda/lanjutkan tur.
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      const target = event.target;
+      const isTyping = target instanceof HTMLElement && (
+        target.isContentEditable ||
+        ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)
+      );
+      if (isTyping) return;
+
+      if (event.code === 'Space' && tourActive) {
+        event.preventDefault();
+        setTourPaused((paused) => !paused);
+        return;
+      }
+
+      if (event.key === 'PageDown' || (event.altKey && event.key === 'ArrowRight')) {
+        event.preventDefault();
+        setTourActive(false);
+        setTourPaused(false);
+        setActiveSlide((current) => {
+          const next = Math.min(7, current + 1);
+          setSlideDirection(1);
+          return next;
+        });
+        stopAudio();
+      } else if (event.key === 'PageUp' || (event.altKey && event.key === 'ArrowLeft')) {
+        event.preventDefault();
+        setTourActive(false);
+        setTourPaused(false);
+        setActiveSlide((current) => {
+          const next = Math.max(0, current - 1);
+          setSlideDirection(-1);
+          return next;
+        });
+        stopAudio();
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      stopAudio();
-    };
-  }, [stopAudio]);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [stopAudio, tourActive]);
 
-  const go = (path) => {
-    stopAudio();
-    setMenuOpen(false);
-    navigate(path);
+  // Roda mouse/trackpad berpindah slide hanya ketika konten slide sudah
+  // mencapai tepi atas/bawah. Konten panjang seperti formulir tetap bisa digulir.
+  const handleWheel = useCallback((event) => {
+    if (Math.abs(event.deltaY) < 42) return;
+    const scroller = slideContentRef.current;
+    if (!scroller || wheelLockRef.current) return;
+
+    const atTop = scroller.scrollTop <= 4;
+    const atBottom = scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 5;
+    const movingDown = event.deltaY > 0;
+    if ((movingDown && !atBottom) || (!movingDown && !atTop)) return;
+
+    event.preventDefault();
+    wheelLockRef.current = true;
+    goToSlide(activeSlide + (movingDown ? 1 : -1));
+    window.setTimeout(() => { wheelLockRef.current = false; }, 920);
+  }, [activeSlide, goToSlide]);
+
+  const handleTouchStart = (event) => {
+    const touch = event.touches?.[0];
+    if (touch) touchStartRef.current = { x: touch.clientX, y: touch.clientY };
   };
 
-  const scrollToSection = (e, id) => {
-    e.preventDefault();
-    setMenuOpen(false);
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const handleTouchEnd = (event) => {
+    const start = touchStartRef.current;
+    const touch = event.changedTouches?.[0];
+    touchStartRef.current = null;
+    if (!start || !touch) return;
+
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+    // Geser horizontal untuk mengganti slide; geser vertikal tetap menggulir isi.
+    if (Math.abs(deltaX) > 72 && Math.abs(deltaX) > Math.abs(deltaY) * 1.25) {
+      goToSlide(activeSlide + (deltaX < 0 ? 1 : -1));
     }
   };
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  useEffect(() => () => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+  }, []);
+
+  const checkChildProfile = useCallback(async (studentId) => {
+    if (!studentId || studentId.trim().length < 5) {
+      setVerifiedChild(null);
+      setChildCheckError(null);
+      return;
+    }
+
+    setCheckingChild(true);
+    setChildCheckError(null);
+    try {
+      const cleanId = studentId.trim();
+      let query = supabase
+        .from('profiles')
+        .select('id, full_name, class_level, disability_type, role, short_id')
+        .eq('role', 'siswa');
+
+      if (cleanId.length === 6 && /^\d+$/.test(cleanId)) {
+        query = query.eq('short_id', cleanId);
+      } else {
+        query = query.or(`id.eq.${cleanId},short_id.eq.${cleanId}`);
+      }
+
+      const { data: child, error } = await query.maybeSingle();
+      if (error || !child) {
+        setVerifiedChild(null);
+        setChildCheckError('ID Belajar Siswa tidak ditemukan. Periksa kembali ID anak.');
+      } else {
+        setVerifiedChild(child);
+        setChildCheckError(null);
+      }
+    } catch (error) {
+      setVerifiedChild(null);
+      setChildCheckError('Gagal memverifikasi ID siswa. Silakan coba lagi.');
+    } finally {
+      setCheckingChild(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (regRole !== 'ortu') {
+      setVerifiedChild(null);
+      setChildCheckError(null);
+      return undefined;
+    }
+
+    if (!regStudentIdInput.trim()) {
+      setVerifiedChild(null);
+      setChildCheckError(null);
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => {
+      checkChildProfile(regStudentIdInput.trim());
+    }, 500);
+    return () => window.clearTimeout(timer);
+  }, [regRole, regStudentIdInput, checkChildProfile]);
+
+  const handleSelectRoleInitial = (roleId) => {
+    setSelectedUserRole(roleId);
+    setRegDisability(roleId);
+    setManualMode(roleId === 'tidak_ada' ? 'standar' : roleId);
+
+    const labels = {
+      tunanetra: 'Mode Tunanetra',
+      tunarungu: 'Mode Tunarungu',
+      tunawicara: 'Mode Tunawicara',
+      tidak_ada: 'Mode Umum / Standar SD',
+    };
+    setRoleFeedback(`${labels[roleId] || 'Pilihan belajar'} dipilih. Pengaturan ini dapat diubah kembali nanti.`);
   };
 
-  // AAC Symbol Tap Simulator
-  const handleSimulateAAC = (symbol) => {
-    setAacToast(`Simbol Terpilih: ${symbol.text}`);
-    speakText(`Suara Balasan Otomatis: ${symbol.text}`);
-    setTimeout(() => setAacToast(null), 3000);
+  const getTargetPath = (role) => {
+    if (role === 'guru') return '/teacher/dashboard';
+    if (role === 'ortu') return '/parent/dashboard';
+    return '/student/dashboard';
   };
+
+  const handleDemoLogin = async (demoAccount) => {
+    setLoginLoading(true);
+    setLoginMessage(null);
+    stopAudio();
+
+    try {
+      const data = await login(demoAccount.email, demoAccount.pass);
+      setUser(data.user);
+
+      const profileData = await fetchProfile(data.user.id);
+      if (!profileData) {
+        throw new Error('Akun demo berhasil dikenali, tetapi profilnya belum tersedia di database.');
+      }
+
+      await logUserActivity(
+        'LOGIN',
+        'Masuk Simulasi Peran',
+        `Mencoba simulasi ${demoAccount.label} (${profileData.full_name})`,
+        profileData,
+      );
+      setModeFromProfile(profileData);
+      speakText(`Selamat mencoba simulasi ${demoAccount.label}.`);
+      window.setTimeout(() => navigate(getTargetPath(profileData.role)), 500);
+    } catch (error) {
+      const message = error?.message || 'Gagal masuk ke akun simulasi.';
+      setLoginMessage({ type: 'error', text: message });
+      speakText(message);
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleLoginSubmit = async (event) => {
+    event.preventDefault();
+    setLoginLoading(true);
+    setLoginMessage(null);
+    stopAudio();
+
+    try {
+      if (!loginEmail.trim()) throw new Error('Silakan masukkan alamat email.');
+      if (!loginPassword) throw new Error('Silakan masukkan kata sandi.');
+
+      const data = await login(loginEmail.trim(), loginPassword);
+      setUser(data.user);
+
+      const profileData = await fetchProfile(data.user.id);
+      if (!profileData) throw new Error('Profil akun belum ditemukan di database.');
+
+      await logUserActivity('LOGIN', 'Masuk Aplikasi', `Pengguna ${profileData.full_name} masuk`, profileData);
+      setModeFromProfile(profileData);
+      speakText(`Selamat datang kembali, ${profileData.full_name}.`);
+      window.setTimeout(() => navigate(getTargetPath(profileData.role)), 500);
+    } catch (error) {
+      const message = error?.message || 'Masuk akun gagal. Periksa email dan kata sandi Anda.';
+      setLoginMessage({ type: 'error', text: message });
+      speakText(message);
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleRegisterNext = () => {
+    setRegMessage(null);
+
+    if (regStep === 1) {
+      if (!regRole) {
+        setRegMessage({ type: 'error', text: 'Silakan pilih peran pengguna terlebih dahulu.' });
+        return;
+      }
+      if (regRole === 'siswa' && !regDisability) {
+        setRegMessage({ type: 'error', text: 'Silakan pilih kebutuhan belajar siswa.' });
+        return;
+      }
+      setRegStep(2);
+      return;
+    }
+
+    if (regStep === 2) {
+      if (regRole === 'siswa') {
+        if (!regClassLevel) {
+          setRegMessage({ type: 'error', text: 'Tingkat kelas SD wajib dipilih.' });
+          return;
+        }
+        if (!regClassCode.trim()) {
+          setRegMessage({ type: 'error', text: 'Kode kelas dari guru wajib diisi.' });
+          return;
+        }
+      }
+
+      if (regRole === 'guru') {
+        if (!regSlbName.trim()) {
+          setRegMessage({ type: 'error', text: 'Nama sekolah atau SLB wajib diisi.' });
+          return;
+        }
+        if (!regClassLevel) {
+          setRegMessage({ type: 'error', text: 'Kelas yang diampu wajib dipilih.' });
+          return;
+        }
+      }
+
+      if (regRole === 'ortu') {
+        if (!regStudentIdInput.trim()) {
+          setRegMessage({ type: 'error', text: 'ID Belajar Siswa anak wajib diisi.' });
+          return;
+        }
+        if (checkingChild) {
+          setRegMessage({ type: 'error', text: 'Sedang memeriksa ID siswa. Silakan tunggu sebentar.' });
+          return;
+        }
+        if (!verifiedChild || childCheckError) {
+          setRegMessage({ type: 'error', text: childCheckError || 'ID siswa belum berhasil diverifikasi.' });
+          return;
+        }
+      }
+
+      setRegStep(3);
+    }
+  };
+
+  const handleRegisterSubmit = async (event) => {
+    event.preventDefault();
+    setRegLoading(true);
+    setRegMessage(null);
+    stopAudio();
+
+    try {
+      if (!regFullName.trim()) throw new Error('Nama lengkap wajib diisi.');
+      if (!regEmail.trim()) throw new Error('Alamat email wajib diisi.');
+      if (regPassword.length < 8) throw new Error('Kata sandi minimal 8 karakter.');
+      if (regPassword !== regConfirmPassword) throw new Error('Konfirmasi kata sandi tidak cocok dengan kata sandi.');
+
+      let linkedId = null;
+      let finalClassCode = regClassCode.trim().toUpperCase();
+      const finalSlbName = regSlbName.trim();
+      let finalClassLevel = regClassLevel;
+
+      if (regRole === 'siswa') {
+        if (!regClassLevel) throw new Error('Tingkat kelas SD (1–6 SD) wajib dipilih.');
+        if (!finalClassCode) throw new Error('Kode kelas dari guru wajib diisi.');
+      }
+
+      if (regRole === 'ortu') {
+        if (!regStudentIdInput.trim()) throw new Error('ID Belajar Siswa anak wajib diisi.');
+        if (checkingChild || !verifiedChild || childCheckError) {
+          throw new Error('ID siswa belum berhasil diverifikasi. Periksa kembali ID anak.');
+        }
+        linkedId = verifiedChild.id;
+        if (verifiedChild.class_level) finalClassLevel = verifiedChild.class_level;
+      }
+
+      if (regRole === 'guru') {
+        finalClassCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+        if (!finalSlbName) throw new Error('Nama sekolah / SLB wajib diisi untuk Guru.');
+        if (!finalClassLevel) throw new Error('Kelas yang diampu wajib dipilih.');
+      }
+
+      const { data, error } = await supabase.auth.signUp({
+        email: regEmail.toLowerCase().trim(),
+        password: regPassword,
+        options: {
+          data: {
+            full_name: regFullName.trim(),
+            role: regRole,
+            disability_type: regDisability,
+            slb_name: finalSlbName,
+            class_level: finalClassLevel,
+            class_code: finalClassCode,
+            subject: regSubject,
+            linked_student_id: linkedId,
+          },
+        },
+      });
+
+      if (error) throw error;
+
+      if (data.user) {
+        const successText = regRole === 'guru'
+          ? `Pendaftaran berhasil. Kode kelas Anda: ${finalClassCode}. Silakan masuk setelah proses konfirmasi akun selesai.`
+          : 'Pendaftaran berhasil. Silakan masuk setelah proses konfirmasi akun selesai.';
+        setRegMessage({ type: 'success', text: successText });
+        speakText(successText);
+        window.setTimeout(() => {
+          setAuthTab('login');
+          setLoginEmail(regEmail);
+          setLoginPassword('');
+        }, 2200);
+      }
+    } catch (error) {
+      const message = error?.message || 'Pendaftaran gagal. Periksa kembali data Anda.';
+      setRegMessage({ type: 'error', text: message });
+      speakText(message);
+    } finally {
+      setRegLoading(false);
+    }
+  };
+
+  const SlideHeading = ({ eyebrow, title, description }) => (
+    <div className="max-w-3xl space-y-3">
+      <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-700">{eyebrow}</p>
+      <h2 className="text-3xl font-black leading-tight tracking-tight text-slate-950 sm:text-5xl">{title}</h2>
+      {description && <p className="max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">{description}</p>}
+    </div>
+  );
+
+  const renderModeCard = (item) => {
+    const selected = selectedUserRole === item.id;
+    const toneClasses = {
+      violet: 'border-violet-200 bg-violet-50 text-violet-950',
+      cyan: 'border-cyan-200 bg-cyan-50 text-cyan-950',
+      emerald: 'border-emerald-200 bg-emerald-50 text-emerald-950',
+      slate: 'border-slate-200 bg-slate-50 text-slate-950',
+    };
+
+    return (
+      <button
+        key={item.id}
+        type="button"
+        onClick={() => handleSelectRoleInitial(item.id)}
+        aria-pressed={selected}
+        className={`group flex min-h-36 flex-col justify-between rounded-2xl border-2 p-4 text-left transition duration-200 hover:-translate-y-1 hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-200 sm:p-5 ${toneClasses[item.tone]} ${selected ? 'border-blue-700 ring-2 ring-blue-200 shadow-md' : ''}`}
+      >
+        <span className="text-[11px] font-bold uppercase tracking-[0.14em] opacity-70">{item.note}</span>
+        <span>
+          <span className="block text-lg font-extrabold">{item.title}</span>
+          <span className="mt-2 block text-xs leading-5 opacity-80">{item.description}</span>
+        </span>
+        <span className="mt-3 flex items-center justify-between text-xs font-bold">
+          <span>{selected ? 'Mode dipilih' : 'Pilih mode'}</span>
+          <span aria-hidden="true" className="text-base">{selected ? '✓' : '→'}</span>
+        </span>
+      </button>
+    );
+  };
+
+  const renderDemoCard = (account) => (
+    <article key={account.key} className="flex h-full flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-blue-300 hover:shadow-lg">
+      <div>
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-700">{account.label}</p>
+        <h3 className="mt-3 text-lg font-extrabold text-slate-950">{account.description}</h3>
+        <p className="mt-2 text-sm leading-6 text-slate-600">{account.support}</p>
+      </div>
+      <button
+        type="button"
+        disabled={loginLoading}
+        onClick={() => handleDemoLogin(account)}
+        className={`${primaryButton} mt-5 w-full`}
+      >
+        {loginLoading ? 'Memproses…' : 'Masuk ke simulasi'}
+      </button>
+    </article>
+  );
+
+  const demoStudents = DEMO_ACCOUNTS.filter((account) => account.group === 'siswa');
+  const demoAdults = DEMO_ACCOUNTS.filter((account) => account.group !== 'siswa');
+
+  const currentMotion = SLIDE_MOTIONS[activeSlide];
+  const initialMotion = prefersReducedMotion ? { opacity: 0 } : (typeof currentMotion.initial === 'function' ? currentMotion.initial(slideDirection) : currentMotion.initial);
+  const exitMotion = prefersReducedMotion ? { opacity: 0 } : (typeof currentMotion.exit === 'function' ? currentMotion.exit(slideDirection) : currentMotion.exit);
 
   return (
-    <div
-      className={`min-h-screen overflow-x-hidden font-sans transition-colors duration-300 relative ${
-        highContrast ? 'bg-black text-yellow-300' : 'bg-white text-slate-900'
-      }`}
-      style={{ fontSize: `${fontSizeScale * 100}%` }}
-    >
-      {/* SMOOTH SCROLL PROGRESS BAR */}
-      <motion.div
-        className={`fixed top-0 left-0 right-0 h-1.5 z-[1000] origin-left ${
-          highContrast ? 'bg-yellow-400' : 'bg-indigo-600'
-        }`}
-        style={{ scaleX }}
-      />
-
-      {/* 🚀 BAR AKSESIBILITAS UTAMA CLEAN DROPDOWN */}
-      <AuthHeaderAccessibilityBar
-        spokenTitle="Halaman Beranda BintangAi"
-        spokenText="Selamat datang di Bintang AI, Ruang Belajar Jarak Jauh SD Inklusif untuk kelas 1 sampai 6."
-        onReadPage={handleReadLandingPage}
-      />
-
-      {/* NAVIGASI UTAMA STICKY */}
-      <header
-        className={`sticky top-0 z-40 border-b transition-all duration-300 ${
-          highContrast
-            ? 'bg-black border-yellow-400 text-yellow-300'
-            : 'bg-white/95 backdrop-blur-xl border-slate-100 text-slate-900'
-        }`}
+    <div className="relative h-screen h-[100dvh] w-screen overflow-hidden bg-[#f7f9fc] font-sans text-slate-900 selection:bg-blue-200">
+      {/* Kanvas presentasi penuh layar. Tidak ada navbar/header maupun footer. */}
+      <div
+        className="absolute inset-0 overflow-hidden"
+        onWheel={handleWheel}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
-        <nav
-          className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-8 py-3.5"
-          aria-label="Navigasi utama"
-        >
-          {/* LOGO BINTANGAI */}
-          <div
-            onClick={() => go('/')}
-            className="flex items-center gap-3 cursor-pointer group select-none"
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && go('/')}
+        <AnimatePresence mode="wait" custom={slideDirection}>
+          <motion.main
+            ref={slideContentRef}
+            key={activeSlide}
+            custom={slideDirection}
+            initial={initialMotion}
+            animate={prefersReducedMotion ? { opacity: 1 } : currentMotion.animate}
+            exit={exitMotion}
+            transition={prefersReducedMotion ? { duration: 0.01 } : currentMotion.transition}
+            style={prefersReducedMotion ? undefined : currentMotion.style}
+            className="absolute inset-0 overflow-x-hidden overflow-y-auto overscroll-contain pr-12 sm:pr-16"
           >
-            <div
-              className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center font-black text-2xl shadow-md transition-transform group-hover:scale-105 ${
-                highContrast
-                  ? 'bg-yellow-400 text-black shadow-yellow-400/20'
-                  : 'bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-700 text-white shadow-indigo-200'
-              }`}
-            >
-              B
-            </div>
-            <div>
-              <span className="font-black text-base sm:text-lg tracking-tight block leading-none">
-                Bintang<span className={highContrast ? 'text-yellow-400' : 'text-indigo-600'}>Ai</span>
-              </span>
-              <span className="text-[10px] font-extrabold tracking-wider uppercase opacity-80">
-                Ruang Belajar SD Inklusif
-              </span>
-            </div>
-          </div>
-
-          <div className="hidden lg:flex items-center gap-7">
-            <a
-              onClick={(e) => scrollToSection(e, 'fitur-bimbingan')}
-              href="#fitur-bimbingan"
-              className={`text-xs font-bold transition ${
-                activeSection === 'fitur-bimbingan'
-                  ? highContrast ? 'text-yellow-400 underline font-black' : 'text-indigo-600 font-black'
-                  : 'hover:text-indigo-600'
-              }`}
-            >
-              Bimbingan Jarak Jauh
-            </a>
-            <a
-              onClick={(e) => scrollToSection(e, 'sandbox-disabilitas')}
-              href="#sandbox-disabilitas"
-              className={`text-xs font-bold transition ${
-                activeSection === 'sandbox-disabilitas'
-                  ? highContrast ? 'text-yellow-400 underline font-black' : 'text-indigo-600 font-black'
-                  : 'hover:text-indigo-600'
-              }`}
-            >
-              Simulator 3 Role Disabilitas
-            </a>
-            <a
-              onClick={(e) => scrollToSection(e, 'kesesuaian-sd')}
-              href="#kesesuaian-sd"
-              className={`text-xs font-bold transition ${
-                activeSection === 'kesesuaian-sd'
-                  ? highContrast ? 'text-yellow-400 underline font-black' : 'text-indigo-600 font-black'
-                  : 'hover:text-indigo-600'
-              }`}
-            >
-              Kesesuaian SD 1-6
-            </a>
-            <a
-              onClick={(e) => scrollToSection(e, 'fitur-utama')}
-              href="#fitur-utama"
-              className={`text-xs font-bold transition ${
-                activeSection === 'fitur-utama'
-                  ? highContrast ? 'text-yellow-400 underline font-black' : 'text-indigo-600 font-black'
-                  : 'hover:text-indigo-600'
-              }`}
-            >
-              Fitur Lengkap
-            </a>
-          </div>
-
-          <div className="hidden lg:flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => go('/auth/login')}
-              className={`rounded-xl px-4 py-2 text-xs font-bold transition ${
-                highContrast
-                  ? 'border border-yellow-400 text-yellow-300 hover:bg-yellow-400 hover:text-black'
-                  : 'text-indigo-600 hover:bg-indigo-50 border border-transparent'
-              }`}
-            >
-              Masuk
-            </button>
-            <button
-              type="button"
-              onClick={() => go('/auth/register')}
-              className={`rounded-xl px-5 py-2.5 text-xs font-black shadow-md transition-all active:scale-95 ${
-                highContrast
-                  ? 'bg-yellow-400 text-black hover:bg-yellow-300'
-                  : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200'
-              }`}
-            >
-              Daftar Gratis SD
-            </button>
-          </div>
-
-          <button
-            type="button"
-            className="rounded-xl border p-2.5 lg:hidden"
-            onClick={() => setMenuOpen((open) => !open)}
-            aria-label={menuOpen ? 'Tutup menu' : 'Buka menu'}
-          >
-            <span className="text-xl font-bold">{menuOpen ? '×' : '☰'}</span>
-          </button>
-        </nav>
-
-        {menuOpen && (
-          <div className={`border-t px-5 py-4 shadow-lg lg:hidden ${highContrast ? 'bg-black border-yellow-400' : 'bg-white'}`}>
-            <div className="mx-auto flex max-w-7xl flex-col gap-3 text-xs font-bold">
-              <a onClick={(e) => scrollToSection(e, 'fitur-bimbingan')} href="#fitur-bimbingan" className="py-2">Bimbingan Jarak Jauh</a>
-              <a onClick={(e) => scrollToSection(e, 'sandbox-disabilitas')} href="#sandbox-disabilitas" className="py-2">Simulator 3 Disabilitas</a>
-              <a onClick={(e) => scrollToSection(e, 'kesesuaian-sd')} href="#kesesuaian-sd" className="py-2">Kesesuaian SD 1-6</a>
-              <a onClick={(e) => scrollToSection(e, 'fitur-utama')} href="#fitur-utama" className="py-2">Fitur Lengkap</a>
-              <div className="grid grid-cols-2 gap-2 pt-3 border-t">
-                <button type="button" onClick={() => go('/auth/login')} className="rounded-xl border py-2.5 text-center">Masuk</button>
-                <button type="button" onClick={() => go('/auth/register')} className="rounded-xl bg-indigo-600 text-white py-2.5 text-center">Daftar SD</button>
-              </div>
-            </div>
-          </div>
-        )}
-      </header>
-
-      <main>
-        {/* HERO SECTION */}
-        <section className={`relative overflow-hidden ${highContrast ? 'bg-black' : 'bg-gradient-to-br from-indigo-50/80 via-white to-sky-50/80'}`}>
-          <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 sm:px-8 py-12 sm:py-20 lg:grid-cols-12">
-
-            {/* LEFT COLUMN: HERO INTRO */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="lg:col-span-7 space-y-6"
-            >
-              <div className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-extrabold border shadow-2xs ${
-                highContrast
-                  ? 'bg-yellow-400 text-black border-yellow-300'
-                  : 'bg-white text-indigo-700 border-indigo-200'
-              }`}>
-                <span>🌟 Belajar Dari Rumah Inklusif SD Kelas 1–6</span>
-              </div>
-
-              <h1 className="text-3xl sm:text-5xl font-black leading-tight tracking-tight">
-                Platform Belajar Dari Rumah
-                <span className={`block mt-1 ${highContrast ? 'text-yellow-300' : 'text-indigo-600'}`}>
-                  Ramah Anak SD Disabilitas
-                </span>
-              </h1>
-
-              <p className={`text-sm sm:text-base leading-relaxed max-w-2xl font-medium ${highContrast ? 'text-yellow-100' : 'text-slate-600'}`}>
-                BintangAi dirancang khusus membantu siswa SD kelas 1–6 (Tunanetra, Tunarungu, dan Tunawicara) belajar mandiri dari rumah dengan aman, seru, serta selalu mendapat bimbingan terarah dari guru dan asisten AI Kak Bintang.
-              </p>
-
-              {/* ACTION BUTTONS */}
-              <div className="flex flex-col sm:flex-row gap-3.5 pt-2">
-                <button
-                  type="button"
-                  onClick={() => go('/auth/register')}
-                  className={`inline-flex items-center justify-center min-h-[48px] rounded-2xl px-7 py-4 text-sm font-black shadow-lg transition-all active:scale-95 w-full sm:w-auto ${
-                    highContrast
-                      ? 'bg-yellow-400 text-black hover:bg-yellow-300 shadow-yellow-400/20'
-                      : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-300'
-                  }`}
-                >
-                  Mulai Belajar Sekarang 🚀
-                </button>
-
-                <button
-                  type="button"
-                  onClick={(e) => scrollToSection(e, 'sandbox-disabilitas')}
-                  className={`inline-flex items-center justify-center min-h-[48px] rounded-2xl border px-6 py-4 text-sm font-bold transition-all w-full sm:w-auto ${
-                    highContrast
-                      ? 'border-yellow-400 text-yellow-300 hover:bg-yellow-400 hover:text-black'
-                      : 'border-slate-300 bg-white text-slate-800 hover:bg-slate-50'
-                  }`}
-                >
-                  🎯 Coba Simulator 3 Disabilitas
-                </button>
-              </div>
-
-              {/* QUICK FEATURE BADGES */}
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-extrabold pt-3">
-                <span className="inline-flex items-center gap-1.5"><HiCheckCircle className="text-indigo-600 text-base" /> Bimbingan Guru Real-time</span>
-                <span className="inline-flex items-center gap-1.5"><HiCheckCircle className="text-indigo-600 text-base" /> Tutor AI Tanpa Markdown Rumit</span>
-                <span className="inline-flex items-center gap-1.5"><HiCheckCircle className="text-indigo-600 text-base" /> Papan Simbol AAC & Gesture</span>
-              </div>
-            </motion.div>
-
-            {/* RIGHT COLUMN: KAK BINTANG AVATAR & INTERACTIVE CARD */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="lg:col-span-5 relative"
-            >
-              <div className={`rounded-3xl border p-6 shadow-xl space-y-4 ${
-                highContrast ? 'bg-black border-yellow-400 text-yellow-300' : 'bg-white border-slate-200'
-              }`}>
-                {/* AVATAR HEADER */}
-                <div className="flex items-center gap-4 border-b pb-4 border-slate-100">
-                  <div className="w-16 h-16 shrink-0 flex items-center justify-center">
-                    <BintangAvatar size="sm" />
+            {/* SLIDE 1 — WELCOME & PREFERENSI AKSESIBILITAS */}
+            {activeSlide === 0 && (
+              <section className="mx-auto flex min-h-full w-full max-w-7xl flex-col justify-center gap-8 px-5 py-8 sm:px-10 lg:flex-row lg:items-center lg:gap-14 lg:px-16">
+                <div className="max-w-xl space-y-6">
+                  <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-700">Kenalan dengan Bintang AI · Kelas 1–6 SD</p>
+                  <h1 className="text-4xl font-black leading-[1.08] tracking-tight text-slate-950 sm:text-6xl">Halo, Teman Bintang.</h1>
+                  <p className="max-w-lg text-lg leading-8 text-slate-600 sm:text-xl">Bintang AI adalah ruang belajar SD inklusif yang membantu anak belajar dengan cara yang lebih sesuai dan nyaman.</p>
+                  <p className="max-w-lg text-sm leading-7 text-slate-500">Di sini, siswa dapat mempelajari modul, bertanya kepada Kak Bintang, dan berlatih. Guru serta orang tua ikut mendampingi perjalanan belajar anak.</p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button type="button" onClick={() => speakText('Halo, Teman Bintang. Bintang AI adalah ruang belajar SD inklusif untuk siswa, guru, dan orang tua. Pilih cara belajar yang nyaman, lalu jelajahi fitur yang tersedia.')} className={secondaryButton}>
+                      {isPlayingAudio ? 'Suara sedang diputar' : 'Dengarkan pengenalan'}
+                    </button>
+                    {isPlayingAudio && <button type="button" onClick={stopAudio} className="text-sm font-semibold text-blue-700 underline">Hentikan suara</button>}
+                    <button type="button" onClick={requestExplore} className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-200">
+                      Jelajahi Bintang AI <span aria-hidden="true">↗</span>
+                    </button>
                   </div>
-                  <div>
-                    <h3 className="font-black text-sm sm:text-base">Kak Bintang AI Tutor SD</h3>
-                    <p className="text-xs text-indigo-600 font-extrabold flex items-center gap-1 mt-0.5">
-                      Sahabat Belajar Pintar Anak SD
-                    </p>
-                  </div>
+                  <p role="status" aria-live="polite" className="min-h-5 text-sm font-semibold text-blue-800">{roleFeedback}</p>
                 </div>
 
-                {/* SPEECH BUBBLE */}
-                <div className={`p-4 rounded-2xl border text-xs leading-relaxed space-y-2 ${
-                  highContrast ? 'bg-yellow-950/40 border-yellow-400 text-yellow-200' : 'bg-indigo-50/90 border-indigo-100 text-indigo-950'
-                }`}>
-                  <p className="font-bold">
-                    "Halo Teman-teman SD! 🌟 Aku Kak Bintang. Mau belajar Matematika, IPA, atau Bahasa Indonesia hari ini? Kamu bisa mendengarkan suaraku, membaca tulisan besar, atau mengetuk gambar simbol!"
-                  </p>
-                </div>
-
-                {/* DISABILITY ROLES BADGES */}
-                <div className="grid grid-cols-3 gap-2 text-center pt-2">
-                  <div className={`p-2.5 rounded-xl border text-[11px] font-bold ${
-                    highContrast ? 'bg-yellow-400 text-black border-yellow-300' : 'bg-amber-50 border-amber-200 text-amber-900'
-                  }`}>
-                    👁️ Tunanetra<br/><span className="text-[9px] font-semibold">Suara Lisan</span>
-                  </div>
-                  <div className={`p-2.5 rounded-xl border text-[11px] font-bold ${
-                    highContrast ? 'bg-yellow-400 text-black border-yellow-300' : 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                  }`}>
-                    👂 Tunarungu<br/><span className="text-[9px] font-semibold">Live Caption</span>
-                  </div>
-                  <div className={`p-2.5 rounded-xl border text-[11px] font-bold ${
-                    highContrast ? 'bg-yellow-400 text-black border-yellow-300' : 'bg-purple-50 border-purple-200 text-purple-900'
-                  }`}>
-                    💬 Tunawicara<br/><span className="text-[9px] font-semibold">Simbol AAC</span>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </section>
-
-        {/* 🎯 SECTION SIMULATOR INTERAKTIF 3 ROLE DISABILITAS (DISABILITY SANDBOX SIMULATOR) */}
-        <section id="sandbox-disabilitas" className={`scroll-mt-28 px-4 sm:px-8 py-16 sm:py-24 border-y ${
-          highContrast ? 'bg-black border-yellow-400' : 'bg-slate-50/70 border-slate-200/80'
-        }`}>
-          <div className="max-w-7xl mx-auto space-y-10">
-            <div className="max-w-3xl mx-auto text-center space-y-3">
-              <span className={`px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider inline-flex items-center gap-1.5 border ${
-                highContrast ? 'bg-yellow-400 text-black border-yellow-300' : 'bg-indigo-100 text-indigo-800 border-indigo-200'
-              }`}>
-                Uji Coba Langsung 3 Role Disabilitas
-              </span>
-              <h2 className="text-2xl sm:text-4xl font-black leading-snug">
-                Coba Simulasi Antarmuka Aksesibilitas
-              </h2>
-              <p className={`text-xs sm:text-sm font-medium leading-relaxed ${highContrast ? 'text-yellow-100' : 'text-slate-600'}`}>
-                Klik tab di bawah untuk mempraktikkan bagaimana BintangAi menyesuaikan fitur secara otomatis untuk siswa Tunanetra, Tunarungu, dan Tunawicara.
-              </p>
-            </div>
-
-            {/* SIMULATOR TAB NAVIGATION */}
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-md space-y-8 max-w-4xl mx-auto">
-              <div className="grid grid-cols-3 gap-2 p-1.5 bg-slate-100 rounded-2xl text-xs font-bold">
-                <button
-                  onClick={() => handleRoleTabSelect('tunanetra')}
-                  className={`py-3 px-3 rounded-xl transition-all font-extrabold ${
-                    activeRoleTab === 'tunanetra'
-                      ? 'bg-amber-500 text-white shadow-md'
-                      : 'text-slate-700 hover:text-slate-900'
-                  }`}
-                >
-                  👁️ Simulasi Tunanetra
-                </button>
-                <button
-                  onClick={() => handleRoleTabSelect('tunarungu')}
-                  className={`py-3 px-3 rounded-xl transition-all font-extrabold ${
-                    activeRoleTab === 'tunarungu'
-                      ? 'bg-emerald-600 text-white shadow-md'
-                      : 'text-slate-700 hover:text-slate-900'
-                  }`}
-                >
-                  👂 Simulasi Tunarungu
-                </button>
-                <button
-                  onClick={() => handleRoleTabSelect('tunawicara')}
-                  className={`py-3 px-3 rounded-xl transition-all font-extrabold ${
-                    activeRoleTab === 'tunawicara'
-                      ? 'bg-purple-600 text-white shadow-md'
-                      : 'text-slate-700 hover:text-slate-900'
-                  }`}
-                >
-                  💬 Simulasi Tunawicara
-                </button>
-              </div>
-
-              {/* DYNAMIC SIMULATOR CONTENT */}
-              <AnimatePresence mode="wait">
-                {/* 👁️ SIMULATOR TUNANETRA */}
-                {activeRoleTab === 'tunanetra' && (
-                  <motion.div
-                    key="tunanetra-sim"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="space-y-5"
-                  >
-                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl space-y-2">
-                      <h4 className="font-black text-amber-950 text-sm flex items-center justify-between">
-                        <span>🔊 Pembacaan Suara Paragraf W3C (TTS)</span>
-                        <span className="text-[10px] bg-amber-200 text-amber-900 px-2.5 py-0.5 rounded-md font-bold">Dukungan Screen Reader</span>
-                      </h4>
-                      <p className="text-xs text-amber-900 font-medium leading-relaxed">
-                        Siswa tunanetra dapat mendengarkan pembacaan materi paragraf demi paragraf tanpa perlu melihat layar.
-                      </p>
+                <div className="w-full max-w-2xl space-y-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Mulai dari sini</p>
+                      <h2 className="mt-1 text-xl font-extrabold text-slate-950 sm:text-2xl">Cara belajar yang nyaman</h2>
                     </div>
-
-                    <div className="p-5 bg-slate-900 text-white rounded-2xl space-y-4 shadow-inner">
-                      <div className="flex items-center justify-between text-xs font-bold text-amber-400">
-                        <span>Paragraf 1 dari Modul IPA Kelas 4 SD:</span>
-                        <span>TTS Rate: 0.95x</span>
-                      </div>
-                      <p className="text-sm font-medium leading-relaxed italic bg-slate-800/80 p-3.5 rounded-xl border border-slate-700">
-                        "Tumbuhan hijau memasak makanannya sendiri melalui proses fotosintesis dengan bantuan sinar matahari."
-                      </p>
-
-                      <div className="flex items-center gap-3 pt-1">
-                        <button
-                          onClick={() => {
-                            if (simTunanetraPlaying) {
-                              stopAudio();
-                              setSimTunanetraPlaying(false);
-                            } else {
-                              setSimTunanetraPlaying(true);
-                              speakText("Paragraf satu: Tumbuhan hijau memasak makanannya sendiri melalui proses fotosintesis dengan bantuan sinar matahari.");
-                            }
-                          }}
-                          className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-black flex items-center gap-2 active:scale-95 transition"
-                        >
-                          {simTunanetraPlaying ? <HiPause className="text-base" /> : <HiPlay className="text-base" />}
-                          <span>{simTunanetraPlaying ? 'Hentikan Audio' : 'Putar Audio Suara Lisan'}</span>
-                        </button>
-                        <span className="text-[11px] text-slate-400 font-bold">
-                          💡 Tekan tombol Spasi di keyboard untuk Play/Pause
-                        </span>
-                      </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button type="button" onClick={() => openAuth('login')} className={`${secondaryButton} min-h-10 px-4 py-2 text-xs`}>Masuk</button>
+                      <button type="button" onClick={() => openAuth('register')} className={`${primaryButton} min-h-10 px-4 py-2 text-xs`}>Daftar</button>
                     </div>
-                  </motion.div>
+                  </div>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {LEARNING_MODES.map(renderModeCard)}
+                  </div>
+                  <p className="text-xs leading-5 text-slate-500">Catatan: kebutuhan setiap anak berbeda. Semua anak tetap dapat menggunakan pengaturan dasar seperti ukuran teks, kontras, dan suara.</p>
+                </div>
+              </section>
+            )}
+
+            {/* SLIDE 2 — ALASAN / SOLUSI */}
+            {activeSlide === 1 && (
+              <section className="mx-auto flex min-h-full w-full max-w-7xl flex-col justify-center gap-10 px-5 py-10 sm:px-10 lg:px-16">
+                <SlideHeading
+                  eyebrow="Mengapa Bintang AI hadir?"
+                  title="Setiap anak berhak belajar dengan cara yang dapat diakses."
+                  description="Bintang AI dirancang sebagai ruang belajar SD yang menghubungkan siswa, guru, dan orang tua dalam pengalaman belajar yang lebih mudah dijangkau."
+                />
+                <div className="grid gap-4 md:grid-cols-2">
+                  <article className="rounded-3xl border border-blue-100 bg-white p-6 sm:p-9">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-700">Untuk siswa</p>
+                    <h3 className="mt-4 text-2xl font-extrabold text-slate-950">Materi yang lebih mudah diikuti.</h3>
+                    <p className="mt-4 max-w-xl text-sm leading-7 text-slate-600">Siswa dapat mempelajari materi melalui teks, suara, visual, dan pilihan komunikasi yang sesuai. Siswa juga dapat bertanya kepada Kak Bintang dengan bahasa yang sederhana.</p>
+                  </article>
+                  <article className="rounded-3xl border border-slate-200 bg-[#eef3f9] p-6 sm:p-9">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-600">Untuk pendamping</p>
+                    <h3 className="mt-4 text-2xl font-extrabold text-slate-950">Belajar yang saling terhubung.</h3>
+                    <p className="mt-4 max-w-xl text-sm leading-7 text-slate-600">Guru menyiapkan kelas dan materi. Orang tua mendampingi kegiatan belajar serta melihat perkembangan anak sesuai data yang tersedia di platform.</p>
+                  </article>
+                </div>
+                <p className="max-w-3xl border-l-4 border-blue-700 pl-4 text-sm leading-7 text-slate-600">Prinsipnya sederhana: teknologi membantu anak belajar, bukan membuat anak harus menyesuaikan diri dengan teknologi.</p>
+              </section>
+            )}
+
+            {/* SLIDE 3 — PILIHAN AKSESIBILITAS */}
+            {activeSlide === 2 && (
+              <section className="mx-auto flex min-h-full w-full max-w-7xl flex-col justify-center gap-8 px-5 py-8 sm:px-10 lg:px-16">
+                <SlideHeading
+                  eyebrow="Pilihan cara belajar"
+                  title="Satu ruang belajar, beberapa cara untuk memahami."
+                  description="Pilih mode sebagai titik awal. Fitur aksesibilitas sebaiknya tetap dapat diatur sesuai kebutuhan masing-masing anak."
+                />
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {LEARNING_MODES.map(renderModeCard)}
+                </div>
+                <p role="status" aria-live="polite" className="text-sm font-semibold text-blue-800">{roleFeedback || 'Belum memilih? Kamu dapat melanjutkan tanpa menentukan mode.'}</p>
+              </section>
+            )}
+
+            {/* SLIDE 4 — FITUR UTAMA */}
+            {activeSlide === 3 && (
+              <section className="mx-auto flex min-h-full w-full max-w-7xl flex-col justify-center gap-10 px-5 py-10 sm:px-10 lg:px-16">
+                <SlideHeading
+                  eyebrow="Fitur utama"
+                  title="Belajar dalam empat langkah yang mudah dikenali."
+                  description="Materi, pendamping tanya jawab, latihan, dan pengajaran realtime disusun agar siswa dapat belajar secara bertahap dan inklusif."
+                />
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <article className="flex min-h-64 flex-col justify-between rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
+                    <span className="text-sm font-bold tracking-[0.16em] text-blue-700">01 / MATERI</span>
+                    <div>
+                      <h3 className="text-2xl font-extrabold text-slate-950">Modul Belajar SD</h3>
+                      <p className="mt-3 text-sm leading-7 text-slate-600">Materi kelas 1–6 dengan pengaturan ukuran teks dan pembacaan paragraf bila tersedia.</p>
+                    </div>
+                  </article>
+                  <article className="flex min-h-64 flex-col justify-between rounded-3xl bg-[#eaf2ff] p-6 sm:p-8">
+                    <span className="text-sm font-bold tracking-[0.16em] text-blue-800">02 / BERTANYA</span>
+                    <div>
+                      <h3 className="text-2xl font-extrabold text-slate-950">Tanya Kak Bintang</h3>
+                      <p className="mt-3 text-sm leading-7 text-slate-700">Tutor belajar yang membantu menjelaskan materi dengan kalimat sederhana dan langkah yang mudah diikuti.</p>
+                    </div>
+                  </article>
+                  <article className="flex min-h-64 flex-col justify-between rounded-3xl bg-[#f1f3f5] p-6 sm:p-8">
+                    <span className="text-sm font-bold tracking-[0.16em] text-slate-600">03 / BERLATIH</span>
+                    <div>
+                      <h3 className="text-2xl font-extrabold text-slate-950">Kuis dan Poin</h3>
+                      <p className="mt-3 text-sm leading-7 text-slate-600">Latihan interaktif dan poin belajar untuk membantu siswa melihat kemajuan dari waktu ke waktu.</p>
+                    </div>
+                  </article>
+                  <article className="flex min-h-64 flex-col justify-between rounded-3xl bg-[#f8fafc] p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
+                    <span className="text-sm font-bold tracking-[0.16em] text-emerald-700">04 / REALTIME</span>
+                    <div>
+                      <h3 className="text-2xl font-extrabold text-slate-950">Pengajaran Realtime</h3>
+                      <p className="mt-3 text-sm leading-7 text-slate-600">Guru mengajar secara realtime dengan penyampaian suara untuk Tunanetra, teks untuk Tunarungu, dan Tunawicara membalas dengan teks.</p>
+                    </div>
+                  </article>
+                </div>
+              </section>
+            )}
+
+            {/* SLIDE 5 — ALUR PENGGUNA */}
+            {activeSlide === 4 && (
+              <section className="mx-auto flex min-h-full w-full max-w-7xl flex-col justify-center gap-10 px-5 py-10 sm:px-10 lg:px-16">
+                <SlideHeading
+                  eyebrow="Pengguna platform"
+                  title="Tiga peran, satu perjalanan belajar."
+                  description="Setiap peran memiliki tugas yang berbeda. Alurnya saling terhubung agar pembelajaran anak mendapat dukungan di sekolah dan di rumah."
+                />
+                <div className="grid gap-3 md:grid-cols-3">
+                  <article className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-7">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-700">01 · Menyiapkan</p>
+                    <h3 className="mt-5 text-2xl font-extrabold">Guru Pembimbing</h3>
+                    <p className="mt-3 text-sm leading-7 text-slate-600">Membuat kelas, membagikan kode kelas, menyiapkan modul, dan memantau tugas siswa.</p>
+                  </article>
+                  <article className="rounded-3xl border-2 border-blue-700 bg-blue-50 p-6 sm:p-7">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-800">02 · Belajar</p>
+                    <h3 className="mt-5 text-2xl font-extrabold">Siswa SD</h3>
+                    <p className="mt-3 text-sm leading-7 text-slate-700">Membuka materi, bertanya kepada Kak Bintang, dan mengerjakan latihan sesuai kelasnya.</p>
+                  </article>
+                  <article className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-7">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-600">03 · Mendampingi</p>
+                    <h3 className="mt-5 text-2xl font-extrabold">Orang Tua / Wali</h3>
+                    <p className="mt-3 text-sm leading-7 text-slate-600">Melihat laporan belajar dan mendampingi anak berdasarkan perkembangan yang tercatat.</p>
+                  </article>
+                </div>
+                <p className="text-sm text-slate-500">Alur operasional: Guru menyiapkan kelas → Siswa belajar → Orang tua mendampingi.</p>
+              </section>
+            )}
+
+            {/* SLIDE 6 — DEMO */}
+            {activeSlide === 5 && (
+              <section className="mx-auto flex min-h-full w-full max-w-7xl flex-col justify-center gap-8 px-5 py-8 sm:px-10 lg:px-16">
+                <SlideHeading
+                  eyebrow="Coba simulasi"
+                  title="Lihat pengalaman dari sisi setiap pengguna."
+                  description="Pilih akun contoh untuk masuk otomatis ke ruang simulasi. Siswa ditampilkan lebih dahulu karena siswa adalah pengguna utama ruang belajar."
+                />
+                {loginMessage && (
+                  <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800">{loginMessage.text}</div>
                 )}
-
-                {/* 👂 SIMULATOR TUNARUNGU */}
-                {activeRoleTab === 'tunarungu' && (
-                  <motion.div
-                    key="tunarungu-sim"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="space-y-5"
-                  >
-                    <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-2">
-                      <h4 className="font-black text-emerald-950 text-sm flex items-center justify-between">
-                        <span>👂 Mata Pintar Live Caption HUD HUD</span>
-                        <span className="text-[10px] bg-emerald-200 text-emerald-900 px-2.5 py-0.5 rounded-md font-bold">Transkripsi Real-time</span>
-                      </h4>
-                      <p className="text-xs text-emerald-900 font-medium leading-relaxed">
-                        Ucapan guru dikonversi menjadi teks caption transparan berdefinisi tinggi di layar siswa tunarungu.
-                      </p>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-bold uppercase tracking-[0.18em] text-blue-700">A · Siswa SD</span>
+                    <span className="h-px flex-1 bg-slate-200" />
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-3">{demoStudents.map(renderDemoCard)}</div>
+                  <article className="mt-3 flex flex-col justify-between gap-4 rounded-2xl border border-dashed border-slate-300 bg-white/70 p-5 sm:flex-row sm:items-center">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-600">Mode Umum / Standar SD</p>
+                      <h3 className="mt-2 text-base font-extrabold text-slate-950">Gunakan akun siswa yang sudah terdaftar.</h3>
+                      <p className="mt-1 text-sm leading-6 text-slate-600">Belum tersedia akun simulasi terpisah untuk mode umum. Pilihan mode tetap dapat diatur sebelum masuk.</p>
                     </div>
+                    <button type="button" onClick={() => { handleSelectRoleInitial('tidak_ada'); openAuth('login'); }} className={secondaryButton}>Masuk sebagai siswa</button>
+                  </article>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-600">B · Guru</span>
+                      <span className="h-px flex-1 bg-slate-200" />
+                    </div>
+                    {renderDemoCard(demoAdults.find((account) => account.group === 'guru'))}
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-600">C · Orang tua / wali</span>
+                      <span className="h-px flex-1 bg-slate-200" />
+                    </div>
+                    {renderDemoCard(demoAdults.find((account) => account.group === 'ortu'))}
+                  </div>
+                </div>
+                <p className="rounded-xl bg-amber-50 px-4 py-3 text-xs leading-6 text-amber-900">Catatan: tombol ini melakukan login otomatis menggunakan akun simulasi yang dikonfigurasi pada aplikasi. Jadi, demo bukan sesi anonim tanpa autentikasi.</p>
+              </section>
+            )}
 
-                    {/* HUD CAPTION PREVIEW */}
-                    <div className="p-6 bg-slate-950 text-white rounded-2xl space-y-4 border border-emerald-500/40 relative overflow-hidden">
-                      <div className="flex items-center justify-between text-xs font-bold border-b border-slate-800 pb-3">
-                        <span className="flex items-center gap-1.5 text-emerald-400">
-                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping inline-block" /> Live Caption Aktif
-                        </span>
-                        <div className="flex gap-1">
-                          <button onClick={() => setSimTunarunguFont('text-xs')} className="px-2 py-0.5 bg-slate-800 text-[10px] rounded font-bold">Teks S</button>
-                          <button onClick={() => setSimTunarunguFont('text-sm')} className="px-2 py-0.5 bg-slate-800 text-[10px] rounded font-bold">Teks M</button>
-                          <button onClick={() => setSimTunarunguFont('text-base')} className="px-2 py-0.5 bg-slate-800 text-[10px] rounded font-bold">Teks L</button>
+            {/* SLIDE 7 — CTA */}
+            {activeSlide === 6 && (
+              <section className="mx-auto flex min-h-full w-full max-w-6xl flex-col items-center justify-center px-5 py-12 text-center sm:px-10">
+                <p className="text-xs font-bold uppercase tracking-[0.24em] text-blue-700">Bintang AI · Ruang Belajar SD Inklusif</p>
+                <h2 className="mt-6 max-w-4xl text-4xl font-black leading-tight tracking-tight text-slate-950 sm:text-6xl">Setiap anak punya cara untuk bersinar.</h2>
+                <p className="mt-6 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">Mulai dari mencoba simulasi, membuat akun, atau masuk untuk melanjutkan kegiatan belajar.</p>
+                <div className="mt-9 flex w-full max-w-lg flex-col gap-3 sm:flex-row">
+                  <button type="button" onClick={() => openAuth('register')} className={`${primaryButton} flex-1`}>Daftar akun</button>
+                  <button type="button" onClick={() => openAuth('login')} className={`${secondaryButton} flex-1`}>Masuk ke akun</button>
+                </div>
+                <button type="button" onClick={() => goToSlide(5)} className="mt-5 text-sm font-semibold text-blue-700 underline underline-offset-4">Kembali mencoba demo</button>
+              </section>
+            )}
+
+            {/* SLIDE 8 — LOGIN / REGISTER */}
+            {activeSlide === 7 && (
+              <section className="mx-auto flex min-h-full w-full max-w-6xl flex-col justify-center px-5 py-8 sm:px-10 lg:px-16">
+                <div className="mb-6 flex flex-col gap-5 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Ruang Belajar SD Inklusif</p>
+                    <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">{authTab === 'login' ? 'Selamat datang kembali.' : 'Buat akun Bintang AI.'}</h2>
+                    <p className="mt-2 text-sm text-slate-600">{authTab === 'login' ? 'Masuk untuk melanjutkan kegiatan belajar.' : 'Lengkapi tiga langkah singkat untuk membuat akun.'}</p>
+                  </div>
+                  <div className="grid grid-cols-2 rounded-xl border border-slate-200 bg-white p-1">
+                    <button type="button" onClick={() => { setAuthTab('login'); setLoginMessage(null); }} className={`rounded-lg px-5 py-3 text-sm font-bold transition ${authTab === 'login' ? 'bg-blue-700 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>Masuk</button>
+                    <button type="button" onClick={() => { setAuthTab('register'); setRegStep(1); setRegMessage(null); }} className={`rounded-lg px-5 py-3 text-sm font-bold transition ${authTab === 'register' ? 'bg-blue-700 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>Daftar</button>
+                  </div>
+                </div>
+
+                {authTab === 'login' && (
+                  <div className="mx-auto w-full max-w-2xl rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+                    {loginMessage && (
+                      <div role="alert" className={`mb-5 rounded-xl border px-4 py-3 text-sm font-semibold ${loginMessage.type === 'error' ? 'border-rose-200 bg-rose-50 text-rose-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>{loginMessage.text}</div>
+                    )}
+                    <form onSubmit={handleLoginSubmit} className="space-y-5">
+                      <div>
+                        <label htmlFor="landing-login-email" className="mb-2 block text-sm font-bold text-slate-800">Email</label>
+                        <input id="landing-login-email" type="email" autoComplete="email" required value={loginEmail} onChange={(event) => setLoginEmail(event.target.value)} placeholder="nama@email.com" className={fieldClass} />
+                      </div>
+                      <div>
+                        <label htmlFor="landing-login-password" className="mb-2 block text-sm font-bold text-slate-800">Kata sandi</label>
+                        <div className="relative">
+                          <input id="landing-login-password" type={showLoginPassword ? 'text' : 'password'} autoComplete="current-password" required value={loginPassword} onChange={(event) => setLoginPassword(event.target.value)} placeholder="Masukkan kata sandi" className={`${fieldClass} pr-24`} />
+                          <button type="button" onClick={() => setShowLoginPassword((value) => !value)} className="absolute inset-y-0 right-3 my-auto h-9 rounded-md px-2 text-xs font-bold text-blue-700 hover:bg-blue-50" aria-label={showLoginPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}>{showLoginPassword ? 'Sembunyikan' : 'Tampilkan'}</button>
                         </div>
                       </div>
-
-                      <div className={`p-4 bg-black/80 border border-emerald-500/30 rounded-xl font-bold text-emerald-300 leading-relaxed ${simTunarunguFont}`}>
-                        {simTunarunguCaption}
-                      </div>
-
-                      <div className="flex gap-2 pt-1">
-                        <button
-                          onClick={() => setSimTunarunguCaption('Ibu Guru: "Siapa yang tahu apa fungsi akar pada tumbuhan?"')}
-                          className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-bold"
-                        >
-                          Simulasi Ucapan Guru 1
-                        </button>
-                        <button
-                          onClick={() => setSimTunarunguCaption('Ibu Guru: "Bagus sekali Bintang! Akar menyerap air dari dalam tanah."')}
-                          className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-bold"
-                        >
-                          Simulasi Ucapan Guru 2
-                        </button>
-                      </div>
-                    </div>
-                  </motion.div>
+                      <button type="submit" disabled={loginLoading} className={`${primaryButton} w-full`}>{loginLoading ? 'Memeriksa akun…' : 'Masuk ke Bintang AI'}</button>
+                    </form>
+                    <p className="mt-5 text-center text-sm text-slate-600">Belum punya akun? <button type="button" onClick={() => { setAuthTab('register'); setRegStep(1); }} className="font-bold text-blue-700 underline underline-offset-4">Daftar sekarang</button></p>
+                  </div>
                 )}
 
-                {/* 💬 SIMULATOR TUNAWICARA */}
-                {activeRoleTab === 'tunawicara' && (
-                  <motion.div
-                    key="tunawicara-sim"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="space-y-5"
-                  >
-                    <div className="p-4 bg-purple-50 border border-purple-200 rounded-2xl space-y-2">
-                      <h4 className="font-black text-purple-950 text-sm flex items-center justify-between">
-                        <span>💬 Papan Simbol AAC (Augmentative Communication)</span>
-                        <span className="text-[10px] bg-purple-200 text-purple-900 px-2.5 py-0.5 rounded-md font-bold">Respons 1-Ketuk</span>
-                      </h4>
-                      <p className="text-xs text-purple-900 font-medium leading-relaxed">
-                        Siswa tunawicara cukup mengetuk kartu gambar simbol untuk langsung bersuara dan membalas guru tanpa perlu mengetik.
-                      </p>
+                {authTab === 'register' && (
+                  <div className="mx-auto w-full max-w-3xl rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+                    <div className="mb-6">
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <p className="text-sm font-bold text-slate-800">Langkah {regStep} dari 3</p>
+                        <p className="text-xs font-semibold text-slate-500">{['Peran pengguna', 'Detail sekolah', 'Data akun'][regStep - 1]}</p>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2" aria-label="Progres pendaftaran">
+                        {[1, 2, 3].map((step) => <div key={step} className={`h-1.5 rounded-full ${step <= regStep ? 'bg-blue-700' : 'bg-slate-200'}`} />)}
+                      </div>
                     </div>
 
-                    <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-4">
-                      <p className="text-xs font-bold text-slate-700">Coba Ketuk Papan Simbol Balasan Cepat Siswa di Bawah Ini:</p>
+                    {regMessage && (
+                      <div role="alert" className={`mb-5 rounded-xl border px-4 py-3 text-sm font-semibold ${regMessage.type === 'error' ? 'border-rose-200 bg-rose-50 text-rose-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>{regMessage.text}</div>
+                    )}
 
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        {sampleAACSymbols.map((sym) => (
-                          <button
-                            key={sym.text}
-                            onClick={() => handleSimulateAAC(sym)}
-                            className={`p-4 rounded-2xl border font-black text-xs flex flex-col items-center gap-2 transition hover:scale-105 active:scale-95 shadow-xs ${sym.bg}`}
-                          >
-                            <span className="text-3xl">{sym.icon}</span>
-                            <span className="text-center">{sym.text}</span>
-                          </button>
-                        ))}
-                      </div>
+                    <form onSubmit={handleRegisterSubmit} className="space-y-6">
+                      {regStep === 1 && (
+                        <div className="space-y-5">
+                          <fieldset>
+                            <legend className="mb-3 text-sm font-bold text-slate-800">Pilih peran pengguna</legend>
+                            <div className="grid gap-3 sm:grid-cols-3">
+                              {[
+                                { id: 'siswa', label: 'Siswa SD', description: 'Untuk anak kelas 1–6' },
+                                { id: 'guru', label: 'Guru SLB/SD', description: 'Untuk pengajar' },
+                                { id: 'ortu', label: 'Orang tua / wali', description: 'Untuk pendamping anak' },
+                              ].map((role) => (
+                                <button key={role.id} type="button" onClick={() => { setRegRole(role.id); setRegMessage(null); }} aria-pressed={regRole === role.id} className={`rounded-xl border-2 p-4 text-left transition focus:outline-none focus:ring-4 focus:ring-blue-100 ${regRole === role.id ? 'border-blue-700 bg-blue-50' : 'border-slate-200 bg-white hover:border-slate-400'}`}>
+                                  <span className="block text-sm font-extrabold text-slate-950">{role.label}</span>
+                                  <span className="mt-1 block text-xs text-slate-600">{role.description}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </fieldset>
 
-                      {aacToast && (
-                        <div className="p-3 bg-purple-600 text-white rounded-xl text-xs font-bold text-center animate-bounce">
-                          {aacToast}
+                          {regRole === 'siswa' && (
+                            <div>
+                              <label htmlFor="landing-reg-disability" className="mb-2 block text-sm font-bold text-slate-800">Preferensi cara belajar</label>
+                              <select id="landing-reg-disability" value={regDisability} onChange={(event) => setRegDisability(event.target.value)} className={fieldClass}>
+                                <option value="tunanetra">Tunanetra — suara dan pembaca layar</option>
+                                <option value="tunarungu">Tunarungu — teks dan subtitle</option>
+                                <option value="tunawicara">Tunawicara — pilihan komunikasi</option>
+                                <option value="tidak_ada">Umum / Standar SD</option>
+                              </select>
+                              <p className="mt-2 text-xs leading-5 text-slate-500">Pilihan ini dapat disesuaikan lagi. Fitur aksesibilitas dasar tetap tersedia untuk semua siswa.</p>
+                            </div>
+                          )}
+                          <div className="flex justify-end">
+                            <button type="button" onClick={handleRegisterNext} className={primaryButton}>Lanjut ke detail</button>
+                          </div>
                         </div>
                       )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-        </section>
 
-        {/* 📚 KESESUAIAN SD KELAS 1–6 (GRADE LEVEL ADAPTABILITY SECTION) */}
-        <section id="kesesuaian-sd" className="scroll-mt-28 px-4 sm:px-8 py-16 sm:py-24 bg-white">
-          <div className="max-w-7xl mx-auto space-y-12">
-            <div className="max-w-3xl mx-auto text-center space-y-3">
-              <span className={`px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider border ${
-                highContrast ? 'bg-yellow-400 text-black border-yellow-300' : 'bg-indigo-50 text-indigo-700 border-indigo-200'
-              }`}>
-                Disesuaikan Berdasarkan Usia Anak
-              </span>
-              <h2 className="text-2xl sm:text-4xl font-black leading-snug">
-                Pendekatan Belajar Khusus SD Kelas 1–6
-              </h2>
-              <p className={`text-xs sm:text-sm font-medium leading-relaxed ${highContrast ? 'text-yellow-100' : 'text-slate-600'}`}>
-                BintangAi memisahkan pendekatan antarmuka untuk tingkat kelas rendah (SD 1–3) dan kelas tinggi (SD 4–6).
-              </p>
-            </div>
+                      {regStep === 2 && (
+                        <div className="space-y-5">
+                          {regRole === 'siswa' && (
+                            <div className="grid gap-4 sm:grid-cols-2">
+                              <div>
+                                <label htmlFor="landing-reg-class" className="mb-2 block text-sm font-bold text-slate-800">Kelas SD</label>
+                                <select id="landing-reg-class" required value={regClassLevel} onChange={(event) => setRegClassLevel(event.target.value)} className={fieldClass}>
+                                  {['1 SD', '2 SD', '3 SD', '4 SD', '5 SD', '6 SD'].map((level) => <option key={level} value={level}>{level}</option>)}
+                                </select>
+                              </div>
+                              <div>
+                                <label htmlFor="landing-reg-class-code" className="mb-2 block text-sm font-bold text-slate-800">Kode kelas dari guru</label>
+                                <input id="landing-reg-class-code" required value={regClassCode} onChange={(event) => setRegClassCode(event.target.value.toUpperCase())} placeholder="Contoh: X8J2K1" className={fieldClass} />
+                              </div>
+                            </div>
+                          )}
 
-            {/* CLASS TAB SWITCHER */}
-            <div className="flex justify-center gap-3">
-              <button
-                onClick={() => setSdClassTab('rendah')}
-                className={`px-6 py-3 rounded-2xl text-xs font-extrabold transition-all border ${
-                  sdClassTab === 'rendah'
-                    ? highContrast ? 'bg-yellow-400 text-black border-yellow-300' : 'bg-indigo-600 text-white border-indigo-600 shadow-md'
-                    : 'bg-slate-100 text-slate-700 border-slate-200'
-                }`}
-              >
-                🏫 Kelas 1, 2, & 3 SD (Kelas Rendah)
-              </button>
-              <button
-                onClick={() => setSdClassTab('tinggi')}
-                className={`px-6 py-3 rounded-2xl text-xs font-extrabold transition-all border ${
-                  sdClassTab === 'tinggi'
-                    ? highContrast ? 'bg-yellow-400 text-black border-yellow-300' : 'bg-indigo-600 text-white border-indigo-600 shadow-md'
-                    : 'bg-slate-100 text-slate-700 border-slate-200'
-                }`}
-              >
-                🎓 Kelas 4, 5, & 6 SD (Kelas Tinggi)
-              </button>
-            </div>
+                          {regRole === 'guru' && (
+                            <div className="grid gap-4 sm:grid-cols-2">
+                              <div>
+                                <label htmlFor="landing-reg-school" className="mb-2 block text-sm font-bold text-slate-800">Nama sekolah / SLB</label>
+                                <input id="landing-reg-school" required value={regSlbName} onChange={(event) => setRegSlbName(event.target.value)} placeholder="Nama sekolah atau SLB" className={fieldClass} />
+                              </div>
+                              <div>
+                                <label htmlFor="landing-reg-teacher-class" className="mb-2 block text-sm font-bold text-slate-800">Kelas yang diampu</label>
+                                <select id="landing-reg-teacher-class" required value={regClassLevel} onChange={(event) => setRegClassLevel(event.target.value)} className={fieldClass}>
+                                  {['1 SD', '2 SD', '3 SD', '4 SD', '5 SD', '6 SD'].map((level) => <option key={level} value={level}>{level}</option>)}
+                                </select>
+                              </div>
+                              <div>
+                                <label htmlFor="landing-reg-subject" className="mb-2 block text-sm font-bold text-slate-800">Mata pelajaran utama</label>
+                                <select id="landing-reg-subject" value={regSubject} onChange={(event) => setRegSubject(event.target.value)} className={fieldClass}>
+                                  {['Matematika', 'Bahasa Indonesia', 'IPAS', 'Pendidikan Pancasila', 'Bahasa Inggris', 'Lainnya'].map((subject) => <option key={subject} value={subject}>{subject}</option>)}
+                                </select>
+                              </div>
+                            </div>
+                          )}
 
-            {/* TAB CONTENT */}
-            <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-6">
-              {sdClassTab === 'rendah' ? (
-                <>
-                  <div className="p-6 bg-amber-50/70 border border-amber-200 rounded-3xl space-y-3">
-                    <div className="w-10 h-10 rounded-xl bg-amber-500 text-white font-black text-lg flex items-center justify-center">1</div>
-                    <h3 className="font-bold text-slate-900 text-base">Fokus Bahasa Bergambar & Suara</h3>
-                    <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                      Anak-anak kelas 1-3 SD yang baru belajar membaca didukung dengan tombol berukuran ekstra besar, ikon visual yang kontras, serta panduan suara otomatis Kak Bintang.
-                    </p>
-                  </div>
+                          {regRole === 'ortu' && (
+                            <div>
+                              <label htmlFor="landing-reg-child-id" className="mb-2 block text-sm font-bold text-slate-800">ID Belajar Siswa anak</label>
+                              <input id="landing-reg-child-id" required value={regStudentIdInput} onChange={(event) => setRegStudentIdInput(event.target.value)} placeholder="Masukkan ID yang diberikan kepada siswa" className={fieldClass} />
+                              {checkingChild && <p role="status" className="mt-2 text-xs font-semibold text-blue-700">Sedang memeriksa ID siswa…</p>}
+                              {verifiedChild && <p role="status" className="mt-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800">Profil ditemukan: {verifiedChild.full_name} · {verifiedChild.class_level || 'Kelas SD'}</p>}
+                              {childCheckError && <p role="alert" className="mt-2 text-xs font-semibold text-rose-700">{childCheckError}</p>}
+                            </div>
+                          )}
 
-                  <div className="p-6 bg-emerald-50/70 border border-emerald-200 rounded-3xl space-y-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white font-black text-lg flex items-center justify-center">2</div>
-                    <h3 className="font-bold text-slate-900 text-base">Penyederhanaan Materi & Tanpa Markdown</h3>
-                    <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                      Jawaban AI dan teks modul diketik menggunakan bahasa anak-anak yang polos tanpa simbol matematika rumit atau format markdown yang membingungkan.
-                    </p>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="p-6 bg-indigo-50/70 border border-indigo-200 rounded-3xl space-y-3">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white font-black text-lg flex items-center justify-center">3</div>
-                    <h3 className="font-bold text-slate-900 text-base">Gamifikasi & Poin XP Belajar</h3>
-                    <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                      Siswa kelas 4-6 SD termotivasi dengan perolehan XP kuis, Streak Harian 🔥, papan peringkat teman sekelas, serta kuis interaktif berdurasi fleksibel.
-                    </p>
-                  </div>
-
-                  <div className="p-6 bg-purple-50/70 border border-purple-200 rounded-3xl space-y-3">
-                    <div className="w-10 h-10 rounded-xl bg-purple-600 text-white font-black text-lg flex items-center justify-center">4</div>
-                    <h3 className="font-bold text-slate-900 text-base">Kuis Gesture Tangan & Diskusi Kelompok</h3>
-                    <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                      Siswa dapat menjawab kuis menggunakan isyarat jari di depan kamera HP/laptop serta bergabung dalam grup kolaborasi inklusif.
-                    </p>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </section>
-
-        {/* FITUR LENGKAP APLIKASI */}
-        <section id="fitur-utama" className="scroll-mt-28 px-4 sm:px-8 py-16 sm:py-24 bg-slate-50/60 border-t border-slate-100">
-          <div className="max-w-7xl mx-auto space-y-12">
-            <div className="max-w-3xl mx-auto text-center space-y-3">
-              <span className="px-3.5 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-full text-xs font-extrabold uppercase tracking-wider">
-                Fitur Lengkap Platform
-              </span>
-              <h2 className="text-2xl sm:text-4xl font-black text-slate-900 leading-snug">
-                Solusi Pembelajaran Inklusif Terpadu
-              </h2>
-            </div>
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {appFeatures.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <motion.div
-                    key={item.id}
-                    whileHover={{ y: -5 }}
-                    onClick={() => go(item.path)}
-                    className={`p-6 rounded-3xl border shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between space-y-4 group ${
-                      highContrast ? 'bg-black border-yellow-400 text-yellow-300' : 'bg-white border-slate-200'
-                    }`}
-                  >
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl border ${item.color}`}>
-                          <Icon />
+                          <div className="flex justify-between gap-3">
+                            <button type="button" onClick={() => { setRegStep(1); setRegMessage(null); }} className={secondaryButton}>Kembali</button>
+                            <button type="button" onClick={handleRegisterNext} className={primaryButton}>Lanjut ke data akun</button>
+                          </div>
                         </div>
-                        <span className="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg text-[10px] font-extrabold">
-                          {item.targetDisability}
-                        </span>
-                      </div>
-                      <h3 className="font-black text-base group-hover:text-indigo-600 transition-colors">
-                        {item.title}
-                      </h3>
-                      <p className="text-xs text-slate-600 font-medium leading-relaxed">
-                        {item.description}
-                      </p>
-                    </div>
+                      )}
 
-                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-extrabold text-indigo-600">
-                      <span>Buka Fitur</span>
-                      <HiArrowRight className="text-sm group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
+                      {regStep === 3 && (
+                        <div className="space-y-5">
+                          <div>
+                            <label htmlFor="landing-reg-name" className="mb-2 block text-sm font-bold text-slate-800">Nama lengkap</label>
+                            <input id="landing-reg-name" autoComplete="name" required value={regFullName} onChange={(event) => setRegFullName(event.target.value)} placeholder="Masukkan nama lengkap" className={fieldClass} />
+                          </div>
+                          <div>
+                            <label htmlFor="landing-reg-email" className="mb-2 block text-sm font-bold text-slate-800">Email</label>
+                            <input id="landing-reg-email" type="email" autoComplete="email" required value={regEmail} onChange={(event) => setRegEmail(event.target.value)} placeholder="nama@email.com" className={fieldClass} />
+                          </div>
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            <div>
+                              <label htmlFor="landing-reg-password" className="mb-2 block text-sm font-bold text-slate-800">Kata sandi</label>
+                              <div className="relative">
+                                <input id="landing-reg-password" type={showRegPassword ? 'text' : 'password'} autoComplete="new-password" required minLength={8} value={regPassword} onChange={(event) => setRegPassword(event.target.value)} placeholder="Minimal 8 karakter" className={`${fieldClass} pr-24`} />
+                                <button type="button" onClick={() => setShowRegPassword((value) => !value)} className="absolute inset-y-0 right-3 my-auto h-9 rounded-md px-2 text-xs font-bold text-blue-700 hover:bg-blue-50">{showRegPassword ? 'Sembunyikan' : 'Tampilkan'}</button>
+                              </div>
+                            </div>
+                            <div>
+                              <label htmlFor="landing-reg-confirm" className="mb-2 block text-sm font-bold text-slate-800">Ulangi kata sandi</label>
+                              <input id="landing-reg-confirm" type={showRegPassword ? 'text' : 'password'} autoComplete="new-password" required value={regConfirmPassword} onChange={(event) => setRegConfirmPassword(event.target.value)} placeholder="Ulangi kata sandi" className={fieldClass} />
+                            </div>
+                          </div>
+                          <div className="flex justify-between gap-3">
+                            <button type="button" onClick={() => { setRegStep(2); setRegMessage(null); }} className={secondaryButton}>Kembali</button>
+                            <button type="submit" disabled={regLoading} className={`${primaryButton} flex-1`}>{regLoading ? 'Membuat akun…' : 'Daftar akun Bintang AI'}</button>
+                          </div>
+                        </div>
+                      )}
+                    </form>
+                  </div>
+                )}
+              </section>
+            )}
+          </motion.main>
+        </AnimatePresence>
+      </div>
 
-        {/* CTA BANNER */}
-        <section className="px-4 sm:px-8 py-16 sm:py-20">
-          <div className="max-w-7xl mx-auto rounded-3xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-violet-800 p-8 sm:p-14 text-white shadow-xl flex flex-col lg:flex-row items-center justify-between gap-8">
-            <div className="space-y-3 max-w-2xl text-center lg:text-left">
-              <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-wider text-indigo-100 inline-block">
-                Aksesibilitas Untuk Semua Anak SD
-              </span>
-              <h2 className="text-2xl sm:text-4xl font-black leading-tight">
-                Mari Wujudkan Ruang Belajar Jarak Jauh Yang Ramah & Inklusif
-              </h2>
-              <p className="text-xs sm:text-sm font-medium text-indigo-100/90 leading-relaxed">
-                Daftarkan akun siswa, guru, atau orang tua hari ini secara gratis. Pengalaman belajar dari rumah anak Anda menjadi lebih mandiri, seru, dan terarah.
-              </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-3.5 shrink-0 w-full sm:w-auto">
-              <button
-                type="button"
-                onClick={() => go('/auth/register')}
-                className="px-7 py-4 bg-white text-indigo-900 font-black rounded-2xl shadow-lg hover:bg-indigo-50 transition-all text-sm text-center active:scale-95"
-              >
-                Daftar Akun Baru Gratis 🚀
-              </button>
-              <button
-                type="button"
-                onClick={() => go('/auth/login')}
-                className="px-6 py-4 bg-indigo-900/80 hover:bg-indigo-900 border border-indigo-400/40 text-white font-bold rounded-2xl transition-all text-sm text-center"
-              >
-                Masuk Akun / Demo
-              </button>
-            </div>
-          </div>
-        </section>
-      </main>
-
-      {/* FLOATING BACK TO TOP BUTTON */}
+      {/* Panduan sebelum tur otomatis dimulai. */}
       <AnimatePresence>
-        {showScrollTop && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            onClick={scrollToTop}
-            className={`fixed bottom-6 right-6 z-[200] p-3.5 rounded-2xl shadow-xl transition-all flex items-center justify-center group ${
-              highContrast ? 'bg-yellow-400 text-black' : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-            }`}
-            title="Kembali ke Atas"
-            aria-label="Kembali ke bagian atas halaman"
+        {showTourGuide && (
+          <motion.div
+            className="absolute inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            role="presentation"
+            onClick={(event) => { if (event.target === event.currentTarget) setShowTourGuide(false); }}
           >
-            <HiChevronUp className="text-xl group-hover:-translate-y-0.5 transition-transform" />
-          </motion.button>
+            <motion.section
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="bintang-tour-title"
+              className="w-full max-w-lg rounded-3xl border border-white/70 bg-white p-6 shadow-2xl sm:p-8"
+              initial={{ opacity: 0, y: 28, scale: 0.94, rotateX: 8 }}
+              animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
+              exit={{ opacity: 0, y: 16, scale: 0.97 }}
+              transition={{ duration: prefersReducedMotion ? 0.01 : 0.42, ease: [0.2, 0.8, 0.2, 1] }}
+            >
+              <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-blue-700">Sebelum mulai</p>
+              <h2 id="bintang-tour-title" className="mt-3 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">Jelajahi Bintang AI</h2>
+              <p className="mt-3 text-sm leading-7 text-slate-600">Slide akan bergerak otomatis satu per satu sampai bagian terakhir. Kamu tidak perlu menekan tombol Lanjut berulang kali.</p>
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl bg-blue-50 p-4">
+                  <p className="text-sm font-extrabold text-slate-900">Di komputer</p>
+                  <p className="mt-1 text-sm leading-6 text-slate-600">Tekan tombol <kbd className="rounded-md border border-slate-300 bg-white px-2 py-1 font-bold text-slate-800">Spasi</kbd> untuk jeda atau lanjutkan.</p>
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-sm font-extrabold text-slate-900">Di Android</p>
+                  <p className="mt-1 text-sm leading-6 text-slate-600">Gunakan tombol Jeda yang muncul di bagian bawah layar.</p>
+                </div>
+              </div>
+              <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <button type="button" onClick={() => setShowTourGuide(false)} className={secondaryButton}>Nanti saja</button>
+                <button type="button" onClick={startExploreTour} className={primaryButton}>Mulai jelajah</button>
+              </div>
+            </motion.section>
+          </motion.div>
         )}
       </AnimatePresence>
 
-      <Footer />
+      {/* Kontrol jeda selalu mudah disentuh selama tur berjalan, termasuk di Android. */}
+      <AnimatePresence>
+        {tourActive && (
+          <motion.div
+            className="absolute bottom-4 left-4 z-40 flex items-center gap-2 rounded-2xl border border-white/80 bg-white/90 p-2 shadow-lg backdrop-blur-md sm:bottom-6 sm:left-6"
+            initial={{ opacity: 0, y: 18, scale: 0.94 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.96 }}
+          >
+            <button
+              type="button"
+              onClick={() => setTourPaused((paused) => !paused)}
+              aria-pressed={tourPaused}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-200"
+            >
+              <span aria-hidden="true">{tourPaused ? '▶' : 'Ⅱ'}</span>
+              {tourPaused ? 'Lanjutkan' : 'Jeda'}
+            </button>
+            <span className="hidden pr-2 text-xs font-semibold text-slate-500 sm:inline">{tourPaused ? 'Tur dijeda' : 'Spasi untuk jeda'}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <p className="sr-only" role="status" aria-live="polite">{tourActive ? (tourPaused ? 'Jelajah Bintang AI dijeda.' : `Jelajah Bintang AI, slide ${activeSlide + 1} dari 8.`) : ''}</p>
+
+      {/* Penanda bab kecil di sisi kanan: tidak mengambil ruang header/footer. */}
+      <nav aria-label="Navigasi bab presentasi" className="absolute right-3 top-1/2 z-30 flex -translate-y-1/2 flex-col items-center gap-2 rounded-full border border-white/70 bg-white/55 px-2 py-3 shadow-sm backdrop-blur-md sm:right-6 sm:gap-2.5 sm:px-2.5">
+        {SLIDE_LABELS.map((label, index) => (
+          <button
+            key={label}
+            type="button"
+            onClick={() => goToSlide(index)}
+            aria-label={`Buka slide ${index + 1}: ${label}`}
+            aria-current={activeSlide === index ? 'step' : undefined}
+            title={label}
+            className={`rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${activeSlide === index ? 'h-7 w-2 bg-blue-700' : 'h-2 w-2 bg-slate-400/70 hover:bg-blue-500'}`}
+          />
+        ))}
+      </nav>
     </div>
   );
 };
 
 export default LandingPage;
+

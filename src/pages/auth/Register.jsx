@@ -5,8 +5,8 @@ import { supabase } from '@/lib/supabaseClient';
 import { useAccessibilityStore } from '@/features/accessibility/store/accessibilityStore';
 import { useVoice } from '@/features/accessibility/hooks/useVoice';
 import AuthHeaderAccessibilityBar from '@/components/ui/AuthHeaderAccessibilityBar';
+import BintangAvatar from '@/features/ai-tutor/components/BintangAvatar';
 import {
-  HiAcademicCap,
   HiArrowLeft,
   HiArrowRight,
   HiCheckCircle,
@@ -15,12 +15,9 @@ import {
   HiEye,
   HiEyeOff,
   HiHeart,
-  HiLink,
   HiLockClosed,
   HiMail,
-  HiSparkles,
   HiUser,
-  HiUserGroup,
   HiVolumeUp
 } from 'react-icons/hi';
 
@@ -28,12 +25,13 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
 
-  // Form State
+  // Form State (100% PRESERVED & REQUIRED)
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [role, setRole] = useState('siswa');
-  const [selectedDisabilities, setSelectedDisabilities] = useState(['tunanetra']);
+  const [role, setRole] = useState('siswa'); // 'siswa', 'guru', 'ortu'
+  const [selectedDisabilities, setSelectedDisabilities] = useState(['tidak_ada']);
   const [slbName, setSlbName] = useState('');
   const [classLevel, setClassLevel] = useState('4 SD');
   const [classCode, setClassCode] = useState('');
@@ -81,7 +79,7 @@ const Register = () => {
 
       if (error || !child) {
         setVerifiedStudent(null);
-        setStudentCheckError('ID Belajar Siswa 6 Digit tidak ditemukan. Periksa kembali ID anak/guru.');
+        setStudentCheckError('ID Belajar Siswa tidak ditemukan. Periksa kembali ID anak.');
       } else {
         setVerifiedStudent(child);
         setStudentCheckError(null);
@@ -108,7 +106,7 @@ const Register = () => {
     setMessage(null);
 
     const names = {
-      siswa: 'Siswa Istimewa untuk belajar mandiri',
+      siswa: 'Siswa SD untuk belajar mandiri',
       guru: 'Guru Pembimbing untuk kelola kelas',
       ortu: 'Orang Tua untuk mendampingi anak'
     };
@@ -119,7 +117,7 @@ const Register = () => {
     let updated = [];
     if (type === 'tidak_ada') {
       updated = ['tidak_ada'];
-      speak('Mode Umum tanpa hambatan khusus dipilih.', 1.0, true);
+      speak('Mode Umum SD dipilih.', 1.0, true);
     } else {
       const prevWithoutGeneral = selectedDisabilities.filter(d => d !== 'tidak_ada');
       if (prevWithoutGeneral.includes(type)) {
@@ -130,9 +128,9 @@ const Register = () => {
       }
 
       const labels = {
-        tunanetra: 'Tunanetra (Audio & Kontras Tinggi)',
+        tunanetra: 'Tunanetra (Suara & Audio)',
         tunarungu: 'Tunarungu (Teks Visual & Subtitle)',
-        tunawicara: 'Tunawicara (Isyarat & Pilihan Cepat)'
+        tunawicara: 'Tunawicara (Kamera Gestur & Panduan Singkat)'
       };
       const activeLabels = updated.map(u => labels[u] || u).join(', ');
       speak(`Kebutuhan khusus dipilih: ${activeLabels}`, 1.0, true);
@@ -147,14 +145,15 @@ const Register = () => {
     stopSpeaking();
 
     try {
+      if (!fullName.trim()) throw new Error('Nama lengkap wajib diisi.');
+      if (!email.trim()) throw new Error('Alamat email wajib diisi.');
+      if (password.length < 8) throw new Error('Kata sandi minimal 8 karakter.');
+      if (password !== confirmPassword) throw new Error('Konfirmasi kata sandi tidak cocok dengan kata sandi.');
+
       let linkedId = null;
       let finalClassCode = classCode.trim().toUpperCase();
       const finalSlbName = slbName.trim();
       let finalClassLevel = classLevel;
-
-      if (!fullName.trim()) throw new Error('Nama lengkap wajib diisi.');
-      if (!email.trim()) throw new Error('Alamat email wajib diisi.');
-      if (password.length < 8) throw new Error('Kata sandi minimal 8 karakter.');
 
       if (role === 'siswa') {
         if (!classLevel) throw new Error('Tingkat kelas siswa (1 SD–6 SD) wajib dipilih.');
@@ -203,14 +202,10 @@ const Register = () => {
 
       if (data.user) {
         const successText = role === 'guru'
-          ? `Pendaftaran berhasil! Kode kelas Anda: ${finalClassCode}. Mengalihkan ke halaman masuk...`
-          : 'Pendaftaran akun BintangAi berhasil! Mengalihkan ke halaman masuk...';
+          ? `Pendaftaran berhasil! Kode kelas Anda: ${finalClassCode}. Mengalihkan ke halaman login...`
+          : 'Pendaftaran akun BintangAI berhasil! Mengalihkan ke halaman masuk...';
 
-        setMessage({
-          type: 'success',
-          text: successText,
-        });
-
+        setMessage({ type: 'success', text: successText });
         speak(successText, 1.0, true);
 
         setTimeout(() => {
@@ -239,7 +234,7 @@ const Register = () => {
   const roleOptions = [
     {
       id: 'siswa',
-      label: 'Siswa Istimewa',
+      label: 'Siswa SD',
       helper: 'Belajar & Bermain',
       badge: 'SD Kelas 1–6',
       icon: '🎓',
@@ -255,90 +250,48 @@ const Register = () => {
     },
     {
       id: 'ortu',
-      label: 'Orang Tua',
+      label: 'Orang Tua / Wali',
       helper: 'Dampingi & Pantau Anak',
-      badge: 'Orang Tua / Wali',
+      badge: 'Orang Tua',
       icon: '👪',
       color: 'border-rose-500 bg-rose-50 text-rose-900',
     },
   ];
 
   const disabilityOptions = [
-    {
-      id: 'tunanetra',
-      label: 'Tunanetra',
-      desc: 'Fitur Suara Audio Reader & Kontras Tinggi',
-      icon: '🦯',
-      color: 'border-purple-400 bg-purple-50 text-purple-950',
-    },
-    {
-      id: 'tunarungu',
-      label: 'Tunarungu',
-      desc: 'Fitur Visual Subtitle & Indikator Jelas',
-      icon: '🤟',
-      color: 'border-cyan-400 bg-cyan-50 text-cyan-950',
-    },
-    {
-      id: 'tunawicara',
-      label: 'Tunawicara',
-      desc: 'Fitur Gambar Isyarat & Pilihan Cepat',
-      icon: '💬',
-      color: 'border-emerald-400 bg-emerald-50 text-emerald-950',
-    },
-    {
-      id: 'tidak_ada',
-      label: 'Umum / Tanpa Hambatan',
-      desc: 'Standar Pembelajaran SD',
-      icon: '🌟',
-      color: 'border-slate-300 bg-slate-50 text-slate-900',
-    },
+    { id: 'tunanetra', label: 'Tunanetra', desc: 'Suara Lisan & Audio Reader', icon: '🦯', color: 'border-purple-400 bg-purple-50 text-purple-950' },
+    { id: 'tunarungu', label: 'Tunarungu', desc: 'Live Caption & Subtitle Visual', icon: '🤟', color: 'border-cyan-400 bg-cyan-50 text-cyan-950' },
+    { id: 'tunawicara', label: 'Tunawicara', desc: 'Kamera Gestur Isyarat Tangan & Panduan Singkat', icon: '💬', color: 'border-emerald-400 bg-emerald-50 text-emerald-950' },
+    { id: 'tidak_ada', label: 'Umum / Tanpa Hambatan', desc: 'Standar Pembelajaran SD', icon: '🌟', color: 'border-slate-300 bg-slate-50 text-slate-900' }
   ];
 
-  // Password strength meter
-  const getPasswordStrength = () => {
-    if (!password) return { percent: 0, label: 'Kosong', color: 'bg-slate-200' };
-    if (password.length < 6) return { percent: 30, label: 'Sangat Lemah 🔴', color: 'bg-rose-500' };
-    if (password.length < 8) return { percent: 60, label: 'Sedang (Kurang 8 Karakter) 🟡', color: 'bg-amber-500' };
-    if (/[A-Z]/.test(password) || /[0-9]/.test(password)) return { percent: 100, label: 'Sangat Kuat & Aman! 🟢', color: 'bg-emerald-500' };
-    return { percent: 80, label: 'Kuat 🟢', color: 'bg-emerald-400' };
-  };
-
-  const pwdStrength = getPasswordStrength();
-
   return (
-    <div className="min-h-screen w-full flex flex-col bg-slate-100 font-sans text-slate-900 selection:bg-indigo-100">
+    <div className="min-h-screen w-full flex flex-col bg-sky-50/70 font-sans text-slate-900 selection:bg-sky-200">
       {/* Universal Accessibility Bar */}
       <AuthHeaderAccessibilityBar
-        spokenTitle="Halaman Pendaftaran BintangAi"
-        spokenText="Selamat datang di halaman pendaftaran BintangAi. Silakan pilih peranmu sebagai siswa, guru, atau orang tua, lalu isi informasi data dirimu."
+        spokenTitle="Halaman Pendaftaran BintangAI"
+        spokenText="Selamat datang di pendaftaran BintangAI. Isi formulir untuk memulai petualangan belajar."
       />
 
       <div className="flex-1 flex flex-col lg:flex-row w-full overflow-hidden">
         {/* Left Visual Branding Side */}
-        <aside className="relative isolate flex min-h-[300px] lg:min-h-full w-full lg:w-[40%] flex-col justify-between overflow-hidden bg-gradient-to-br from-indigo-950 via-blue-950 to-indigo-900 px-6 py-8 text-white sm:px-10 lg:px-12 lg:py-10 shadow-2xl">
-          <div
-            className="absolute inset-0 -z-20 bg-cover bg-center opacity-30 mix-blend-overlay"
-            style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1491841573634-28140fc7ced7?auto=format&fit=crop&q=80")' }}
-            aria-hidden="true"
-          />
-          <div className="pointer-events-none absolute -bottom-28 -left-16 -z-10 h-80 w-80 rounded-full bg-amber-400/20 blur-3xl" />
-
+        <aside className="relative isolate flex min-h-[300px] lg:min-h-full w-full lg:w-[40%] flex-col justify-between overflow-hidden bg-gradient-to-br from-blue-900 via-indigo-900 to-slate-900 px-6 py-8 text-white sm:px-10 lg:px-12 lg:py-10 shadow-2xl">
           {/* Top Logo */}
           <div className="flex items-center justify-between">
             <button
               type="button"
               onClick={() => navigate('/')}
-              className="flex items-center gap-3 rounded-2xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300"
-              aria-label="Kembali ke Beranda Utama BintangAi"
+              className="flex items-center gap-3 rounded-2xl focus-visible:outline-none"
+              aria-label="Kembali ke Beranda Utama BintangAI"
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-amber-400 to-yellow-300 font-black text-2xl text-indigo-950 shadow-xl shadow-amber-400/20">
-                ⭐
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-sky-400 via-blue-600 to-indigo-600 p-0.5 shadow-md flex items-center justify-center">
+                <BintangAvatar state="idle" size="xs" />
               </div>
               <div className="text-left">
                 <span className="text-2xl font-black tracking-tight text-white block">
-                  Bintang<span className="text-amber-400">Ai</span>
+                  Bintang<span className="text-blue-400">AI</span>
                 </span>
-                <span className="text-[10px] font-extrabold text-indigo-200 tracking-wider uppercase block">
+                <span className="text-[10px] font-extrabold text-sky-200 tracking-wider uppercase block">
                   Pendaftaran Inklusif
                 </span>
               </div>
@@ -353,32 +306,30 @@ const Register = () => {
               className="rounded-3xl bg-white/10 p-6 backdrop-blur-xl border border-white/20 shadow-2xl space-y-4"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-400 text-2xl text-indigo-950 shadow-md">
-                  ⭐
-                </div>
+                <BintangAvatar state="happy" size="sm" />
                 <div>
-                  <h3 className="text-base font-black text-white">Mulai Belajar Bersama Kak Bintang</h3>
-                  <p className="text-xs text-indigo-200 font-medium">Setiap anak punya cara untuk bersinar!</p>
+                  <h3 className="text-base font-black text-white">Kak Bintang AI</h3>
+                  <p className="text-xs text-sky-200 font-medium">Setiap anak punya cara bersinar!</p>
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-indigo-950/70 p-4 border border-white/10 text-xs sm:text-sm text-indigo-100 leading-relaxed font-medium">
+              <div className="rounded-2xl bg-slate-950/70 p-4 border border-white/10 text-xs sm:text-sm text-sky-100 leading-relaxed font-medium">
                 "Pilih peranmu, tentukan kebutuhan belajarmu, dan nikmati materi SD yang seru dan mudah dipahami!"
               </div>
 
               <button
                 type="button"
-                onClick={() => speak("Setiap anak punya cara untuk bersinar. Bergabung bersama BintangAi untuk pengalaman belajar inklusif yang disesuaikan dengan dirimu!", 1.0, true)}
-                className="w-full py-2.5 px-4 bg-amber-400 hover:bg-amber-300 text-indigo-950 font-extrabold rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-md"
+                onClick={() => speak("Setiap anak punya cara untuk bersinar. Bergabung bersama BintangAI untuk pengalaman belajar inklusif!", 1.0, true)}
+                className="w-full py-2.5 px-4 bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-extrabold rounded-xl text-xs flex items-center justify-center gap-2 transition shadow-md"
               >
                 <HiVolumeUp className="text-base" /> Dengarkan Kak Bintang
               </button>
             </motion.div>
           </div>
 
-          <div className="relative border-t border-white/15 pt-4 text-xs text-indigo-200 font-semibold flex justify-between items-center">
-            <span>© 2026 BintangAi • SD Inklusif</span>
-            <span className="inline-flex items-center gap-1 text-amber-300">
+          <div className="relative border-t border-white/15 pt-4 text-xs text-sky-200 font-semibold flex justify-between items-center">
+            <span>© 2026 BintangAI • Ruang Belajar SD</span>
+            <span className="inline-flex items-center gap-1 text-yellow-300">
               <HiHeart className="text-rose-400" /> Belajar Tanpa Hambatan
             </span>
           </div>
@@ -392,28 +343,28 @@ const Register = () => {
               <button
                 type="button"
                 onClick={() => navigate('/auth/login')}
-                className="mb-4 inline-flex items-center gap-2 rounded-xl px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-600 transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-200"
+                className="mb-4 inline-flex items-center gap-2 rounded-xl px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-600 transition"
               >
                 <HiArrowLeft className="text-sm" /> Sudah punya akun? Masuk
               </button>
 
               <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
-                Buat Akun <span className="text-indigo-600">BintangAi</span>
+                Buat Akun <span className="text-blue-600">BintangAI</span>
               </h1>
               <p className="mt-1 text-sm font-medium text-slate-500">
-                Lengkapi langkah berikut untuk pengalaman belajar inklusif yang disesuaikan.
+                Semua kolom wajib diisi (*) untuk keamanan dan kenyamanan belajar anak.
               </p>
             </div>
 
             {/* Visual Step Progress Indicator */}
-            <div className="grid grid-cols-3 gap-2 p-1.5 bg-slate-100 rounded-2xl border border-slate-200 text-xs font-bold">
+            <div className="grid grid-cols-3 gap-2 p-1.5 bg-sky-100 rounded-2xl border border-sky-200 text-xs font-bold">
               <button
                 type="button"
                 onClick={() => setCurrentStep(1)}
                 className={`py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-2 ${
                   currentStep === 1
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'text-slate-600 hover:text-indigo-600'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'text-slate-600 hover:text-blue-600'
                 }`}
               >
                 <span>1. Peran & Kebutuhan</span>
@@ -423,8 +374,8 @@ const Register = () => {
                 onClick={() => setCurrentStep(2)}
                 className={`py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-2 ${
                   currentStep === 2
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'text-slate-600 hover:text-indigo-600'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'text-slate-600 hover:text-blue-600'
                 }`}
               >
                 <span>2. Detail Profil SD</span>
@@ -434,8 +385,8 @@ const Register = () => {
                 onClick={() => setCurrentStep(3)}
                 className={`py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-2 ${
                   currentStep === 3
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'text-slate-600 hover:text-indigo-600'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'text-slate-600 hover:text-blue-600'
                 }`}
               >
                 <span>3. Data & Keamanan</span>
@@ -465,14 +416,6 @@ const Register = () => {
                   <div className="flex-1">
                     <p>{message.text}</p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => speak(message.text, 1.0, true)}
-                    className="p-1 rounded-lg hover:bg-black/5 text-slate-500 hover:text-slate-900"
-                    title="Dengarkan Pesan Ini"
-                  >
-                    <HiVolumeUp className="text-lg" />
-                  </button>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -499,10 +442,10 @@ const Register = () => {
                             key={opt.id}
                             type="button"
                             onClick={() => handleRoleChange(opt.id)}
-                            className={`p-4 rounded-2xl border-2 text-left transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-4 ${
+                            className={`p-4 rounded-2xl border-2 text-left transition-all active:scale-95 ${
                               isSelected
-                                ? 'border-indigo-600 bg-indigo-50/70 shadow-lg ring-2 ring-indigo-500/20'
-                                : 'border-slate-200 bg-white hover:border-indigo-300'
+                                ? 'border-blue-600 bg-sky-50 shadow-lg ring-2 ring-blue-500/20'
+                                : 'border-slate-200 bg-white hover:border-blue-300'
                             }`}
                           >
                             <div className="flex items-center justify-between">
@@ -521,19 +464,19 @@ const Register = () => {
                     </div>
                   </div>
 
-                  {/* Disability Type Selection (If Siswa - Multi Select Enabled) */}
+                  {/* Disability Type Selection (If Siswa) */}
                   {role === 'siswa' && (
                     <div className="space-y-3 pt-2">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                         <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-700">
                           Langkah 1B: Pilih Kebutuhan Belajar Siswa <span className="text-rose-500">*</span>
                         </label>
-                        <span className="text-[10px] font-black text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-200 uppercase tracking-wider self-start sm:self-auto">
-                          ✨ Bisa Pilih Lebih Dari Satu (Multi-Select)
+                        <span className="text-[10px] font-black text-blue-700 bg-sky-100 px-2.5 py-1 rounded-full uppercase">
+                          Pilih yang paling sesuai
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         {disabilityOptions.map((dis) => {
                           const isSelected = selectedDisabilities.includes(dis.id);
                           return (
@@ -541,10 +484,10 @@ const Register = () => {
                               key={dis.id}
                               type="button"
                               onClick={() => toggleDisability(dis.id)}
-                              className={`p-4 rounded-2xl border-2 text-left transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-4 flex items-center justify-between gap-3 ${
+                              className={`p-4 rounded-2xl border-2 text-left transition-all active:scale-95 flex items-center justify-between gap-3 ${
                                 isSelected
-                                  ? `${dis.color} shadow-lg ring-2 ring-indigo-500/20 scale-[1.01]`
-                                  : 'border-slate-200 bg-white hover:border-indigo-200'
+                                  ? `${dis.color} shadow-lg ring-2 ring-blue-500/20 scale-[1.01]`
+                                  : 'border-slate-200 bg-white hover:border-blue-200'
                               }`}
                             >
                               <div className="flex items-center gap-3">
@@ -554,8 +497,8 @@ const Register = () => {
                                   <p className="text-xs text-slate-600 font-semibold">{dis.desc}</p>
                                 </div>
                               </div>
-                              <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center font-black text-xs shrink-0 transition-all ${
-                                isSelected ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm' : 'border-slate-300 bg-white'
+                              <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center font-black text-xs shrink-0 ${
+                                isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-300 bg-white'
                               }`}>
                                 {isSelected ? '✓' : ''}
                               </div>
@@ -570,7 +513,7 @@ const Register = () => {
                     <button
                       type="button"
                       onClick={() => setCurrentStep(2)}
-                      className="py-3.5 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-sm rounded-xl shadow-lg transition-all flex items-center gap-2"
+                      className="py-3.5 px-6 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm rounded-xl shadow-lg transition flex items-center gap-2"
                     >
                       <span>Lanjut ke Langkah 2</span>
                       <HiArrowRight />
@@ -588,15 +531,15 @@ const Register = () => {
                 >
                   {/* Siswa Fields */}
                   {role === 'siswa' && (
-                    <div className="space-y-5 rounded-3xl bg-indigo-50/70 p-5 border-2 border-indigo-100">
+                    <div className="space-y-5 rounded-3xl bg-sky-50/70 p-5 border-2 border-sky-200">
                       <div>
-                        <h3 className="text-sm font-extrabold text-indigo-950">Detail Siswa SD</h3>
-                        <p className="text-xs text-indigo-700 font-semibold">Pilih tingkat kelas dan masukkan kode kelas dari gurumu.</p>
+                        <h3 className="text-sm font-extrabold text-sky-950">Detail Siswa SD</h3>
+                        <p className="text-xs text-sky-700 font-semibold">Pilih tingkat kelas dan masukkan kode kelas dari gurumu.</p>
                       </div>
 
                       {/* Grade Level Selection Pills */}
                       <div className="space-y-2">
-                        <label className="block text-xs font-extrabold text-slate-700 uppercase tracking-wider">
+                        <label className="block text-xs font-extrabold text-slate-700 uppercase">
                           Tingkat Kelas SD <span className="text-rose-500">*</span>
                         </label>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -610,10 +553,10 @@ const Register = () => {
                                   setClassLevel(lvl.code);
                                   speak(`Kelas ${lvl.code} dipilih`, 1.0, true);
                                 }}
-                                className={`py-3 px-4 rounded-2xl border-2 font-black text-sm flex items-center justify-center gap-2 transition-all ${
+                                className={`py-3 px-4 rounded-2xl border-2 font-black text-sm flex items-center justify-center gap-2 transition ${
                                   isSelected
-                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-md scale-105'
-                                    : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-300'
+                                    ? 'bg-blue-600 text-white border-blue-600 shadow-md scale-105'
+                                    : 'bg-white text-slate-700 border-slate-200 hover:border-blue-300'
                                 }`}
                               >
                                 <span>{lvl.emoji}</span>
@@ -626,7 +569,7 @@ const Register = () => {
 
                       {/* Class Code Input */}
                       <div className="space-y-1.5">
-                        <label htmlFor="student-class-code" className="block text-xs font-extrabold text-slate-700 uppercase tracking-wider">
+                        <label htmlFor="student-class-code" className="block text-xs font-extrabold text-slate-700 uppercase">
                           Kode Kelas dari Guru <span className="text-rose-500">*</span>
                         </label>
                         <input
@@ -636,27 +579,23 @@ const Register = () => {
                           value={classCode}
                           onChange={(e) => setClassCode(e.target.value.toUpperCase())}
                           placeholder="Contoh: X8J2K1"
-                          autoCapitalize="characters"
-                          className="w-full rounded-2xl bg-white border-2 border-slate-200 px-4 py-3.5 text-sm font-black text-slate-900 tracking-wider uppercase outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100"
+                          className="w-full rounded-2xl bg-white border-2 border-slate-200 px-4 py-3.5 text-sm font-black text-slate-900 tracking-wider uppercase outline-none focus:border-blue-600 focus:ring-4 focus:ring-sky-100"
                         />
-                        <p className="text-[11px] text-slate-500 font-semibold">
-                          Minta kode kelas 6 digit kepada guru pembimbingmu.
-                        </p>
                       </div>
                     </div>
                   )}
 
                   {/* Guru Fields */}
                   {role === 'guru' && (
-                    <div className="space-y-4 rounded-3xl bg-indigo-50/70 p-5 border-2 border-indigo-100">
+                    <div className="space-y-4 rounded-3xl bg-sky-50/70 p-5 border-2 border-sky-200">
                       <div>
-                        <h3 className="text-sm font-extrabold text-indigo-950">Profil Guru Pembimbing</h3>
-                        <p className="text-xs text-indigo-700 font-semibold">Kode kelas unik akan dibuat otomatis untuk siswa Anda.</p>
+                        <h3 className="text-sm font-extrabold text-sky-950">Profil Guru Pembimbing</h3>
+                        <p className="text-xs text-sky-700 font-semibold">Kode kelas unik akan dibuat otomatis untuk siswa Anda.</p>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                          <label htmlFor="teacher-school" className="block text-xs font-extrabold text-slate-700 uppercase tracking-wider">
+                          <label htmlFor="teacher-school" className="block text-xs font-extrabold text-slate-700 uppercase">
                             Nama Sekolah / SLB <span className="text-rose-500">*</span>
                           </label>
                           <input
@@ -665,13 +604,13 @@ const Register = () => {
                             required
                             value={slbName}
                             onChange={(e) => setSlbName(e.target.value)}
-                            placeholder="Contoh: SLB Negeri 1 / SDN 01 Utama"
-                            className="w-full rounded-2xl bg-white border-2 border-slate-200 px-4 py-3.5 text-sm font-semibold text-slate-900 outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100"
+                            placeholder="Contoh: SLB Negeri 1 / SDN 01"
+                            className="w-full rounded-2xl bg-white border-2 border-slate-200 px-4 py-3.5 text-sm font-semibold text-slate-900 outline-none focus:border-blue-600 focus:ring-4 focus:ring-sky-100"
                           />
                         </div>
 
                         <div className="space-y-1.5">
-                          <label htmlFor="teacher-class" className="block text-xs font-extrabold text-slate-700 uppercase tracking-wider">
+                          <label htmlFor="teacher-class" className="block text-xs font-extrabold text-slate-700 uppercase">
                             Kelas yang Diampu <span className="text-rose-500">*</span>
                           </label>
                           <select
@@ -679,7 +618,7 @@ const Register = () => {
                             required
                             value={classLevel}
                             onChange={(e) => setClassLevel(e.target.value)}
-                            className="w-full rounded-2xl bg-white border-2 border-slate-200 px-4 py-3.5 text-sm font-bold text-slate-900 outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100"
+                            className="w-full rounded-2xl bg-white border-2 border-slate-200 px-4 py-3.5 text-sm font-bold text-slate-900 outline-none focus:border-blue-600"
                           >
                             {classLevels.map((lvl) => (
                               <option key={lvl.code} value={lvl.code}>{lvl.emoji} {lvl.code}</option>
@@ -689,14 +628,14 @@ const Register = () => {
                       </div>
 
                       <div className="space-y-1.5">
-                        <label htmlFor="teacher-subject" className="block text-xs font-extrabold text-slate-700 uppercase tracking-wider">
+                        <label htmlFor="teacher-subject" className="block text-xs font-extrabold text-slate-700 uppercase">
                           Mata Pelajaran Utama
                         </label>
                         <select
                           id="teacher-subject"
                           value={subject}
                           onChange={(e) => setSubject(e.target.value)}
-                          className="w-full rounded-2xl bg-white border-2 border-slate-200 px-4 py-3.5 text-sm font-bold text-slate-900 outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100"
+                          className="w-full rounded-2xl bg-white border-2 border-slate-200 px-4 py-3.5 text-sm font-bold text-slate-900 outline-none focus:border-blue-600"
                         >
                           {subjects.map((s) => (
                             <option key={s} value={s}>{s}</option>
@@ -708,14 +647,14 @@ const Register = () => {
 
                   {/* Orang Tua Fields */}
                   {role === 'ortu' && (
-                    <div className="space-y-4 rounded-3xl bg-rose-50/70 p-5 border-2 border-rose-100">
+                    <div className="space-y-4 rounded-3xl bg-rose-50/70 p-5 border-2 border-rose-200">
                       <div>
                         <h3 className="text-sm font-extrabold text-rose-950">Hubungkan Akun Anak</h3>
                         <p className="text-xs text-rose-700 font-semibold">Masukkan ID unik profil anak Anda untuk pemantauan.</p>
                       </div>
 
                       <div className="space-y-2">
-                        <label htmlFor="parent-student-id" className="block text-xs font-extrabold text-slate-700 uppercase tracking-wider">
+                        <label htmlFor="parent-student-id" className="block text-xs font-extrabold text-slate-700 uppercase">
                           ID Unik Siswa (Anak) <span className="text-rose-500">*</span>
                         </label>
                         <div className="relative">
@@ -725,17 +664,16 @@ const Register = () => {
                             required
                             value={studentIdInput}
                             onChange={(e) => setStudentIdInput(e.target.value)}
-                            placeholder="Contoh: UUID Profil Siswa (disalin dari profil anak)"
-                            className="w-full rounded-2xl bg-white border-2 border-slate-200 px-4 py-3.5 text-sm font-semibold text-slate-900 outline-none focus:border-rose-500 focus:ring-4 focus:ring-rose-100"
+                            placeholder="Contoh: UUID / Short ID Siswa"
+                            className="w-full rounded-2xl bg-white border-2 border-slate-200 px-4 py-3.5 text-sm font-semibold text-slate-900 outline-none focus:border-rose-500"
                           />
                           {checkingStudent && (
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-rose-600 font-bold animate-pulse">
-                              Memeriksa ID...
+                              Memeriksa...
                             </div>
                           )}
                         </div>
 
-                        {/* Realtime verification feedback */}
                         {verifiedStudent && (
                           <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-100 text-emerald-900 text-xs font-bold border border-emerald-300">
                             <HiCheckCircle className="text-lg text-emerald-600 shrink-0" />
@@ -757,14 +695,14 @@ const Register = () => {
                     <button
                       type="button"
                       onClick={() => setCurrentStep(1)}
-                      className="py-3 px-5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-extrabold text-sm rounded-xl transition-all"
+                      className="py-3 px-5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-extrabold text-sm rounded-xl transition"
                     >
                       Kembali
                     </button>
                     <button
                       type="button"
                       onClick={() => setCurrentStep(3)}
-                      className="py-3.5 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-sm rounded-xl shadow-lg transition-all flex items-center gap-2"
+                      className="py-3.5 px-6 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm rounded-xl shadow-lg transition flex items-center gap-2"
                     >
                       <span>Lanjut ke Langkah 3</span>
                       <HiArrowRight />
@@ -782,13 +720,11 @@ const Register = () => {
                 >
                   {/* Full Name Input */}
                   <div className="space-y-1.5">
-                    <label htmlFor="reg-name" className="block text-xs font-extrabold uppercase tracking-wider text-slate-700">
+                    <label htmlFor="reg-name" className="block text-xs font-extrabold uppercase text-slate-700">
                       Nama Lengkap <span className="text-rose-500">*</span>
                     </label>
                     <div className="relative group">
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg group-focus-within:text-indigo-600">
-                        <HiUser />
-                      </div>
+                      <HiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg" />
                       <input
                         id="reg-name"
                         type="text"
@@ -796,20 +732,18 @@ const Register = () => {
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                         placeholder="Masukkan nama lengkap Anda"
-                        className="w-full rounded-2xl bg-slate-50 border-2 border-slate-200 pl-12 pr-4 py-4 text-sm font-semibold text-slate-900 outline-none focus:border-indigo-600 focus:bg-white focus:ring-4 focus:ring-indigo-100"
+                        className="w-full rounded-2xl bg-slate-50 border-2 border-slate-200 pl-12 pr-4 py-4 text-sm font-semibold text-slate-900 outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-sky-100"
                       />
                     </div>
                   </div>
 
                   {/* Email Input */}
                   <div className="space-y-1.5">
-                    <label htmlFor="reg-email" className="block text-xs font-extrabold uppercase tracking-wider text-slate-700">
+                    <label htmlFor="reg-email" className="block text-xs font-extrabold uppercase text-slate-700">
                       Alamat Email <span className="text-rose-500">*</span>
                     </label>
                     <div className="relative group">
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg group-focus-within:text-indigo-600">
-                        <HiMail />
-                      </div>
+                      <HiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg" />
                       <input
                         id="reg-email"
                         type="email"
@@ -817,65 +751,63 @@ const Register = () => {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="nama@gmail.com"
-                        className="w-full rounded-2xl bg-slate-50 border-2 border-slate-200 pl-12 pr-4 py-4 text-sm font-semibold text-slate-900 outline-none focus:border-indigo-600 focus:bg-white focus:ring-4 focus:ring-indigo-100"
+                        className="w-full rounded-2xl bg-slate-50 border-2 border-slate-200 pl-12 pr-4 py-4 text-sm font-semibold text-slate-900 outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-sky-100"
                       />
                     </div>
                   </div>
 
-                  {/* Password Input & Strength */}
-                  <div className="space-y-2">
-                    <label htmlFor="reg-password" className="block text-xs font-extrabold uppercase tracking-wider text-slate-700">
-                      Kata Sandi Baru <span className="text-rose-500">*</span>
-                    </label>
-                    <div className="relative group">
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg group-focus-within:text-indigo-600">
-                        <HiLockClosed />
+                  {/* Password & Confirm Password Inputs */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label htmlFor="reg-password" className="block text-xs font-extrabold uppercase text-slate-700">
+                        Kata Sandi Baru <span className="text-rose-500">*</span>
+                      </label>
+                      <div className="relative group">
+                        <HiLockClosed className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg" />
+                        <input
+                          id="reg-password"
+                          type={showPassword ? 'text' : 'password'}
+                          required
+                          minLength={8}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="Min 8 karakter"
+                          className="w-full rounded-2xl bg-slate-50 border-2 border-slate-200 pl-12 pr-10 py-4 text-sm font-semibold text-slate-900 outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-sky-100"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600"
+                        >
+                          {showPassword ? <HiEyeOff /> : <HiEye />}
+                        </button>
                       </div>
-                      <input
-                        id="reg-password"
-                        type={showPassword ? 'text' : 'password'}
-                        required
-                        minLength={8}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Minimal 8 karakter"
-                        className="w-full rounded-2xl bg-slate-50 border-2 border-slate-200 pl-12 pr-12 py-4 text-sm font-semibold text-slate-900 outline-none focus:border-indigo-600 focus:bg-white focus:ring-4 focus:ring-indigo-100"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const nextState = !showPassword;
-                          setShowPassword(nextState);
-                          speak(nextState ? 'Kata sandi ditampilkan' : 'Kata sandi disembunyikan', 1.0, true);
-                        }}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 rounded-xl p-2.5 text-slate-400 hover:text-indigo-600 transition-colors"
-                        aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
-                      >
-                        {showPassword ? <HiEyeOff className="text-xl" /> : <HiEye className="text-xl" />}
-                      </button>
                     </div>
 
-                    {/* Password Strength Progress Bar */}
-                    {password && (
-                      <div className="space-y-1 pt-1">
-                        <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full transition-all duration-300 ${pwdStrength.color}`}
-                            style={{ width: `${pwdStrength.percent}%` }}
-                          />
-                        </div>
-                        <p className="text-[11px] font-extrabold text-slate-600">
-                          Kekuatan Sandi: <span>{pwdStrength.label}</span>
-                        </p>
+                    <div className="space-y-1.5">
+                      <label htmlFor="reg-confirm-password" className="block text-xs font-extrabold uppercase text-slate-700">
+                        Konfirmasi Kata Sandi <span className="text-rose-500">*</span>
+                      </label>
+                      <div className="relative group">
+                        <HiLockClosed className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg" />
+                        <input
+                          id="reg-confirm-password"
+                          type={showPassword ? 'text' : 'password'}
+                          required
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder="Ulangi Kata Sandi"
+                          className="w-full rounded-2xl bg-slate-50 border-2 border-slate-200 pl-12 pr-4 py-4 text-sm font-semibold text-slate-900 outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-sky-100"
+                        />
                       </div>
-                    )}
+                    </div>
                   </div>
 
                   <div className="pt-4 flex justify-between gap-3">
                     <button
                       type="button"
                       onClick={() => setCurrentStep(2)}
-                      className="py-3.5 px-5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-extrabold text-sm rounded-xl transition-all"
+                      className="py-3.5 px-5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-extrabold text-sm rounded-xl transition"
                     >
                       Kembali
                     </button>
@@ -883,16 +815,13 @@ const Register = () => {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="flex-1 py-4 px-6 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-black text-base rounded-2xl shadow-xl shadow-indigo-600/25 active:scale-[0.99] transition-all flex items-center justify-center gap-3 disabled:opacity-60"
+                      className="flex-1 py-4 px-6 bg-blue-600 hover:bg-blue-700 text-white font-black text-base rounded-2xl shadow-xl shadow-blue-300 active:scale-[0.99] transition flex items-center justify-center gap-3 disabled:opacity-60"
                     >
                       {loading ? (
-                        <>
-                          <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />
-                          <span>Membuat Akun...</span>
-                        </>
+                        <span>Membuat Akun...</span>
                       ) : (
                         <>
-                          <span>Daftar Akun BintangAi</span>
+                          <span>Daftar Akun BintangAI</span>
                           <HiChevronRight className="text-xl" />
                         </>
                       )}
@@ -908,7 +837,7 @@ const Register = () => {
               <button
                 type="button"
                 onClick={() => navigate('/auth/login')}
-                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-extrabold text-sm transition-all"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-sky-100 hover:bg-sky-200 text-sky-900 font-extrabold text-sm transition"
               >
                 <span>Masuk ke Akun Anda</span>
                 <HiChevronRight />

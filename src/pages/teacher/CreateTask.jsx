@@ -174,7 +174,7 @@ const TeacherCreateTask = () => {
 
         setQuestions(formatted);
         setShowAIModal(false);
-        showToast(`✨ AI berhasil menyusun ${formatted.length} soal untukmu!`, "success");
+        showToast(`Berhasil menyusun ${formatted.length} soal untukmu!`, "success");
       } else {
         throw new Error(response?.message || "Gagal menghasilkan kuis");
       }

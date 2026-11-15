@@ -413,7 +413,7 @@ const Auth = () => {
                   {role === 'siswa' && (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
                       <div>
-                        <label className={labelStyles}>Kebutuhan Khusus ✨</label>
+                        <label className={labelStyles}>Kebutuhan Khusus</label>
                         <select
                           value={disabilityType} onChange={(e) => setDisabilityType(e.target.value)}
                           className={inputStyles}

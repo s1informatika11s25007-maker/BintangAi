@@ -562,7 +562,7 @@ const StudentQuiz = () => {
                         <p className="text-[8px] md:text-[10px] font-black text-indigo-400 uppercase mb-1">Jawaban Benar</p>
                         <p className="font-black text-indigo-700 text-sm md:text-lg">{res.correctAnswer}</p>
                       </div>
-                      <span className="text-2xl md:text-3xl">✨</span>
+                      <span className="text-2xl md:text-3xl">⭐</span>
                     </div>
                   )}
                 </div>

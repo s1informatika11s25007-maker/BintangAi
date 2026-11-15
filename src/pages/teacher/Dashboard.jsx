@@ -1124,7 +1124,7 @@ const TeacherDashboard = () => {
                 className="relative bg-white p-12 rounded-[4rem] shadow-2xl max-w-sm w-full space-y-10 border border-white"
                >
                   <div className="text-center space-y-4">
-                     <div className="w-20 h-20 bg-amber-50 rounded-[1.5rem] flex items-center justify-center text-5xl mx-auto shadow-sm">✨</div>
+                     <div className="w-20 h-20 bg-amber-50 rounded-[1.5rem] flex items-center justify-center text-5xl mx-auto shadow-sm">⭐</div>
                      <h3 className="text-2xl font-black text-slate-900 tracking-tighter uppercase">Bonus Apresiasi</h3>
                      <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">Berikan XP Tambahan Untuk <br /><span className="text-indigo-600">{xpModal.student?.full_name}</span></p>
                   </div>
@@ -1198,7 +1198,7 @@ const TeacherDashboard = () => {
                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="bg-white p-8 rounded-3xl border border-slate-50 shadow-sm">
                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Total XP</p>
-                           <p className="text-3xl font-black text-indigo-600">{selectedStudent.xp} ✨</p>
+                           <p className="text-3xl font-black text-indigo-600">{selectedStudent.xp} XP</p>
                         </div>
                         <div className="bg-white p-8 rounded-3xl border border-slate-50 shadow-sm">
                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Total Interaksi AI</p>

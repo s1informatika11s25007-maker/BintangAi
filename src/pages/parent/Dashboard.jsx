@@ -434,7 +434,7 @@ const ParentDashboard = () => {
                       </div>
                       <div className="sm:text-right bg-indigo-50/70 p-4 rounded-2xl border border-indigo-100/80 shrink-0">
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Apresiasi & Keaktifan</p>
-                        <p className="text-xl font-black text-indigo-600 mt-0.5">{childData?.xp || 0} XP ✨</p>
+                        <p className="text-xl font-black text-indigo-600 mt-0.5">{childData?.xp || 0} XP</p>
                         <p className="text-[10px] font-bold text-emerald-600">🔥 {childData?.streak || 0} Hari Belajar Rutin</p>
                       </div>
                     </div>
