@@ -676,6 +676,4 @@ const StudentTaskDetail = () => {
   );
 };
 
-};
-
 export default StudentTaskDetail;
