@@ -61,9 +61,7 @@ function AppContent() {
   }, [showToast]);
 
   useEffect(() => {
-    const publicPaths = ['/', '/auth/login', '/auth/register'];
-    const isPublic = publicPaths.includes(location.pathname);
-    reapplyMode(isPublic);
+    reapplyMode(false);
   }, [location.pathname, reapplyMode]);
 
   useEffect(() => {

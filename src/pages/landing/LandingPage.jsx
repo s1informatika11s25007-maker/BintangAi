@@ -178,12 +178,6 @@ const LandingPage = () => {
     }
   };
 
-  const { reset: resetAccessibility } = useAccessibilityStore();
-
-  useEffect(() => {
-    resetAccessibility();
-  }, [resetAccessibility]);
-
   useEffect(() => {
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > 300);
