@@ -234,6 +234,37 @@ const StudentDashboard = () => {
               </div>
             </motion.section>
 
+            {/* INLINE GESTURE CAMERA ACTIVATION BANNER (TUNAWICARA MODE - NOT FLOATING) */}
+            {isMute && isCameraClosed && (
+              <motion.section
+                variants={itemVariants}
+                className="lg:col-span-12 p-5 sm:p-6 rounded-3xl bg-slate-900 text-white border-2 border-amber-400/80 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-400/20 text-amber-300 border border-amber-400/30 flex items-center justify-center text-2xl shrink-0">
+                    📷
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-sm sm:text-base text-white flex items-center gap-2">
+                      Kamera Gestur Isyarat Tangan <span className="text-[10px] bg-rose-500/30 text-rose-300 border border-rose-400/30 px-2 py-0.5 rounded-full uppercase font-bold">Sedang Nonaktif</span>
+                    </h3>
+                    <p className="text-xs text-slate-300 font-medium mt-0.5">
+                      Klik tombol di samping untuk mengaktifkan kembali kontrol kamera gestur jari tangan di seluruh halaman.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleReenableCamera}
+                  className="w-full sm:w-auto px-6 py-3 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-2xl font-black text-xs uppercase tracking-wider shadow-xl transition-all active:scale-95 shrink-0 flex items-center justify-center gap-2"
+                >
+                  <HiStar className="text-base text-slate-950" />
+                  <span>Aktifkan Kamera Gestur</span>
+                </button>
+              </motion.section>
+            )}
+
             {/* HERO SECTION - Progress & Level */}
             <motion.section
               variants={itemVariants}
@@ -405,27 +436,6 @@ const StudentDashboard = () => {
         <Footer />
       </div>
       </main>
-
-      {/* FLOATING CAMERA REACTIVATION BUTTON FOR TUNAWICARA USERS */}
-      {isMute && isCameraClosed && (
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0, y: 20 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.8, opacity: 0, y: 20 }}
-          className="fixed bottom-6 right-6 z-[600]"
-        >
-          <button
-            type="button"
-            onClick={handleReenableCamera}
-            className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-full shadow-2xl border-2 border-amber-400 font-extrabold text-xs flex items-center gap-3 transition-all active:scale-95 group"
-            title="Aktifkan Kembali Kamera Gestur Isyarat Tangan"
-          >
-            <div className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-            <HiStar className="text-lg text-amber-300 group-hover:rotate-12 transition-transform" />
-            <span>Aktifkan Kamera Gestur</span>
-          </button>
-        </motion.div>
-      )}
 
       <style>{`
         @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }

@@ -331,6 +331,9 @@ const GlobalGestureCamera = () => {
   };
 
   useEffect(() => {
+    try {
+      setIsCameraDisabled(localStorage.getItem('gesture_camera_disabled') === 'true');
+    } catch {}
     setMenuActive(false);
     lastProcessedFinger.current = -1;
     cooldownRef.current = false;
