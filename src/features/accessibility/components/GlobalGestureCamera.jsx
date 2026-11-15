@@ -65,6 +65,23 @@ const GlobalGestureCamera = () => {
     }
   };
 
+  const scrollActivePage = (amount) => {
+    if (typeof document === 'undefined') return;
+    const pdfViewport = document.getElementById('pdf-scroll-viewport');
+    if (pdfViewport) {
+      pdfViewport.scrollBy({ top: amount, behavior: 'smooth' });
+      return;
+    }
+
+    const mainEl = document.querySelector('main') || document.querySelector('.overflow-y-auto');
+    if (mainEl && mainEl.scrollHeight > mainEl.clientHeight + 10) {
+      mainEl.scrollBy({ top: amount, behavior: 'smooth' });
+      return;
+    }
+
+    window.scrollBy({ top: amount, behavior: 'smooth' });
+  };
+
   const { videoRef, canvasRef, isActive, handDetected, totalFingers } = useGestureControl({
     enabled: isEnabled
   });
