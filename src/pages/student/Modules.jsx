@@ -353,63 +353,6 @@ const StudentModules = () => {
     }
   };
 
-  // CONTINUOUS AUTOMATIC SCROLLING LOOP FOR READER VIEW (1 Jari = Scroll Kebawah, 2 Jari = Scroll Keatas)
-  useEffect(() => {
-    if (!selectedModule || !isMute || !handDetected) return;
-
-    // Determine scroll direction based on finger count
-    const isScrollDown = totalFingers === 1;
-    const isScrollUp = totalFingers === 2 || (activeTab === 'pdf' && totalFingers === 3);
-
-    if (!isScrollDown && !isScrollUp) return;
-
-    let animFrameId;
-    let lastTime = performance.now();
-
-    const scrollLoop = (time) => {
-      const delta = time - lastTime;
-      if (delta >= 16) { // ~60fps smooth continuous frame tick
-        const speed = isScrollDown ? 4.5 : -4.5; // Smooth ~270px per second
-
-        if (activeTab === 'pdf') {
-          const pdfViewport = document.querySelector('#pdf-scroll-viewport');
-          if (pdfViewport) {
-            pdfViewport.scrollTop += speed;
-          }
-          const pdfIframe = document.querySelector('#pdf-viewer-frame');
-          if (pdfIframe && pdfIframe.contentWindow) {
-            try { pdfIframe.contentWindow.scrollBy({ top: speed }); } catch (e) {}
-          }
-        } else {
-          const candidateSelectors = ['.overflow-y-auto', 'main', 'body', '#root'];
-          let scrollTarget = null;
-          for (const selector of candidateSelectors) {
-            const el = document.querySelector(selector);
-            if (el && el.scrollHeight > el.clientHeight + 10) {
-              scrollTarget = el;
-              break;
-            }
-          }
-          if (!scrollTarget) scrollTarget = document.documentElement || document.body || window;
-
-          if (scrollTarget === window || scrollTarget === document.documentElement || scrollTarget === document.body) {
-            window.scrollBy(0, speed);
-          } else if (scrollTarget) {
-            scrollTarget.scrollTop += speed;
-          }
-        }
-        lastTime = time;
-      }
-      animFrameId = requestAnimationFrame(scrollLoop);
-    };
-
-    animFrameId = requestAnimationFrame(scrollLoop);
-
-    return () => {
-      if (animFrameId) cancelAnimationFrame(animFrameId);
-    };
-  }, [selectedModule, isMute, handDetected, totalFingers, activeTab]);
-
   const lastProcessedFingerRef = useRef(-1);
   const cooldownRef = useRef(false);
 
@@ -542,6 +485,63 @@ const StudentModules = () => {
       }
     }
   });
+
+  // CONTINUOUS AUTOMATIC SCROLLING LOOP FOR READER VIEW (1 Jari = Scroll Kebawah, 2 Jari = Scroll Keatas)
+  useEffect(() => {
+    if (!selectedModule || !isMute || !handDetected) return;
+
+    // Determine scroll direction based on finger count
+    const isScrollDown = totalFingers === 1;
+    const isScrollUp = totalFingers === 2 || (activeTab === 'pdf' && totalFingers === 3);
+
+    if (!isScrollDown && !isScrollUp) return;
+
+    let animFrameId;
+    let lastTime = performance.now();
+
+    const scrollLoop = (time) => {
+      const delta = time - lastTime;
+      if (delta >= 16) { // ~60fps smooth continuous frame tick
+        const speed = isScrollDown ? 4.5 : -4.5; // Smooth ~270px per second
+
+        if (activeTab === 'pdf') {
+          const pdfViewport = document.querySelector('#pdf-scroll-viewport');
+          if (pdfViewport) {
+            pdfViewport.scrollTop += speed;
+          }
+          const pdfIframe = document.querySelector('#pdf-viewer-frame');
+          if (pdfIframe && pdfIframe.contentWindow) {
+            try { pdfIframe.contentWindow.scrollBy({ top: speed }); } catch (e) {}
+          }
+        } else {
+          const candidateSelectors = ['.overflow-y-auto', 'main', 'body', '#root'];
+          let scrollTarget = null;
+          for (const selector of candidateSelectors) {
+            const el = document.querySelector(selector);
+            if (el && el.scrollHeight > el.clientHeight + 10) {
+              scrollTarget = el;
+              break;
+            }
+          }
+          if (!scrollTarget) scrollTarget = document.documentElement || document.body || window;
+
+          if (scrollTarget === window || scrollTarget === document.documentElement || scrollTarget === document.body) {
+            window.scrollBy(0, speed);
+          } else if (scrollTarget) {
+            scrollTarget.scrollTop += speed;
+          }
+        }
+        lastTime = time;
+      }
+      animFrameId = requestAnimationFrame(scrollLoop);
+    };
+
+    animFrameId = requestAnimationFrame(scrollLoop);
+
+    return () => {
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+    };
+  }, [selectedModule, isMute, handDetected, totalFingers, activeTab]);
 
   // Subject Card Details & Emojis
   const getSubjectMeta = (subjectName) => {
