@@ -11,8 +11,6 @@ import { useVoice } from '@/features/accessibility/hooks/useVoice';
 import { useSubtitle } from '@/features/accessibility/components/Subtitles';
 import { globalCaptionBus } from '@/features/accessibility/components/MataPintarGlobalCaption';
 import { getCleanFirstName } from '@/utils';
-import { useGestureControl } from '@/features/accessibility/hooks/useGestureControl';
-import GestureCameraOverlay from '@/features/accessibility/components/GestureCameraOverlay';
 import {
   HiBookOpen, HiSearch, HiChatAlt2,
   HiPaperAirplane, HiLightBulb, HiChevronRight,
@@ -409,37 +407,20 @@ const StudentModules = () => {
     }
   };
 
-  const lastProcessedFingerRef = useRef(-1);
-  const cooldownRef = useRef(false);
-
-  const [isCameraClosed, setIsCameraClosed] = useState(() => {
-    try {
-      return localStorage.getItem('gesture_camera_disabled') === 'true';
-    } catch {
-      return false;
-    }
-  });
-
+  // 🎯 Global Gesture Listener for Tunawicara Mode
   useEffect(() => {
-    const handleToggle = () => {
-      try {
-        setIsCameraClosed(localStorage.getItem('gesture_camera_disabled') === 'true');
-      } catch {}
-    };
-    window.addEventListener('gesture-camera-toggle', handleToggle);
-    window.addEventListener('storage', handleToggle);
-    return () => {
-      window.removeEventListener('gesture-camera-toggle', handleToggle);
-      window.removeEventListener('storage', handleToggle);
-    };
-  }, []);
+    if (!isMute) return;
 
-  const { videoRef, canvasRef, isActive: camActive, handDetected, totalFingers } = useGestureControl({
-    enabled: isMute && !isCameraClosed,
-    onGesture: (fingerCount) => {
-      // Ignore if navigation menu is open
+    const handleGlobalGesture = (e) => {
       if (document.body.getAttribute('data-menu-active') === 'true' || window.__isNavMenuActive) {
         return;
+      }
+
+      const fingerCount = e.detail?.fingers;
+      if (fingerCount === undefined || fingerCount === 0) {
+        lastProcessedFingerRef.current = -1;
+        return;
+      }
       }
 
       // 1. Mode Membaca Materi (Reader View: Teks & PDF)
@@ -1198,18 +1179,6 @@ const StudentModules = () => {
           )}
         </div>
       </main>
-
-      {/* Gesture Camera Overlay for Tunawicara Mode */}
-      {isMute && !isCameraClosed && (
-        <GestureCameraOverlay
-          videoRef={videoRef}
-          canvasRef={canvasRef}
-          isActive={camActive}
-          handDetected={handDetected}
-          totalFingers={totalFingers}
-          isModuleSelected={!!selectedModule}
-        />
-      )}
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }

@@ -7,8 +7,6 @@ import StudentSidebar from '@/components/layout/StudentSidebar';
 import { useVoice } from '@/features/accessibility/hooks/useVoice';
 import { useAccessibility } from '@/features/accessibility/hooks/useAccessibility';
 import { useSubtitle } from '@/features/accessibility/components/Subtitles';
-import { useGestureControl } from '@/features/accessibility/hooks/useGestureControl';
-import GestureCameraOverlay from '@/features/accessibility/components/GestureCameraOverlay';
 import {
   HiChatAlt2, HiUsers, HiUserGroup, HiLockClosed, HiLockOpen,
   HiPaperAirplane, HiX, HiSearch, HiCheckCircle,
@@ -214,100 +212,87 @@ const StudentCollaboration = () => {
   const lastProcessedFingerRef = useRef(-1);
   const cooldownRef = useRef(false);
 
-  const [isCameraClosed, setIsCameraClosed] = useState(() => {
-    try {
-      return localStorage.getItem('gesture_camera_disabled') === 'true';
-    } catch {
-      return false;
-    }
-  });
-
+  // 🎯 Global Gesture Listener for Tunawicara Mode
   useEffect(() => {
-    const handleToggle = () => {
-      try {
-        setIsCameraClosed(localStorage.getItem('gesture_camera_disabled') === 'true');
-      } catch {}
-    };
-    window.addEventListener('gesture-camera-toggle', handleToggle);
-    window.addEventListener('storage', handleToggle);
-    return () => {
-      window.removeEventListener('gesture-camera-toggle', handleToggle);
-      window.removeEventListener('storage', handleToggle);
-    };
-  }, []);
+    if (!isMute) return;
 
-  const { videoRef, canvasRef, isActive: camActive, handDetected, totalFingers } = useGestureControl({
-    enabled: isMute && !isCameraClosed,
-    onGesture: (fingerCount) => {
-      // Ignore if navigation menu is open
+    const handleGlobalGesture = (e) => {
       if (document.body.getAttribute('data-menu-active') === 'true' || window.__isNavMenuActive) {
         return;
       }
 
-      if (cooldownRef.current) return;
-      if (fingerCount === 0) {
+      const fingerCount = e.detail?.fingers;
+      if (fingerCount === undefined || fingerCount === 0) {
         lastProcessedFingerRef.current = -1;
         return;
       }
-      if (fingerCount === lastProcessedFingerRef.current) return;
+      if (cooldownRef.current || fingerCount === lastProcessedFingerRef.current) return;
 
       lastProcessedFingerRef.current = fingerCount;
       cooldownRef.current = true;
       setTimeout(() => { cooldownRef.current = false; }, 800);
 
-      // 🎯 1. FISI 1 JARI: Pindah ke Tab "Grup Saya"
       if (fingerCount === 1) {
         setActiveTab('mine');
         setSelectedIndex(0);
-        if (isMute) showSubtitle('☝️ 1 Jari: Membuka Tab Grup Saya', 'info');
+        showSubtitle('☝️ 1 Jari: Membuka Tab Grup Saya', 'info');
         return;
       }
 
-      // 🎯 2. FISI 2 JARI: Pindah ke Tab "Cari Grup"
       if (fingerCount === 2) {
         setActiveTab('discover');
         setSelectedIndex(0);
-        if (isMute) showSubtitle('✌️ 2 Jari: Membuka Tab Cari Grup', 'info');
+        showSubtitle('✌️ 2 Jari: Membuka Tab Cari Grup', 'info');
         return;
       }
 
       if (!smartGroups || smartGroups.length === 0) return;
 
-      // 🎯 3. FISI 3 JARI: Next Grup / Lanjut memilih grup
       if (fingerCount === 3) {
         setSelectedIndex(prev => {
           const nextIdx = (prev + 1) % smartGroups.length;
           const g = smartGroups[nextIdx];
-          if (isMute) showSubtitle(`🤟 3 Jari (Lanjut): Grup "${g?.name || 'Grup'}" disorot`, 'info');
-
+          showSubtitle(`🤟 3 Jari (Lanjut): Grup "${g?.name || 'Grup'}" disorot`, 'info');
           setTimeout(() => {
             const el = document.querySelector(`[data-idx="${nextIdx}"]`);
             el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           }, 100);
-
           return nextIdx;
         });
         return;
       }
 
-      // 🎯 4. FISI 4 JARI: Prev Grup / Mundur memilih grup
       if (fingerCount === 4) {
         setSelectedIndex(prev => {
           const prevIdx = (prev - 1 + smartGroups.length) % smartGroups.length;
           const g = smartGroups[prevIdx];
-          if (isMute) showSubtitle(`🖖 4 Jari (Mundur): Grup "${g?.name || 'Grup'}" disorot`, 'info');
-
+          showSubtitle(`🖖 4 Jari (Mundur): Grup "${g?.name || 'Grup'}" disorot`, 'info');
           setTimeout(() => {
             const el = document.querySelector(`[data-idx="${prevIdx}"]`);
             el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           }, 100);
-
           return prevIdx;
         });
         return;
       }
 
-      // 🎯 5. FISI 5 JARI: Masuk / Buka grup yang disorot
+      if (fingerCount === 5) {
+        const targetGroup = smartGroups[selectedIndex];
+        if (!targetGroup) return;
+        if (activeTab === 'mine') {
+          showSubtitle(`🖐️ 5 Jari: Masuk ke Grup "${targetGroup.name}"...`, 'success');
+          setSelectedGroup(targetGroup);
+          navigate(`/student/collaboration/${targetGroup.id}`);
+        } else {
+          showSubtitle(`🖐️ 5 Jari: Bergabung ke Grup "${targetGroup.name}"...`, 'success');
+          handleJoinGroup(targetGroup.id);
+        }
+      }
+    };
+
+    window.addEventListener('gesture-detected', handleGlobalGesture);
+    return () => window.removeEventListener('gesture-detected', handleGlobalGesture);
+  }, [isMute, smartGroups, activeTab, selectedIndex, navigate, showSubtitle]);
       if (fingerCount === 5) {
         if (showJoinModal) {
           setShowJoinModal(false);
@@ -618,38 +603,6 @@ const StudentCollaboration = () => {
             </div>
           )}
         </AnimatePresence>
-
-        {/* Navigation Info for Tunawicara */}
-        {isMute && !isCameraClosed && (
-          <div className="bg-slate-900 text-white py-4 px-10 flex items-center justify-between shrink-0 z-[120] border-t border-white/5">
-             <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-                <p className="text-[10px] font-black uppercase tracking-[0.1em]">
-                  {selectedGroup ? `AKTIF DI GRUP: ${selectedGroup.name}` : (activeTab === 'mine' ? 'PILIH GRUP SAYA' : 'CARI & GABUNG GRUP')}
-                </p>
-             </div>
-             <div className="flex gap-10 items-center">
-                <div className="flex gap-6">
-                   <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest"><span className="text-white bg-indigo-600 px-2 py-0.5 rounded mr-1">1</span> Grup Saya</p>
-                   <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest"><span className="text-white bg-emerald-600 px-2 py-0.5 rounded mr-1">2</span> Cari Grup</p>
-                   <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest"><span className="text-white bg-indigo-600 px-2 py-0.5 rounded mr-1">3</span> Lanjut</p>
-                   <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest"><span className="text-white bg-indigo-600 px-2 py-0.5 rounded mr-1">4</span> Mundur</p>
-                   <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest"><span className="text-white bg-slate-700 px-2 py-0.5 rounded mr-1">5</span> Masuk</p>
-                </div>
-             </div>
-          </div>
-        )}
-
-        {/* Gesture Camera Overlay for Tunawicara Mode */}
-        {isMute && !isCameraClosed && (
-          <GestureCameraOverlay
-            videoRef={videoRef}
-            canvasRef={canvasRef}
-            isActive={camActive}
-            handDetected={handDetected}
-            totalFingers={totalFingers}
-          />
-        )}
       </main>
     </div>
   );

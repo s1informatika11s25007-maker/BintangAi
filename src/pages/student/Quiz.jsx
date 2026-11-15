@@ -5,8 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import ConfettiEffect from '@/components/feedback/ConfettiEffect';
-import GestureCameraOverlay from '@/features/accessibility/components/GestureCameraOverlay';
-import { useGestureControl } from '@/features/accessibility/hooks/useGestureControl';
 import { useSubtitle } from '@/features/accessibility/components/Subtitles';
 import { useAccessibility } from '@/features/accessibility/hooks/useAccessibility';
 import { useVoice } from '@/features/accessibility/hooks/useVoice';
@@ -129,18 +127,18 @@ const StudentQuiz = () => {
     } else {
       window.scrollBy({ top: stepAmount, behavior: 'smooth' });
     }
-  };
+  // 🎯 Global Gesture Listener for Quiz Execution & Results
+  useEffect(() => {
+    if (!isMute) return;
 
-  const lastProcessedFingerRef = useRef(-1);
-  const cooldownRef = useRef(false);
-
-  const {
-    videoRef, canvasRef, isActive: camActive, handDetected, totalFingers
-  } = useGestureControl({
-    enabled: isMute,
-    onGesture: (fingerCount) => {
-      // 🎯 ABAIKAN GESTUR HALAMAN SAAT MENU UTAMA NAVIGASI SEDANG TERBUKA
+    const handleGlobalGesture = (e) => {
       if (document.body.getAttribute('data-menu-active') === 'true' || window.__isNavMenuActive) {
+        return;
+      }
+
+      const fingerCount = e.detail?.fingers;
+      if (fingerCount === undefined || fingerCount === 0) {
+        lastProcessedFingerRef.current = -1;
         return;
       }
 
@@ -424,9 +422,6 @@ const StudentQuiz = () => {
   if (retakeAllowedSub) {
     return (
       <div data-quiz-status="IZIN_ULANG_DISETUJUI" data-retake-screen="true" className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-6 text-slate-800 font-sans relative">
-        {isMute && (
-          <GestureCameraOverlay isResultScreen={true} videoRef={videoRef} canvasRef={canvasRef} isActive={camActive} handDetected={handDetected} totalFingers={totalFingers} />
-        )}
         <div className="w-full max-w-xl bg-white p-8 md:p-10 rounded-[2.5rem] shadow-2xl border border-slate-100 text-center space-y-6">
           <div className="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-3xl flex items-center justify-center text-4xl mx-auto shadow-inner border border-indigo-100">
             🎉
@@ -494,9 +489,6 @@ const StudentQuiz = () => {
 
     return (
       <div data-quiz-status="MENUNGGU_IZIN_GURU" data-result-screen="true" className="min-h-screen bg-white flex flex-col items-center p-4 md:p-6 pt-8 md:pt-10 overflow-y-auto pb-24 relative">
-        {isMute && (
-          <GestureCameraOverlay isResultScreen={true} videoRef={videoRef} canvasRef={canvasRef} isActive={camActive} handDetected={handDetected} totalFingers={totalFingers} />
-        )}
         <ConfettiEffect active={showConfetti} />
         <span className="text-6xl md:text-7xl mb-4 drop-shadow-2xl animate-bounce">🏆</span>
         <h2 className="font-black text-slate-900 text-3xl md:text-4xl mb-2 uppercase text-center tracking-tighter">Hasil Petualanganmu</h2>
@@ -592,10 +584,6 @@ const StudentQuiz = () => {
 
   return (
     <div data-quiz-status="BELUM_DIKERJAKAN" className="min-h-screen bg-slate-50 pb-24 md:pb-32">
-      {isMute && (
-        <GestureCameraOverlay isResultScreen={false} videoRef={videoRef} canvasRef={canvasRef} isActive={camActive}
-          handDetected={handDetected} totalFingers={totalFingers} />
-      )}
 
       <header className={`bg-white border-b-2 md:border-b-2 border-slate-100 p-4 md:p-5 sticky z-20 flex justify-between items-center transition-all ${isBlind || isMute ? 'top-4 md:top-6' : 'top-0'}`}>
         <div className="flex items-center gap-2 md:gap-4">

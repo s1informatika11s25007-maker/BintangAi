@@ -10,8 +10,6 @@ import { useVoice } from '@/features/accessibility/hooks/useVoice';
 import { useGlobalVoiceNav } from '@/features/accessibility/hooks/useGlobalVoiceNav';
 import { useSubtitle } from '@/features/accessibility/components/Subtitles';
 import { useAccessibility } from '@/features/accessibility/hooks/useAccessibility';
-import { useGestureControl } from '@/features/accessibility/hooks/useGestureControl';
-import GestureCameraOverlay from '@/features/accessibility/components/GestureCameraOverlay';
 import {
   HiLightningBolt, HiCheckCircle, HiChevronRight,
   HiClock, HiAcademicCap, HiInformationCircle, HiChevronLeft, HiBookOpen, HiVolumeUp
@@ -106,18 +104,17 @@ const StudentTaskDetail = () => {
     }
   };
 
-  const lastProcessedFingerRef = useRef(-1);
-  const cooldownRef = useRef(false);
+  // 🎯 Global Gesture Listener for TaskDetail Execution & Results
+  useEffect(() => {
+    if (!isMute) return;
 
-  const { videoRef, canvasRef, isActive: camActive, handDetected, totalFingers } = useGestureControl({
-    enabled: isMute,
-    onGesture: (fingerCount) => {
-      // 🎯 ABAIKAN GESTUR HALAMAN SAAT MENU UTAMA NAVIGASI SEDANG TERBUKA
+    const handleGlobalGesture = (e) => {
       if (document.body.getAttribute('data-menu-active') === 'true' || window.__isNavMenuActive) {
         return;
       }
 
-      if (fingerCount === 0) {
+      const fingerCount = e.detail?.fingers;
+      if (fingerCount === undefined || fingerCount === 0) {
         lastProcessedFingerRef.current = -1;
         return;
       }
@@ -675,26 +672,9 @@ const StudentTaskDetail = () => {
         </AnimatePresence>
       </main>
 
-      {isMute && (
-        <div className="fixed bottom-0 inset-x-0 bg-indigo-600 text-white py-3 md:py-4 px-4 md:px-10 flex flex-col md:flex-row items-center justify-between z-[100] shadow-[0_-10px_50px_rgba(79,70,229,0.3)] gap-2 md:gap-0">
-           <div className="flex items-center gap-2 md:gap-4">
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-white/20 flex items-center justify-center animate-pulse"><HiLightningBolt className="text-xs md:text-base text-amber-300" /></div>
-              <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em]">Pemandu Jari Aktif</p>
-           </div>
-           <div className="flex gap-4 md:gap-10">
-              <div className="flex items-center gap-2 md:gap-3">
-                 <span className="bg-white/20 px-2 py-0.5 rounded text-[8px] md:text-xs font-black">1-4</span>
-                 <p className="text-[7px] md:text-[9px] font-bold uppercase tracking-widest">Pilih Jawaban</p>
-              </div>
-              <div className="flex items-center gap-2 md:gap-3">
-                 <span className="bg-white/20 px-2 py-0.5 rounded text-[8px] md:text-xs font-black">5</span>
-                 <p className="text-[7px] md:text-[9px] font-bold uppercase tracking-widest">Lanjut / Selesai</p>
-              </div>
-           </div>
-        </div>
-      )}
     </div>
   );
+};
 
 };
 

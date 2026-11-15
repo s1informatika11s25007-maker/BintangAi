@@ -6,8 +6,6 @@ import { StudentSidebar } from '@/components/layout';
 import { useTasks } from '@/features/quiz/hooks/useTasks';
 import { useSubtitle } from '@/features/accessibility/components/Subtitles';
 import { useAccessibility } from '@/features/accessibility/hooks/useAccessibility';
-import { useGestureControl } from '@/features/accessibility/hooks/useGestureControl';
-import GestureCameraOverlay from '@/features/accessibility/components/GestureCameraOverlay';
 import {
   HiChevronLeft, HiChevronRight, HiCollection, HiLightningBolt,
   HiAcademicCap, HiCheckCircle, HiLockClosed, HiClock, HiEye
@@ -38,38 +36,29 @@ const StudentTasks = () => {
   // Selected Card Index for Tunawicara Gestures
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const [isCameraClosed, setIsCameraClosed] = useState(() => {
-    try {
-      return localStorage.getItem('gesture_camera_disabled') === 'true';
-    } catch {
-      return false;
-    }
-  });
-
+  // 🎯 Global Gesture Listener for Tunawicara Mode
   useEffect(() => {
-    const handleToggle = () => {
-      try {
-        setIsCameraClosed(localStorage.getItem('gesture_camera_disabled') === 'true');
-      } catch {}
-    };
-    window.addEventListener('gesture-camera-toggle', handleToggle);
-    window.addEventListener('storage', handleToggle);
-    return () => {
-      window.removeEventListener('gesture-camera-toggle', handleToggle);
-      window.removeEventListener('storage', handleToggle);
-    };
-  }, []);
+    if (!isMute) return;
 
-  const { videoRef, canvasRef, isActive: camActive, handDetected, totalFingers } = useGestureControl({
-    enabled: isMute && !isCameraClosed,
-    onGesture: (fingerCount) => {
-      // 🎯 ABAIKAN GESTUR HALAMAN SAAT MENU UTAMA NAVIGASI SEDANG TERBUKA
+    const handleGlobalGesture = (e) => {
       if (document.body.getAttribute('data-menu-active') === 'true' || window.__isNavMenuActive) {
         return;
       }
+      const fingerCount = e.detail?.fingers;
+      if (fingerCount === undefined || fingerCount === 0) return;
 
       if (fingerCount === 4) {
         setTabFilter('completed');
+        showSubtitle('🖖 4 Jari: Membuka Tab Riwayat & Kunci Jawaban', 'info');
+      } else if (fingerCount === 5) {
+        setTabFilter('active');
+        showSubtitle('🖐️ 5 Jari: Membuka Tab QuizKu Aktif', 'info');
+      }
+    };
+
+    window.addEventListener('gesture-detected', handleGlobalGesture);
+    return () => window.removeEventListener('gesture-detected', handleGlobalGesture);
+  }, [isMute, showSubtitle]);
         if (isMute) showSubtitle('🖖 4 Jari: Membuka Tab Riwayat & Kunci Jawaban', 'info');
         return;
       } else if (fingerCount === 5) {
@@ -352,35 +341,7 @@ const StudentTasks = () => {
             </div>
           )}
         </div>
-
-        {/* Navigation Info for Tunawicara */}
-        {isMute && !isCameraClosed && (
-          <div className="bg-indigo-600 text-white py-3 px-8 flex items-center justify-between shrink-0 text-xs font-bold">
-            <div className="flex items-center gap-3">
-              <HiLightningBolt className="text-amber-400" />
-              <span>Kontrol Jari Tunawicara Aktif</span>
-            </div>
-            <div className="flex gap-4 md:gap-6 text-[11px]">
-              <span><strong className="bg-white/20 px-2 py-0.5 rounded">1</strong> Lanjut</span>
-              <span><strong className="bg-white/20 px-2 py-0.5 rounded">2</strong> Mundur</span>
-              <span><strong className="bg-white/20 px-2 py-0.5 rounded">3</strong> Masuk</span>
-              <span><strong className="bg-white/20 px-2 py-0.5 rounded">4</strong> Riwayat</span>
-              <span><strong className="bg-white/20 px-2 py-0.5 rounded">5</strong> Aktif</span>
-            </div>
-          </div>
-        )}
       </main>
-
-      {/* Gesture Camera Overlay for Tunawicara */}
-      {isMute && !isCameraClosed && (
-        <GestureCameraOverlay
-          videoRef={videoRef}
-          canvasRef={canvasRef}
-          isActive={camActive}
-          handDetected={handDetected}
-          totalFingers={totalFingers}
-        />
-      )}
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
