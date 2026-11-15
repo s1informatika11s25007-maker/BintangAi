@@ -81,8 +81,23 @@ const GestureCameraOverlay = ({
     { icon: '🙌', label: 'Menu (10)' },
   ];
 
+  // Perintah Khusus Halaman Hasil Petualanganmu & Retake Kuis
+  const quizResultCommands = [
+    { icon: '☝️', label: 'Scroll ↓ (1)' },
+    { icon: '✌️', label: 'Scroll ↑ (2)' },
+    { icon: '🤟', label: 'Ulangi (3)' },
+    { icon: '🖖', label: 'Nanti (4)' },
+    { icon: '🖐️', label: 'Daftar (5)' },
+  ];
+
   const isDashboardPage = path === '/student/dashboard';
   const isSubmissionView = path.includes('/student/task/') && !!document.querySelector('[data-view-pembahasan="true"]');
+  const isQuizPage = path.includes('/student/quiz/') || path.includes('/student/task/');
+  const isResultScreen = isQuizPage && (
+    !!document.querySelector('[data-result-screen="true"]') ||
+    !!document.querySelector('[data-retake-screen="true"]') ||
+    (typeof document !== 'undefined' && (document.body.innerText.includes('Hasil Petualanganmu') || document.body.innerText.includes('Izin Kerjakan Ulang')))
+  );
 
   // LOGIKA PENENTUAN COMMAND YANG TAMPIL
   let currentCommands = navCommands;
@@ -105,7 +120,12 @@ const GestureCameraOverlay = ({
     title = '📖 Pembahasan Quiz';
     accentColor = 'text-indigo-400';
     activeDot = 'bg-indigo-500';
-  } else if (isTaskDetail) {
+  } else if (isResultScreen) {
+    currentCommands = quizResultCommands;
+    title = '🏆 Hasil Petualanganmu';
+    accentColor = 'text-emerald-400';
+    activeDot = 'bg-emerald-500';
+  } else if (isTaskDetail || isQuizPage) {
     currentCommands = quizDetailCommands;
     title = '🎯 Fokus Quiz';
     accentColor = 'text-amber-500';
@@ -176,6 +196,8 @@ const GestureCameraOverlay = ({
               isMatch = totalFingers === navFingerMap[i];
             } else if (isSubmissionView) {
               isMatch = (i === 0 && totalFingers === 1);
+            } else if (isResultScreen) {
+              isMatch = totalFingers >= 1 && totalFingers <= 5 && totalFingers === (i + 1);
             } else if (isTaskDetail) {
               isMatch = totalFingers === (i + 1);
             } else if (isQuizList) {
@@ -217,6 +239,10 @@ const GestureCameraOverlay = ({
           ) : isSubmissionView ? (
             <p className="text-[8px] font-black text-white uppercase tracking-widest">
               1 Jari = Kembali ke Daftar Quiz | 10 = Menu
+            </p>
+          ) : isResultScreen ? (
+            <p className="text-[8px] font-black text-white uppercase tracking-widest">
+              1 = Scroll ↓ | 2 = Scroll ↑ | 3 = Ulangi | 4 = Nanti | 5 = Ke Daftar
             </p>
           ) : isTaskDetail ? (
             <p className="text-[8px] font-black text-white uppercase tracking-widest">

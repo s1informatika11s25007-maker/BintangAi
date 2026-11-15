@@ -96,49 +96,23 @@ const StudentQuiz = () => {
   } = useGestureControl({
     enabled: isMute,
     onGesture: (fingerCount) => {
-      // 🎯 1. ATURAN GESTUR KHUSUS HALAMAN HASIL PETUALANGANMU (RESULT SCREEN)
-      if (alreadyDone || finished) {
+      // 🎯 1. ATURAN GESTUR KHUSUS HALAMAN HASIL PETUALANGANMU & IZIN ULANGI
+      if (alreadyDone || finished || retakeAllowedSub) {
         if (fingerCount === 1) {
           window.scrollBy({ top: 400, behavior: 'smooth' });
-          if (isMute) showSubtitle('☝️ 1 Jari: Scroll Otomatis Kebawah', 'info');
-        } else if (fingerCount === 2) {
-          window.scrollBy({ top: -400, behavior: 'smooth' });
-          if (isMute) showSubtitle('✌️ 2 Jari: Scroll Otomatis Keatas', 'info');
-        } else if (fingerCount === 3) {
-          if (isMute) showSubtitle('🤟 3 Jari: Kembali ke Daftar Kuis', 'success');
-          setTimeout(() => navigate('/student/tasks'), 300);
-        } else if (fingerCount === 4) {
-          if (isMute) showSubtitle('🖖 4 Jari: Nanti Saja', 'info');
-          setTimeout(() => navigate('/student/tasks'), 300);
-        } else if (fingerCount === 5) {
-          if (retakeAllowedSub) {
-            if (isMute) showSubtitle('🖐️ 5 Jari: Kerjakan Ulang Sekarang!', 'success');
-            confirmStartRetakeInQuiz();
-          } else {
-            if (isMute) showSubtitle('✋ 5 Jari: Kembali ke Daftar', 'success');
-            setTimeout(() => navigate('/student/tasks'), 300);
-          }
-        }
-        return;
-      }
-
-      // 🎯 2. ATURAN GESTUR KHUSUS HALAMAN IZIN KERJAKAN ULANG (RETAKE SCREEN)
-      if (retakeAllowedSub) {
-        if (fingerCount === 1) {
-          window.scrollBy({ top: 300, behavior: 'smooth' });
           if (isMute) showSubtitle('☝️ 1 Jari: Scroll Kebawah', 'info');
         } else if (fingerCount === 2) {
-          window.scrollBy({ top: -300, behavior: 'smooth' });
+          window.scrollBy({ top: -400, behavior: 'smooth' });
           if (isMute) showSubtitle('✌️ 2 Jari: Scroll Keatas', 'info');
         } else if (fingerCount === 3) {
-          if (isMute) showSubtitle('🤟 3 Jari: Kembali ke Daftar Kuis', 'success');
-          setTimeout(() => navigate('/student/tasks'), 300);
+          if (isMute) showSubtitle('🤟 3 Jari: Kerjakan Ulang Sekarang!', 'success');
+          confirmStartRetakeInQuiz();
         } else if (fingerCount === 4) {
-          if (isMute) showSubtitle('🖖 4 Jari: Nanti Saja', 'info');
+          if (isMute) showSubtitle('🖖 4 Jari: Tekan Nanti Saja', 'info');
           setTimeout(() => navigate('/student/tasks'), 300);
         } else if (fingerCount === 5) {
-          if (isMute) showSubtitle('🖐️ 5 Jari: Kerjakan Ulang Sekarang!', 'success');
-          confirmStartRetakeInQuiz();
+          if (isMute) showSubtitle('🖐️ 5 Jari: Kembali ke Daftar Kuis', 'success');
+          setTimeout(() => navigate('/student/tasks'), 300);
         }
         return;
       }
