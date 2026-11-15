@@ -33,8 +33,16 @@ const BlindAIAssistant = () => {
 
   const navMap = useMemo(() => ({
     'dashboard': '/student/dashboard',
-    'beranda': '/student/dashboard',
-    'home': '/student/dashboard',
+    'beranda': '/',
+    'landing': '/',
+    'home': '/',
+    'utama': '/',
+    'masuk': '/auth/login',
+    'login': '/auth/login',
+    'daftar': '/auth/register',
+    'register': '/auth/register',
+    'buat akun': '/auth/register',
+    'pendaftaran': '/auth/register',
     'playground': '/student/playground',
     'tanya-ai': profile?.disability_type === 'tunanetra' ? '/student/playground' : '/student/tanya-ai',
     'tasks': '/student/tasks',
@@ -353,7 +361,7 @@ const BlindAIAssistant = () => {
   }, [isRecording, isProcessing, startRecording, stopRecording, startListening, stopListening, speak, stopSpeaking]);
 
   useEffect(() => {
-    if (!isBlind || isPublicPage) return;
+    if (!isBlind) return;
     const handleKeyDown = (e) => {
       const activeEl = document.activeElement;
       const isInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable);
@@ -364,9 +372,9 @@ const BlindAIAssistant = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isBlind, isPublicPage, handleMicClick]);
+  }, [isBlind, handleMicClick]);
 
-  if (!isBlind || !profile || isPlaygroundPage || isPublicPage) return null;
+  if (!isBlind || isPlaygroundPage) return null;
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-[500] flex flex-col items-center pointer-events-none pb-6 md:pb-12">

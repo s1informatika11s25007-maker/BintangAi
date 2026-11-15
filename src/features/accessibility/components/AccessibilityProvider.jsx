@@ -95,9 +95,9 @@ const AccessibilityProvider = ({ children }) => {
     return { name: 'Halaman Baru', guide: '' };
   };
 
-  // Global focus, hover, and W3C Image/Diagram listener for Siswa Tunanetra
+  // Global focus, hover, and W3C Image/Diagram listener for Siswa Tunanetra (Works on ALL pages including Landing, Login, Register)
   useEffect(() => {
-    if (isPublicPage || !isBlind || !profile) return;
+    if (!isBlind) return;
 
     let lastSpokenBlock = null;
     let lastSpokenText = '';

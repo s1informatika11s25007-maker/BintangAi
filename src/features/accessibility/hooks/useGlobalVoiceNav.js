@@ -153,6 +153,24 @@ export function useGlobalVoiceNav() {
     }
 
     // Navigation Commands - Auto Direct Routing (< 300ms)
+    if (t.includes('masuk') || t.includes('login') || t.includes('halaman masuk')) {
+      navigate('/auth/login');
+      speak('Membuka halaman masuk akun');
+      return;
+    }
+
+    if (t.includes('daftar') || t.includes('register') || t.includes('buat akun') || t.includes('pendaftaran')) {
+      navigate('/auth/register');
+      speak('Membuka halaman pendaftaran akun baru');
+      return;
+    }
+
+    if (t.includes('beranda') || t.includes('landing') || t.includes('utama') || t.includes('home')) {
+      navigate('/');
+      speak('Membuka halaman utama SambungJaga');
+      return;
+    }
+
     if (t.includes('kembali') || t.includes('back')) {
       navigate(-1);
       speak('Kembali ke halaman sebelumnya');
