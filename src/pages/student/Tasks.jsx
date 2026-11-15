@@ -49,16 +49,6 @@ const StudentTasks = () => {
 
       if (fingerCount === 4) {
         setTabFilter('completed');
-        showSubtitle('🖖 4 Jari: Membuka Tab Riwayat & Kunci Jawaban', 'info');
-      } else if (fingerCount === 5) {
-        setTabFilter('active');
-        showSubtitle('🖐️ 5 Jari: Membuka Tab QuizKu Aktif', 'info');
-      }
-    };
-
-    window.addEventListener('gesture-detected', handleGlobalGesture);
-    return () => window.removeEventListener('gesture-detected', handleGlobalGesture);
-  }, [isMute, showSubtitle]);
         if (isMute) showSubtitle('🖖 4 Jari: Membuka Tab Riwayat & Kunci Jawaban', 'info');
         return;
       } else if (fingerCount === 5) {
@@ -93,8 +83,11 @@ const StudentTasks = () => {
           }, 300);
         }
       }
-    }
-  });
+    };
+
+    window.addEventListener('gesture-detected', handleGlobalGesture);
+    return () => window.removeEventListener('gesture-detected', handleGlobalGesture);
+  }, [isMute, showSubtitle, currentItems, selectedIndex, tabFilter, navigate]);
 
   const nextPage = () => {
     if (currentPage < totalPages) {
