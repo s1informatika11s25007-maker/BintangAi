@@ -12,7 +12,7 @@ import { logUserActivity } from '@/utils/logger';
  * Catatan:
  * - Alur autentikasi, pendaftaran, akun simulasi, dan integrasi store tetap dipertahankan.
  * - Akun DEMO_ACCOUNTS memang merupakan akun simulasi yang disediakan proyek.
- * - Seluruh ilustrasi dekoratif menggunakan emoji/CSS agar tidak membutuhkan aset eksternal.
+ * - Maskot Bintang dibuat sebagai SVG inline dengan mata, senyum, animasi mengambang, dan kedipan berkala.
  */
 
 const DEMO_ACCOUNTS = [
@@ -25,7 +25,7 @@ const DEMO_ACCOUNTS = [
     description: 'Budi Santoso · Kelas 4 SD',
     support: 'Panduan suara, pembaca layar, dan deskripsi gambar',
     icon: '🎧',
-    color: 'from-violet-100 to-purple-50',
+    color: 'from-blue-50 to-sky-50',
   },
   {
     key: 'tunarungu',
@@ -36,7 +36,7 @@ const DEMO_ACCOUNTS = [
     description: 'Siti Rahma · Kelas 3 SD',
     support: 'Teks yang jelas, subtitle, dan petunjuk visual',
     icon: '💬',
-    color: 'from-sky-100 to-cyan-50',
+    color: 'from-sky-50 to-blue-50',
   },
   {
     key: 'tunawicara',
@@ -47,7 +47,7 @@ const DEMO_ACCOUNTS = [
     description: 'Doni Pratama · Kelas 5 SD',
     support: 'Komunikasi dengan tulisan, gambar, dan simbol',
     icon: '🧩',
-    color: 'from-emerald-100 to-green-50',
+    color: 'from-blue-50 to-sky-50',
   },
   {
     key: 'guru',
@@ -58,7 +58,7 @@ const DEMO_ACCOUNTS = [
     description: 'Ibu Rina · Guru SLB/SD',
     support: 'Kelola kelas dan materi belajar',
     icon: '👩‍🏫',
-    color: 'from-amber-100 to-yellow-50',
+    color: 'from-blue-100 to-sky-50',
   },
   {
     key: 'ortu',
@@ -69,7 +69,7 @@ const DEMO_ACCOUNTS = [
     description: 'Pak Herman · Orang tua',
     support: 'Dampingi dan lihat laporan anak',
     icon: '👨‍👧',
-    color: 'from-rose-100 to-pink-50',
+    color: 'from-sky-50 to-blue-100',
   },
 ];
 
@@ -80,7 +80,7 @@ const LEARNING_MODES = [
     note: 'Hambatan penglihatan',
     description: 'Dengarkan materi, gunakan pembaca layar, dan dengarkan deskripsi gambar.',
     icon: '🎧',
-    tone: 'violet',
+    tone: 'blue',
   },
   {
     id: 'tunarungu',
@@ -96,7 +96,15 @@ const LEARNING_MODES = [
     note: 'Hambatan bicara',
     description: 'Gunakan tulisan, gambar, dan simbol untuk menyampaikan jawaban.',
     icon: '🧩',
-    tone: 'emerald',
+    tone: 'blueSoft',
+  },
+  {
+    id: 'umum',
+    title: 'Umum',
+    note: 'Tampilan standar',
+    description: 'Gunakan tampilan Bintang AI seperti biasa, tanpa pengaturan khusus.',
+    icon: '🌟',
+    tone: 'sky',
   },
 ];
 
@@ -170,6 +178,67 @@ const SLIDE_MOTIONS = [
   },
 ];
 
+// Transisi 2D yang lebih ringan khusus perangkat sentuh/Android.
+// Desktop tetap menggunakan rangkaian transisi sinematik di SLIDE_MOTIONS.
+const MOBILE_SLIDE_MOTIONS = [
+  {
+    initial: { opacity: 0, y: 18, scale: 0.985 },
+    animate: { opacity: 1, y: 0, scale: 1 },
+    exit: { opacity: 0, y: -12, scale: 0.99 },
+    transition: { duration: 0.34, ease: [0.2, 0.8, 0.2, 1] },
+    style: {},
+  },
+  {
+    initial: (direction) => ({ opacity: 0, x: direction > 0 ? 22 : -22 }),
+    animate: { opacity: 1, x: 0 },
+    exit: (direction) => ({ opacity: 0, x: direction > 0 ? -18 : 18 }),
+    transition: { duration: 0.32, ease: [0.2, 0.8, 0.2, 1] },
+    style: {},
+  },
+  {
+    initial: { opacity: 0, scale: 0.97 },
+    animate: { opacity: 1, scale: 1 },
+    exit: { opacity: 0, scale: 1.02 },
+    transition: { duration: 0.34, ease: [0.16, 1, 0.3, 1] },
+    style: {},
+  },
+  {
+    initial: { opacity: 0, x: 18 },
+    animate: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: -14 },
+    transition: { duration: 0.32, ease: [0.2, 0.8, 0.2, 1] },
+    style: {},
+  },
+  {
+    initial: { opacity: 0, y: 16 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -12 },
+    transition: { duration: 0.34, ease: [0.2, 0.8, 0.2, 1] },
+    style: {},
+  },
+  {
+    initial: { opacity: 0, scale: 0.98, y: 12 },
+    animate: { opacity: 1, scale: 1, y: 0 },
+    exit: { opacity: 0, scale: 0.99, y: -10 },
+    transition: { duration: 0.34, ease: [0.16, 1, 0.3, 1] },
+    style: {},
+  },
+  {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -14 },
+    transition: { duration: 0.34, ease: [0.2, 0.8, 0.2, 1] },
+    style: {},
+  },
+  {
+    initial: (direction) => ({ opacity: 0, x: direction > 0 ? 18 : -18 }),
+    animate: { opacity: 1, x: 0 },
+    exit: (direction) => ({ opacity: 0, x: direction > 0 ? -18 : 18 }),
+    transition: { duration: 0.32, ease: [0.2, 0.8, 0.2, 1] },
+    style: {},
+  },
+];
+
 const TOUR_DURATIONS = [0, 7200, 7600, 7600, 7600, 10500, 7000, 0];
 
 const inputClass =
@@ -180,17 +249,16 @@ const secondaryButton =
   'inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl border-2 border-sky-200 bg-white px-6 py-3 text-base font-extrabold text-sky-800 transition hover:-translate-y-0.5 hover:border-sky-400 hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-sky-100 disabled:cursor-not-allowed disabled:opacity-60';
 
 const toneStyles = {
-  violet: 'border-violet-200 bg-violet-50',
-  sky: 'border-sky-200 bg-sky-50',
-  emerald: 'border-emerald-200 bg-emerald-50',
-  amber: 'border-amber-200 bg-amber-50',
+  blue: 'border-blue-100 bg-blue-50',
+  sky: 'border-sky-100 bg-sky-50',
+  blueSoft: 'border-blue-100 bg-[#F3F8FF]',
 };
 
 function SlideHeading({ eyebrow, title, description }) {
   return (
     <div className="mx-auto max-w-3xl text-center">
       {eyebrow && (
-        <p className="inline-flex rounded-full bg-amber-100 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-amber-800">
+        <p className="inline-flex rounded-full bg-blue-50 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-blue-800">
           {eyebrow}
         </p>
       )}
@@ -206,15 +274,49 @@ function SlideHeading({ eyebrow, title, description }) {
   );
 }
 
+function BintangMascot({ size = 48, className = '', label = 'Maskot Bintang' }) {
+  return (
+    <span
+      className={`bintang-mascot inline-flex shrink-0 items-center justify-center ${className}`}
+      style={{ width: size, height: size }}
+      aria-hidden={label ? undefined : 'true'}
+      role={label ? 'img' : undefined}
+      aria-label={label || undefined}
+    >
+      <svg viewBox="0 0 120 120" width="100%" height="100%" focusable="false">
+        <path
+          d="M60 7.5 75 40.5 111 44 84 68.5 92 105 60 86 28 105 36 68.5 9 44 45 40.5Z"
+          fill="#60A5FA"
+          stroke="#1D4ED8"
+          strokeWidth="4.5"
+          strokeLinejoin="round"
+        />
+        <path d="M26 43 Q34 22 55 20" fill="none" stroke="#DBEAFE" strokeWidth="5" strokeLinecap="round" opacity=".9" />
+        <g className="bintang-eye bintang-eye-left">
+          <ellipse cx="46" cy="55" rx="6.6" ry="9.2" fill="#102A56" />
+          <circle cx="48" cy="51.5" r="2.4" fill="#FFFFFF" />
+        </g>
+        <g className="bintang-eye bintang-eye-right">
+          <ellipse cx="74" cy="55" rx="6.6" ry="9.2" fill="#102A56" />
+          <circle cx="76" cy="51.5" r="2.4" fill="#FFFFFF" />
+        </g>
+        <ellipse cx="31.5" cy="68" rx="6.5" ry="3.7" fill="#BFDBFE" opacity=".95" />
+        <ellipse cx="88.5" cy="68" rx="6.5" ry="3.7" fill="#BFDBFE" opacity=".95" />
+        <path d="M47 72 Q60 84 73 72" fill="none" stroke="#102A56" strokeWidth="4.2" strokeLinecap="round" />
+      </svg>
+    </span>
+  );
+}
+
 function BrandMark({ light = false }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="grid h-11 w-11 place-items-center rounded-2xl bg-amber-300 text-2xl shadow-[0_4px_0_#d97706]" aria-hidden="true">
-        ⭐
+      <span className="grid h-12 w-12 place-items-center rounded-2xl border-2 border-blue-100 bg-white shadow-[0_5px_0_#bfdbfe]" aria-hidden="true">
+        <BintangMascot size={45} label={null} />
       </span>
       <span>
-        <span className={`block text-lg font-black leading-tight ${light ? 'text-white' : 'text-slate-900'}`}>Bintang AI</span>
-        <span className={`block text-xs font-semibold ${light ? 'text-sky-100' : 'text-slate-500'}`}>Teman Belajar Kita</span>
+        <span className={`block text-lg font-black leading-tight ${light ? 'text-white' : 'text-blue-950'}`}>Bintang AI</span>
+        <span className={`block text-xs font-semibold ${light ? 'text-blue-100' : 'text-blue-600'}`}>Teman Belajar Kita</span>
       </span>
     </div>
   );
@@ -226,9 +328,24 @@ const LandingPage = () => {
   const { mode, setManualMode, setModeFromProfile } = useAccessibilityStore();
   const { setUser, fetchProfile } = useAuthStore();
   const prefersReducedMotion = useReducedMotion();
+  const [isCoarsePointer, setIsCoarsePointer] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return undefined;
+    const mediaQuery = window.matchMedia('(pointer: coarse)');
+    const updatePointerMode = () => setIsCoarsePointer(mediaQuery.matches);
+    updatePointerMode();
+    mediaQuery.addEventListener?.('change', updatePointerMode);
+    return () => mediaQuery.removeEventListener?.('change', updatePointerMode);
+  }, []);
 
   const validLearningModes = ['tunanetra', 'tunarungu', 'tunawicara'];
-  const normalizedMode = validLearningModes.includes(mode) ? mode : '';
+  const normalizedMode = validLearningModes.includes(mode)
+    ? mode
+    : (['standar', 'tidak_ada', 'umum'].includes(mode) ? 'umum' : '');
+  const initialRegistrationMode = validLearningModes.includes(mode)
+    ? mode
+    : (['standar', 'tidak_ada', 'umum'].includes(mode) ? 'tidak_ada' : '');
 
   const [activeSlide, setActiveSlide] = useState(0);
   const [slideDirection, setSlideDirection] = useState(1);
@@ -256,7 +373,7 @@ const LandingPage = () => {
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [regRole, setRegRole] = useState('siswa');
-  const [regDisability, setRegDisability] = useState(normalizedMode);
+  const [regDisability, setRegDisability] = useState(initialRegistrationMode);
   const [regClassLevel, setRegClassLevel] = useState('4 SD');
   const [regClassCode, setRegClassCode] = useState('');
   const [regSlbName, setRegSlbName] = useState('');
@@ -495,15 +612,22 @@ const LandingPage = () => {
   }, [regRole, regStudentIdInput, checkChildProfile]);
 
   const handleSelectRoleInitial = (roleId) => {
+    const isGeneralMode = roleId === 'umum';
     setSelectedUserRole(roleId);
-    setRegDisability(roleId);
-    setManualMode(roleId);
+    // Nilai profil tetap kompatibel dengan data lama: mode umum disimpan sebagai tidak_ada.
+    setRegDisability(isGeneralMode ? 'tidak_ada' : roleId);
+    // Store aplikasi menggunakan 'standar' sebagai mode tanpa penyesuaian khusus.
+    setManualMode(isGeneralMode ? 'standar' : roleId);
     const labels = {
-      tunanetra: 'Cara belajar dengan suara',
-      tunarungu: 'Cara belajar dengan teks',
-      tunawicara: 'Cara belajar dengan simbol',
+      tunanetra: 'Mode Tunanetra',
+      tunarungu: 'Mode Tunarungu',
+      tunawicara: 'Mode Tunawicara',
+      umum: 'Tampilan Umum',
     };
-    setRoleFeedback(`${labels[roleId] || 'Pilihan belajar'} dipilih. Kamu bisa mengubahnya lagi nanti.`);
+    const feedback = isGeneralMode
+      ? 'Tampilan Umum dipilih. Bintang AI menggunakan tampilan standar tanpa pengaturan khusus.'
+      : `${labels[roleId] || 'Pilihan belajar'} dipilih. Kamu bisa mengubahnya lagi nanti.`;
+    setRoleFeedback(feedback);
   };
 
   const getTargetPath = (role) => {
@@ -694,7 +818,7 @@ const LandingPage = () => {
 
   const renderModeCard = (item, compact = false) => {
     const selected = selectedUserRole === item.id;
-    const baseClass = `group relative flex rounded-[26px] border-2 text-left transition duration-200 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-sky-200 ${toneStyles[item.tone]} ${selected ? 'border-sky-600 shadow-lg ring-4 ring-sky-100' : 'border-transparent'}`;
+    const baseClass = `bintang-touch-card group relative flex rounded-[26px] border-2 text-left transition duration-200 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-sky-200 ${toneStyles[item.tone]} ${selected ? 'border-sky-600 shadow-lg ring-4 ring-sky-100' : 'border-transparent'}`;
 
     if (compact) {
       return (
@@ -758,6 +882,11 @@ const LandingPage = () => {
 
   const requestExplore = () => setShowTourGuide(true);
 
+  const openDemoSlide = () => {
+    setLoginMessage(null);
+    goToSlide(5);
+  };
+
   const startExploreTour = () => {
     setShowTourGuide(false);
     setTourActive(true);
@@ -765,7 +894,7 @@ const LandingPage = () => {
     goToSlide(1, { manual: false });
   };
 
-  const currentMotion = SLIDE_MOTIONS[activeSlide];
+  const currentMotion = (isCoarsePointer ? MOBILE_SLIDE_MOTIONS : SLIDE_MOTIONS)[activeSlide];
   const initialMotion = prefersReducedMotion
     ? { opacity: 0 }
     : (typeof currentMotion.initial === 'function' ? currentMotion.initial(slideDirection) : currentMotion.initial);
@@ -773,17 +902,117 @@ const LandingPage = () => {
     ? { opacity: 0 }
     : (typeof currentMotion.exit === 'function' ? currentMotion.exit(slideDirection) : currentMotion.exit);
 
+  useEffect(() => {
+    // Sinkronkan tinggi kanvas Android secara ter-throttle agar perubahan address bar/keyboard
+    // tidak memicu penulisan style berulang pada setiap event viewport.
+    if (typeof window === 'undefined') return undefined;
+    let frameId = 0;
+    let lastHeight = 0;
+    const updateViewportHeight = () => {
+      if (frameId) return;
+      frameId = window.requestAnimationFrame(() => {
+        frameId = 0;
+        const height = Math.round(window.visualViewport?.height || window.innerHeight);
+        if (Math.abs(height - lastHeight) < 2) return;
+        lastHeight = height;
+        document.documentElement.style.setProperty('--bintang-vh', `${height * 0.01}px`);
+      });
+    };
+    updateViewportHeight();
+    window.addEventListener('resize', updateViewportHeight, { passive: true });
+    window.visualViewport?.addEventListener('resize', updateViewportHeight, { passive: true });
+    window.visualViewport?.addEventListener('scroll', updateViewportHeight, { passive: true });
+    return () => {
+      if (frameId) window.cancelAnimationFrame(frameId);
+      window.removeEventListener('resize', updateViewportHeight);
+      window.visualViewport?.removeEventListener('resize', updateViewportHeight);
+      window.visualViewport?.removeEventListener('scroll', updateViewportHeight);
+    };
+  }, []);
+
   return (
-    <div className="relative min-h-[100dvh] overflow-hidden bg-[#f4f9ff] font-sans text-slate-900 selection:bg-amber-200">
+    <div className="bintang-landing relative overflow-hidden bg-[#F4F8FF] font-sans text-slate-900 selection:bg-blue-200">
+      <style>{`
+        .bintang-landing {
+          width: 100%;
+          height: calc(var(--bintang-vh, 1vh) * 100);
+          min-height: 100vh;
+          min-height: calc(var(--bintang-vh, 1vh) * 100);
+          isolation: isolate;
+        }
+        .bintang-slide {
+          width: 100%;
+          height: calc(var(--bintang-vh, 1vh) * 100);
+          min-height: calc(var(--bintang-vh, 1vh) * 100);
+          -webkit-overflow-scrolling: touch;
+          overscroll-behavior-y: contain;
+          scrollbar-width: thin;
+          scrollbar-color: #93c5fd transparent;
+          padding-bottom: max(.75rem, env(safe-area-inset-bottom));
+        }
+        .bintang-screen-section {
+          min-height: calc(var(--bintang-vh, 1vh) * 100);
+          padding-top: max(1rem, env(safe-area-inset-top));
+          padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+        }
+        .bintang-mascot {
+          position: relative;
+          overflow: visible;
+          animation: bintang-float 3.8s ease-in-out infinite;
+          filter: drop-shadow(0 5px 4px rgba(29, 78, 216, .16));
+        }
+        .bintang-mascot svg { display: block; overflow: visible; }
+        .bintang-eye {
+          transform-box: fill-box;
+          transform-origin: center;
+          animation: bintang-blink 5.2s ease-in-out infinite;
+        }
+        .bintang-eye-right { animation-delay: .035s; }
+        .bintang-mascot-hero { filter: drop-shadow(0 12px 10px rgba(37, 99, 235, .22)); }
+        .bintang-pause-control { bottom: max(1.25rem, env(safe-area-inset-bottom)); left: max(1rem, env(safe-area-inset-left)); }
+        .bintang-chapter-nav { right: max(.5rem, env(safe-area-inset-right)); }
+        @keyframes bintang-blink {
+          0%, 43%, 47%, 100% { transform: scaleY(1); }
+          45%, 46% { transform: scaleY(.08); }
+          82%, 84% { transform: scaleY(1); }
+          83% { transform: scaleY(.08); }
+        }
+        @keyframes bintang-float {
+          0%, 100% { transform: translateY(0) rotate(-2deg); }
+          50% { transform: translateY(-5px) rotate(2deg); }
+        }
+        @media (max-width: 640px) {
+          .bintang-slide { scrollbar-width: none; }
+          .bintang-slide::-webkit-scrollbar { display: none; }
+          .bintang-screen-section {
+            padding-left: max(1rem, env(safe-area-inset-left));
+            padding-right: max(1rem, env(safe-area-inset-right));
+          }
+          .bintang-chapter-nav { right: max(.25rem, env(safe-area-inset-right)); padding: .55rem .4rem; gap: .45rem; }
+          .bintang-chapter-nav button { min-width: 18px; min-height: 18px; }
+          .bintang-pause-control { bottom: max(.75rem, env(safe-area-inset-bottom)); left: max(.75rem, env(safe-area-inset-left)); }
+          input, select, textarea { font-size: 16px !important; }
+        }
+        @media (pointer: coarse) {
+          .bintang-mascot { filter: none; }
+          .bintang-slide { scroll-behavior: auto; }
+          .bintang-background-glow { filter: none !important; opacity: .2; }
+          .bintang-touch-card { transition-duration: 120ms; }
+          .bintang-touch-card:hover { transform: none !important; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .bintang-mascot, .bintang-eye { animation: none !important; }
+        }
+      `}</style>
       {/* Latar dekoratif yang lembut; tidak mengganggu keterbacaan. */}
       <div aria-hidden="true" className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -left-28 -top-28 h-80 w-80 rounded-full bg-sky-200/40 blur-3xl" />
-        <div className="absolute -right-24 top-1/3 h-80 w-80 rounded-full bg-amber-200/30 blur-3xl" />
-        <div className="absolute -bottom-36 left-1/3 h-96 w-96 rounded-full bg-violet-200/30 blur-3xl" />
+        <div className="bintang-background-glow absolute -left-28 -top-28 h-80 w-80 rounded-full bg-sky-200/40 blur-3xl" />
+        <div className="bintang-background-glow absolute -right-24 top-1/3 h-80 w-80 rounded-full bg-blue-100/30 blur-3xl" />
+        <div className="bintang-background-glow absolute -bottom-36 left-1/3 h-96 w-96 rounded-full bg-blue-200/30 blur-3xl" />
       </div>
 
       <div
-        className="relative min-h-[100dvh]"
+        className="relative h-full min-h-0"
         onWheel={handleWheel}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
@@ -801,26 +1030,31 @@ const LandingPage = () => {
               ...(prefersReducedMotion ? {} : currentMotion.style),
               WebkitOverflowScrolling: 'touch',
               touchAction: 'pan-y',
+              willChange: 'transform, opacity',
+              backfaceVisibility: 'hidden',
             }}
-            className={`relative h-[100dvh] overflow-x-hidden overflow-y-auto overscroll-contain ${activeSlide === 7 ? 'pb-8' : 'pr-12 sm:pr-16'}`}
+            className={`bintang-slide relative overflow-x-hidden overflow-y-auto overscroll-contain ${activeSlide === 7 ? 'pb-8' : 'pr-12 sm:pr-16'}`}
           >
             {/* SLIDE 1 — HALO DAN PILIH CARA BELAJAR */}
             {activeSlide === 0 && (
-              <section className="mx-auto flex min-h-[100dvh] w-full max-w-7xl flex-col px-4 pb-8 pt-5 sm:px-7 lg:px-10">
-                <header className="flex items-center justify-between gap-3">
+              <section className="mx-auto flex bintang-screen-section min-h-[100dvh] w-full max-w-7xl flex-col px-4 pb-8 pt-5 sm:px-7 lg:px-10">
+                <header className="flex flex-wrap items-center justify-between gap-3">
                   <BrandMark />
-                  <div className="flex items-center gap-2">
-                    <button type="button" onClick={() => openAuth('login')} className={`${secondaryButton} min-h-11 px-4 py-2 text-sm`}>Masuk</button>
-                    <button type="button" onClick={() => openAuth('register')} className={`${primaryButton} min-h-11 px-4 py-2 text-sm`}>Daftar</button>
+                  <div className="flex w-full flex-wrap items-center justify-center gap-2 sm:w-auto sm:justify-end">
+                    <button type="button" onClick={() => openAuth('login')} className={`${secondaryButton} min-h-11 flex-1 px-3 py-2 text-sm sm:flex-none sm:px-4`}>Masuk</button>
+                    <button type="button" onClick={() => openAuth('register')} className={`${primaryButton} min-h-11 flex-1 px-3 py-2 text-sm sm:flex-none sm:px-4`}>Daftar</button>
+                    <button type="button" onClick={openDemoSlide} aria-label="Lihat demo akun Bintang AI" className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-blue-200 bg-blue-50 px-3 py-2 text-sm font-extrabold text-blue-800 shadow-sm transition hover:border-blue-400 hover:bg-blue-100 focus:outline-none focus:ring-4 focus:ring-blue-100 sm:flex-none sm:px-4">
+                      <span aria-hidden="true">▶</span> Demo
+                    </button>
                   </div>
                 </header>
 
-                <div className="grid flex-1 items-center gap-8 py-8 lg:grid-cols-[0.95fr_1.05fr] lg:gap-12 lg:py-10">
+                <div className="grid flex-1 items-center gap-6 py-6 sm:gap-8 sm:py-8 lg:grid-cols-[0.95fr_1.05fr] lg:gap-12 lg:py-10">
                   <div className="relative mx-auto w-full max-w-xl text-center lg:mx-0 lg:text-left">
-                    <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-extrabold text-amber-800">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-extrabold text-blue-800">
                       <span aria-hidden="true">✨</span> Untuk teman kelas 1–6 SD
                     </div>
-                    <h1 className="mt-6 text-[2.65rem] font-black leading-[1.08] tracking-tight text-slate-900 sm:text-6xl">
+                    <h1 className="mt-6 text-[2.35rem] font-black leading-[1.08] tracking-tight text-slate-900 sm:text-6xl">
                       Halo, <span className="text-sky-600">Teman Bintang!</span>
                     </h1>
                     <p className="mx-auto mt-5 max-w-lg text-lg leading-8 text-slate-600 sm:text-xl lg:mx-0">
@@ -837,7 +1071,7 @@ const LandingPage = () => {
                     {isPlayingAudio && (
                       <button type="button" onClick={stopAudio} className="mt-3 text-sm font-bold text-sky-700 underline underline-offset-4">Hentikan suara</button>
                     )}
-                    <p role="status" aria-live="polite" className="mt-4 min-h-6 text-sm font-bold text-emerald-700">{roleFeedback}</p>
+                    <p role="status" aria-live="polite" className="mt-4 min-h-6 text-sm font-bold text-blue-700">{roleFeedback}</p>
 
                     <div className="mt-5 rounded-2xl border border-sky-100 bg-white/90 p-4 shadow-sm lg:max-w-md">
                       <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Ruang khusus pendamping</p>
@@ -846,7 +1080,7 @@ const LandingPage = () => {
                           <span className="text-2xl" aria-hidden="true">👩‍🏫</span>
                           <span className="text-sm font-extrabold text-slate-800">Guru</span>
                         </div>
-                        <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-3 py-3">
+                        <div className="flex items-center gap-2 rounded-xl bg-blue-50 px-3 py-3">
                           <span className="text-2xl" aria-hidden="true">👨‍👩‍👧</span>
                           <span className="text-sm font-extrabold text-slate-800">Orang tua / wali</span>
                         </div>
@@ -856,19 +1090,19 @@ const LandingPage = () => {
                   </div>
 
                   <div className="relative mx-auto w-full max-w-2xl">
-                    <div className="absolute -right-2 -top-5 z-10 grid h-16 w-16 rotate-12 place-items-center rounded-3xl bg-amber-300 text-4xl shadow-lg sm:-right-4 sm:h-20 sm:w-20" aria-hidden="true">⭐</div>
-                    <div className="rounded-[34px] border border-white bg-white/90 p-4 shadow-[0_22px_70px_rgba(14,116,144,0.12)] sm:p-6">
+                    <div className="absolute -right-2 -top-7 z-10 sm:-right-4" aria-hidden="true"><BintangMascot size={76} label={null} /></div>
+                    <div className="rounded-[34px] border border-white bg-white/90 p-4 shadow-[0_22px_70px_rgba(37,99,235,0.12)] sm:p-6">
                       <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                         <div>
                           <p className="text-sm font-black uppercase tracking-[0.12em] text-sky-600">Mulai dari sini</p>
                           <h2 className="mt-1 text-2xl font-black text-slate-900 sm:text-3xl">Pilih cara belajarmu</h2>
                         </div>
-                        <span className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-extrabold text-emerald-800">Bisa diubah nanti</span>
+                        <span className="w-fit rounded-full bg-blue-100 px-3 py-1.5 text-xs font-extrabold text-blue-800">Bisa diubah nanti</span>
                       </div>
                       <div className="grid grid-cols-1 gap-3">
                         {LEARNING_MODES.map((item) => renderModeCard(item, true))}
                       </div>
-                      <p className="mt-4 text-sm leading-6 text-slate-500">Pilih cara belajar yang paling nyaman. Guru dan orang tua dapat membantu menyiapkan akunmu.</p>
+                      <p className="mt-4 text-sm leading-6 text-slate-500">Pilih cara belajar yang paling nyaman. Pilihan Umum memakai tampilan standar tanpa penyesuaian khusus. Kamu bisa mengubah pilihan ini nanti bersama guru atau orang tua.</p>
                     </div>
                   </div>
                 </div>
@@ -877,7 +1111,7 @@ const LandingPage = () => {
 
             {/* SLIDE 2 — MANFAAT */}
             {activeSlide === 1 && (
-              <section className="mx-auto flex min-h-[100dvh] w-full max-w-7xl flex-col justify-center gap-9 px-4 py-12 sm:px-7 lg:px-10">
+              <section className="mx-auto flex bintang-screen-section min-h-[100dvh] w-full max-w-7xl flex-col justify-center gap-9 px-4 py-12 sm:px-7 lg:px-10">
                 <SlideHeading
                   eyebrow="Kenapa Bintang AI?"
                   title="Belajar harus terasa menyenangkan dan mudah diikuti."
@@ -892,30 +1126,30 @@ const LandingPage = () => {
                       {['Materi SD', 'Tanya jawab', 'Latihan seru'].map((tag) => <span key={tag} className="rounded-full bg-sky-50 px-3 py-2 text-sm font-bold text-sky-800">{tag}</span>)}
                     </div>
                   </article>
-                  <article className="rounded-[30px] border-2 border-amber-100 bg-amber-50 p-6 shadow-sm sm:p-8">
-                    <span className="grid h-16 w-16 place-items-center rounded-3xl bg-amber-200 text-4xl" aria-hidden="true">🧑‍🏫</span>
+                  <article className="rounded-[30px] border-2 border-blue-100 bg-blue-50 p-6 shadow-sm sm:p-8">
+                    <span className="grid h-16 w-16 place-items-center rounded-3xl bg-blue-100 text-4xl" aria-hidden="true">🧑‍🏫</span>
                     <h3 className="mt-5 text-2xl font-black text-slate-900">Untuk Guru dan Keluarga</h3>
                     <p className="mt-3 text-base leading-7 text-slate-600">Guru membantu menyiapkan kelas dan materi. Orang tua dapat menemani anak serta melihat perkembangan belajarnya.</p>
                     <div className="mt-5 flex flex-wrap gap-2">
-                      {['Kelas', 'Pendampingan', 'Laporan belajar'].map((tag) => <span key={tag} className="rounded-full bg-white px-3 py-2 text-sm font-bold text-amber-800">{tag}</span>)}
+                      {['Kelas', 'Pendampingan', 'Laporan belajar'].map((tag) => <span key={tag} className="rounded-full bg-white px-3 py-2 text-sm font-bold text-blue-800">{tag}</span>)}
                     </div>
                   </article>
                 </div>
-                <p className="mx-auto max-w-3xl rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-center text-base font-bold leading-7 text-emerald-900">
-                  🌟 Semua anak berhak belajar, mencoba, dan tumbuh dengan caranya sendiri.
+                <p className="mx-auto max-w-3xl rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 text-center text-base font-bold leading-7 text-blue-900">
+                  Semua anak berhak belajar, mencoba, dan tumbuh dengan caranya sendiri.
                 </p>
               </section>
             )}
 
             {/* SLIDE 3 — CARA BELAJAR */}
             {activeSlide === 2 && (
-              <section className="mx-auto flex min-h-[100dvh] w-full max-w-7xl flex-col justify-center gap-8 px-4 py-12 sm:px-7 lg:px-10">
+              <section className="mx-auto flex bintang-screen-section min-h-[100dvh] w-full max-w-7xl flex-col justify-center gap-8 px-4 py-12 sm:px-7 lg:px-10">
                 <SlideHeading
                   eyebrow="Pilih yang nyaman"
                   title="Ada banyak cara untuk memahami pelajaran."
                   description="Pilih satu cara untuk memulai. Pengaturan dapat disesuaikan lagi kapan saja."
                 />
-                <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                   {LEARNING_MODES.map((item) => renderModeCard(item))}
                 </div>
                 <p className="mx-auto max-w-3xl rounded-2xl border border-sky-100 bg-white px-5 py-4 text-center text-sm font-semibold leading-6 text-slate-600 shadow-sm">
@@ -926,7 +1160,7 @@ const LandingPage = () => {
 
             {/* SLIDE 4 — FITUR */}
             {activeSlide === 3 && (
-              <section className="mx-auto flex min-h-[100dvh] w-full max-w-7xl flex-col justify-center gap-9 px-4 py-12 sm:px-7 lg:px-10">
+              <section className="mx-auto flex bintang-screen-section min-h-[100dvh] w-full max-w-7xl flex-col justify-center gap-9 px-4 py-12 sm:px-7 lg:px-10">
                 <SlideHeading
                   eyebrow="Yang bisa kamu lakukan"
                   title="Empat kegiatan seru di Bintang AI."
@@ -935,9 +1169,9 @@ const LandingPage = () => {
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   {[
                     { icon: '📖', number: '01', title: 'Baca Materi', text: 'Pelajari materi kelas 1 sampai 6 dengan tampilan yang mudah dibaca.', color: 'bg-sky-50 border-sky-100' },
-                    { icon: '🤖', number: '02', title: 'Tanya Kak Bintang', text: 'Tanyakan pelajaran dan dapatkan penjelasan dengan bahasa sederhana.', color: 'bg-violet-50 border-violet-100' },
-                    { icon: '🎯', number: '03', title: 'Kerjakan Latihan', text: 'Jawab kuis dan lihat hasil latihanmu. Terus semangat mencoba!', color: 'bg-amber-50 border-amber-100' },
-                    { icon: '👩‍🏫', number: '04', title: 'Belajar Bersama', text: 'Ikuti kegiatan belajar bersama guru dengan dukungan aksesibilitas.', color: 'bg-emerald-50 border-emerald-100' },
+                    { icon: '🤖', number: '02', title: 'Tanya Kak Bintang', text: 'Tanyakan pelajaran dan dapatkan penjelasan dengan bahasa sederhana.', color: 'bg-blue-50 border-blue-100' },
+                    { icon: '🎯', number: '03', title: 'Kerjakan Latihan', text: 'Jawab kuis dan lihat hasil latihanmu. Terus semangat mencoba!', color: 'bg-blue-50 border-blue-100' },
+                    { icon: '🧑‍💻', number: '04', title: 'Mengajar Real-Time', text: 'Guru mengajar secara langsung dari jarak jauh. Materi, instruksi, dan balasan guru dikirim dalam format yang sesuai untuk tiap siswa: suara, teks atau subtitle, serta komunikasi visual.', color: 'bg-blue-50 border-blue-100' },
                   ].map((feature) => (
                     <article key={feature.number} className={`flex min-h-[270px] flex-col rounded-[28px] border-2 p-6 transition hover:-translate-y-1 hover:shadow-lg ${feature.color}`}>
                       <div className="flex items-center justify-between">
@@ -954,16 +1188,16 @@ const LandingPage = () => {
 
             {/* SLIDE 5 — PERAN */}
             {activeSlide === 4 && (
-              <section className="mx-auto flex min-h-[100dvh] w-full max-w-7xl flex-col justify-center gap-9 px-4 py-12 sm:px-7 lg:px-10">
+              <section className="mx-auto flex bintang-screen-section min-h-[100dvh] w-full max-w-7xl flex-col justify-center gap-9 px-4 py-12 sm:px-7 lg:px-10">
                 <SlideHeading
                   eyebrow="Kita belajar bersama"
                   title="Ada tiga teman dalam perjalanan belajar."
                   description="Siswa, guru, dan orang tua punya tugas masing-masing. Semuanya saling membantu."
                 />
                 <div className="grid gap-5 md:grid-cols-3">
-                  <article className="rounded-[30px] border-2 border-amber-100 bg-amber-50 p-6 text-center sm:p-8">
+                  <article className="rounded-[30px] border-2 border-blue-100 bg-blue-50 p-6 text-center sm:p-8">
                     <span className="mx-auto grid h-24 w-24 place-items-center rounded-[30px] bg-white text-6xl shadow-sm" aria-hidden="true">👩‍🏫</span>
-                    <p className="mt-5 text-xs font-black uppercase tracking-widest text-amber-800">Menyiapkan</p>
+                    <p className="mt-5 text-xs font-black uppercase tracking-widest text-blue-800">Menyiapkan</p>
                     <h3 className="mt-2 text-2xl font-black text-slate-900">Guru</h3>
                     <p className="mt-3 text-sm leading-6 text-slate-600">Menyiapkan kelas, membagikan kode kelas, membuat materi, dan melihat tugas.</p>
                   </article>
@@ -973,31 +1207,31 @@ const LandingPage = () => {
                     <h3 className="mt-2 text-2xl font-black text-slate-900">Siswa</h3>
                     <p className="mt-3 text-sm leading-6 text-slate-600">Membaca materi, bertanya kepada Kak Bintang, dan mengerjakan latihan.</p>
                   </article>
-                  <article className="rounded-[30px] border-2 border-rose-100 bg-rose-50 p-6 text-center sm:p-8">
+                  <article className="rounded-[30px] border-2 border-blue-100 bg-blue-50 p-6 text-center sm:p-8">
                     <span className="mx-auto grid h-24 w-24 place-items-center rounded-[30px] bg-white text-6xl shadow-sm" aria-hidden="true">👨‍👧</span>
-                    <p className="mt-5 text-xs font-black uppercase tracking-widest text-rose-800">Mendampingi</p>
+                    <p className="mt-5 text-xs font-black uppercase tracking-widest text-blue-800">Mendampingi</p>
                     <h3 className="mt-2 text-2xl font-black text-slate-900">Orang Tua</h3>
                     <p className="mt-3 text-sm leading-6 text-slate-600">Menemani anak belajar dan melihat laporan perkembangan yang tersedia.</p>
                   </article>
                 </div>
                 <div className="mx-auto flex flex-wrap items-center justify-center gap-2 text-sm font-extrabold text-slate-600">
-                  <span className="rounded-full bg-amber-100 px-4 py-2">Guru menyiapkan</span><span aria-hidden="true">→</span>
+                  <span className="rounded-full bg-blue-50 px-4 py-2">Guru menyiapkan</span><span aria-hidden="true">→</span>
                   <span className="rounded-full bg-sky-100 px-4 py-2">Siswa belajar</span><span aria-hidden="true">→</span>
-                  <span className="rounded-full bg-rose-100 px-4 py-2">Keluarga mendampingi</span>
+                  <span className="rounded-full bg-blue-100 px-4 py-2">Keluarga mendampingi</span>
                 </div>
               </section>
             )}
 
             {/* SLIDE 6 — DEMO */}
             {activeSlide === 5 && (
-              <section className="mx-auto flex min-h-[100dvh] w-full max-w-7xl flex-col gap-8 px-4 py-10 sm:px-7 lg:px-10">
+              <section className="mx-auto flex bintang-screen-section min-h-[100dvh] w-full max-w-7xl flex-col gap-8 px-4 py-10 sm:px-7 lg:px-10">
                 <SlideHeading
                   eyebrow="Yuk, coba!"
                   title="Pilih pengalaman yang ingin kamu lihat."
                   description="Tekan tombol untuk membuka akun simulasi. Kamu bisa melihat Bintang AI dari sisi siswa, guru, atau orang tua."
                 />
                 {loginMessage && (
-                  <div role="alert" className="mx-auto w-full max-w-3xl rounded-2xl border-2 border-rose-200 bg-rose-50 px-5 py-4 text-sm font-bold text-rose-800">{loginMessage.text}</div>
+                  <div role="alert" className="mx-auto w-full max-w-3xl rounded-2xl border-2 border-blue-100 bg-blue-50 px-5 py-4 text-sm font-bold text-blue-800">{loginMessage.text}</div>
                 )}
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
@@ -1008,11 +1242,11 @@ const LandingPage = () => {
                 </div>
                 <div className="grid gap-5 md:grid-cols-2">
                   <div className="space-y-4">
-                    <div className="flex items-center gap-3"><span className="rounded-full bg-amber-100 px-4 py-2 text-sm font-black text-amber-800">👩‍🏫 B. Akun Guru</span><span className="h-px flex-1 bg-amber-100" /></div>
+                    <div className="flex items-center gap-3"><span className="rounded-full bg-blue-50 px-4 py-2 text-sm font-black text-blue-800">👩‍🏫 B. Akun Guru</span><span className="h-px flex-1 bg-blue-50" /></div>
                     {renderDemoCard(demoTeacher)}
                   </div>
                   <div className="space-y-4">
-                    <div className="flex items-center gap-3"><span className="rounded-full bg-rose-100 px-4 py-2 text-sm font-black text-rose-800">👨‍👧 C. Akun Orang Tua</span><span className="h-px flex-1 bg-rose-100" /></div>
+                    <div className="flex items-center gap-3"><span className="rounded-full bg-blue-100 px-4 py-2 text-sm font-black text-blue-800">👨‍👧 C. Akun Orang Tua</span><span className="h-px flex-1 bg-blue-100" /></div>
                     {renderDemoCard(demoParent)}
                   </div>
                 </div>
@@ -1024,15 +1258,15 @@ const LandingPage = () => {
 
             {/* SLIDE 7 — AJAKAN MULAI */}
             {activeSlide === 6 && (
-              <section className="relative mx-auto flex min-h-[100dvh] w-full max-w-6xl flex-col items-center justify-center overflow-hidden px-5 py-16 text-center">
+              <section className="relative mx-auto flex bintang-screen-section min-h-[100dvh] w-full max-w-6xl flex-col items-center justify-center overflow-hidden px-5 py-16 text-center">
                 <span className="absolute left-[10%] top-[18%] rotate-[-12deg] text-5xl" aria-hidden="true">✨</span>
                 <span className="absolute right-[10%] top-[22%] rotate-12 text-5xl" aria-hidden="true">🌈</span>
-                <span className="grid h-28 w-28 place-items-center rounded-[36px] bg-amber-300 text-7xl shadow-[0_10px_0_#d97706]" aria-hidden="true">⭐</span>
+                <BintangMascot size={116} label="Maskot Bintang tersenyum" className="bintang-mascot-hero" />
                 <p className="mt-9 rounded-full bg-sky-100 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-sky-800">Bintang AI · Ruang Belajar SD</p>
                 <h2 className="mt-6 max-w-4xl text-4xl font-black leading-tight tracking-tight text-slate-900 sm:text-6xl">Setiap anak punya kesempatan untuk bersinar!</h2>
                 <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">Ayo mulai petualangan belajar. Kamu bisa membuat akun atau masuk ke akun yang sudah ada.</p>
                 <div className="mt-9 flex w-full max-w-xl flex-col gap-4 sm:flex-row">
-                  <button type="button" onClick={() => openAuth('register')} className={`${primaryButton} flex-1`}>🌟 Buat akun</button>
+                  <button type="button" onClick={() => openAuth('register')} className={`${primaryButton} flex-1`}>Buat akun <BintangMascot size={22} label={null} /></button>
                   <button type="button" onClick={() => openAuth('login')} className={`${secondaryButton} flex-1`}>Masuk ke akun</button>
                 </div>
                 <button type="button" onClick={() => goToSlide(5)} className="mt-7 text-sm font-extrabold text-sky-700 underline decoration-sky-300 underline-offset-4">Aku mau coba demo dulu</button>
@@ -1041,8 +1275,8 @@ const LandingPage = () => {
 
             {/* SLIDE 8 — LOGIN / REGISTER */}
             {activeSlide === 7 && (
-              <section className="mx-auto flex min-h-[100dvh] w-full max-w-[1500px] flex-col p-3 sm:p-5 lg:flex-row lg:gap-5 lg:p-6">
-                <aside className="relative flex w-full shrink-0 flex-col justify-between overflow-hidden rounded-[30px] bg-gradient-to-br from-sky-700 via-blue-700 to-indigo-700 p-6 text-white shadow-xl sm:p-8 lg:min-h-[calc(100dvh-3rem)] lg:w-[38%] xl:p-10">
+              <section className="mx-auto flex bintang-screen-section min-h-[100dvh] w-full max-w-[1500px] flex-col p-3 sm:p-5 lg:flex-row lg:gap-5 lg:p-6">
+                <aside className="relative flex w-full shrink-0 flex-col justify-between overflow-hidden rounded-[30px] bg-gradient-to-br from-blue-800 via-blue-700 to-sky-700 p-6 text-white shadow-xl sm:p-8 lg:min-h-[calc(100dvh-3rem)] lg:w-[38%] xl:p-10">
                   <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full border-[30px] border-white/10" />
                   <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 -left-20 h-72 w-72 rounded-full border-[34px] border-white/10" />
                   <div className="relative z-10">
@@ -1071,8 +1305,8 @@ const LandingPage = () => {
                       </div>
                     </div>
                     {authTab === 'register' && (
-                      <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-amber-300 px-4 py-2 text-sm font-black text-amber-950">
-                        Langkah {regStep} dari 3 <span aria-hidden="true">⭐</span>
+                      <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-black text-white">
+                        Langkah {regStep} dari 3 <BintangMascot size={22} label={null} />
                       </div>
                     )}
                   </div>
@@ -1095,7 +1329,7 @@ const LandingPage = () => {
                     {authTab === 'login' && (
                       <div className="w-full">
                         {loginMessage && (
-                          <div role="alert" className="mb-5 rounded-2xl border-2 border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-800">{loginMessage.text}</div>
+                          <div role="alert" className="mb-5 rounded-2xl border-2 border-blue-100 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-800">{loginMessage.text}</div>
                         )}
                         <form onSubmit={handleLoginSubmit} className="space-y-5">
                           <div>
@@ -1128,12 +1362,12 @@ const LandingPage = () => {
                             <p className="text-xs font-bold text-sky-700">{['Pilih peran', 'Detail kelas', 'Data akun'][regStep - 1]}</p>
                           </div>
                           <div className="grid grid-cols-3 gap-2" aria-label="Progres pendaftaran">
-                            {[1, 2, 3].map((step) => <div key={step} className={`h-3 rounded-full ${step <= regStep ? 'bg-amber-400' : 'bg-sky-100'}`} />)}
+                            {[1, 2, 3].map((step) => <div key={step} className={`h-3 rounded-full ${step <= regStep ? 'bg-blue-500' : 'bg-sky-100'}`} />)}
                           </div>
                         </div>
 
                         {regMessage && (
-                          <div role="alert" className={`mb-5 rounded-2xl border-2 px-4 py-3 text-sm font-bold ${regMessage.type === 'error' ? 'border-rose-200 bg-rose-50 text-rose-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>{regMessage.text}</div>
+                          <div role="alert" className={`mb-5 rounded-2xl border-2 px-4 py-3 text-sm font-bold ${regMessage.type === 'error' ? 'border-blue-100 bg-blue-50 text-blue-800' : 'border-blue-100 bg-blue-50 text-blue-800'}`}>{regMessage.text}</div>
                         )}
 
                         <form onSubmit={handleRegisterSubmit} className="space-y-5">
@@ -1164,8 +1398,9 @@ const LandingPage = () => {
                                     <option value="tunanetra">Tunanetra — suara dan pembaca layar</option>
                                     <option value="tunarungu">Tunarungu — teks dan petunjuk visual</option>
                                     <option value="tunawicara">Tunawicara — tulisan, gambar, dan simbol</option>
+                                    <option value="tidak_ada">Umum — tampilan standar tanpa pengaturan khusus</option>
                                   </select>
-                                  <p className="mt-2 text-sm leading-6 text-slate-500">Ini hanya pilihan awal. Kamu bisa mengubah pengaturan nanti.</p>
+                                  <p className="mt-2 text-sm leading-6 text-slate-500">Pilihan Umum menggunakan tampilan standar Bintang AI. Pilihan ini tidak mengaktifkan penyesuaian khusus.</p>
                                 </div>
                               )}
                               <div className="flex justify-end">
@@ -1217,8 +1452,8 @@ const LandingPage = () => {
                                   <label htmlFor="landing-reg-child-id" className="mb-2 block text-base font-extrabold text-slate-800">ID Belajar Siswa anak</label>
                                   <input id="landing-reg-child-id" required value={regStudentIdInput} onChange={(event) => setRegStudentIdInput(event.target.value)} placeholder="Masukkan ID dari anak" className={inputClass} />
                                   {checkingChild && <p role="status" className="mt-2 text-sm font-bold text-sky-700">Sedang memeriksa ID siswa…</p>}
-                                  {verifiedChild && <p role="status" className="mt-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">✓ Profil ditemukan: {verifiedChild.full_name} · {verifiedChild.class_level || 'Kelas SD'}</p>}
-                                  {childCheckError && <p role="alert" className="mt-2 rounded-xl bg-rose-50 px-4 py-3 text-sm font-bold text-rose-800">{childCheckError}</p>}
+                                  {verifiedChild && <p role="status" className="mt-2 rounded-xl bg-blue-50 px-4 py-3 text-sm font-bold text-blue-800">✓ Profil ditemukan: {verifiedChild.full_name} · {verifiedChild.class_level || 'Kelas SD'}</p>}
+                                  {childCheckError && <p role="alert" className="mt-2 rounded-xl bg-blue-50 px-4 py-3 text-sm font-bold text-blue-800">{childCheckError}</p>}
                                 </div>
                               )}
                               <div className="flex flex-col-reverse justify-between gap-3 sm:flex-row">
@@ -1256,7 +1491,7 @@ const LandingPage = () => {
                               <div className="flex flex-col-reverse justify-between gap-3 sm:flex-row">
                                 <button type="button" onClick={() => { setRegStep(2); setRegMessage(null); }} className={secondaryButton}>← Kembali</button>
                                 <button type="submit" disabled={regLoading} className={`${primaryButton} sm:min-w-64`}>
-                                  {regLoading ? 'Membuat akun…' : 'Buat akun Bintang AI'} <span aria-hidden="true">⭐</span>
+                                  {regLoading ? 'Membuat akun…' : 'Buat akun Bintang AI'} <BintangMascot size={22} label={null} />
                                 </button>
                               </div>
                             </div>
@@ -1288,7 +1523,7 @@ const LandingPage = () => {
               initial={{ opacity: 0, y: 20, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 12, scale: 0.98 }}
               transition={{ duration: prefersReducedMotion ? 0.01 : 0.25 }}
             >
-              <span className="grid h-16 w-16 place-items-center rounded-2xl bg-amber-100 text-4xl" aria-hidden="true">🧭</span>
+              <span className="grid h-16 w-16 place-items-center rounded-2xl border border-blue-100 bg-blue-50" aria-hidden="true"><BintangMascot size={58} label={null} /></span>
               <p className="mt-5 text-xs font-black uppercase tracking-[0.16em] text-sky-700">Tur pengenalan</p>
               <h2 id="bintang-tour-title" className="mt-2 text-3xl font-black text-slate-900">Jelajahi Bintang AI</h2>
               <p className="mt-3 text-base leading-7 text-slate-600">Halaman akan berpindah sendiri agar kamu bisa melihat fitur-fitur Bintang AI. Kamu tetap bisa menjeda atau memilih halaman sendiri.</p>
@@ -1308,7 +1543,7 @@ const LandingPage = () => {
       <AnimatePresence>
         {tourActive && activeSlide < 7 && (
           <motion.div
-            className="fixed bottom-5 left-4 z-40 sm:bottom-6 sm:left-6"
+            className="bintang-pause-control fixed bottom-5 left-4 z-40 sm:bottom-6 sm:left-6"
             initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
           >
             <button type="button" onClick={() => setTourPaused((paused) => !paused)} aria-pressed={tourPaused} className="inline-flex min-h-12 items-center gap-2 rounded-2xl border-2 border-white bg-slate-900 px-5 py-3 text-sm font-black text-white shadow-xl hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">
@@ -1320,7 +1555,7 @@ const LandingPage = () => {
 
       {/* Navigasi bab vertikal seperti versi awal; tidak memakai footer atau tombol 1/7–Lanjut. */}
       {activeSlide !== 7 && (
-        <nav aria-label="Navigasi bab presentasi" className="fixed right-2 top-1/2 z-30 flex -translate-y-1/2 flex-col items-center gap-2 rounded-full border border-sky-100 bg-white/90 px-2 py-3 shadow-md backdrop-blur-md sm:right-5 sm:gap-2.5 sm:px-2.5">
+        <nav aria-label="Navigasi bab presentasi" className="bintang-chapter-nav fixed right-2 top-1/2 z-30 flex -translate-y-1/2 flex-col items-center gap-2 rounded-full border border-blue-100 bg-white/95 px-2 py-3 shadow-md backdrop-blur-md sm:right-5 sm:gap-2.5 sm:px-2.5">
           {SLIDE_LABELS.map((label, index) => (
             <button
               key={label}
@@ -1336,7 +1571,7 @@ const LandingPage = () => {
       )}
 
       <p className="sr-only" role="status" aria-live="polite">
-        {tourActive ? (tourPaused ? 'Tur Bintang AI dijeda.' : `Tur Bintang AI, halaman ${activeSlide + 1} dari 7.`) : ''}
+        {tourActive ? (tourPaused ? 'Tur Bintang AI dijeda.' : `Tur Bintang AI, halaman ${activeSlide + 1} dari 8.`) : ''}
       </p>
     </div>
   );
