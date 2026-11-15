@@ -134,12 +134,22 @@ const GestureCameraOverlay = ({
     { icon: '🖐️', label: 'Aktif (5)' },
   ];
 
-  // 7. Perintah Membaca Modul
+  // 7. Perintah Membaca Modul (Reader View)
   const readingCommands = [
-    { icon: '☝️', label: 'Scroll ↓' },
-    { icon: '✌️', label: 'Scroll ↑' },
-    { icon: '🤘', label: 'Stop' },
-    { icon: '✋', label: 'Tutup' },
+    { icon: '☝️', label: 'Scroll ↓ (1)' },
+    { icon: '✌️', label: 'Scroll ↑ (2)' },
+    { icon: '🤟', label: 'Suara (3)' },
+    { icon: '🖖', label: 'Lanjut (4)' },
+    { icon: '🖐️', label: 'Tutup (5)' },
+  ];
+
+  // 8. Perintah Halaman Perpustakaan Materi / Modul (📚 Pilih Materi)
+  const modulePageCommands = [
+    { icon: '☝️', label: 'Lanjut (1)' },
+    { icon: '✌️', label: 'Mundur (2)' },
+    { icon: '🤟', label: 'Masuk (3)' },
+    { icon: '🖖', label: 'Kategori (4)' },
+    { icon: '🖐️', label: 'Semua (5)' },
   ];
 
   const profileCommands = [
@@ -196,16 +206,16 @@ const GestureCameraOverlay = ({
     footerHint = '1 Jari = Scroll ↓ | 2 Jari = Scroll ↑ | 10 = Menu';
   } else if (isModulesList && isModuleSelected) {
     currentCommands = readingCommands;
-    title = '📖 Membaca PDF';
+    title = '📖 Membaca Materi';
     accentColor = 'text-emerald-400';
     activeDot = 'bg-emerald-500';
-    footerHint = '1 = Scroll ↓ | 2 = Scroll ↑ | 5 = Tutup | 10 = Menu';
+    footerHint = '1 = Scroll ↓ | 2 = Scroll ↑ | 3 = Suara | 4 = Lanjut | 5 = Tutup';
   } else if (isModulesList) {
-    currentCommands = itemCommands;
+    currentCommands = modulePageCommands;
     title = '📚 Pilih Materi';
     accentColor = 'text-blue-400';
     activeDot = 'bg-blue-500';
-    footerHint = '1-5 Jari = Pilih Item | 6 = Next | 7 = Prev | 10 = Menu';
+    footerHint = '1 = Lanjut | 2 = Mundur | 3 = Masuk | 4 = Kategori | 5 = Semua';
   }
 
   const borderColor = !isActive ? 'border-slate-500' :

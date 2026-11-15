@@ -11,6 +11,8 @@ import { useVoice } from '@/features/accessibility/hooks/useVoice';
 import { useSubtitle } from '@/features/accessibility/components/Subtitles';
 import { globalCaptionBus } from '@/features/accessibility/components/MataPintarGlobalCaption';
 import { getCleanFirstName } from '@/utils';
+import { useGestureControl } from '@/features/accessibility/hooks/useGestureControl';
+import GestureCameraOverlay from '@/features/accessibility/components/GestureCameraOverlay';
 import {
   HiBookOpen, HiSearch, HiChatAlt2,
   HiPaperAirplane, HiLightBulb, HiChevronRight,
@@ -294,6 +296,109 @@ const StudentModules = () => {
     }),
     [modules, searchQuery, selectedSubject]
   );
+
+  // Selected Card Index for Tunawicara Gestures (Highlighting)
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const scrollToEdge = (direction) => {
+    if (typeof document === 'undefined') return;
+    const candidateSelectors = ['.overflow-y-auto', 'main', 'body', '#root'];
+    let scrollTarget = null;
+    for (const selector of candidateSelectors) {
+      const el = document.querySelector(selector);
+      if (el && el.scrollHeight > el.clientHeight + 10) {
+        scrollTarget = el;
+        break;
+      }
+    }
+    if (!scrollTarget) scrollTarget = document.documentElement || document.body || window;
+    const isWin = scrollTarget === window || scrollTarget === document.documentElement || scrollTarget === document.body;
+    const maxScroll = isWin ? Math.max(document.body.scrollHeight, document.documentElement.scrollHeight) - window.innerHeight : scrollTarget.scrollHeight - scrollTarget.clientHeight;
+    const targetY = direction === 'down' ? Math.max(0, maxScroll) : 0;
+    const startY = isWin ? (window.pageYOffset || document.documentElement.scrollTop) : scrollTarget.scrollTop;
+    const distance = targetY - startY;
+    if (Math.abs(distance) < 5) return;
+    const duration = 1300;
+    let startTime = null;
+    const easeInOutCubic = (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    const step = (timestamp) => {
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const currentY = startY + (distance * easeInOutCubic(progress));
+      if (isWin) window.scrollTo(0, currentY); else scrollTarget.scrollTop = currentY;
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+
+  const { videoRef, canvasRef, isActive: camActive, handDetected, totalFingers } = useGestureControl({
+    enabled: isMute,
+    onGesture: (fingerCount) => {
+      // Ignore if navigation menu is open
+      if (document.body.getAttribute('data-menu-active') === 'true' || window.__isNavMenuActive) {
+        return;
+      }
+
+      // 1. Mode Membaca Materi (Reader View)
+      if (selectedModule) {
+        if (fingerCount === 1) {
+          scrollToEdge('down');
+          if (isMute) showSubtitle('⬇️ 1 Jari: Scroll Kebawah (Membaca)', 'info');
+        } else if (fingerCount === 2) {
+          scrollToEdge('up');
+          if (isMute) showSubtitle('⬆️ 2 Jari: Scroll Keatas', 'info');
+        } else if (fingerCount === 3) {
+          if (isPlayingAudio && !isAudioPaused) {
+            pauseReadingModule();
+          } else {
+            resumeReadingModule();
+          }
+        } else if (fingerCount === 4) {
+          nextParagraph();
+        } else if (fingerCount === 5) {
+          closeModule();
+          if (isMute) showSubtitle('🖐️ 5 Jari: Menutup Materi', 'info');
+        }
+        return;
+      }
+
+      // 2. Mode Perpustakaan (📚 Pilih Materi)
+      if (!filteredModules || filteredModules.length === 0) return;
+
+      if (fingerCount === 1) {
+        setSelectedIndex(prev => {
+          const nextIdx = (prev + 1) % filteredModules.length;
+          const item = filteredModules[nextIdx];
+          if (isMute) showSubtitle(`☝️ 1 Jari (Next): Materi "${item?.title || 'Materi'}" disorot`, 'info');
+          return nextIdx;
+        });
+      } else if (fingerCount === 2) {
+        setSelectedIndex(prev => {
+          const prevIdx = (prev - 1 + filteredModules.length) % filteredModules.length;
+          const item = filteredModules[prevIdx];
+          if (isMute) showSubtitle(`✌️ 2 Jari (Mundur): Materi "${item?.title || 'Materi'}" disorot`, 'info');
+          return prevIdx;
+        });
+      } else if (fingerCount === 3) {
+        const selectedItem = filteredModules[selectedIndex];
+        if (selectedItem) {
+          if (isMute) showSubtitle(`🤟 3 Jari: Membuka Materi "${selectedItem.title}"...`, 'success');
+          setTimeout(() => {
+            selectModule(selectedItem);
+          }, 300);
+        }
+      } else if (fingerCount === 4) {
+        const currIdx = availableSubjects.indexOf(selectedSubject);
+        const nextSub = availableSubjects[(currIdx + 1) % availableSubjects.length];
+        setSelectedSubject(nextSub);
+        if (isMute) showSubtitle(`🖖 4 Jari: Filter Kategori "${nextSub}"`, 'info');
+      } else if (fingerCount === 5) {
+        setSelectedSubject('Semua');
+        if (isMute) showSubtitle('🖐️ 5 Jari: Menampilkan Semua Materi', 'info');
+      }
+    }
+  });
 
   // Subject Card Details & Emojis
   const getSubjectMeta = (subjectName) => {
@@ -815,15 +920,20 @@ const StudentModules = () => {
                   </div>
                 ) : (
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredModules.map((m) => {
+                    {filteredModules.map((m, idx) => {
                       const meta = getSubjectMeta(m.subject);
+                      const isSelectedCard = isMute && idx === selectedIndex;
                       return (
                         <motion.div
                           key={m.id}
                           whileHover={{ y: -4, scale: 1.01 }}
                           whileTap={{ scale: 0.98 }}
                           onClick={() => selectModule(m)}
-                          className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between space-y-4 group"
+                          className={`bg-white rounded-2xl border p-5 transition-all cursor-pointer flex flex-col justify-between space-y-4 group relative overflow-hidden ${
+                            isSelectedCard
+                              ? 'ring-4 ring-indigo-600 border-indigo-600 bg-indigo-50/50 shadow-xl scale-[1.02]'
+                              : 'border-slate-200/80 shadow-xs hover:shadow-md'
+                          }`}
                         >
                           <div className="space-y-3">
                             <div className="flex items-center justify-between">
@@ -831,10 +941,16 @@ const StudentModules = () => {
                                 <span>{meta.emoji}</span>
                                 <span>{m.subject || 'Umum'}</span>
                               </span>
-                              {m.pdf_url && (
-                                <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
-                                  PDF
+                              {isSelectedCard ? (
+                                <span className="px-3 py-1 bg-indigo-600 text-white rounded-full text-[10px] font-black uppercase tracking-wider animate-pulse shadow-md">
+                                  👉 Disorot (3 Jari Masuk)
                                 </span>
+                              ) : (
+                                m.pdf_url && (
+                                  <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                                    PDF
+                                  </span>
+                                )
                               )}
                             </div>
                             <h3 className="font-bold text-slate-900 text-sm sm:text-base leading-snug group-hover:text-indigo-600 transition-colors line-clamp-2">
@@ -863,6 +979,18 @@ const StudentModules = () => {
           )}
         </div>
       </main>
+
+      {/* Gesture Camera Overlay for Tunawicara Mode */}
+      {isMute && (
+        <GestureCameraOverlay
+          videoRef={videoRef}
+          canvasRef={canvasRef}
+          isActive={camActive}
+          handDetected={handDetected}
+          totalFingers={totalFingers}
+          isModuleSelected={!!selectedModule}
+        />
+      )}
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
