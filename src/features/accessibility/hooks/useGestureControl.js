@@ -31,7 +31,30 @@ const detectFingers = (landmarks) => {
 
 export function useGestureControl({ onGesture, onScroll, enabled } = {}) {
   const { mode, isGestureActive } = useAccessibilityStore();
-  const isActiveMode = enabled !== undefined ? enabled : (mode === 'tunawicara' || isGestureActive);
+
+  const [isCameraDisabled, setIsCameraDisabled] = useState(() => {
+    try {
+      return localStorage.getItem('gesture_camera_disabled') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    const handleToggle = () => {
+      try {
+        setIsCameraDisabled(localStorage.getItem('gesture_camera_disabled') === 'true');
+      } catch {}
+    };
+    window.addEventListener('gesture-camera-toggle', handleToggle);
+    window.addEventListener('storage', handleToggle);
+    return () => {
+      window.removeEventListener('gesture-camera-toggle', handleToggle);
+      window.removeEventListener('storage', handleToggle);
+    };
+  }, []);
+
+  const isActiveMode = !isCameraDisabled && (enabled !== undefined ? enabled : (mode === 'tunawicara' || isGestureActive));
 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);

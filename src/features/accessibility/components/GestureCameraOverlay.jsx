@@ -18,6 +18,27 @@ const GestureCameraOverlay = ({
   const path = location.pathname;
 
   const [isOverlayMinimized, setIsOverlayMinimized] = useState(false);
+  const [isCameraDisabled, setIsCameraDisabled] = useState(() => {
+    try {
+      return localStorage.getItem('gesture_camera_disabled') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    const handleToggle = () => {
+      try {
+        setIsCameraDisabled(localStorage.getItem('gesture_camera_disabled') === 'true');
+      } catch {}
+    };
+    window.addEventListener('gesture-camera-toggle', handleToggle);
+    window.addEventListener('storage', handleToggle);
+    return () => {
+      window.removeEventListener('gesture-camera-toggle', handleToggle);
+      window.removeEventListener('storage', handleToggle);
+    };
+  }, []);
 
   const isQuizList = path === '/student/tasks';
   const isModulesList = path === '/student/modules';
@@ -251,6 +272,8 @@ const GestureCameraOverlay = ({
       window.dispatchEvent(new CustomEvent('gesture-camera-toggle'));
     } catch (e) {}
   };
+
+  if (isCameraDisabled) return null;
 
   return (
     <motion.div
