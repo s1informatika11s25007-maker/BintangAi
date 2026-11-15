@@ -96,7 +96,55 @@ const StudentQuiz = () => {
   } = useGestureControl({
     enabled: isMute,
     onGesture: (fingerCount) => {
-      if (!currentQ || finished || alreadyDone || loading) return;
+      // 🎯 1. ATURAN GESTUR KHUSUS HALAMAN HASIL PETUALANGANMU (RESULT SCREEN)
+      if (alreadyDone || finished) {
+        if (fingerCount === 1) {
+          window.scrollBy({ top: 400, behavior: 'smooth' });
+          if (isMute) showSubtitle('☝️ 1 Jari: Scroll Otomatis Kebawah', 'info');
+        } else if (fingerCount === 2) {
+          window.scrollBy({ top: -400, behavior: 'smooth' });
+          if (isMute) showSubtitle('✌️ 2 Jari: Scroll Otomatis Keatas', 'info');
+        } else if (fingerCount === 3) {
+          if (isMute) showSubtitle('🤟 3 Jari: Kembali ke Daftar Kuis', 'success');
+          setTimeout(() => navigate('/student/tasks'), 300);
+        } else if (fingerCount === 4) {
+          if (isMute) showSubtitle('🖖 4 Jari: Nanti Saja', 'info');
+          setTimeout(() => navigate('/student/tasks'), 300);
+        } else if (fingerCount === 5) {
+          if (retakeAllowedSub) {
+            if (isMute) showSubtitle('🖐️ 5 Jari: Kerjakan Ulang Sekarang!', 'success');
+            confirmStartRetakeInQuiz();
+          } else {
+            if (isMute) showSubtitle('✋ 5 Jari: Kembali ke Daftar', 'success');
+            setTimeout(() => navigate('/student/tasks'), 300);
+          }
+        }
+        return;
+      }
+
+      // 🎯 2. ATURAN GESTUR KHUSUS HALAMAN IZIN KERJAKAN ULANG (RETAKE SCREEN)
+      if (retakeAllowedSub) {
+        if (fingerCount === 1) {
+          window.scrollBy({ top: 300, behavior: 'smooth' });
+          if (isMute) showSubtitle('☝️ 1 Jari: Scroll Kebawah', 'info');
+        } else if (fingerCount === 2) {
+          window.scrollBy({ top: -300, behavior: 'smooth' });
+          if (isMute) showSubtitle('✌️ 2 Jari: Scroll Keatas', 'info');
+        } else if (fingerCount === 3) {
+          if (isMute) showSubtitle('🤟 3 Jari: Kembali ke Daftar Kuis', 'success');
+          setTimeout(() => navigate('/student/tasks'), 300);
+        } else if (fingerCount === 4) {
+          if (isMute) showSubtitle('🖖 4 Jari: Nanti Saja', 'info');
+          setTimeout(() => navigate('/student/tasks'), 300);
+        } else if (fingerCount === 5) {
+          if (isMute) showSubtitle('🖐️ 5 Jari: Kerjakan Ulang Sekarang!', 'success');
+          confirmStartRetakeInQuiz();
+        }
+        return;
+      }
+
+      // 🎯 3. ATURAN GESTUR KHUSUS PENGERJAAN SOAL KUIS (1-4 OPSI, 5 SELESAI)
+      if (!currentQ || loading) return;
 
       if (fingerCount === 1) {
         if (selectedAnswer === null) {
@@ -327,7 +375,10 @@ const StudentQuiz = () => {
 
   if (retakeAllowedSub) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-6 text-slate-800 font-sans">
+      <div data-retake-screen="true" className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-6 text-slate-800 font-sans relative">
+        {isMute && (
+          <GestureCameraOverlay videoRef={videoRef} canvasRef={canvasRef} isActive={camActive} handDetected={handDetected} totalFingers={totalFingers} />
+        )}
         <div className="w-full max-w-xl bg-white p-8 md:p-10 rounded-[2.5rem] shadow-2xl border border-slate-100 text-center space-y-6">
           <div className="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-3xl flex items-center justify-center text-4xl mx-auto shadow-inner border border-indigo-100">
             🎉
@@ -394,7 +445,10 @@ const StudentQuiz = () => {
     const displayDetails = finalData?.results_detail || [];
 
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center p-4 md:p-6 pt-8 md:pt-10 overflow-y-auto pb-24">
+      <div data-result-screen="true" className="min-h-screen bg-white flex flex-col items-center p-4 md:p-6 pt-8 md:pt-10 overflow-y-auto pb-24 relative">
+        {isMute && (
+          <GestureCameraOverlay videoRef={videoRef} canvasRef={canvasRef} isActive={camActive} handDetected={handDetected} totalFingers={totalFingers} />
+        )}
         <ConfettiEffect active={showConfetti} />
         <span className="text-6xl md:text-7xl mb-4 drop-shadow-2xl animate-bounce">🏆</span>
         <h2 className="font-black text-slate-900 text-3xl md:text-4xl mb-2 uppercase text-center tracking-tighter">Hasil Petualanganmu</h2>
