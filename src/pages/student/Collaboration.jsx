@@ -293,32 +293,6 @@ const StudentCollaboration = () => {
     window.addEventListener('gesture-detected', handleGlobalGesture);
     return () => window.removeEventListener('gesture-detected', handleGlobalGesture);
   }, [isMute, smartGroups, activeTab, selectedIndex, navigate, showSubtitle]);
-      if (fingerCount === 5) {
-        if (showJoinModal) {
-          setShowJoinModal(false);
-          if (isMute) showSubtitle('🔙 Batal Bergabung', 'info');
-          return;
-        }
-
-        const targetIdx = selectedIndex >= 0 ? selectedIndex : 0;
-        const targetGroup = smartGroups[targetIdx];
-        if (targetGroup) {
-          if (activeTab === 'mine') {
-            if (isMute) showSubtitle(`🖐️ 5 Jari: Masuk ke Grup "${targetGroup.name}"...`, 'success');
-            setTimeout(() => {
-              handleSelectGroup(targetGroup);
-            }, 300);
-          } else {
-            if (isMute) showSubtitle(`🖐️ 5 Jari: Bergabung ke Grup "${targetGroup.name}"...`, 'success');
-            setTimeout(() => {
-              handleJoinGroup(targetGroup);
-            }, 300);
-          }
-        }
-        return;
-      }
-    }
-  });
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
