@@ -69,12 +69,6 @@ export const useAccessibilityStore = create(
         const isDeaf = modes.includes('tunarungu');
         const isMute = modes.includes('tunawicara');
 
-        try {
-          if (typeof sessionStorage !== 'undefined') {
-            sessionStorage.setItem('bintangai_session_manual_mode', newMode || 'tidak_ada');
-          }
-        } catch (e) {}
-
         set(() => ({
           mode: newMode || null,
           modes,
@@ -147,11 +141,6 @@ export const useAccessibilityStore = create(
         root.setAttribute('data-disabilities', 'none');
         root.classList.remove('blind-mode', 'deaf-mode', 'mute-mode');
         root.style.fontSize = '100%';
-        try {
-          localStorage.removeItem('bintangai-mode-simple');
-          localStorage.removeItem('gesture_camera_disabled');
-          sessionStorage.removeItem('bintangai_session_manual_mode');
-        } catch (e) {}
 
         if (typeof window !== 'undefined' && window.speechSynthesis) {
           window.speechSynthesis.cancel();

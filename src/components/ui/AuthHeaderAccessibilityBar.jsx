@@ -15,52 +15,19 @@ export const AuthHeaderAccessibilityBar = ({
   onReadPage = null
 }) => {
   const { speak, stopSpeaking, isSpeaking } = useVoice();
-  const { profile } = useAuthStore();
-  const { mode, isManualSelection, setManualMode } = useAccessibilityStore();
+  const { mode, setManualMode } = useAccessibilityStore();
 
-  const [selectedDisability, setSelectedDisability] = useState(() => {
-    try {
-      if (typeof sessionStorage !== 'undefined') {
-        const savedSession = sessionStorage.getItem('bintangai_session_manual_mode');
-        if (savedSession) return savedSession;
-      }
-    } catch (e) {}
-    if (!profile && !isManualSelection) return 'tidak_ada';
-    return mode || 'tidak_ada';
-  });
-
+  const [selectedDisability, setSelectedDisability] = useState(mode || 'tidak_ada');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [fontSizeLevel, setFontSizeLevel] = useState(100);
   const [isHighContrast, setIsHighContrast] = useState(false);
 
   const dropdownRef = useRef(null);
 
-  // Sync with global store mode and session storage persistence
+  // Sync with global store mode
   useEffect(() => {
-    if (!profile) {
-      try {
-        if (typeof sessionStorage !== 'undefined') {
-          const savedSession = sessionStorage.getItem('bintangai_session_manual_mode');
-          if (savedSession) {
-            if (mode !== savedSession && savedSession !== 'tidak_ada') {
-              setManualMode(savedSession);
-            }
-            setSelectedDisability(savedSession);
-            return;
-          }
-        }
-      } catch (e) {}
-
-      if (!isManualSelection) {
-        useAccessibilityStore.getState().reset();
-        setSelectedDisability('tidak_ada');
-      } else {
-        setSelectedDisability(mode || 'tidak_ada');
-      }
-    } else {
-      setSelectedDisability(mode || 'tidak_ada');
-    }
-  }, [mode, profile, isManualSelection, setManualMode]);
+    setSelectedDisability(mode || 'tidak_ada');
+  }, [mode]);
 
   // Sync high contrast status from DOM
   useEffect(() => {
@@ -87,12 +54,6 @@ export const AuthHeaderAccessibilityBar = ({
   const handleSelectDisability = (newMode) => {
     setSelectedDisability(newMode);
     setIsDropdownOpen(false);
-
-    try {
-      if (typeof sessionStorage !== 'undefined') {
-        sessionStorage.setItem('bintangai_session_manual_mode', newMode || 'tidak_ada');
-      }
-    } catch (e) {}
 
     setManualMode(newMode);
 
