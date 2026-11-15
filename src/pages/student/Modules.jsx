@@ -407,17 +407,21 @@ const StudentModules = () => {
     }
   };
 
+  const [activeGestureFingers, setActiveGestureFingers] = useState(0);
+
   // 🎯 Global Gesture Listener for Tunawicara Mode
   useEffect(() => {
     if (!isMute) return;
 
     const handleGlobalGesture = (e) => {
+      const fingerCount = e.detail?.fingers || 0;
+      setActiveGestureFingers(fingerCount);
+
       if (document.body.getAttribute('data-menu-active') === 'true' || window.__isNavMenuActive) {
         return;
       }
 
-      const fingerCount = e.detail?.fingers;
-      if (fingerCount === undefined || fingerCount === 0) {
+      if (fingerCount === 0) {
         lastProcessedFingerRef.current = -1;
         return;
       }
@@ -549,11 +553,11 @@ const StudentModules = () => {
 
   // CONTINUOUS AUTOMATIC SCROLLING LOOP FOR READER VIEW (1 Jari = Scroll Kebawah, 2 Jari = Scroll Keatas)
   useEffect(() => {
-    if (!selectedModule || !isMute || !handDetected) return;
+    if (!selectedModule || !isMute || activeGestureFingers === 0) return;
 
     // Determine scroll direction based on finger count
-    const isScrollDown = totalFingers === 1;
-    const isScrollUp = totalFingers === 2 || (activeTab === 'pdf' && totalFingers === 3);
+    const isScrollDown = activeGestureFingers === 1;
+    const isScrollUp = activeGestureFingers === 2 || (activeTab === 'pdf' && activeGestureFingers === 3);
 
     if (!isScrollDown && !isScrollUp) return;
 
@@ -602,7 +606,7 @@ const StudentModules = () => {
     return () => {
       if (animFrameId) cancelAnimationFrame(animFrameId);
     };
-  }, [selectedModule, isMute, handDetected, totalFingers, activeTab]);
+  }, [selectedModule, isMute, activeGestureFingers, activeTab]);
 
   // Subject Card Details & Emojis
   const getSubjectMeta = (subjectName) => {
