@@ -308,7 +308,6 @@ const StudentCollaboration = () => {
       }
     }
   });
-  }, [isMute, activeTab, smartGroups, selectedIndex, showJoinModal, joiningGroup]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
