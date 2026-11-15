@@ -5,7 +5,10 @@ import { useAccessibility } from '../hooks/useAccessibility';
 import { useAI } from '@/features/ai-tutor';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { HiMicrophone, HiX, HiOutlineLightningBolt, HiOutlineVolumeUp } from 'react-icons/hi';
+import {
+  HiMicrophone, HiX, HiOutlineLightningBolt,
+  HiOutlineVolumeUp, HiMinus, HiChevronUp, HiChevronDown
+} from 'react-icons/hi';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 
 const BlindAIAssistant = () => {
@@ -14,9 +17,15 @@ const BlindAIAssistant = () => {
   const { speak, stopSpeaking, startListening, stopListening } = useVoice();
   const { isRecording, startRecording, stopRecording, audioBlob, clearAudio } = useAudioRecorder();
   const { smartVoiceAssistant, transcribeAudio } = useAI();
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [liveTranscript, setLiveTranscript] = useState("");
   const [aiResponse, setAiResponse] = useState("");
+
+  // Widget States for Minimize / Close / Restore
+  const [isWidgetClosed, setIsWidgetClosed] = useState(false);
+  const [isWidgetMinimized, setIsWidgetMinimized] = useState(false);
+
   const location = useLocation();
   const navigate = useNavigate();
   const lastProcessedBlobRef = useRef(null);
@@ -69,14 +78,11 @@ const BlindAIAssistant = () => {
     const raw = transcript.toLowerCase().trim();
     if (!raw) return false;
 
-    // Clean common Indonesian voice prefixes
     let clean = raw
       .replace(/^(jawaban|pilihan|opsi|pilih|jawab|nomor|no|saya pilih|pilihkan|jawabannya|pilihannya)\s+/gi, '')
       .trim();
 
-    // Quiz Option Mapping (A=0, B=1, C=2, D=3 / 1=0, 2=1, 3=2, 4=3)
     let optionIndex = -1;
-
     const isOptionA = ['a', 'satu', '1', 'alfa', 'alpha'].some(k => clean === k || raw.includes('pilihan a') || raw.includes('jawaban a') || raw.includes('opsi a') || raw.includes('pilih a'));
     const isOptionB = ['b', 'dua', '2', 'bravo'].some(k => clean === k || raw.includes('pilihan b') || raw.includes('jawaban b') || raw.includes('opsi b') || raw.includes('pilih b'));
     const isOptionC = ['c', 'tiga', '3', 'charlie'].some(k => clean === k || raw.includes('pilihan c') || raw.includes('jawaban c') || raw.includes('opsi c') || raw.includes('pilih c'));
@@ -89,9 +95,8 @@ const BlindAIAssistant = () => {
 
     const elements = Array.from(document.querySelectorAll('button, a, [role="button"], [data-gesture-item="true"], [data-option-index], h3'));
 
-    // 1. If option index is matched, find the option button by index or data-option-index or aria-label
     if (optionIndex !== -1) {
-      const optionLetter = String.fromCharCode(65 + optionIndex); // A, B, C, D
+      const optionLetter = String.fromCharCode(65 + optionIndex);
       const targetOptionBtn = elements.find(el => {
         const aria = (el.getAttribute('aria-label') || '').toLowerCase();
         const text = (el.innerText || '').toLowerCase();
@@ -106,26 +111,11 @@ const BlindAIAssistant = () => {
         setTimeout(() => {
           try { targetOptionBtn.click(); } catch(e) {}
         }, 100);
-        return true;
+        return { clicked: true, label: `pilihan ${optionLetter}` };
       }
     }
 
-    // 2. Check quiz option texts directly if on quiz page
-    const quizOptionButtons = Array.from(document.querySelectorAll('[data-option-index]'));
-    if (quizOptionButtons.length > 0) {
-      for (const btn of quizOptionButtons) {
-        const optText = (btn.getAttribute('data-option-text') || btn.innerText || '').toLowerCase().trim();
-        if (optText && (optText === clean || raw.includes(optText) || optText.includes(clean))) {
-          btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          setTimeout(() => {
-            try { btn.click(); } catch(e) {}
-          }, 100);
-          return true;
-        }
-      }
-    }
-
-    // 3. Fuzzy text match across interactive elements
+    // Fuzzy text match across interactive elements
     for (const el of elements) {
       const text = (el.innerText || el.getAttribute('aria-label') || el.getAttribute('title') || '').toLowerCase().trim();
       if (!text || text.length < 1) continue;
@@ -137,17 +127,22 @@ const BlindAIAssistant = () => {
           if (parent) target = parent;
         }
 
+        const href = target.getAttribute('href') || target.getAttribute('data-nav-target');
+        if (href && href.startsWith('/')) {
+          navigate(href);
+          return { clicked: true, label: text };
+        }
+
         target.scrollIntoView({ behavior: 'smooth', block: 'center' });
         setTimeout(() => {
           try { target.click(); } catch(e) {}
         }, 100);
-        return true;
+        return { clicked: true, label: text };
       }
     }
     return false;
-  }, []);
+  }, [navigate]);
 
-  // Improved context gathering - detect items on page
   const getPageContent = () => {
     const main = document.querySelector('main');
     if (!main) return "Beranda Utama";
@@ -167,62 +162,6 @@ const BlindAIAssistant = () => {
     return `Halaman Aktif: ${headings}. Item di layar: ${listItems}.`;
   };
 
-  const handleAction = useCallback((action, actionData) => {
-    console.log("Nay executing action:", action, actionData);
-
-    switch (action) {
-      case 'NAVIGATE_TO':
-        if (navMap[actionData]) {
-          navigate(navMap[actionData]);
-        }
-        break;
-      case 'OPEN_ITEM':
-        if (!actionData) break;
-        const query = actionData.toLowerCase();
-
-        const elements = Array.from(document.querySelectorAll('button, a, [role="button"], [data-gesture-item="true"], h3'));
-
-        let targetElement = elements.find(el => {
-          const text = (el.innerText || el.getAttribute('aria-label') || "").toLowerCase();
-          return text === query || (text.length > 3 && text.includes(query));
-        });
-
-        if (targetElement && targetElement.tagName === 'H3') {
-           const parentLink = targetElement.closest('a') || targetElement.closest('button');
-           if (parentLink) targetElement = parentLink;
-        }
-
-        if (targetElement) {
-          targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          setTimeout(() => targetElement.click(), 300);
-          return true;
-        }
-        return false;
-
-      case 'ASK_TUTOR':
-        if (!actionData) break;
-        const playgroundInput = document.querySelector('input[placeholder*="Tulis pesan"]');
-        if (playgroundInput) {
-          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-          nativeInputValueSetter.call(playgroundInput, actionData);
-          playgroundInput.dispatchEvent(new Event('input', { bubbles: true }));
-          setTimeout(() => {
-            const enterEvent = new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true });
-            playgroundInput.dispatchEvent(enterEvent);
-          }, 300);
-        }
-        break;
-      case 'SCROLL_DOWN':
-        window.scrollBy({ top: window.innerHeight / 1.5, behavior: 'smooth' });
-        break;
-      case 'SCROLL_UP':
-        window.scrollBy({ top: -window.innerHeight / 1.5, behavior: 'smooth' });
-        break;
-      default:
-        console.warn("Unknown action:", action);
-    }
-  }, [navigate, navMap]);
-
   const handleProcessAudio = useCallback(async (blob) => {
     if (isProcessing) return;
     setIsProcessing(true);
@@ -233,7 +172,6 @@ const BlindAIAssistant = () => {
       const context = getPageContent();
       const studentName = profile?.full_name?.split(' ')[0] || "Teman";
 
-      // Resolve actual transcript text from Speech Recognition or Audio Blob transcription
       let transcriptText = "";
       if (lastTranscriptRef.current && lastTranscriptRef.current !== "Mendengarkan...") {
         transcriptText = lastTranscriptRef.current.trim();
@@ -292,8 +230,8 @@ const BlindAIAssistant = () => {
       // 2. SCREEN ELEMENT CLICK MATCH
       const elementClicked = tryClickOnScreenElement(transcriptText);
 
-      if (elementClicked) {
-        const confirmMsg = isQuizPage ? "Memilih jawaban..." : "Membuka pilihan...";
+      if (elementClicked && elementClicked.clicked) {
+        const confirmMsg = isQuizPage ? "Memilih jawaban..." : `Membuka ${elementClicked.label || 'pilihan'}...`;
         setAiResponse(confirmMsg);
         speak(confirmMsg, 1.0, true);
         setTimeout(() => {
@@ -304,7 +242,7 @@ const BlindAIAssistant = () => {
         return;
       }
 
-      // ON QUIZ PAGE: Focus ONLY on quiz answers! Never run AI navigation or redirect!
+      // ON QUIZ PAGE: Focus ONLY on quiz answers
       if (isQuizPage) {
         const lower = transcriptText.toLowerCase();
         const isExitCommand = lower.includes('keluar') || lower.includes('beranda') || lower.includes('tutup kuis') || lower.includes('dashboard');
@@ -395,11 +333,53 @@ const BlindAIAssistant = () => {
           if (text) {
             setLiveTranscript(text);
             lastTranscriptRef.current = text;
+
+            // ⚡ REALTIME INSTANT VOICE COMMAND STREAM MATCH (< 50ms Direct Routing)
+            const clean = text.toLowerCase().trim();
+            if (clean.includes('masuk') || clean.includes('login') || clean.includes('halaman masuk')) {
+              stopRecording();
+              stopListening();
+              speak("Membuka halaman masuk akun.", 1.0, true);
+              navigate('/auth/login');
+            } else if (clean.includes('daftar') || clean.includes('register') || clean.includes('buat akun') || clean.includes('pendaftaran')) {
+              stopRecording();
+              stopListening();
+              speak("Membuka halaman pendaftaran akun baru.", 1.0, true);
+              navigate('/auth/register');
+            } else if (clean.includes('beranda') || clean.includes('landing') || clean.includes('home') || clean.includes('utama')) {
+              stopRecording();
+              stopListening();
+              speak("Membuka halaman utama SambungJaga.", 1.0, true);
+              navigate('/');
+            }
           }
         });
       }, 400);
     }
-  }, [isRecording, isProcessing, startRecording, stopRecording, startListening, stopListening, speak, stopSpeaking]);
+  }, [isRecording, isProcessing, startRecording, stopRecording, startListening, stopListening, speak, stopSpeaking, navigate]);
+
+  // Handle Widget Minimize / Close / Restore
+  const handleCloseWidget = () => {
+    stopSpeaking();
+    if (isRecording) {
+      stopRecording();
+      stopListening();
+    }
+    setIsWidgetClosed(true);
+    speak("Asisten Suara ditutup. Tekan tombol aktifkan mikrofon di kanan bawah atau tekan Spasi untuk membuka kembali.", 1.0, true);
+  };
+
+  const handleMinimizeWidget = () => {
+    setIsWidgetMinimized(true);
+    speak("Tampilan Asisten Suara diminimalkan.", 1.0, true);
+  };
+
+  const handleRestoreWidget = () => {
+    setIsWidgetClosed(false);
+    setIsWidgetMinimized(false);
+    speak("Asisten Suara diaktifkan kembali.", 1.0, true);
+    setTimeout(() => handleMicClick(), 300);
+  };
 
   useEffect(() => {
     if (!isBlind) return;
@@ -408,34 +388,137 @@ const BlindAIAssistant = () => {
       const isInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable);
       if (e.code === 'Space' && !isInput) {
         e.preventDefault();
+        if (isWidgetClosed || isWidgetMinimized) {
+          setIsWidgetClosed(false);
+          setIsWidgetMinimized(false);
+        }
         handleMicClick();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isBlind, handleMicClick]);
+  }, [isBlind, handleMicClick, isWidgetClosed, isWidgetMinimized]);
 
-  if (!isBlind || isPlaygroundPage || isPublicPage) return null;
+  if (!isBlind || isPlaygroundPage) return null;
 
+  // 1. STATE 1: WIDGET CLOSED -> Render neat floating activation button
+  if (isWidgetClosed) {
+    return (
+      <div className="fixed bottom-6 right-6 z-[600] pointer-events-auto">
+        <motion.button
+          type="button"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          onClick={handleRestoreWidget}
+          className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-full shadow-2xl border-2 border-amber-400/80 font-extrabold text-xs flex items-center gap-3 transition-all active:scale-95"
+          title="Aktifkan Mikrofon Navigasi Suara (Tekan Spasi)"
+        >
+          <div className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+          <HiMicrophone className="text-lg text-amber-300" />
+          <span>Aktifkan Mikrofon Navigasi</span>
+        </motion.button>
+      </div>
+    );
+  }
+
+  // 2. STATE 2: WIDGET MINIMIZED -> Render compact pill button + control icons
+  if (isWidgetMinimized) {
+    return (
+      <div className="fixed bottom-6 right-6 z-[600] flex items-center gap-2 pointer-events-auto">
+        <motion.button
+          type="button"
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          onClick={handleMicClick}
+          className={`
+            px-4 py-2.5 rounded-full shadow-2xl font-extrabold text-xs flex items-center gap-2 transition-all active:scale-95 border
+            ${isRecording ? 'bg-rose-600 text-white border-rose-400 animate-pulse' : 'bg-slate-900 text-white border-amber-400/60'}
+          `}
+        >
+          <HiMicrophone className="text-base text-amber-300" />
+          <span>{isRecording ? "Mendengarkan..." : "Bicara Navigasi (Spasi)"}</span>
+        </motion.button>
+
+        <button
+          type="button"
+          onClick={() => setIsWidgetMinimized(false)}
+          className="w-9 h-9 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white rounded-full flex items-center justify-center border border-slate-700 shadow-md transition-all active:scale-90"
+          title="Perbesar Tampilan Asisten Suara"
+        >
+          <HiChevronUp className="text-base" />
+        </button>
+
+        <button
+          type="button"
+          onClick={handleCloseWidget}
+          className="w-9 h-9 bg-slate-900 hover:bg-rose-950 text-slate-300 hover:text-rose-400 rounded-full flex items-center justify-center border border-slate-700 shadow-md transition-all active:scale-90"
+          title="Tutup Asisten Suara"
+        >
+          <HiX className="text-base" />
+        </button>
+      </div>
+    );
+  }
+
+  // 3. STATE 3: FULL FLOATING ASSISTANT WIDGET
   return (
-    <div className="fixed inset-x-0 bottom-0 z-[500] flex flex-col items-center pointer-events-none pb-6 md:pb-12">
+    <div className="fixed inset-x-0 bottom-0 z-[500] flex flex-col items-center pointer-events-none pb-6 md:pb-10">
       <AnimatePresence>
-        {(isRecording || isProcessing || aiResponse) && (
+        {(isRecording || isProcessing || aiResponse || true) && (
           <motion.div
             initial={{ opacity: 0, y: 50, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="w-[90%] max-w-2xl bg-slate-900/90 backdrop-blur-2xl border border-white/10 p-6 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col gap-4 pointer-events-auto mb-6"
+            className="w-[92%] max-w-xl bg-slate-900/95 backdrop-blur-2xl border border-white/15 p-5 sm:p-6 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.6)] flex flex-col gap-3 pointer-events-auto mb-4 relative"
           >
-            <div className="flex justify-center gap-1.5 h-8 items-center">
+            {/* Top Control Bar: Title & Minimize / Close Buttons */}
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-xs font-black text-white uppercase tracking-wider">
+                  🎤 Nay Asisten Navigasi Suara
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleMinimizeWidget}
+                  className="p-1.5 bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white rounded-xl transition-all"
+                  title="Kecilkan Tampilan"
+                >
+                  <HiMinus className="text-sm" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCloseWidget}
+                  className="p-1.5 bg-white/10 hover:bg-rose-500/30 text-slate-300 hover:text-rose-400 rounded-xl transition-all"
+                  title="Tutup Asisten Suara"
+                >
+                  <HiX className="text-sm" />
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Action Hints on Public Pages */}
+            {isPublicPage && !isRecording && !isProcessing && !aiResponse && (
+              <div className="bg-white/5 p-3 rounded-2xl border border-white/10 text-center space-y-1">
+                <p className="text-[11px] font-bold text-amber-300">
+                  💡 Katakan <strong className="text-white">"Masuk"</strong> untuk ke Halaman Login, atau <strong className="text-white">"Daftar Gratis"</strong> untuk Pendaftaran Akun Baru.
+                </p>
+              </div>
+            )}
+
+            {/* Waveform Equalizer Bar */}
+            <div className="flex justify-center gap-1.5 h-6 items-center my-1">
               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(i => (
                 <motion.div
                   key={i}
                   animate={isRecording ? {
-                    height: [8, Math.random() * 32 + 8, 8],
+                    height: [8, Math.random() * 28 + 8, 8],
                     backgroundColor: ['#6366f1', '#f43f5e', '#6366f1']
                   } : isProcessing ? {
-                    height: [16, 24, 16],
+                    height: [12, 20, 12],
                     backgroundColor: '#818cf8',
                     opacity: [0.5, 1, 0.5]
                   } : { height: 4, backgroundColor: '#475569' }}
@@ -445,17 +528,18 @@ const BlindAIAssistant = () => {
               ))}
             </div>
 
-            <div className="space-y-3">
+            {/* Live Transcript & Response Display */}
+            <div className="space-y-2">
               {liveTranscript && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   className="flex flex-col items-center text-center"
                 >
-                  <span className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mb-1">
+                  <span className="text-[9px] text-indigo-400 font-bold uppercase tracking-widest mb-0.5">
                     {isRecording ? "Suara Kamu" : "Transkrip"}
                   </span>
-                  <p className="text-white text-lg md:text-xl font-medium leading-relaxed italic">
+                  <p className="text-white text-base md:text-lg font-medium italic">
                     "{liveTranscript}"
                   </p>
                 </motion.div>
@@ -465,21 +549,21 @@ const BlindAIAssistant = () => {
                 <motion.div
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="pt-3 border-t border-white/5 flex flex-col items-center text-center"
+                  className="pt-2 border-t border-white/5 flex flex-col items-center text-center"
                 >
-                  <span className="text-[10px] text-rose-400 font-bold uppercase tracking-widest mb-1 flex items-center gap-2">
-                    <HiOutlineLightningBolt className="animate-pulse" /> Nay Berkata
+                  <span className="text-[9px] text-rose-400 font-bold uppercase tracking-widest mb-0.5 flex items-center gap-1.5">
+                    <HiOutlineLightningBolt className="animate-pulse" /> Respon Navigasi
                   </span>
-                  <p className="text-indigo-100 text-base md:text-lg font-bold leading-relaxed">
+                  <p className="text-indigo-100 text-sm md:text-base font-bold">
                     {aiResponse}
                   </p>
                 </motion.div>
               )}
             </div>
 
-            <div className="text-center mt-2">
-              <p className={`text-[11px] font-black uppercase tracking-[0.2em] ${isRecording ? "Mendengarkan..." : isProcessing ? "Berpikir..." : "Nay Selesai"}`}>
-                {isRecording ? "Mendengarkan..." : isProcessing ? "Berpikir..." : "Nay Selesai"}
+            <div className="text-center mt-1">
+              <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${isRecording ? "text-rose-400 animate-pulse" : isProcessing ? "text-amber-400" : "text-slate-400"}`}>
+                {isRecording ? "Mendengarkan..." : isProcessing ? "Berpikir..." : "Siap Mendengarkan"}
               </p>
             </div>
           </motion.div>
@@ -496,9 +580,9 @@ const BlindAIAssistant = () => {
             handleMicClick();
           }}
           className={`
-            w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center border-4 border-white/20 shadow-2xl
+            w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center border-4 border-white/20 shadow-2xl
             relative overflow-hidden transition-all duration-500
-            ${isRecording ? 'bg-rose-600' : isProcessing ? 'bg-amber-500' : 'bg-indigo-600'}
+            ${isRecording ? 'bg-rose-600 ring-8 ring-rose-500/30' : isProcessing ? 'bg-amber-500' : 'bg-indigo-600'}
           `}
         >
           <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent" />
@@ -513,7 +597,7 @@ const BlindAIAssistant = () => {
             )}
           </AnimatePresence>
 
-          <div className="relative z-20 text-white text-4xl md:text-5xl">
+          <div className="relative z-20 text-white text-3xl sm:text-4xl">
             {isProcessing ? (
               <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }}>
                 <HiOutlineLightningBolt />
@@ -530,7 +614,7 @@ const BlindAIAssistant = () => {
            <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="absolute -top-12 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-tighter whitespace-nowrap shadow-xl"
+            className="absolute -top-10 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider whitespace-nowrap shadow-xl border border-indigo-400/40"
           >
             Tekan Spasi
           </motion.div>
