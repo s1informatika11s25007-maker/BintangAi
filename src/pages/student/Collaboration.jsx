@@ -83,7 +83,7 @@ const StudentCollaboration = () => {
 
     loadInitialData();
 
-    const channel = supabase.channel('student-sync')
+    const channel = supabase.channel(`student-sync-${profile.id}-${Date.now()}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'group_members', filter: `student_id=eq.${profile.id}` }, (payload) => {
         if (payload.eventType === 'DELETE' && selectedGroup?.id) {
           fetchMyGroups();
@@ -92,6 +92,10 @@ const StudentCollaboration = () => {
           fetchMyGroups();
           fetchAllGroups();
         }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'study_groups' }, () => {
+        fetchMyGroups();
+        fetchAllGroups();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'group_join_requests', filter: `student_id=eq.${profile.id}` }, () => {
         fetchMyRequests();

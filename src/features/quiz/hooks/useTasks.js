@@ -49,6 +49,13 @@ export const useTasks = (studentId) => {
         )
         .on(
           'postgres_changes',
+          { event: '*', schema: 'public', table: 'quizzes' },
+          () => {
+            fetchTasks();
+          }
+        )
+        .on(
+          'postgres_changes',
           { event: '*', schema: 'public', table: 'submissions', filter: `student_id=eq.${studentId}` },
           () => {
             fetchTasks();

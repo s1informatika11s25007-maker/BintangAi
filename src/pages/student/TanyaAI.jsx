@@ -168,7 +168,10 @@ const TanyaAI = () => {
           }
         }
 
-        try { speak(response.answer); } catch (e) {}
+        const isDeafUser = isDeaf || profile?.disability_type === 'tunarungu';
+        if (!isDeafUser) {
+          try { speak(response.answer); } catch (e) {}
+        }
       }
     } catch (err) {
       console.error("handleSend Error:", err);
@@ -188,6 +191,9 @@ const TanyaAI = () => {
 
   const handleSaveEdit = async (msgId) => {
     if (!editText.trim() || loading) return;
+
+    // Stop any audio currently playing before regenerating response
+    stopSpeaking();
 
     const newPrompt = editText.trim();
     setEditingMsgId(null);
@@ -241,7 +247,10 @@ const TanyaAI = () => {
           }
         }
 
-        try { speak(response.answer); } catch (e) {}
+        const isDeafUser = isDeaf || profile?.disability_type === 'tunarungu';
+        if (!isDeafUser) {
+          try { speak(response.answer); } catch (e) {} // Speak ONLY the NEW AI response
+        }
       }
     } catch (err) {
       console.error("handleSaveEdit Error:", err);

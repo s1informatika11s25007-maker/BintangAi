@@ -64,9 +64,25 @@ const StudentModules = () => {
   // SUBJECT FILTER
   const [selectedSubject, setSelectedSubject] = useState('Semua');
 
+  // Fetch & Real-time Sync Modules (< 1s Update when Teacher Uploads)
   useEffect(() => {
     fetchModules();
-  }, []);
+
+    const channelName = `realtime_modules_student_${profile?.id || 'guest'}_${Date.now()}`;
+    const channel = supabase.channel(channelName)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'modules' },
+        () => {
+          fetchModules();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.id]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
