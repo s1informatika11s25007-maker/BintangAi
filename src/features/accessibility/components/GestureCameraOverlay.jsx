@@ -10,7 +10,8 @@ const GestureCameraOverlay = ({
   totalFingers = 0,
   menuActive = false,
   isProfilePage = false,
-  isModuleSelected = false
+  isModuleSelected = false,
+  isQuizResultScreen = false
 }) => {
   const location = useLocation();
   const path = location.pathname;
@@ -93,11 +94,11 @@ const GestureCameraOverlay = ({
   const isDashboardPage = path === '/student/dashboard';
   const isSubmissionView = path.includes('/student/task/') && !!document.querySelector('[data-view-pembahasan="true"]');
   const isQuizPage = path.includes('/student/quiz/') || path.includes('/student/task/');
-  const isResultScreen = isQuizPage && (
+  const isResultScreen = isQuizResultScreen || (isQuizPage && (
     !!document.querySelector('[data-result-screen="true"]') ||
     !!document.querySelector('[data-retake-screen="true"]') ||
-    (typeof document !== 'undefined' && (document.body.innerText.includes('Hasil Petualanganmu') || document.body.innerText.includes('Izin Kerjakan Ulang')))
-  );
+    (typeof document !== 'undefined' && (document.body?.innerText?.includes('Hasil Petualanganmu') || document.body?.innerText?.includes('Izin Kerjakan Ulang')))
+  ));
 
   // LOGIKA PENENTUAN COMMAND YANG TAMPIL
   let currentCommands = navCommands;

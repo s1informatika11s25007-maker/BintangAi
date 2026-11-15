@@ -351,7 +351,7 @@ const StudentQuiz = () => {
     return (
       <div data-retake-screen="true" className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-6 text-slate-800 font-sans relative">
         {isMute && (
-          <GestureCameraOverlay videoRef={videoRef} canvasRef={canvasRef} isActive={camActive} handDetected={handDetected} totalFingers={totalFingers} />
+          <GestureCameraOverlay videoRef={videoRef} canvasRef={canvasRef} isActive={camActive} handDetected={handDetected} totalFingers={totalFingers} isQuizResultScreen={true} />
         )}
         <div className="w-full max-w-xl bg-white p-8 md:p-10 rounded-[2.5rem] shadow-2xl border border-slate-100 text-center space-y-6">
           <div className="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-3xl flex items-center justify-center text-4xl mx-auto shadow-inner border border-indigo-100">
@@ -421,7 +421,7 @@ const StudentQuiz = () => {
     return (
       <div data-result-screen="true" className="min-h-screen bg-white flex flex-col items-center p-4 md:p-6 pt-8 md:pt-10 overflow-y-auto pb-24 relative">
         {isMute && (
-          <GestureCameraOverlay videoRef={videoRef} canvasRef={canvasRef} isActive={camActive} handDetected={handDetected} totalFingers={totalFingers} />
+          <GestureCameraOverlay videoRef={videoRef} canvasRef={canvasRef} isActive={camActive} handDetected={handDetected} totalFingers={totalFingers} isQuizResultScreen={true} />
         )}
         <ConfettiEffect active={showConfetti} />
         <span className="text-6xl md:text-7xl mb-4 drop-shadow-2xl animate-bounce">🏆</span>
