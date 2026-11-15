@@ -266,7 +266,7 @@ export function useGlobalVoiceNav() {
 
   const startGlobalListening = useCallback(() => {
     const isQuizPage = location.pathname.includes('/student/quiz/');
-    if (!isBlind || !isVoiceActive || activeRef.current || aiListening || isQuizPage) return;
+    if (!isBlind || activeRef.current || aiListening || isQuizPage) return;
 
     if (!sharedRecognition) {
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
