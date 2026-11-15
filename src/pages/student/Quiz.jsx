@@ -92,16 +92,38 @@ const StudentQuiz = () => {
   }, [finished, alreadyDone, isBlind, loading, existingResult, score, questions.length, speak]);
 
   const {
-    videoRef, canvasRef, isActive: camActive, gestureLabel, lastGesture, confidence, handDetected
+    videoRef, canvasRef, isActive: camActive, handDetected, totalFingers
   } = useGestureControl({
     enabled: isMute,
-    onGesture: (gesture, action) => {
-      if (!currentQ || finished) return;
-      const gestureToAnswer = { 'point_up': 0, 'peace': 1, 'three_fingers': 2, 'four_fingers': 3 };
-      if (gestureToAnswer[gesture] !== undefined && selectedAnswer === null) {
-        handleAnswer(gestureToAnswer[gesture]);
+    onGesture: (fingerCount) => {
+      if (!currentQ || finished || alreadyDone || loading) return;
+
+      if (fingerCount === 1) {
+        if (selectedAnswer === null) {
+          handleAnswer(0);
+          if (isMute) showSubtitle('☝️ 1 Jari: Memilih Pilihan A', 'success');
+        }
+      } else if (fingerCount === 2) {
+        if (selectedAnswer === null && currentQ?.options?.length > 1) {
+          handleAnswer(1);
+          if (isMute) showSubtitle('✌️ 2 Jari: Memilih Pilihan B', 'success');
+        }
+      } else if (fingerCount === 3) {
+        if (selectedAnswer === null && currentQ?.options?.length > 2) {
+          handleAnswer(2);
+          if (isMute) showSubtitle('🤟 3 Jari: Memilih Pilihan C', 'success');
+        }
+      } else if (fingerCount === 4) {
+        if (selectedAnswer === null && currentQ?.options?.length > 3) {
+          handleAnswer(3);
+          if (isMute) showSubtitle('🖖 4 Jari: Memilih Pilihan D', 'success');
+        }
+      } else if (fingerCount === 5) {
+        if (selectedAnswer !== null || currentIndex === questions.length - 1) {
+          finishQuiz();
+          if (isMute) showSubtitle('✋ 5 Jari: Menyelesaikan Kuis!', 'success');
+        }
       }
-      if (action === 'stop' || gesture === 'fist') finishQuiz();
     }
   });
 

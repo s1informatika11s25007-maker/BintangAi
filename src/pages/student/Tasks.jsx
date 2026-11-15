@@ -6,6 +6,8 @@ import { StudentSidebar } from '@/components/layout';
 import { useTasks } from '@/features/quiz/hooks/useTasks';
 import { useSubtitle } from '@/features/accessibility/components/Subtitles';
 import { useAccessibility } from '@/features/accessibility/hooks/useAccessibility';
+import { useGestureControl } from '@/features/accessibility/hooks/useGestureControl';
+import GestureCameraOverlay from '@/features/accessibility/components/GestureCameraOverlay';
 import {
   HiChevronLeft, HiChevronRight, HiCollection, HiLightningBolt,
   HiAcademicCap, HiCheckCircle, HiLockClosed, HiClock, HiEye
@@ -33,6 +35,40 @@ const StudentTasks = () => {
     return displayList.slice(start, start + itemsPerPage);
   }, [displayList, currentPage, itemsPerPage]);
 
+  // Selected Card Index for Tunawicara Gestures
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const { videoRef, canvasRef, isActive: camActive, handDetected, totalFingers } = useGestureControl({
+    enabled: isMute,
+    onGesture: (fingerCount) => {
+      if (!currentItems || currentItems.length === 0) return;
+
+      if (fingerCount === 1) {
+        setSelectedIndex(prev => {
+          const nextIdx = (prev + 1) % currentItems.length;
+          const item = currentItems[nextIdx];
+          if (isMute) showSubtitle(`☝️ 1 Jari (Next): Kuis "${item?.title || 'Kuis'}" disorot`, 'info');
+          return nextIdx;
+        });
+      } else if (fingerCount === 2) {
+        setSelectedIndex(prev => {
+          const prevIdx = (prev - 1 + currentItems.length) % currentItems.length;
+          const item = currentItems[prevIdx];
+          if (isMute) showSubtitle(`✌️ 2 Jari (Mundur): Kuis "${item?.title || 'Kuis'}" disorot`, 'info');
+          return prevIdx;
+        });
+      } else if (fingerCount === 3) {
+        const selectedItem = currentItems[selectedIndex];
+        if (selectedItem) {
+          if (isMute) showSubtitle(`🤟 3 Jari: Membuka Kuis "${selectedItem.title}"...`, 'success');
+          setTimeout(() => {
+            navigate(`/student/task/${selectedItem.id}`);
+          }, 300);
+        }
+      }
+    }
+  });
+
   const nextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(prev => prev + 1);
@@ -49,12 +85,13 @@ const StudentTasks = () => {
 
   useEffect(() => {
     setCurrentPage(1);
+    setSelectedIndex(0);
   }, [tabFilter]);
 
   // Auto-announce for Tunawicara
   useEffect(() => {
     if (isMute && tasks.length > 0) {
-      showSubtitle(`Ditemukan ${tasks.length} Quiz Aktif. Menampilkan 5 teratas. Gunakan 1-5 jari untuk memilih.`, 'success');
+      showSubtitle(`Kuis Jari Tunawicara: 1 Jari = Next | 2 Jari = Mundur | 3 Jari = Masuk Kuis`, 'success');
     }
   }, [isMute, tasks.length]);
 
@@ -135,44 +172,57 @@ const StudentTasks = () => {
           ) : tabFilter === 'active' ? (
             /* TAB 1: ACTIVE QUIZZES */
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {currentItems.map((task, idx) => (
-                <motion.div
-                  key={task.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                  onClick={() => navigate(`/student/task/${task.id}`)}
-                  className="bg-white p-7 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:border-indigo-100 transition-all cursor-pointer group relative overflow-hidden flex flex-col justify-between min-h-[220px]"
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-inner shrink-0">
-                        <HiCollection />
+              {currentItems.map((task, idx) => {
+                const isSelectedCard = isMute && idx === selectedIndex;
+                return (
+                  <motion.div
+                    key={task.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    onClick={() => navigate(`/student/task/${task.id}`)}
+                    className={`bg-white p-7 rounded-3xl border transition-all cursor-pointer group relative overflow-hidden flex flex-col justify-between min-h-[220px] ${
+                      isSelectedCard
+                        ? 'ring-4 ring-indigo-600 border-indigo-600 bg-indigo-50/50 shadow-2xl scale-[1.02]'
+                        : 'border-slate-100 hover:shadow-xl hover:border-indigo-100'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-inner shrink-0">
+                          <HiCollection />
+                        </div>
+                        {isSelectedCard ? (
+                          <span className="px-3 py-1 bg-indigo-600 text-white rounded-full text-[10px] font-black uppercase tracking-wider animate-pulse shadow-md">
+                            👉 Disorot (3 Jari Masuk)
+                          </span>
+                        ) : (
+                          <span className="px-3 py-1 bg-slate-50 text-slate-500 group-hover:bg-indigo-50 group-hover:text-indigo-600 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                            {task.subject || 'Materi SD'}
+                          </span>
+                        )}
                       </div>
-                      <span className="px-3 py-1 bg-slate-50 text-slate-500 group-hover:bg-indigo-50 group-hover:text-indigo-600 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                        {task.subject || 'Materi SD'}
-                      </span>
+
+                      <h3 className="text-xl font-black text-slate-900 leading-snug mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                        {task.title}
+                      </h3>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">
+                        Modul: {task.modules?.title || 'Umum'}
+                      </p>
                     </div>
 
-                    <h3 className="text-xl font-black text-slate-900 leading-snug mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2">
-                      {task.title}
-                    </h3>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">
-                      Modul: {task.modules?.title || 'Umum'}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-4 border-t border-slate-50">
-                    <div className="flex items-center gap-2 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-xl border border-amber-100 text-[10px] font-bold uppercase">
-                      <HiAcademicCap className="text-amber-500" />
-                      <span>{task.duration_minutes || 30} Mins</span>
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-50">
+                      <div className="flex items-center gap-2 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-xl border border-amber-100 text-[10px] font-bold uppercase">
+                        <HiAcademicCap className="text-amber-500" />
+                        <span>{task.duration_minutes || 30} Mins</span>
+                      </div>
+                      <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center group-hover:bg-indigo-600 group-hover:scale-105 transition-all shadow-md">
+                        <HiChevronRight size={20} />
+                      </div>
                     </div>
-                    <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center group-hover:bg-indigo-600 group-hover:scale-105 transition-all shadow-md">
-                      <HiChevronRight size={20} />
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                );
+              })}
 
               {tasks.length === 0 && (
                 <div className="col-span-full py-20 text-center space-y-4 bg-white rounded-3xl border border-slate-100 p-8 max-w-xl mx-auto my-6 shadow-sm">
@@ -270,16 +320,27 @@ const StudentTasks = () => {
           <div className="bg-indigo-600 text-white py-3 px-8 flex items-center justify-between shrink-0 text-xs font-bold">
             <div className="flex items-center gap-3">
               <HiLightningBolt className="text-amber-400" />
-              <span>Navigasi Jari Aktif</span>
+              <span>Kontrol Jari Tunawicara Aktif</span>
             </div>
             <div className="flex gap-6">
-              <span><strong className="bg-white/20 px-2 py-0.5 rounded">1-5</strong> Pilih Quiz</span>
-              <span><strong className="bg-white/20 px-2 py-0.5 rounded">6</strong> Lanjut</span>
-              <span><strong className="bg-white/20 px-2 py-0.5 rounded">7</strong> Kembali</span>
+              <span><strong className="bg-white/20 px-2 py-0.5 rounded">1 Jari</strong> Lanjut Sorot</span>
+              <span><strong className="bg-white/20 px-2 py-0.5 rounded">2 Jari</strong> Mundur Sorot</span>
+              <span><strong className="bg-white/20 px-2 py-0.5 rounded">3 Jari</strong> Masuk Kuis</span>
             </div>
           </div>
         )}
       </main>
+
+      {/* Gesture Camera Overlay for Tunawicara */}
+      {isMute && (
+        <GestureCameraOverlay
+          videoRef={videoRef}
+          canvasRef={canvasRef}
+          isActive={camActive}
+          handDetected={handDetected}
+          totalFingers={totalFingers}
+        />
+      )}
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }

@@ -54,11 +54,11 @@ const GestureCameraOverlay = ({
     { icon: '✌️', label: 'Scroll ↑' },
   ];
 
-  // 5. Perintah Khusus Halaman QuizKu
+  // 5. Perintah Khusus Halaman Daftar QuizKu (Siswa Tunawicara)
   const quizPageCommands = [
-    { icon: '☝️', label: 'Tab Aktif' },
-    { icon: '✌️', label: 'Riwayat' },
-    { icon: '🤘', label: 'Pembahasan' },
+    { icon: '☝️', label: 'Lanjut (1)' },
+    { icon: '✌️', label: 'Mundur (2)' },
+    { icon: '🤟', label: 'Masuk Kuis (3)' },
   ];
 
   // 6. Perintah Khusus Halaman Pembahasan
@@ -210,7 +210,7 @@ const GestureCameraOverlay = ({
             </p>
           ) : isQuizList ? (
             <p className="text-[7px] font-extrabold text-amber-300 uppercase tracking-widest">
-              1 = Aktif | 2 = Riwayat | 3 = Pembahasan | 10 = Menu
+              1 = Lanjut | 2 = Mundur | 3 = Masuk Kuis | 10 = Menu
             </p>
           ) : isSubmissionView ? (
             <p className="text-[7px] font-extrabold text-indigo-300 uppercase tracking-widest">
