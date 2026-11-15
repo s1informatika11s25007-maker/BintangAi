@@ -38,8 +38,30 @@ const StudentTasks = () => {
   // Selected Card Index for Tunawicara Gestures
   const [selectedIndex, setSelectedIndex] = useState(0);
 
+  const [isCameraClosed, setIsCameraClosed] = useState(() => {
+    try {
+      return localStorage.getItem('gesture_camera_disabled') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    const handleToggle = () => {
+      try {
+        setIsCameraClosed(localStorage.getItem('gesture_camera_disabled') === 'true');
+      } catch {}
+    };
+    window.addEventListener('gesture-camera-toggle', handleToggle);
+    window.addEventListener('storage', handleToggle);
+    return () => {
+      window.removeEventListener('gesture-camera-toggle', handleToggle);
+      window.removeEventListener('storage', handleToggle);
+    };
+  }, []);
+
   const { videoRef, canvasRef, isActive: camActive, handDetected, totalFingers } = useGestureControl({
-    enabled: isMute,
+    enabled: isMute && !isCameraClosed,
     onGesture: (fingerCount) => {
       // 🎯 ABAIKAN GESTUR HALAMAN SAAT MENU UTAMA NAVIGASI SEDANG TERBUKA
       if (document.body.getAttribute('data-menu-active') === 'true' || window.__isNavMenuActive) {
@@ -332,7 +354,7 @@ const StudentTasks = () => {
         </div>
 
         {/* Navigation Info for Tunawicara */}
-        {isMute && (
+        {isMute && !isCameraClosed && (
           <div className="bg-indigo-600 text-white py-3 px-8 flex items-center justify-between shrink-0 text-xs font-bold">
             <div className="flex items-center gap-3">
               <HiLightningBolt className="text-amber-400" />
@@ -350,7 +372,7 @@ const StudentTasks = () => {
       </main>
 
       {/* Gesture Camera Overlay for Tunawicara */}
-      {isMute && (
+      {isMute && !isCameraClosed && (
         <GestureCameraOverlay
           videoRef={videoRef}
           canvasRef={canvasRef}

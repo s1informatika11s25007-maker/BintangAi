@@ -412,8 +412,30 @@ const StudentModules = () => {
   const lastProcessedFingerRef = useRef(-1);
   const cooldownRef = useRef(false);
 
+  const [isCameraClosed, setIsCameraClosed] = useState(() => {
+    try {
+      return localStorage.getItem('gesture_camera_disabled') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    const handleToggle = () => {
+      try {
+        setIsCameraClosed(localStorage.getItem('gesture_camera_disabled') === 'true');
+      } catch {}
+    };
+    window.addEventListener('gesture-camera-toggle', handleToggle);
+    window.addEventListener('storage', handleToggle);
+    return () => {
+      window.removeEventListener('gesture-camera-toggle', handleToggle);
+      window.removeEventListener('storage', handleToggle);
+    };
+  }, []);
+
   const { videoRef, canvasRef, isActive: camActive, handDetected, totalFingers } = useGestureControl({
-    enabled: isMute,
+    enabled: isMute && !isCameraClosed,
     onGesture: (fingerCount) => {
       // Ignore if navigation menu is open
       if (document.body.getAttribute('data-menu-active') === 'true' || window.__isNavMenuActive) {
@@ -1178,7 +1200,7 @@ const StudentModules = () => {
       </main>
 
       {/* Gesture Camera Overlay for Tunawicara Mode */}
-      {isMute && (
+      {isMute && !isCameraClosed && (
         <GestureCameraOverlay
           videoRef={videoRef}
           canvasRef={canvasRef}

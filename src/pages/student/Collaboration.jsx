@@ -214,8 +214,30 @@ const StudentCollaboration = () => {
   const lastProcessedFingerRef = useRef(-1);
   const cooldownRef = useRef(false);
 
+  const [isCameraClosed, setIsCameraClosed] = useState(() => {
+    try {
+      return localStorage.getItem('gesture_camera_disabled') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    const handleToggle = () => {
+      try {
+        setIsCameraClosed(localStorage.getItem('gesture_camera_disabled') === 'true');
+      } catch {}
+    };
+    window.addEventListener('gesture-camera-toggle', handleToggle);
+    window.addEventListener('storage', handleToggle);
+    return () => {
+      window.removeEventListener('gesture-camera-toggle', handleToggle);
+      window.removeEventListener('storage', handleToggle);
+    };
+  }, []);
+
   const { videoRef, canvasRef, isActive: camActive, handDetected, totalFingers } = useGestureControl({
-    enabled: isMute,
+    enabled: isMute && !isCameraClosed,
     onGesture: (fingerCount) => {
       // Ignore if navigation menu is open
       if (document.body.getAttribute('data-menu-active') === 'true' || window.__isNavMenuActive) {
@@ -598,7 +620,7 @@ const StudentCollaboration = () => {
         </AnimatePresence>
 
         {/* Navigation Info for Tunawicara */}
-        {isMute && (
+        {isMute && !isCameraClosed && (
           <div className="bg-slate-900 text-white py-4 px-10 flex items-center justify-between shrink-0 z-[120] border-t border-white/5">
              <div className="flex items-center gap-3">
                 <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
@@ -619,7 +641,7 @@ const StudentCollaboration = () => {
         )}
 
         {/* Gesture Camera Overlay for Tunawicara Mode */}
-        {isMute && (
+        {isMute && !isCameraClosed && (
           <GestureCameraOverlay
             videoRef={videoRef}
             canvasRef={canvasRef}
