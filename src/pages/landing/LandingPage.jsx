@@ -104,11 +104,24 @@ const sampleAACSymbols = [
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const { mode, setManualMode } = useAccessibilityStore();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [activeSection, setActiveSection] = useState('hero');
-  const [activeRoleTab, setActiveRoleTab] = useState('tunanetra');
+  const [activeRoleTab, setActiveRoleTab] = useState(mode || 'tunanetra');
   const [sdClassTab, setSdClassTab] = useState('rendah'); // 'rendah' (1-3) or 'tinggi' (4-6)
+
+  // Sync active role tab and simulator with global accessibility mode
+  useEffect(() => {
+    if (mode && ['tunanetra', 'tunarungu', 'tunawicara'].includes(mode)) {
+      setActiveRoleTab(mode);
+    }
+  }, [mode]);
+
+  const handleRoleTabSelect = (role) => {
+    setActiveRoleTab(role);
+    setManualMode(role);
+  };
 
   // ACCESSIBILITY TOOLBAR STATES (FOR SD & DISABILITIES)
   const [fontSizeScale, setFontSizeScale] = useState(1); // 1 = Normal, 1.15 = Large, 1.3 = XL
@@ -527,7 +540,7 @@ const LandingPage = () => {
             <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-md space-y-8 max-w-4xl mx-auto">
               <div className="grid grid-cols-3 gap-2 p-1.5 bg-slate-100 rounded-2xl text-xs font-bold">
                 <button
-                  onClick={() => setActiveRoleTab('tunanetra')}
+                  onClick={() => handleRoleTabSelect('tunanetra')}
                   className={`py-3 px-3 rounded-xl transition-all font-extrabold ${
                     activeRoleTab === 'tunanetra'
                       ? 'bg-amber-500 text-white shadow-md'
@@ -537,7 +550,7 @@ const LandingPage = () => {
                   👁️ Simulasi Tunanetra
                 </button>
                 <button
-                  onClick={() => setActiveRoleTab('tunarungu')}
+                  onClick={() => handleRoleTabSelect('tunarungu')}
                   className={`py-3 px-3 rounded-xl transition-all font-extrabold ${
                     activeRoleTab === 'tunarungu'
                       ? 'bg-emerald-600 text-white shadow-md'
@@ -547,7 +560,7 @@ const LandingPage = () => {
                   👂 Simulasi Tunarungu
                 </button>
                 <button
-                  onClick={() => setActiveRoleTab('tunawicara')}
+                  onClick={() => handleRoleTabSelect('tunawicara')}
                   className={`py-3 px-3 rounded-xl transition-all font-extrabold ${
                     activeRoleTab === 'tunawicara'
                       ? 'bg-purple-600 text-white shadow-md'
