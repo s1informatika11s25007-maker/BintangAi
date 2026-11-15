@@ -10,6 +10,8 @@ import { useVoice } from '@/features/accessibility/hooks/useVoice';
 import { useGlobalVoiceNav } from '@/features/accessibility/hooks/useGlobalVoiceNav';
 import { useSubtitle } from '@/features/accessibility/components/Subtitles';
 import { useAccessibility } from '@/features/accessibility/hooks/useAccessibility';
+import { useGestureControl } from '@/features/accessibility/hooks/useGestureControl';
+import GestureCameraOverlay from '@/features/accessibility/components/GestureCameraOverlay';
 import {
   HiLightningBolt, HiCheckCircle, HiChevronRight,
   HiClock, HiAcademicCap, HiInformationCircle, HiChevronLeft, HiBookOpen, HiVolumeUp
@@ -63,6 +65,153 @@ const StudentTaskDetail = () => {
       setRetakeStarting(false);
     }
   };
+
+  const scrollStep = (direction) => {
+    if (typeof document === 'undefined') return;
+    const candidateSelectors = [
+      '[data-result-screen="true"]',
+      '[data-retake-screen="true"]',
+      '[data-view-pembahasan="true"]',
+      '.overflow-y-auto',
+      'main',
+      'body',
+      '#root'
+    ];
+
+    let scrollTarget = null;
+    for (const selector of candidateSelectors) {
+      const el = document.querySelector(selector);
+      if (el && el.scrollHeight > el.clientHeight + 10) {
+        scrollTarget = el;
+        break;
+      }
+    }
+
+    if (!scrollTarget) {
+      scrollTarget = document.documentElement || document.body || window;
+    }
+
+    const stepAmount = direction === 'down' ? 150 : -150;
+
+    if (scrollTarget && typeof scrollTarget.scrollBy === 'function') {
+      try {
+        scrollTarget.scrollBy({ top: stepAmount, behavior: 'smooth' });
+      } catch (e) {
+        scrollTarget.scrollTop += stepAmount;
+      }
+    } else if (scrollTarget && scrollTarget !== window) {
+      scrollTarget.scrollTop += stepAmount;
+    } else {
+      window.scrollBy({ top: stepAmount, behavior: 'smooth' });
+    }
+  };
+
+  const lastProcessedFingerRef = useRef(-1);
+  const cooldownRef = useRef(false);
+
+  const { videoRef, canvasRef, isActive: camActive, handDetected, totalFingers } = useGestureControl({
+    enabled: isMute,
+    onGesture: (fingerCount) => {
+      if (fingerCount === 0) {
+        lastProcessedFingerRef.current = -1;
+        return;
+      }
+
+      if (cooldownRef.current) return;
+
+      // 🎯 1. ATURAN LOGIKA STATUS: IZIN_ULANG_DISETUJUI / HASIL PETUALANGANMU
+      if (submissionRecord) {
+        if (fingerCount === 1) {
+          scrollStep('down');
+          if (isMute) showSubtitle('⬇️ 1 Jari: Continuous Scroll Kebawah (Sampai Footer)', 'info');
+          cooldownRef.current = true;
+          setTimeout(() => { cooldownRef.current = false; }, 220);
+          return;
+        } else if (fingerCount === 2) {
+          scrollStep('up');
+          if (isMute) showSubtitle('⬆️ 2 Jari: Continuous Scroll Keatas (Sampai Puncak)', 'info');
+          cooldownRef.current = true;
+          setTimeout(() => { cooldownRef.current = false; }, 220);
+          return;
+        }
+
+        // Discrete single-trigger gestures for 3, 4, 5 fingers
+        if (fingerCount === lastProcessedFingerRef.current) return;
+        lastProcessedFingerRef.current = fingerCount;
+        cooldownRef.current = true;
+        setTimeout(() => { cooldownRef.current = false; }, 1000);
+
+        if (fingerCount === 3) {
+          if (isMute) showSubtitle('🤟 3 Jari: Kerjakan Ulang Sekarang!', 'success');
+          confirmStartRetake();
+        } else if (fingerCount === 4) {
+          if (isMute) showSubtitle('🖖 4 Jari: Tekan Nanti Saja', 'info');
+          setDismissRetakePrompt(true);
+        } else if (fingerCount === 5) {
+          if (isMute) showSubtitle('🖐️ 5 Jari: Kembali ke Daftar Kuis', 'success');
+          setTimeout(() => navigate('/student/tasks'), 300);
+        }
+        return;
+      }
+
+      // 🎯 2. ATURAN LOGIKA STATUS: BELUM_DIKERJAKAN (PENGERJAAN SOAL)
+      if (fingerCount === lastProcessedFingerRef.current) return;
+      lastProcessedFingerRef.current = fingerCount;
+      cooldownRef.current = true;
+      setTimeout(() => { cooldownRef.current = false; }, 800);
+      cooldownRef.current = true;
+      setTimeout(() => { cooldownRef.current = false; }, 800);
+
+      // 🎯 1. ATURAN LOGIKA STATUS: IZIN_ULANG_DISETUJUI / HASIL PETUALANGANMU
+      if (submissionRecord) {
+        if (fingerCount === 1) {
+          scrollToEdge('down');
+          if (isMute) showSubtitle('☝️ 1 Jari: Scroll Otomatis ke Paling Bawah (Analisis Jawaban)', 'info');
+        } else if (fingerCount === 2) {
+          scrollToEdge('up');
+          if (isMute) showSubtitle('✌️ 2 Jari: Scroll Otomatis ke Paling Atas', 'info');
+        } else if (fingerCount === 3) {
+          if (isMute) showSubtitle('🤟 3 Jari: Kerjakan Ulang Sekarang!', 'success');
+          confirmStartRetake();
+        } else if (fingerCount === 4) {
+          if (isMute) showSubtitle('🖖 4 Jari: Tekan Nanti Saja', 'info');
+          setDismissRetakePrompt(true);
+        } else if (fingerCount === 5) {
+          if (isMute) showSubtitle('🖐️ 5 Jari: Kembali ke Daftar Kuis', 'success');
+          setTimeout(() => navigate('/student/tasks'), 300);
+        }
+        return;
+      }
+
+      // 🎯 3. ATURAN LOGIKA STATUS: BELUM_DIKERJAKAN (PENGERJAAN SOAL)
+      if (!started || currentStep <= 0) return;
+      const q = questions[currentStep - 1];
+      if (!q) return;
+
+      if (fingerCount === 1) {
+        handleAnswerChoice(0);
+        if (isMute) showSubtitle('☝️ 1 Jari: Memilih Pilihan A', 'success');
+      } else if (fingerCount === 2) {
+        if (q.assignment_question_options?.length > 1) {
+          handleAnswerChoice(1);
+          if (isMute) showSubtitle('✌️ 2 Jari: Memilih Pilihan B', 'success');
+        }
+      } else if (fingerCount === 3) {
+        if (q.assignment_question_options?.length > 2) {
+          handleAnswerChoice(2);
+          if (isMute) showSubtitle('🤟 3 Jari: Memilih Pilihan C', 'success');
+        }
+      } else if (fingerCount === 4) {
+        if (q.assignment_question_options?.length > 3) {
+          handleAnswerChoice(3);
+          if (isMute) showSubtitle('🖖 4 Jari: Memilih Pilihan D', 'success');
+        }
+      } else if (fingerCount === 5) {
+        handleNext();
+        if (isMute) showSubtitle('🖐️ 5 Jari: Lanjut Soal', 'success');
+      }
+    }
+  });
 
   useEffect(() => { if (id) fetchTaskData(); }, [id, profile?.id]);
 
@@ -236,10 +385,11 @@ const StudentTaskDetail = () => {
   );
 
   if (submissionRecord) {
-    const isRetakeAllowed = submissionRecord.allow_retake === true || submissionRecord.status === 'retake_allowed';
+    const isRetakeAllowed = submissionRecord.allow_retake === true || submissionRecord.status === 'retake_allowed' || submissionRecord.status === 'IZIN_ULANG_DISETUJUI';
+    const statusAttr = isRetakeAllowed ? 'IZIN_ULANG_DISETUJUI' : 'MENUNGGU_IZIN_GURU';
 
     return (
-      <div data-view-pembahasan="true" className="min-h-screen bg-[#F8FAFC] flex flex-col items-center p-4 md:p-6 pt-12 overflow-y-auto pb-32">
+      <div data-quiz-status={statusAttr} data-view-pembahasan="true" className="min-h-screen bg-[#F8FAFC] flex flex-col items-center p-4 md:p-6 pt-12 overflow-y-auto pb-32">
         <ConfettiEffect active={showConfetti} />
 
         {/* Retake Prompt Card when Teacher grants permission */}
@@ -416,7 +566,7 @@ const StudentTaskDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] font-sans relative overflow-hidden text-slate-800">
+    <div data-quiz-status="BELUM_DIKERJAKAN" className="min-h-screen bg-[#F8FAFC] font-sans relative overflow-hidden text-slate-800">
 
       <div className="absolute top-0 right-0 w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-indigo-50/50 rounded-full blur-[60px] md:blur-[120px] -z-10 translate-x-1/3 -translate-y-1/3" />
 

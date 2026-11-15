@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 
@@ -11,14 +11,75 @@ const GestureCameraOverlay = ({
   menuActive = false,
   isProfilePage = false,
   isModuleSelected = false,
-  isQuizResultScreen = false
+  isResultScreen: isResultScreenProp
 }) => {
   const location = useLocation();
   const path = location.pathname;
 
   const isQuizList = path === '/student/tasks';
   const isModulesList = path === '/student/modules';
-  const isTaskDetail = path.includes('/student/task/');
+  const isQuizPage = path.includes('/student/quiz/') || path.includes('/student/task/');
+  const isDashboardPage = path === '/student/dashboard';
+
+  // Synchronous DOM check directly inside render body (0ms delay)
+  const isResultScreenSync = (() => {
+    if (!isQuizPage || typeof document === 'undefined') return false;
+    const bodyText = document.body ? (document.body.innerText || '') : '';
+    const hasResultDOM = !!document.querySelector('[data-result-screen="true"]') ||
+                         !!document.querySelector('[data-retake-screen="true"]') ||
+                         !!document.querySelector('[data-view-pembahasan="true"]') ||
+                         !!document.querySelector('[data-quiz-status="IZIN_ULANG_DISETUJUI"]') ||
+                         !!document.querySelector('[data-quiz-status="MENUNGGU_IZIN_GURU"]');
+
+    const hasResultText = bodyText.includes('Hasil Petualanganmu') ||
+                          bodyText.includes('Analisis Belajar') ||
+                          bodyText.includes('Skor Akhir') ||
+                          bodyText.includes('Izin Kerjakan Ulang') ||
+                          bodyText.includes('Pembahasan Kak Bintang') ||
+                          bodyText.includes('Kunci Jawaban & Pembahasan');
+
+    return hasResultDOM || hasResultText;
+  })();
+
+  const [isResultScreenState, setIsResultScreenState] = useState(false);
+
+  useEffect(() => {
+    if (!isQuizPage) {
+      setIsResultScreenState(false);
+      return;
+    }
+
+    const checkResultScreen = () => {
+      if (typeof document === 'undefined') return;
+      const bodyText = document.body ? (document.body.innerText || '') : '';
+      const hasResultDOM = !!document.querySelector('[data-result-screen="true"]') ||
+                           !!document.querySelector('[data-retake-screen="true"]') ||
+                           !!document.querySelector('[data-view-pembahasan="true"]') ||
+                           !!document.querySelector('[data-quiz-status="IZIN_ULANG_DISETUJUI"]') ||
+                           !!document.querySelector('[data-quiz-status="MENUNGGU_IZIN_GURU"]');
+
+      const hasResultText = bodyText.includes('Hasil Petualanganmu') ||
+                            bodyText.includes('Analisis Belajar') ||
+                            bodyText.includes('Skor Akhir') ||
+                            bodyText.includes('Izin Kerjakan Ulang') ||
+                            bodyText.includes('Pembahasan Kak Bintang') ||
+                            bodyText.includes('Kunci Jawaban & Pembahasan');
+
+      setIsResultScreenState(hasResultDOM || hasResultText);
+    };
+
+    checkResultScreen();
+    const observer = new MutationObserver(checkResultScreen);
+    if (typeof document !== 'undefined' && document.body) {
+      observer.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true });
+    }
+    return () => observer.disconnect();
+  }, [path, isQuizPage]);
+
+  // Combined result screen flag (Prop priority -> Sync check -> Async Observer State)
+  const isResultScreen = isResultScreenProp !== undefined
+    ? isResultScreenProp
+    : (isResultScreenSync || isResultScreenState);
 
   // 1. Perintah Navigasi Global (Dipicu dengan 10 Jari)
   const navCommands = [
@@ -31,16 +92,25 @@ const GestureCameraOverlay = ({
     { icon: '7️⃣', label: 'Profil' },
   ];
 
-  // 2. Perintah Khusus Halaman Quiz (Sedang Mengerjakan)
+  // 2. Perintah Halaman Quiz: Belum Dikerjakan (Mengerjakan Soal / 🎯 Fokus Quiz)
   const quizDetailCommands = [
     { icon: '☝️', label: 'Mulai / A' },
     { icon: '✌️', label: 'Opsi B' },
     { icon: '🤘', label: 'Opsi C' },
     { icon: '🖖', label: 'Opsi D' },
-    { icon: '✋', label: 'Lanjut' },
+    { icon: '🖐️', label: 'Lanjut' },
   ];
 
-  // 3. Perintah Khusus Daftar & Halaman Utama
+  // 3. Perintah Halaman Quiz: Hasil Petualanganmu & Retake Kuis
+  const quizResultCommands = [
+    { icon: '☝️', label: 'Scroll ↓ (1)' },
+    { icon: '✌️', label: 'Scroll ↑ (2)' },
+    { icon: '🤟', label: 'Ulangi (3)' },
+    { icon: '🖖', label: 'Nanti (4)' },
+    { icon: '🖐️', label: 'Daftar (5)' },
+  ];
+
+  // 4. Perintah Daftar & Halaman Utama
   const itemCommands = [
     { icon: '☝️', label: 'Pilih 1' },
     { icon: '✌️', label: 'Pilih 2' },
@@ -49,13 +119,13 @@ const GestureCameraOverlay = ({
     { icon: '✋', label: 'Pilih 5' },
   ];
 
-  // 4. Perintah Khusus Beranda
+  // 5. Perintah Beranda
   const dashboardCommands = [
     { icon: '☝️', label: 'Scroll ↓' },
     { icon: '✌️', label: 'Scroll ↑' },
   ];
 
-  // 5. Perintah Khusus Halaman Daftar QuizKu (Siswa Tunawicara)
+  // 6. Perintah Daftar QuizKu (Siswa Tunawicara)
   const quizPageCommands = [
     { icon: '☝️', label: 'Lanjut (1)' },
     { icon: '✌️', label: 'Mundur (2)' },
@@ -64,12 +134,7 @@ const GestureCameraOverlay = ({
     { icon: '🖐️', label: 'Aktif (5)' },
   ];
 
-  // 6. Perintah Khusus Halaman Pembahasan
-  const pembahasanCommands = [
-    { icon: '☝️', label: 'Kembali' },
-  ];
-
-  // 7. Perintah Khusus Membaca Modul
+  // 7. Perintah Membaca Modul
   const readingCommands = [
     { icon: '☝️', label: 'Scroll ↓' },
     { icon: '✌️', label: 'Scroll ↑' },
@@ -82,75 +147,65 @@ const GestureCameraOverlay = ({
     { icon: '🙌', label: 'Menu (10)' },
   ];
 
-  // Perintah Khusus Halaman Hasil Petualanganmu & Retake Kuis
-  const quizResultCommands = [
-    { icon: '☝️', label: 'Scroll ↓ (1)' },
-    { icon: '✌️', label: 'Scroll ↑ (2)' },
-    { icon: '🤟', label: 'Ulangi (3)' },
-    { icon: '🖖', label: 'Nanti (4)' },
-    { icon: '🖐️', label: 'Daftar (5)' },
-  ];
-
-  const isDashboardPage = path === '/student/dashboard';
-  const isSubmissionView = path.includes('/student/task/') && !!document.querySelector('[data-view-pembahasan="true"]');
-  const isQuizPage = path.includes('/student/quiz/') || path.includes('/student/task/');
-  const isResultScreen = isQuizResultScreen || (isQuizPage && (
-    !!document.querySelector('[data-result-screen="true"]') ||
-    !!document.querySelector('[data-retake-screen="true"]') ||
-    (typeof document !== 'undefined' && (document.body?.innerText?.includes('Hasil Petualanganmu') || document.body?.innerText?.includes('Izin Kerjakan Ulang')))
-  ));
-
-  // LOGIKA PENENTUAN COMMAND YANG TAMPIL
+  // LOGIKA PENENTUAN COMMAND YANG TAMPIL SEPERTI ATURAN LOGIKA WAJIB
   let currentCommands = navCommands;
   let title = '👋 Navigasi Jari';
   let accentColor = 'text-indigo-400';
   let activeDot = 'bg-indigo-500';
+  let footerHint = '';
 
   if (isProfilePage) {
     currentCommands = profileCommands;
     title = '👤 Menu Profil';
     accentColor = 'text-rose-400';
     activeDot = 'bg-rose-500';
+    footerHint = '2 Jari = Logout | 10 Jari = Menu Utama';
   } else if (menuActive) {
     currentCommands = navCommands;
     title = '🔓 Menu Utama';
     accentColor = 'text-emerald-400';
     activeDot = 'bg-emerald-500';
-  } else if (isResultScreen) {
-    currentCommands = quizResultCommands;
-    title = '🏆 Hasil Petualanganmu';
-    accentColor = 'text-emerald-400';
-    activeDot = 'bg-emerald-500';
-  } else if (isSubmissionView) {
-    currentCommands = pembahasanCommands;
-    title = '📖 Pembahasan Quiz';
-    accentColor = 'text-indigo-400';
-    activeDot = 'bg-indigo-500';
-  } else if (isTaskDetail || isQuizPage) {
-    currentCommands = quizDetailCommands;
-    title = '🎯 Fokus Quiz';
-    accentColor = 'text-amber-500';
-    activeDot = 'bg-amber-500';
+    footerHint = 'Pilih Jari (1-7) untuk Pindah Halaman | 10 = Tutup';
+  } else if (isQuizPage) {
+    if (isResultScreen) {
+      // PANDUAN HALAMAN HASIL PETUALANGANMU & RETAKE KUIS
+      currentCommands = quizResultCommands;
+      title = '🏆 Hasil Petualanganmu';
+      accentColor = 'text-emerald-400';
+      activeDot = 'bg-emerald-500';
+      footerHint = '1 = Scroll ↓ | 2 = Scroll ↑ | 3 = Ulangi | 4 = Nanti | 5 = Ke Daftar';
+    } else {
+      // PANDUAN MENGERJAKAN SOAL KUIS (BELUM DIKERJAKAN)
+      currentCommands = quizDetailCommands;
+      title = '🎯 Fokus Quiz';
+      accentColor = 'text-amber-500';
+      activeDot = 'bg-amber-500';
+      footerHint = '1-4 Jari = Opsi Jawaban | 5 Jari = Lanjut Soal';
+    }
   } else if (isQuizList) {
     currentCommands = quizPageCommands;
     title = '⚡ QuizKu Kontrol';
     accentColor = 'text-amber-400';
     activeDot = 'bg-amber-500';
+    footerHint = '1 = Lanjut | 2 = Mundur | 3 = Masuk | 4 = Riwayat | 5 = Aktif | 10 = Menu';
   } else if (isDashboardPage) {
     currentCommands = dashboardCommands;
     title = '🏠 Scroll Beranda';
     accentColor = 'text-indigo-400';
     activeDot = 'bg-indigo-500';
+    footerHint = '1 Jari = Scroll ↓ | 2 Jari = Scroll ↑ | 10 = Menu';
   } else if (isModulesList && isModuleSelected) {
     currentCommands = readingCommands;
     title = '📖 Membaca PDF';
     accentColor = 'text-emerald-400';
     activeDot = 'bg-emerald-500';
+    footerHint = '1 = Scroll ↓ | 2 = Scroll ↑ | 5 = Tutup | 10 = Menu';
   } else if (isModulesList) {
     currentCommands = itemCommands;
     title = '📚 Pilih Materi';
     accentColor = 'text-blue-400';
     activeDot = 'bg-blue-500';
+    footerHint = '1-5 Jari = Pilih Item | 6 = Next | 7 = Prev | 10 = Menu';
   }
 
   const borderColor = !isActive ? 'border-slate-500' :
@@ -186,21 +241,16 @@ const GestureCameraOverlay = ({
           </div>
         </div>
 
-        <div className={`grid ${currentCommands.length > 5 ? 'grid-cols-4' : (isProfilePage ? 'grid-cols-2' : 'grid-cols-5')} gap-3`}>
+        <div className={`grid ${currentCommands.length > 5 ? 'grid-cols-4' : (currentCommands.length === 3 ? 'grid-cols-3' : (isProfilePage ? 'grid-cols-2' : 'grid-cols-5'))} gap-3`}>
           {currentCommands.map((cmd, i) => {
-            // Dynamic finger matching for active instruction set
             let isMatch = false;
             if (isProfilePage) {
               isMatch = (i === 0 && totalFingers === 2) || (i === 1 && totalFingers === 10);
             } else if (menuActive) {
               const navFingerMap = [1, 2, 3, 4, 5, 6, 7];
               isMatch = totalFingers === navFingerMap[i];
-            } else if (isResultScreen) {
+            } else if (isQuizPage) {
               isMatch = totalFingers >= 1 && totalFingers <= 5 && totalFingers === (i + 1);
-            } else if (isSubmissionView) {
-              isMatch = (i === 0 && totalFingers === 1);
-            } else if (isTaskDetail) {
-              isMatch = totalFingers === (i + 1);
             } else if (isQuizList) {
               isMatch = (i === 0 && totalFingers === 1) || (i === 1 && totalFingers === 2) || (i === 2 && totalFingers === 3) || (i === 3 && totalFingers === 4) || (i === 4 && totalFingers === 5);
             } else if (isDashboardPage) {
@@ -225,43 +275,9 @@ const GestureCameraOverlay = ({
         </div>
 
         <div className="mt-4 pt-3 border-t border-white/10 text-center">
-          {menuActive ? (
-            <p className="text-[8px] font-black text-white uppercase tracking-widest animate-pulse">
-              Pilih Jari (1-7) untuk Pindah Halaman | 10 = Tutup
-            </p>
-          ) : isDashboardPage ? (
-            <p className="text-[8px] font-black text-white uppercase tracking-widest">
-              1 Jari = Scroll ↓ | 2 Jari = Scroll ↑ | 10 = Menu
-            </p>
-          ) : isQuizList ? (
-            <p className="text-[8px] font-black text-white uppercase tracking-widest">
-              1 = Lanjut | 2 = Mundur | 3 = Masuk | 4 = Riwayat | 5 = Aktif | 10 = Menu
-            </p>
-          ) : isSubmissionView ? (
-            <p className="text-[8px] font-black text-white uppercase tracking-widest">
-              1 Jari = Kembali ke Daftar Quiz | 10 = Menu
-            </p>
-          ) : isResultScreen ? (
-            <p className="text-[8px] font-black text-white uppercase tracking-widest">
-              1 = Scroll ↓ | 2 = Scroll ↑ | 3 = Ulangi | 4 = Nanti | 5 = Ke Daftar
-            </p>
-          ) : isTaskDetail ? (
-            <p className="text-[8px] font-black text-white uppercase tracking-widest">
-              1-4 Jari = Opsi Jawaban | 5 Jari = Lanjut Soal
-            </p>
-          ) : isModulesList && isModuleSelected ? (
-            <p className="text-[8px] font-black text-white uppercase tracking-widest">
-              1 = Scroll ↓ | 2 = Scroll ↑ | 5 = Tutup | 10 = Menu
-            </p>
-          ) : isProfilePage ? (
-            <p className="text-[8px] font-black text-white uppercase tracking-widest">
-              2 Jari = Logout | 10 Jari = Menu Utama
-            </p>
-          ) : (
-            <p className="text-[8px] font-black text-white uppercase tracking-widest">
-              1-5 Jari = Pilih Item | 6 = Next | 7 = Prev | 10 = Menu
-            </p>
-          )}
+          <p className="text-[8px] font-black text-white uppercase tracking-widest">
+            {footerHint}
+          </p>
         </div>
       </div>
     </div>

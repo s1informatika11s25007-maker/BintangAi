@@ -91,24 +91,88 @@ const StudentQuiz = () => {
     }
   }, [finished, alreadyDone, isBlind, loading, existingResult, score, questions.length, speak]);
 
+  const scrollStep = (direction) => {
+    if (typeof document === 'undefined') return;
+    const candidateSelectors = [
+      '[data-result-screen="true"]',
+      '[data-retake-screen="true"]',
+      '[data-view-pembahasan="true"]',
+      '.overflow-y-auto',
+      'main',
+      'body',
+      '#root'
+    ];
+
+    let scrollTarget = null;
+    for (const selector of candidateSelectors) {
+      const el = document.querySelector(selector);
+      if (el && el.scrollHeight > el.clientHeight + 10) {
+        scrollTarget = el;
+        break;
+      }
+    }
+
+    if (!scrollTarget) {
+      scrollTarget = document.documentElement || document.body || window;
+    }
+
+    const stepAmount = direction === 'down' ? 150 : -150;
+
+    if (scrollTarget && typeof scrollTarget.scrollBy === 'function') {
+      try {
+        scrollTarget.scrollBy({ top: stepAmount, behavior: 'smooth' });
+      } catch (e) {
+        scrollTarget.scrollTop += stepAmount;
+      }
+    } else if (scrollTarget && scrollTarget !== window) {
+      scrollTarget.scrollTop += stepAmount;
+    } else {
+      window.scrollBy({ top: stepAmount, behavior: 'smooth' });
+    }
+  };
+
+  const lastProcessedFingerRef = useRef(-1);
+  const cooldownRef = useRef(false);
+
   const {
     videoRef, canvasRef, isActive: camActive, handDetected, totalFingers
   } = useGestureControl({
     enabled: isMute,
     onGesture: (fingerCount) => {
-      // 🎯 1. ATURAN GESTUR KHUSUS HALAMAN HASIL PETUALANGANMU & IZIN ULANGI
-      if (alreadyDone || finished || retakeAllowedSub) {
+      if (fingerCount === 0) {
+        lastProcessedFingerRef.current = -1;
+        return;
+      }
+
+      if (cooldownRef.current) return;
+
+      // 🎯 1. ATURAN LOGIKA STATUS: IZIN_ULANG_DISETUJUI / HASIL PETUALANGANMU
+      if (retakeAllowedSub || alreadyDone || finished) {
         if (fingerCount === 1) {
-          window.scrollBy({ top: 400, behavior: 'smooth' });
-          if (isMute) showSubtitle('☝️ 1 Jari: Scroll Kebawah', 'info');
+          scrollStep('down');
+          if (isMute) showSubtitle('⬇️ 1 Jari: Continuous Scroll Kebawah (Sampai Footer)', 'info');
+          cooldownRef.current = true;
+          setTimeout(() => { cooldownRef.current = false; }, 220);
+          return;
         } else if (fingerCount === 2) {
-          window.scrollBy({ top: -400, behavior: 'smooth' });
-          if (isMute) showSubtitle('✌️ 2 Jari: Scroll Keatas', 'info');
-        } else if (fingerCount === 3) {
+          scrollStep('up');
+          if (isMute) showSubtitle('⬆️ 2 Jari: Continuous Scroll Keatas (Sampai Puncak)', 'info');
+          cooldownRef.current = true;
+          setTimeout(() => { cooldownRef.current = false; }, 220);
+          return;
+        }
+
+        // Discrete single-trigger gestures for 3, 4, 5 fingers
+        if (fingerCount === lastProcessedFingerRef.current) return;
+        lastProcessedFingerRef.current = fingerCount;
+        cooldownRef.current = true;
+        setTimeout(() => { cooldownRef.current = false; }, 1000);
+
+        if (fingerCount === 3) {
           if (isMute) showSubtitle('🤟 3 Jari: Kerjakan Ulang Sekarang!', 'success');
           confirmStartRetakeInQuiz();
         } else if (fingerCount === 4) {
-          if (isMute) showSubtitle('🖖 4 Jari: Tekan Nanti Saja', 'info');
+          if (isMute) showSubtitle('🖖 4 Jari: Nanti Saja', 'info');
           setTimeout(() => navigate('/student/tasks'), 300);
         } else if (fingerCount === 5) {
           if (isMute) showSubtitle('🖐️ 5 Jari: Kembali ke Daftar Kuis', 'success');
@@ -117,7 +181,12 @@ const StudentQuiz = () => {
         return;
       }
 
-      // 🎯 3. ATURAN GESTUR KHUSUS PENGERJAAN SOAL KUIS (1-4 OPSI, 5 SELESAI)
+      // 🎯 2. ATURAN LOGIKA STATUS: BELUM_DIKERJAKAN (PENGERJAAN SOAL)
+      if (fingerCount === lastProcessedFingerRef.current) return;
+      lastProcessedFingerRef.current = fingerCount;
+      cooldownRef.current = true;
+      setTimeout(() => { cooldownRef.current = false; }, 800);
+
       if (!currentQ || loading) return;
 
       if (fingerCount === 1) {
@@ -349,9 +418,9 @@ const StudentQuiz = () => {
 
   if (retakeAllowedSub) {
     return (
-      <div data-retake-screen="true" className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-6 text-slate-800 font-sans relative">
+      <div data-quiz-status="IZIN_ULANG_DISETUJUI" data-retake-screen="true" className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-6 text-slate-800 font-sans relative">
         {isMute && (
-          <GestureCameraOverlay videoRef={videoRef} canvasRef={canvasRef} isActive={camActive} handDetected={handDetected} totalFingers={totalFingers} isQuizResultScreen={true} />
+          <GestureCameraOverlay isResultScreen={true} videoRef={videoRef} canvasRef={canvasRef} isActive={camActive} handDetected={handDetected} totalFingers={totalFingers} />
         )}
         <div className="w-full max-w-xl bg-white p-8 md:p-10 rounded-[2.5rem] shadow-2xl border border-slate-100 text-center space-y-6">
           <div className="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-3xl flex items-center justify-center text-4xl mx-auto shadow-inner border border-indigo-100">
@@ -419,9 +488,9 @@ const StudentQuiz = () => {
     const displayDetails = finalData?.results_detail || [];
 
     return (
-      <div data-result-screen="true" className="min-h-screen bg-white flex flex-col items-center p-4 md:p-6 pt-8 md:pt-10 overflow-y-auto pb-24 relative">
+      <div data-quiz-status="MENUNGGU_IZIN_GURU" data-result-screen="true" className="min-h-screen bg-white flex flex-col items-center p-4 md:p-6 pt-8 md:pt-10 overflow-y-auto pb-24 relative">
         {isMute && (
-          <GestureCameraOverlay videoRef={videoRef} canvasRef={canvasRef} isActive={camActive} handDetected={handDetected} totalFingers={totalFingers} isQuizResultScreen={true} />
+          <GestureCameraOverlay isResultScreen={true} videoRef={videoRef} canvasRef={canvasRef} isActive={camActive} handDetected={handDetected} totalFingers={totalFingers} />
         )}
         <ConfettiEffect active={showConfetti} />
         <span className="text-6xl md:text-7xl mb-4 drop-shadow-2xl animate-bounce">🏆</span>
@@ -517,10 +586,10 @@ const StudentQuiz = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24 md:pb-32">
+    <div data-quiz-status="BELUM_DIKERJAKAN" className="min-h-screen bg-slate-50 pb-24 md:pb-32">
       {isMute && (
-        <GestureCameraOverlay videoRef={videoRef} canvasRef={canvasRef} isActive={camActive}
-          gestureLabel={gestureLabel} lastGesture={lastGesture} confidence={confidence} handDetected={handDetected} />
+        <GestureCameraOverlay isResultScreen={false} videoRef={videoRef} canvasRef={canvasRef} isActive={camActive}
+          handDetected={handDetected} totalFingers={totalFingers} />
       )}
 
       <header className={`bg-white border-b-2 md:border-b-2 border-slate-100 p-4 md:p-5 sticky z-20 flex justify-between items-center transition-all ${isBlind || isMute ? 'top-4 md:top-6' : 'top-0'}`}>

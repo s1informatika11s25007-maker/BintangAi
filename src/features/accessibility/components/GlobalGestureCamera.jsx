@@ -24,35 +24,49 @@ const GlobalGestureCamera = () => {
   const lastProcessedFinger = useRef(-1);
   const cooldownRef = useRef(false);
 
-  // Helper function to scroll active container reliably across all pages
-  const scrollActivePage = (topOffset) => {
-    const containers = Array.from(document.querySelectorAll('.overflow-y-auto, main, body, #root'));
-    let scrollTarget = containers.find(el => el && el.scrollHeight > el.clientHeight);
+  // Helper function to scroll active container in controlled steps
+  const scrollStep = (direction) => {
+    if (typeof document === 'undefined') return;
+    const candidateSelectors = [
+      '[data-result-screen="true"]',
+      '[data-retake-screen="true"]',
+      '[data-view-pembahasan="true"]',
+      '.overflow-y-auto',
+      'main',
+      'body',
+      '#root'
+    ];
+
+    let scrollTarget = null;
+    for (const selector of candidateSelectors) {
+      const el = document.querySelector(selector);
+      if (el && el.scrollHeight > el.clientHeight + 10) {
+        scrollTarget = el;
+        break;
+      }
+    }
 
     if (!scrollTarget) {
-      scrollTarget = document.querySelector('main') || window;
+      scrollTarget = document.documentElement || document.body || window;
     }
+
+    const stepAmount = direction === 'down' ? 150 : -150;
 
     if (scrollTarget && typeof scrollTarget.scrollBy === 'function') {
       try {
-        scrollTarget.scrollBy({ top: topOffset, behavior: 'smooth' });
+        scrollTarget.scrollBy({ top: stepAmount, behavior: 'smooth' });
       } catch (e) {
-        scrollTarget.scrollTop += topOffset;
+        scrollTarget.scrollTop += stepAmount;
       }
-    } else if (scrollTarget) {
-      scrollTarget.scrollTop += topOffset;
+    } else if (scrollTarget && scrollTarget !== window) {
+      scrollTarget.scrollTop += stepAmount;
     } else {
-      window.scrollBy({ top: topOffset, behavior: 'smooth' });
+      window.scrollBy({ top: stepAmount, behavior: 'smooth' });
     }
   };
 
   const { videoRef, canvasRef, isActive, handDetected, totalFingers } = useGestureControl({
-    enabled: isEnabled,
-    onScroll: (dir) => {
-      if (!menuActive) {
-        scrollActivePage(dir === 'down' ? 280 : -280);
-      }
-    }
+    enabled: isEnabled
   });
 
   const isProfilePage = path === '/profile';
@@ -71,10 +85,24 @@ const GlobalGestureCamera = () => {
   }, [isEnabled]);
 
   useEffect(() => {
-    if (!isEnabled || totalFingers === 0 || cooldownRef.current) return;
+    if (!isEnabled || cooldownRef.current) return;
 
-    if (totalFingers === lastProcessedFinger.current) return;
-    lastProcessedFinger.current = totalFingers;
+    if (totalFingers === 0) {
+      lastProcessedFinger.current = -1;
+      return;
+    }
+
+    const isQuizResultPage = (path.includes('/student/task/') || path.includes('/student/quiz/')) && (
+      !!document.querySelector('[data-result-screen="true"]') ||
+      !!document.querySelector('[data-retake-screen="true"]') ||
+      !!document.querySelector('[data-view-pembahasan="true"]') ||
+      (document.body && document.body.innerText.includes('Hasil Petualanganmu'))
+    );
+
+    if (!isQuizResultPage || (totalFingers !== 1 && totalFingers !== 2)) {
+      if (totalFingers === lastProcessedFinger.current) return;
+      lastProcessedFinger.current = totalFingers;
+    }
 
     const isLoggedInPage = path.startsWith('/student/') || path === '/profile';
 
@@ -154,14 +182,32 @@ const GlobalGestureCamera = () => {
       }
     }
 
-    // 5. ATURAN KHUSUS HALAMAN PEMBAHASAN QUIZ (Saat Modal/View Pembahasan Aktif)
-    if (isTaskDetailPage && !menuActive) {
-      const isPembahasanView = !!document.querySelector('[data-view-pembahasan="true"]');
-      if (isPembahasanView && totalFingers === 1) {
-        showSubtitle('⬅️ Kembali ke Halaman Sebelumnya', 'info');
-        navigate('/student/tasks');
-        triggerCooldown();
-        return;
+    // 5. ATURAN KHUSUS HALAMAN PEMBAHASAN / HASIL QUIZ
+    const isQuizDetailPage = path.includes('/student/task/') || path.includes('/student/quiz/');
+    if (isQuizDetailPage && !menuActive) {
+      const isPembahasanView = !!document.querySelector('[data-view-pembahasan="true"]') ||
+                               !!document.querySelector('[data-result-screen="true"]') ||
+                               !!document.querySelector('[data-retake-screen="true"]') ||
+                               (document.body && document.body.innerText.includes('Hasil Petualanganmu'));
+      if (isPembahasanView) {
+        if (totalFingers === 1) {
+          scrollStep('down');
+          showSubtitle('⬇️ 1 Jari: Continuous Scroll Kebawah', 'info');
+          triggerCooldown(220);
+          return;
+        }
+        if (totalFingers === 2) {
+          scrollStep('up');
+          showSubtitle('⬆️ 2 Jari: Continuous Scroll Keatas', 'info');
+          triggerCooldown(220);
+          return;
+        }
+        if (totalFingers === 5) {
+          showSubtitle('⬅️ Kembali ke Daftar QuizKu', 'info');
+          navigate('/student/tasks');
+          triggerCooldown(1000);
+          return;
+        }
       }
     }
 
@@ -222,12 +268,11 @@ const GlobalGestureCamera = () => {
 
   }, [totalFingers, menuActive, path, isEnabled, isProfilePage, logout, navigate]);
 
-  const triggerCooldown = () => {
+  const triggerCooldown = (ms = 800) => {
     cooldownRef.current = true;
     setTimeout(() => {
       cooldownRef.current = false;
-      lastProcessedFinger.current = -1;
-    }, 1000);
+    }, ms);
   };
 
   useEffect(() => {
