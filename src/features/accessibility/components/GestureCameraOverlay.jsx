@@ -190,10 +190,10 @@ const GestureCameraOverlay = ({
 
             return (
               <div key={i} className="flex flex-col items-center gap-1.5 transition-all">
-                <div className={`text-xl transition-all duration-300 ${isMatch ? 'scale-150 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]' : 'opacity-30 grayscale'}`}>
+                <div className={`text-xl transition-all duration-300 ${isMatch ? 'scale-150 drop-shadow-[0_0_12px_rgba(255,255,255,0.9)]' : 'opacity-60'}`}>
                   {cmd.icon}
                 </div>
-                <div className={`text-[6px] font-black uppercase text-center leading-tight transition-colors ${isMatch ? 'text-white' : 'text-slate-600'}`}>
+                <div className="text-[7px] font-black uppercase text-center leading-tight text-white">
                   {cmd.label}
                 </div>
               </div>
@@ -201,37 +201,37 @@ const GestureCameraOverlay = ({
           })}
         </div>
 
-        <div className="mt-4 pt-3 border-t border-white/5 text-center">
+        <div className="mt-4 pt-3 border-t border-white/10 text-center">
           {menuActive ? (
-            <p className="text-[7px] font-black text-emerald-400 uppercase tracking-widest animate-pulse">
+            <p className="text-[8px] font-black text-white uppercase tracking-widest animate-pulse">
               Pilih Jari (1-7) untuk Pindah Halaman | 10 = Tutup
             </p>
           ) : isDashboardPage ? (
-            <p className="text-[7px] font-extrabold text-indigo-300 uppercase tracking-widest">
+            <p className="text-[8px] font-black text-white uppercase tracking-widest">
               1 Jari = Scroll ↓ | 2 Jari = Scroll ↑ | 10 = Menu
             </p>
           ) : isQuizList ? (
-            <p className="text-[7px] font-extrabold text-amber-300 uppercase tracking-widest">
+            <p className="text-[8px] font-black text-white uppercase tracking-widest">
               1 = Lanjut | 2 = Mundur | 3 = Masuk | 4 = Riwayat | 5 = Aktif | 10 = Menu
             </p>
           ) : isSubmissionView ? (
-            <p className="text-[7px] font-extrabold text-indigo-300 uppercase tracking-widest">
+            <p className="text-[8px] font-black text-white uppercase tracking-widest">
               1 Jari = Kembali ke Daftar Quiz | 10 = Menu
             </p>
           ) : isTaskDetail ? (
-            <p className="text-[7px] font-extrabold text-amber-300 uppercase tracking-widest">
+            <p className="text-[8px] font-black text-white uppercase tracking-widest">
               1-4 Jari = Opsi Jawaban | 5 Jari = Lanjut Soal
             </p>
           ) : isModulesList && isModuleSelected ? (
-            <p className="text-[7px] font-extrabold text-emerald-300 uppercase tracking-widest">
+            <p className="text-[8px] font-black text-white uppercase tracking-widest">
               1 = Scroll ↓ | 2 = Scroll ↑ | 5 = Tutup | 10 = Menu
             </p>
           ) : isProfilePage ? (
-            <p className="text-[7px] font-black text-rose-400 uppercase tracking-widest">
+            <p className="text-[8px] font-black text-white uppercase tracking-widest">
               2 Jari = Logout | 10 Jari = Menu Utama
             </p>
           ) : (
-            <p className="text-[7px] font-extrabold text-blue-300 uppercase tracking-widest">
+            <p className="text-[8px] font-black text-white uppercase tracking-widest">
               1-5 Jari = Pilih Item | 6 = Next | 7 = Prev | 10 = Menu
             </p>
           )}
