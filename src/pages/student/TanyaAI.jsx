@@ -11,7 +11,8 @@ import VoiceSettingsPanel from '@/features/accessibility/components/VoiceSetting
 import BintangAvatar from '@/features/ai-tutor/components/BintangAvatar';
 import {
   HiPaperAirplane, HiTrash, HiUser,
-  HiChevronLeft, HiVolumeUp, HiX, HiArrowDown
+  HiChevronLeft, HiVolumeUp, HiX, HiArrowDown,
+  HiPlus, HiPencil, HiCheck
 } from 'react-icons/hi';
 import { useNavigate } from 'react-router-dom';
 
@@ -26,6 +27,10 @@ const TanyaAI = () => {
   const [showVoiceSettingsModal, setShowVoiceSettingsModal] = useState(false);
   const [isScrolledUp, setIsScrolledUp] = useState(false);
 
+  // Edit Chat States (ChatGPT Style)
+  const [editingMsgId, setEditingMsgId] = useState(null);
+  const [editText, setEditText] = useState('');
+
   const firstName = getCleanFirstName(profile?.full_name) || 'Teman';
 
   const [messages, setMessages] = useState([
@@ -37,7 +42,6 @@ const TanyaAI = () => {
     }
   ]);
 
-  const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
 
   const scrollToBottom = (smooth = true) => {
@@ -52,12 +56,11 @@ const TanyaAI = () => {
   const handleScroll = () => {
     if (!chatContainerRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
-    // Consider scrolled up if more than 120px away from bottom
     const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
     setIsScrolledUp(distanceFromBottom > 120);
   };
 
-  // Restore chat history on page load
+  // 🎯 STRICT STUDENT ISOLATION: Fetch chat history for THIS STUDENT ONLY
   useEffect(() => {
     if (!profile?.id) return;
 
@@ -66,7 +69,7 @@ const TanyaAI = () => {
         const { data, error } = await supabase
           .from('student_ai_chat_history')
           .select('*')
-          .eq('student_id', profile.id)
+          .eq('student_id', profile.id) // Isolated per student
           .order('created_at', { ascending: true })
           .limit(100);
 
@@ -83,54 +86,37 @@ const TanyaAI = () => {
           data.forEach((item, index) => {
             const itemTime = item.created_at ? new Date(item.created_at) : new Date();
 
-            if (item.question) {
+            if (item.question || item.content) {
               formatted.push({
                 id: `hist-user-${item.id || index}`,
                 role: 'user',
-                content: item.question,
-                timestamp: itemTime
-              });
-            } else if (item.role === 'user' && item.content) {
-              formatted.push({
-                id: `hist-user-${item.id || index}`,
-                role: 'user',
-                content: item.content,
+                content: item.question || item.content,
                 timestamp: itemTime
               });
             }
 
-            if (item.answer) {
+            if (item.answer || (item.role === 'assistant' || item.role === 'ai')) {
               formatted.push({
                 id: `hist-ai-${item.id || index}`,
                 role: 'ai',
-                content: item.answer,
-                timestamp: itemTime
-              });
-            } else if ((item.role === 'assistant' || item.role === 'ai') && item.content) {
-              formatted.push({
-                id: `hist-ai-${item.id || index}`,
-                role: 'ai',
-                content: item.content,
+                content: item.answer || item.content,
                 timestamp: itemTime
               });
             }
           });
 
           setMessages(formatted);
-
-          // Scroll to bottom once after history loads
-          setTimeout(() => {
-            scrollToBottom(false);
-          }, 150);
+          setTimeout(() => scrollToBottom(false), 150);
         }
       } catch (err) {
-        console.warn("Error restoring chat history:", err);
+        console.warn("Error restoring student chat history:", err);
       }
     };
 
     fetchHistory();
   }, [profile?.id, firstName]);
 
+  // Send New Message
   const handleSend = async (e) => {
     if (e) e.preventDefault();
     if (!input.trim() || loading) return;
@@ -148,15 +134,12 @@ const TanyaAI = () => {
     setMessages(prev => [...prev, userMsgObj]);
     setTimeout(() => scrollToBottom(true), 50);
 
-    let aiMessageAdded = false;
-
     try {
       const response = await askTutor(userMessage, profile?.id, [], {
         history: messages.map(m => ({ role: m.role, content: m.content }))
       });
 
       if (response && response.answer) {
-        aiMessageAdded = true;
         setMessages(prev => [...prev, {
           id: `ai-${Date.now()}`,
           role: 'ai',
@@ -166,11 +149,11 @@ const TanyaAI = () => {
 
         setTimeout(() => scrollToBottom(true), 50);
 
-        // Permanently record Q&A interaction in student_ai_chat_history
+        // Permanently record Q&A in database ISOLATED by student_id
         if (profile?.id) {
           try {
             await supabase.from('student_ai_chat_history').insert({
-              student_id: profile.id,
+              student_id: profile.id, // Strictly isolated per student
               role: 'user',
               content: userMessage,
               question: userMessage,
@@ -185,55 +168,110 @@ const TanyaAI = () => {
           }
         }
 
-        try {
-          speak(response.answer);
-        } catch (speakErr) {
-          console.warn("Audio speech error:", speakErr);
-        }
-      } else if (!aiMessageAdded) {
-        aiMessageAdded = true;
-        const errorMsg = "Halo! Kak Bintang siap membantu. Coba tanyakan lagi ya! 😊";
-        setMessages(prev => [...prev, {
-          id: `ai-err-${Date.now()}`,
-          role: 'ai',
-          content: errorMsg,
-          timestamp: new Date()
-        }]);
-        setTimeout(() => scrollToBottom(true), 50);
+        try { speak(response.answer); } catch (e) {}
       }
     } catch (err) {
       console.error("handleSend Error:", err);
-      if (!aiMessageAdded) {
-        aiMessageAdded = true;
-        const failMsg = `Halo ${firstName}! Kak Bintang selalu siap membantumu belajar. Mari tanyakan lagi ya! 😊`;
-        setMessages(prev => [...prev, {
-          id: `ai-fail-${Date.now()}`,
-          role: 'ai',
-          content: failMsg,
-          timestamp: new Date()
-        }]);
-        setTimeout(() => scrollToBottom(true), 50);
-      }
     }
   };
 
-  const clearChat = async () => {
+  // 🎯 EDIT CHAT (ChatGPT Style)
+  const handleStartEdit = (msg) => {
+    setEditingMsgId(msg.id);
+    setEditText(msg.content);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMsgId(null);
+    setEditText('');
+  };
+
+  const handleSaveEdit = async (msgId) => {
+    if (!editText.trim() || loading) return;
+
+    const newPrompt = editText.trim();
+    setEditingMsgId(null);
+    setEditText('');
+
+    const editIndex = messages.findIndex(m => m.id === msgId);
+    if (editIndex === -1) return;
+
+    const updatedUserMsg = {
+      ...messages[editIndex],
+      content: newPrompt,
+      timestamp: new Date()
+    };
+
+    // Truncate history up to the edited message
+    const newHistory = [...messages.slice(0, editIndex), updatedUserMsg];
+    setMessages(newHistory);
+    setTimeout(() => scrollToBottom(true), 50);
+
+    try {
+      const response = await askTutor(newPrompt, profile?.id, [], {
+        history: newHistory.map(m => ({ role: m.role, content: m.content }))
+      });
+
+      if (response && response.answer) {
+        const aiMsgObj = {
+          id: `ai-edit-${Date.now()}`,
+          role: 'ai',
+          content: response.answer,
+          timestamp: new Date()
+        };
+
+        setMessages(prev => [...prev, aiMsgObj]);
+        setTimeout(() => scrollToBottom(true), 50);
+
+        if (profile?.id) {
+          try {
+            await supabase.from('student_ai_chat_history').insert({
+              student_id: profile.id, // Isolated per student
+              role: 'user',
+              content: newPrompt,
+              question: newPrompt,
+              answer: response.answer,
+              topic: response.detectedTopic || 'Edit Prompt AI',
+              class_code: profile.class_code || null,
+              student_name: profile.full_name || null,
+              created_at: new Date().toISOString()
+            });
+          } catch (logErr) {
+            console.warn("Edit chat log error:", logErr);
+          }
+        }
+
+        try { speak(response.answer); } catch (e) {}
+      }
+    } catch (err) {
+      console.error("handleSaveEdit Error:", err);
+    }
+  };
+
+  // 🎯 NEW CHAT: Clear database for THIS STUDENT ONLY and start fresh
+  const handleNewChat = async () => {
     stopSpeaking();
     if (profile?.id) {
       try {
-        await supabase.from('student_ai_chat_history').delete().eq('student_id', profile.id);
+        await supabase
+          .from('student_ai_chat_history')
+          .delete()
+          .eq('student_id', profile.id); // Delete ONLY this student's history
       } catch (e) {
-        console.warn("Clear chat history error:", e);
+        console.warn("New chat clear error:", e);
       }
     }
     setMessages([
       {
-        id: `welcome-cleared-${Date.now()}`,
+        id: `welcome-new-${Date.now()}`,
         role: 'ai',
-        content: `Halo ${firstName}! 👋 Chat sudah dibersihkan. Ada lagi yang mau ditanyakan?`,
+        content: `Halo ${firstName}! 👋 Obrolan baru telah dimulai. Apa hal seru yang ingin kamu tanyakan pada Kak Bintang hari ini?`,
         timestamp: new Date()
       }
     ]);
+    setInput('');
+    setEditingMsgId(null);
+    setEditText('');
   };
 
   return (
@@ -275,9 +313,19 @@ const TanyaAI = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* NEW CHAT BUTTON */}
+            <button
+              onClick={handleNewChat}
+              className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95 shrink-0"
+              title="Mulai Obrolan Baru"
+            >
+              <HiPlus className="text-base" />
+              <span className="hidden sm:inline">Obrolan Baru</span>
+            </button>
+
             <button
               onClick={() => setShowVoiceSettingsModal(true)}
-              className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-bold transition-all border border-indigo-100 flex items-center gap-1.5"
+              className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-bold transition-all border border-indigo-100 flex items-center gap-1.5 shrink-0"
               title="Pengaturan Suara"
             >
               <HiVolumeUp className="text-base text-indigo-600" />
@@ -285,12 +333,12 @@ const TanyaAI = () => {
             </button>
 
             <button
-              onClick={clearChat}
-              className="p-2 sm:px-3 sm:py-1.5 bg-slate-50 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-xl text-xs font-bold transition-all border border-slate-200/60 hover:border-rose-100 flex items-center gap-1.5"
+              onClick={handleNewChat}
+              className="p-2 sm:px-3 sm:py-1.5 bg-slate-50 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-xl text-xs font-bold transition-all border border-slate-200/60 hover:border-rose-100 flex items-center gap-1.5 shrink-0"
               title="Bersihkan Percakapan Chat"
             >
               <HiTrash className="text-base" />
-              <span className="hidden sm:inline">Bersihkan</span>
+              <span className="hidden sm:inline">Hapus</span>
             </button>
           </div>
         </header>
@@ -308,7 +356,7 @@ const TanyaAI = () => {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2 }}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} w-full items-end gap-2.5 sm:gap-3`}
+                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} w-full items-end gap-2.5 sm:gap-3 group`}
               >
                 {msg.role === 'ai' && (
                   <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white shrink-0 mb-1 shadow-sm">
@@ -325,38 +373,83 @@ const TanyaAI = () => {
                     ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-br-none'
                     : 'bg-white text-slate-800 border border-slate-200/80 rounded-bl-none'}
                 `}>
-                  <p className="text-xs sm:text-sm font-medium leading-relaxed whitespace-pre-wrap tracking-normal">
-                    {msg.content}
-                  </p>
-                  <div className={`
-                    flex items-center gap-2 mt-2.5
-                    ${msg.role === 'user' ? 'justify-end' : 'justify-between'}
-                  `}>
-                    {msg.role === 'ai' && (
-                      <button
-                        onClick={() => speak(msg.content, 1.0, true)}
-                        className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded-lg flex items-center gap-1 transition-all border border-indigo-100"
-                        title="Dengarkan / Ulangi Suara"
-                      >
-                        <HiVolumeUp className="text-xs text-indigo-600" />
-                        <span>Dengarkan</span>
-                      </button>
-                    )}
+                  {/* EDIT MODE (ChatGPT Style) */}
+                  {msg.role === 'user' && editingMsgId === msg.id ? (
+                    <div className="space-y-3">
+                      <textarea
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        className="w-full p-3 bg-white/10 text-white border border-white/30 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-white/50 custom-scrollbar resize-none"
+                        rows={3}
+                        autoFocus
+                      />
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={handleCancelEdit}
+                          className="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1"
+                        >
+                          <HiX /> Batal
+                        </button>
+                        <button
+                          onClick={() => handleSaveEdit(msg.id)}
+                          disabled={!editText.trim() || loading}
+                          className="px-3 py-1.5 bg-white text-indigo-700 hover:bg-indigo-50 rounded-lg text-xs font-black transition-all flex items-center gap-1 shadow-sm disabled:opacity-50"
+                        >
+                          <HiCheck /> Simpan & Kirim
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-xs sm:text-sm font-medium leading-relaxed whitespace-pre-wrap tracking-normal">
+                        {msg.content}
+                      </p>
 
-                    <span className={`
-                      text-[9px] sm:text-[10px] font-bold uppercase tracking-wider opacity-50
-                      ${msg.role === 'user' ? 'text-indigo-100' : 'text-slate-400'}
-                    `}>
-                      {(() => {
-                        try {
-                          const d = msg.timestamp instanceof Date ? msg.timestamp : new Date(msg.timestamp);
-                          return isNaN(d.getTime()) ? '' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                        } catch {
-                          return '';
-                        }
-                      })()}
-                    </span>
-                  </div>
+                      <div className={`
+                        flex items-center gap-2 mt-2.5
+                        ${msg.role === 'user' ? 'justify-end' : 'justify-between'}
+                      `}>
+                        {msg.role === 'ai' && (
+                          <button
+                            onClick={() => speak(msg.content, 1.0, true)}
+                            className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded-lg flex items-center gap-1 transition-all border border-indigo-100"
+                            title="Dengarkan / Ulangi Suara"
+                          >
+                            <HiVolumeUp className="text-xs text-indigo-600" />
+                            <span>Dengarkan</span>
+                          </button>
+                        )}
+
+                        <div className="flex items-center gap-2">
+                          {/* EDIT PROMPT BUTTON FOR USER MESSAGES */}
+                          {msg.role === 'user' && (
+                            <button
+                              onClick={() => handleStartEdit(msg)}
+                              className="p-1 hover:bg-white/20 text-indigo-100 rounded-lg transition-all text-xs opacity-70 hover:opacity-100 flex items-center gap-1"
+                              title="Edit Teks Pesan"
+                            >
+                              <HiPencil className="text-xs" />
+                              <span className="text-[9px] font-bold uppercase">Edit</span>
+                            </button>
+                          )}
+
+                          <span className={`
+                            text-[9px] sm:text-[10px] font-bold uppercase tracking-wider opacity-50
+                            ${msg.role === 'user' ? 'text-indigo-100' : 'text-slate-400'}
+                          `}>
+                            {(() => {
+                              try {
+                                const d = msg.timestamp instanceof Date ? msg.timestamp : new Date(msg.timestamp);
+                                return isNaN(d.getTime()) ? '' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                              } catch {
+                                return '';
+                              }
+                            })()}
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {msg.role === 'user' && (
@@ -388,7 +481,7 @@ const TanyaAI = () => {
             </motion.div>
           )}
 
-          <div ref={messagesEndRef} />
+          <div />
         </div>
 
         {/* FLOATING SCROLL TO BOTTOM BUTTON */}
@@ -517,4 +610,3 @@ const TanyaAI = () => {
 };
 
 export default TanyaAI;
-
