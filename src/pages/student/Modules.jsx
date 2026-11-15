@@ -64,32 +64,8 @@ const StudentModules = () => {
   // SUBJECT FILTER
   const [selectedSubject, setSelectedSubject] = useState('Semua');
 
-  // Fetch & Real-time Sync Modules (< 1s Update when Teacher Uploads)
-  useEffect(() => {
-    fetchModules();
-
-    const channelName = `realtime_modules_student_${profile?.id || 'guest'}_${Date.now()}`;
-    const channel = supabase.channel(channelName)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'modules' },
-        () => {
-          fetchModules();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [profile?.id]);
-
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatMessages]);
-
-  const fetchModules = async () => {
-    setLoading(true);
+  const fetchModules = async (showSkeleton = false) => {
+    if (showSkeleton) setLoading(true);
     try {
       const { data, error } = await supabase
         .from('modules')
@@ -100,9 +76,38 @@ const StudentModules = () => {
     } catch (err) {
       console.error("Fetch Error:", err);
     } finally {
-      setLoading(false);
+      if (showSkeleton) setLoading(false);
     }
   };
+
+  // Fetch & Real-time Sync Modules (< 1s Instant Smooth Update on INSERT/DELETE/UPDATE)
+  useEffect(() => {
+    fetchModules(true);
+
+    const channelName = `realtime_modules_student_${profile?.id || 'guest'}_${Date.now()}`;
+    const channel = supabase.channel(channelName)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'modules' },
+        (payload) => {
+          if (payload.eventType === 'DELETE') {
+            const deletedId = payload.old?.id;
+            setModules(prev => prev.filter(m => m.id !== deletedId));
+            if (selectedModule?.id === deletedId) {
+              setSelectedModule(null);
+              showSubtitle("⚠️ Materi ini telah dihapus oleh Pengajar.", "warning");
+            }
+          } else {
+            fetchModules(false);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.id, selectedModule?.id]);
 
   /**
    * 🎯 PEMBACA MATERI OTOMATIS (Paragraph-by-Paragraph Reader)

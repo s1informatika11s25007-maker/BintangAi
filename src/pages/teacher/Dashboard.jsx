@@ -332,21 +332,50 @@ const TeacherDashboard = () => {
     const { data, error } = await supabase
       .from('modules')
       .select('*')
-      .eq('teacher_id', profile.id)
       .order('created_at', { ascending: false });
 
-    if (!error) setMyModules(data);
+    if (!error) setMyModules(data || []);
   };
 
   const fetchMyAssignments = async () => {
     const { data, error } = await supabase
       .from('assignments')
       .select('*, assignment_questions(count)')
-      .eq('teacher_id', profile.id)
       .order('created_at', { ascending: false });
 
-    if (!error) setMyAssignments(data);
+    if (!error) setMyAssignments(data || []);
   };
+
+  // Real-time synchronization for Teacher Dashboard (< 1s update for modules, assignments & submissions)
+  useEffect(() => {
+    if (!profile?.id) return;
+
+    fetchMyModules();
+    fetchMyAssignments();
+
+    const channelName = `teacher_dashboard_sync_${profile.id}_${Date.now()}`;
+    const channel = supabase.channel(channelName)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'modules' }, (payload) => {
+        if (payload.eventType === 'DELETE') {
+          setMyModules(prev => prev.filter(m => m.id !== payload.old?.id));
+        } else {
+          fetchMyModules();
+        }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'assignments' }, () => {
+        fetchMyAssignments();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'submissions' }, () => {
+        if (selectedAssignment?.id) {
+          fetchAssignmentDetails(selectedAssignment);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.id, selectedAssignment?.id]);
 
   const fetchAssignmentDetails = async (assignment) => {
     if (!assignment?.id) return;

@@ -45,14 +45,21 @@ const StudentDashboard = () => {
       fetchGroups();
       fetchLeaderboard();
 
-      // Realtime listener (< 1s auto appear when teacher creates new QuizKu)
-      const channelName = `student_dash_assignments_${profile.id}_${Date.now()}`;
+      // Realtime listener (< 1s auto appear when teacher creates new QuizKu or uploads/deletes Modules)
+      const channelName = `student_dash_sync_${profile.id}_${Date.now()}`;
       const channel = supabase.channel(channelName)
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'assignments' },
           () => {
             fetchTasks();
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'modules' },
+          () => {
+            fetchModules();
           }
         )
         .subscribe();
