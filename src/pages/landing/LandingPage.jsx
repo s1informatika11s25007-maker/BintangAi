@@ -164,9 +164,9 @@ const SLIDE_LABELS = [
 // Durasi otomatis tiap slide. Slide demo diberi waktu baca lebih panjang.
 const TOUR_DURATIONS = [0, 7200, 7600, 7600, 7600, 10500, 7000, 0];
 
-const fieldClass = 'w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100';
+const fieldClass = 'w-full min-h-12 rounded-xl border border-blue-200 bg-white px-4 py-3 text-sm font-medium text-blue-950 placeholder:text-blue-300 outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-100';
 const primaryButton = 'inline-flex min-h-12 items-center justify-center rounded-xl bg-blue-700 px-6 py-3 text-sm font-bold text-white transition hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-200 disabled:cursor-not-allowed disabled:opacity-60';
-const secondaryButton = 'inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 transition hover:border-slate-500 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100';
+const secondaryButton = 'inline-flex min-h-12 items-center justify-center rounded-xl border border-blue-200 bg-white px-6 py-3 text-sm font-semibold text-blue-800 transition hover:border-blue-400 hover:bg-blue-50 focus:outline-none focus:ring-4 focus:ring-blue-100';
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -286,8 +286,10 @@ const LandingPage = () => {
     }
   }, [location.search]);
 
-  // Tur bergerak otomatis dari slide pengenalan sampai slide terakhir.
-  // Tekan Spasi atau tombol Jeda untuk menghentikan sementara; navigasi manual menghentikan tur.
+  // Tur otomatis: tunggu slide selesai masuk, lalu gulir isi yang panjang
+  // secara perlahan sampai bagian paling bawah sebelum berpindah ke slide berikutnya.
+  // Pada perangkat sentuh (termasuk Android), kecepatan dibuat lebih pelan.
+  // Saat dijeda, requestAnimationFrame dihentikan dan posisi scroll dipertahankan.
   useEffect(() => {
     if (!tourActive || tourPaused) return undefined;
 
@@ -297,13 +299,65 @@ const LandingPage = () => {
       return undefined;
     }
 
-    const duration = TOUR_DURATIONS[activeSlide] || 7200;
-    const timer = window.setTimeout(() => {
-      goToSlide(activeSlide + 1, { manual: false });
-    }, duration);
+    const scroller = slideContentRef.current;
+    if (!scroller) return undefined;
 
-    return () => window.clearTimeout(timer);
-  }, [tourActive, tourPaused, activeSlide, goToSlide]);
+    let animationFrame = 0;
+    let entryTimer = 0;
+    let advanceTimer = 0;
+    let cancelled = false;
+
+    const advance = () => {
+      if (cancelled) return;
+      goToSlide(activeSlide + 1, { manual: false });
+    };
+
+    // Beri waktu untuk animasi transisi slide selesai sebelum mengukur konten.
+    entryTimer = window.setTimeout(() => {
+      if (cancelled) return;
+
+      const maxScrollTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+      const startScrollTop = Math.min(scroller.scrollTop, maxScrollTop);
+      const distance = Math.max(0, maxScrollTop - startScrollTop);
+      const baseDuration = TOUR_DURATIONS[activeSlide] || 7200;
+
+      // Slide pendek tetap diberi waktu baca. Slide panjang digulir perlahan.
+      if (distance < 8) {
+        advanceTimer = window.setTimeout(advance, baseDuration);
+        return;
+      }
+
+      const isTouchDevice = typeof window !== 'undefined'
+        && window.matchMedia
+        && window.matchMedia('(pointer: coarse)').matches;
+      const pixelsPerSecond = prefersReducedMotion ? 10000 : (isTouchDevice ? 46 : 76);
+      const scrollDuration = Math.max(baseDuration, (distance / pixelsPerSecond) * 1000);
+      const startedAt = performance.now();
+
+      const animateScroll = (now) => {
+        if (cancelled) return;
+        const progress = Math.min(1, (now - startedAt) / scrollDuration);
+        // Gerak linear menjaga laju gulir stabil dan mudah diikuti.
+        scroller.scrollTop = startScrollTop + (distance * progress);
+
+        if (progress < 1) {
+          animationFrame = window.requestAnimationFrame(animateScroll);
+        } else {
+          // Tahan sebentar di bagian akhir agar konten terakhir sempat dibaca.
+          advanceTimer = window.setTimeout(advance, 1100);
+        }
+      };
+
+      animationFrame = window.requestAnimationFrame(animateScroll);
+    }, prefersReducedMotion ? 80 : 850);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(entryTimer);
+      window.clearTimeout(advanceTimer);
+      if (animationFrame) window.cancelAnimationFrame(animationFrame);
+    };
+  }, [tourActive, tourPaused, activeSlide, goToSlide, prefersReducedMotion]);
 
   // Navigasi keyboard: PageUp / PageDown, serta Spasi untuk jeda/lanjutkan tur.
   useEffect(() => {
@@ -675,10 +729,10 @@ const LandingPage = () => {
   const renderModeCard = (item) => {
     const selected = selectedUserRole === item.id;
     const toneClasses = {
-      violet: 'border-violet-200 bg-violet-50 text-violet-950',
-      cyan: 'border-cyan-200 bg-cyan-50 text-cyan-950',
-      emerald: 'border-emerald-200 bg-emerald-50 text-emerald-950',
-      slate: 'border-slate-200 bg-slate-50 text-slate-950',
+      violet: 'border-blue-200 bg-blue-50 text-blue-950',
+      cyan: 'border-blue-200 bg-white text-blue-950',
+      emerald: 'border-blue-300 bg-[#f2f7ff] text-blue-950',
+      slate: 'border-slate-200 bg-white text-slate-950',
     };
 
     return (
@@ -745,8 +799,12 @@ const LandingPage = () => {
             animate={prefersReducedMotion ? { opacity: 1 } : currentMotion.animate}
             exit={exitMotion}
             transition={prefersReducedMotion ? { duration: 0.01 } : currentMotion.transition}
-            style={prefersReducedMotion ? undefined : currentMotion.style}
-            className="absolute inset-0 overflow-x-hidden overflow-y-auto overscroll-contain pr-12 sm:pr-16"
+            style={{
+              ...(prefersReducedMotion ? {} : currentMotion.style),
+              WebkitOverflowScrolling: 'touch',
+              touchAction: 'pan-y',
+            }}
+            className={`absolute inset-0 overflow-x-hidden overflow-y-auto overscroll-contain px-0 pb-24 [scrollbar-width:thin] [scrollbar-color:#93c5fd_transparent] sm:pb-20 ${activeSlide === 7 ? 'pr-4 sm:pr-8' : 'pr-12 sm:pr-16'}`}
           >
             {/* SLIDE 1 — WELCOME & PREFERENSI AKSESIBILITAS */}
             {activeSlide === 0 && (
@@ -857,7 +915,7 @@ const LandingPage = () => {
                     </div>
                   </article>
                   <article className="flex min-h-64 flex-col justify-between rounded-3xl bg-[#f8fafc] p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
-                    <span className="text-sm font-bold tracking-[0.16em] text-emerald-700">04 / REALTIME</span>
+                    <span className="text-sm font-bold tracking-[0.16em] text-blue-700">04 / REALTIME</span>
                     <div>
                       <h3 className="text-2xl font-extrabold text-slate-950">Pengajaran Realtime</h3>
                       <p className="mt-3 text-sm leading-7 text-slate-600">Guru mengajar secara realtime dengan penyampaian suara untuk Tunanetra, teks untuk Tunarungu, dan Tunawicara membalas dengan teks.</p>
@@ -905,7 +963,7 @@ const LandingPage = () => {
                   description="Pilih akun contoh untuk masuk otomatis ke ruang simulasi. Siswa ditampilkan lebih dahulu karena siswa adalah pengguna utama ruang belajar."
                 />
                 {loginMessage && (
-                  <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800">{loginMessage.text}</div>
+                  <div role="alert" className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-800">{loginMessage.text}</div>
                 )}
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
@@ -938,7 +996,7 @@ const LandingPage = () => {
                     {renderDemoCard(demoAdults.find((account) => account.group === 'ortu'))}
                   </div>
                 </div>
-                <p className="rounded-xl bg-amber-50 px-4 py-3 text-xs leading-6 text-amber-900">Catatan: tombol ini melakukan login otomatis menggunakan akun simulasi yang dikonfigurasi pada aplikasi. Jadi, demo bukan sesi anonim tanpa autentikasi.</p>
+                <p className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs leading-6 text-blue-900">Catatan: tombol ini melakukan login otomatis menggunakan akun simulasi yang dikonfigurasi pada aplikasi. Jadi, demo bukan sesi anonim tanpa autentikasi.</p>
               </section>
             )}
 
@@ -956,184 +1014,239 @@ const LandingPage = () => {
               </section>
             )}
 
-            {/* SLIDE 8 — LOGIN / REGISTER */}
+            {/* SLIDE 8 — LOGIN / REGISTER: SPLIT SCREEN, BLUE & WHITE */}
             {activeSlide === 7 && (
-              <section className="mx-auto flex min-h-full w-full max-w-6xl flex-col justify-center px-5 py-8 sm:px-10 lg:px-16">
-                <div className="mb-6 flex flex-col gap-5 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Ruang Belajar SD Inklusif</p>
-                    <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">{authTab === 'login' ? 'Selamat datang kembali.' : 'Buat akun Bintang AI.'}</h2>
-                    <p className="mt-2 text-sm text-slate-600">{authTab === 'login' ? 'Masuk untuk melanjutkan kegiatan belajar.' : 'Lengkapi tiga langkah singkat untuk membuat akun.'}</p>
+              <section className="flex min-h-full w-full flex-col bg-white lg:min-h-[100dvh] lg:flex-row">
+                {/* Panel kiri: pengenalan singkat yang mengisi ruang dan ramah anak. */}
+                <aside className="relative flex w-full shrink-0 flex-col justify-between overflow-hidden bg-gradient-to-br from-blue-800 via-blue-700 to-blue-600 px-5 py-6 text-white sm:px-8 sm:py-8 lg:min-h-[100dvh] lg:w-[40%] lg:px-10 lg:py-10 xl:w-[38%] xl:px-12">
+                  <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full border-[28px] border-white/10" />
+                  <div aria-hidden="true" className="pointer-events-none absolute -bottom-20 -left-16 h-72 w-72 rounded-full border-[34px] border-white/10" />
+                  <div className="relative z-10">
+                    <div className="inline-flex items-center rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-[11px] font-bold tracking-[0.14em] text-blue-50">
+                      RUANG BELAJAR SD INKLUSIF
+                    </div>
+                    <p className="mt-7 text-sm font-semibold text-blue-100 sm:mt-10">Halo, Teman Bintang!</p>
+                    <h2 className="mt-2 max-w-xl text-3xl font-black leading-tight tracking-tight text-white sm:text-4xl xl:text-5xl">
+                      {authTab === 'login' ? 'Senang bertemu kembali.' : 'Yuk, mulai perjalanan belajarmu.'}
+                    </h2>
+                    <p className="mt-4 max-w-lg text-sm leading-7 text-blue-50 sm:text-base">
+                      {authTab === 'login'
+                        ? 'Masuk untuk melanjutkan belajar, membuka modul, bertanya kepada Kak Bintang, dan melihat kegiatan kelas.'
+                        : 'Buat akun bersama guru atau orang tua. Pilih peran dan cara belajar yang paling nyaman untukmu.'}
+                    </p>
                   </div>
-                  <div className="grid grid-cols-2 rounded-xl border border-slate-200 bg-white p-1">
-                    <button type="button" onClick={() => { setAuthTab('login'); setLoginMessage(null); }} className={`rounded-lg px-5 py-3 text-sm font-bold transition ${authTab === 'login' ? 'bg-blue-700 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>Masuk</button>
-                    <button type="button" onClick={() => { setAuthTab('register'); setRegStep(1); setRegMessage(null); }} className={`rounded-lg px-5 py-3 text-sm font-bold transition ${authTab === 'register' ? 'bg-blue-700 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>Daftar</button>
-                  </div>
-                </div>
 
-                {authTab === 'login' && (
-                  <div className="mx-auto w-full max-w-2xl rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
-                    {loginMessage && (
-                      <div role="alert" className={`mb-5 rounded-xl border px-4 py-3 text-sm font-semibold ${loginMessage.type === 'error' ? 'border-rose-200 bg-rose-50 text-rose-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>{loginMessage.text}</div>
+                  <div className="relative z-10 mt-7 grid grid-cols-3 gap-2 sm:mt-9 sm:gap-3 lg:mt-12">
+                    {['Kelas 1', 'Kelas 2', 'Kelas 3', 'Kelas 4', 'Kelas 5', 'Kelas 6'].map((grade, index) => (
+                      <div key={grade} className="rounded-xl border border-white/20 bg-white/10 px-2 py-3 text-center backdrop-blur-sm sm:py-4">
+                        <span className="block text-[10px] font-semibold uppercase tracking-wider text-blue-100">{grade}</span>
+                        <span className="mt-1 block text-xl font-black text-white">{index + 1}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="relative z-10 mt-6 flex flex-col gap-2 border-t border-white/20 pt-5 sm:flex-row sm:items-center sm:justify-between lg:mt-10">
+                    <p className="text-xs leading-5 text-blue-100">Belajar dengan cara yang nyaman, satu langkah setiap hari.</p>
+                    {authTab === 'register' && (
+                      <span className="inline-flex w-fit items-center rounded-full bg-white px-3 py-1.5 text-xs font-extrabold text-blue-800">
+                        Langkah {regStep} dari 3
+                      </span>
                     )}
-                    <form onSubmit={handleLoginSubmit} className="space-y-5">
-                      <div>
-                        <label htmlFor="landing-login-email" className="mb-2 block text-sm font-bold text-slate-800">Email</label>
-                        <input id="landing-login-email" type="email" autoComplete="email" required value={loginEmail} onChange={(event) => setLoginEmail(event.target.value)} placeholder="nama@email.com" className={fieldClass} />
-                      </div>
-                      <div>
-                        <label htmlFor="landing-login-password" className="mb-2 block text-sm font-bold text-slate-800">Kata sandi</label>
-                        <div className="relative">
-                          <input id="landing-login-password" type={showLoginPassword ? 'text' : 'password'} autoComplete="current-password" required value={loginPassword} onChange={(event) => setLoginPassword(event.target.value)} placeholder="Masukkan kata sandi" className={`${fieldClass} pr-24`} />
-                          <button type="button" onClick={() => setShowLoginPassword((value) => !value)} className="absolute inset-y-0 right-3 my-auto h-9 rounded-md px-2 text-xs font-bold text-blue-700 hover:bg-blue-50" aria-label={showLoginPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}>{showLoginPassword ? 'Sembunyikan' : 'Tampilkan'}</button>
-                        </div>
-                      </div>
-                      <button type="submit" disabled={loginLoading} className={`${primaryButton} w-full`}>{loginLoading ? 'Memeriksa akun…' : 'Masuk ke Bintang AI'}</button>
-                    </form>
-                    <p className="mt-5 text-center text-sm text-slate-600">Belum punya akun? <button type="button" onClick={() => { setAuthTab('register'); setRegStep(1); }} className="font-bold text-blue-700 underline underline-offset-4">Daftar sekarang</button></p>
                   </div>
-                )}
+                </aside>
 
-                {authTab === 'register' && (
-                  <div className="mx-auto w-full max-w-3xl rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
-                    <div className="mb-6">
-                      <div className="mb-3 flex items-center justify-between gap-3">
-                        <p className="text-sm font-bold text-slate-800">Langkah {regStep} dari 3</p>
-                        <p className="text-xs font-semibold text-slate-500">{['Peran pengguna', 'Detail sekolah', 'Data akun'][regStep - 1]}</p>
+                {/* Panel kanan: form mengisi sisi kanan, tidak menjadi kartu kecil di tengah. */}
+                <div className="flex min-w-0 flex-1 flex-col bg-[#f4f8ff] px-4 py-6 sm:px-7 sm:py-8 lg:min-h-[100dvh] lg:px-8 lg:py-9 xl:px-12">
+                  <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center">
+                    <div className="mb-6 flex flex-col gap-4 border-b border-blue-100 pb-5 sm:mb-7 sm:flex-row sm:items-end sm:justify-between">
+                      <div>
+                        <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-blue-600">Bintang AI</p>
+                        <h3 className="mt-2 text-2xl font-black tracking-tight text-blue-950 sm:text-3xl">
+                          {authTab === 'login' ? 'Masuk ke akun' : 'Daftar akun baru'}
+                        </h3>
+                        <p className="mt-2 max-w-xl text-sm leading-6 text-blue-700/80">
+                          {authTab === 'login' ? 'Gunakan email dan kata sandi akunmu.' : 'Isi informasi secara bertahap. Data yang diminta menyesuaikan peran.'}
+                        </p>
                       </div>
-                      <div className="grid grid-cols-3 gap-2" aria-label="Progres pendaftaran">
-                        {[1, 2, 3].map((step) => <div key={step} className={`h-1.5 rounded-full ${step <= regStep ? 'bg-blue-700' : 'bg-slate-200'}`} />)}
+                      <div className="grid w-full grid-cols-2 rounded-xl border border-blue-200 bg-white p-1 sm:w-auto sm:min-w-[230px]">
+                        <button type="button" onClick={() => { setAuthTab('login'); setLoginMessage(null); }} aria-pressed={authTab === 'login'} className={`min-h-11 rounded-lg px-5 py-2.5 text-sm font-extrabold transition focus:outline-none focus:ring-4 focus:ring-blue-100 ${authTab === 'login' ? 'bg-blue-700 text-white shadow-sm' : 'text-blue-700 hover:bg-blue-50'}`}>Masuk</button>
+                        <button type="button" onClick={() => { setAuthTab('register'); setRegStep(1); setRegMessage(null); }} aria-pressed={authTab === 'register'} className={`min-h-11 rounded-lg px-5 py-2.5 text-sm font-extrabold transition focus:outline-none focus:ring-4 focus:ring-blue-100 ${authTab === 'register' ? 'bg-blue-700 text-white shadow-sm' : 'text-blue-700 hover:bg-blue-50'}`}>Daftar</button>
                       </div>
                     </div>
 
-                    {regMessage && (
-                      <div role="alert" className={`mb-5 rounded-xl border px-4 py-3 text-sm font-semibold ${regMessage.type === 'error' ? 'border-rose-200 bg-rose-50 text-rose-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>{regMessage.text}</div>
+                    {authTab === 'login' && (
+                      <div className="w-full rounded-2xl border border-blue-100 bg-white p-4 shadow-[0_12px_36px_rgba(37,99,235,0.08)] sm:rounded-3xl sm:p-7 lg:p-8">
+                        {loginMessage && (
+                          <div role="alert" className={`mb-5 rounded-xl border px-4 py-3 text-sm font-semibold ${loginMessage.type === 'error' ? 'border-blue-200 bg-blue-50 text-blue-900' : 'border-blue-200 bg-[#eef5ff] text-blue-900'}`}>{loginMessage.text}</div>
+                        )}
+                        <form onSubmit={handleLoginSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
+                          <div className="min-w-0">
+                            <label htmlFor="landing-login-email" className="mb-2 block text-sm font-extrabold text-blue-900">Email</label>
+                            <input id="landing-login-email" type="email" autoComplete="email" required value={loginEmail} onChange={(event) => setLoginEmail(event.target.value)} placeholder="nama@email.com" className={fieldClass} />
+                          </div>
+                          <div className="min-w-0">
+                            <label htmlFor="landing-login-password" className="mb-2 block text-sm font-extrabold text-blue-900">Kata sandi</label>
+                            <div className="relative">
+                              <input id="landing-login-password" type={showLoginPassword ? 'text' : 'password'} autoComplete="current-password" required value={loginPassword} onChange={(event) => setLoginPassword(event.target.value)} placeholder="Masukkan kata sandi" className={`${fieldClass} pr-24`} />
+                              <button type="button" onClick={() => setShowLoginPassword((value) => !value)} className="absolute inset-y-0 right-2 my-auto h-9 rounded-lg px-2 text-xs font-extrabold text-blue-700 hover:bg-blue-50" aria-label={showLoginPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}>{showLoginPassword ? 'Sembunyikan' : 'Tampilkan'}</button>
+                            </div>
+                          </div>
+                          <div className="sm:col-span-2">
+                            <button type="submit" disabled={loginLoading} className={`${primaryButton} w-full rounded-xl py-3.5 text-base`}>{loginLoading ? 'Memeriksa akun…' : 'Masuk ke Bintang AI'}</button>
+                          </div>
+                        </form>
+                        <div className="mt-5 flex flex-col gap-2 border-t border-blue-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                          <p className="text-sm text-blue-800">Belum punya akun?</p>
+                          <button type="button" onClick={() => { setAuthTab('register'); setRegStep(1); setRegMessage(null); }} className="w-fit text-sm font-extrabold text-blue-700 underline decoration-blue-300 underline-offset-4 hover:text-blue-900">Daftar sekarang</button>
+                        </div>
+                      </div>
                     )}
 
-                    <form onSubmit={handleRegisterSubmit} className="space-y-6">
-                      {regStep === 1 && (
-                        <div className="space-y-5">
-                          <fieldset>
-                            <legend className="mb-3 text-sm font-bold text-slate-800">Pilih peran pengguna</legend>
-                            <div className="grid gap-3 sm:grid-cols-3">
-                              {[
-                                { id: 'siswa', label: 'Siswa SD', description: 'Untuk anak kelas 1–6' },
-                                { id: 'guru', label: 'Guru SLB/SD', description: 'Untuk pengajar' },
-                                { id: 'ortu', label: 'Orang tua / wali', description: 'Untuk pendamping anak' },
-                              ].map((role) => (
-                                <button key={role.id} type="button" onClick={() => { setRegRole(role.id); setRegMessage(null); }} aria-pressed={regRole === role.id} className={`rounded-xl border-2 p-4 text-left transition focus:outline-none focus:ring-4 focus:ring-blue-100 ${regRole === role.id ? 'border-blue-700 bg-blue-50' : 'border-slate-200 bg-white hover:border-slate-400'}`}>
-                                  <span className="block text-sm font-extrabold text-slate-950">{role.label}</span>
-                                  <span className="mt-1 block text-xs text-slate-600">{role.description}</span>
-                                </button>
-                              ))}
-                            </div>
-                          </fieldset>
-
-                          {regRole === 'siswa' && (
-                            <div>
-                              <label htmlFor="landing-reg-disability" className="mb-2 block text-sm font-bold text-slate-800">Preferensi cara belajar</label>
-                              <select id="landing-reg-disability" value={regDisability} onChange={(event) => setRegDisability(event.target.value)} className={fieldClass}>
-                                <option value="tunanetra">Tunanetra — suara dan pembaca layar</option>
-                                <option value="tunarungu">Tunarungu — teks dan subtitle</option>
-                                <option value="tunawicara">Tunawicara — pilihan komunikasi</option>
-                                <option value="tidak_ada">Umum / Standar SD</option>
-                              </select>
-                              <p className="mt-2 text-xs leading-5 text-slate-500">Pilihan ini dapat disesuaikan lagi. Fitur aksesibilitas dasar tetap tersedia untuk semua siswa.</p>
-                            </div>
-                          )}
-                          <div className="flex justify-end">
-                            <button type="button" onClick={handleRegisterNext} className={primaryButton}>Lanjut ke detail</button>
+                    {authTab === 'register' && (
+                      <div className="w-full rounded-2xl border border-blue-100 bg-white p-4 shadow-[0_12px_36px_rgba(37,99,235,0.08)] sm:rounded-3xl sm:p-6 lg:p-8">
+                        <div className="mb-6">
+                          <div className="mb-3 flex items-center justify-between gap-3">
+                            <p className="text-sm font-extrabold text-blue-900">Langkah {regStep} dari 3</p>
+                            <p className="text-xs font-bold text-blue-600">{['Peran pengguna', 'Detail sekolah', 'Data akun'][regStep - 1]}</p>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2" aria-label="Progres pendaftaran">
+                            {[1, 2, 3].map((step) => <div key={step} className={`h-2 rounded-full ${step <= regStep ? 'bg-blue-700' : 'bg-blue-100'}`} />)}
                           </div>
                         </div>
-                      )}
 
-                      {regStep === 2 && (
-                        <div className="space-y-5">
-                          {regRole === 'siswa' && (
-                            <div className="grid gap-4 sm:grid-cols-2">
-                              <div>
-                                <label htmlFor="landing-reg-class" className="mb-2 block text-sm font-bold text-slate-800">Kelas SD</label>
-                                <select id="landing-reg-class" required value={regClassLevel} onChange={(event) => setRegClassLevel(event.target.value)} className={fieldClass}>
-                                  {['1 SD', '2 SD', '3 SD', '4 SD', '5 SD', '6 SD'].map((level) => <option key={level} value={level}>{level}</option>)}
-                                </select>
-                              </div>
-                              <div>
-                                <label htmlFor="landing-reg-class-code" className="mb-2 block text-sm font-bold text-slate-800">Kode kelas dari guru</label>
-                                <input id="landing-reg-class-code" required value={regClassCode} onChange={(event) => setRegClassCode(event.target.value.toUpperCase())} placeholder="Contoh: X8J2K1" className={fieldClass} />
+                        {regMessage && (
+                          <div role="alert" className={`mb-5 rounded-xl border px-4 py-3 text-sm font-semibold ${regMessage.type === 'error' ? 'border-blue-200 bg-blue-50 text-blue-900' : 'border-blue-200 bg-[#eef5ff] text-blue-900'}`}>{regMessage.text}</div>
+                        )}
+
+                        <form onSubmit={handleRegisterSubmit} className="w-full space-y-5">
+                          {regStep === 1 && (
+                            <div className="space-y-5">
+                              <fieldset>
+                                <legend className="mb-3 text-sm font-extrabold text-blue-900">Pilih peran pengguna</legend>
+                                <div className="grid gap-3 sm:grid-cols-3">
+                                  {[
+                                    { id: 'siswa', label: 'Siswa SD', description: 'Untuk anak kelas 1–6' },
+                                    { id: 'guru', label: 'Guru SLB/SD', description: 'Untuk pengajar' },
+                                    { id: 'ortu', label: 'Orang tua / wali', description: 'Untuk pendamping anak' },
+                                  ].map((role) => (
+                                    <button key={role.id} type="button" onClick={() => { setRegRole(role.id); setRegMessage(null); }} aria-pressed={regRole === role.id} className={`min-h-24 rounded-xl border-2 p-4 text-left transition focus:outline-none focus:ring-4 focus:ring-blue-100 ${regRole === role.id ? 'border-blue-700 bg-blue-50 shadow-sm' : 'border-blue-100 bg-white hover:border-blue-300 hover:bg-blue-50/60'}`}>
+                                      <span className="block text-sm font-extrabold text-blue-900">{role.label}</span>
+                                      <span className="mt-1 block text-xs leading-5 text-blue-700/80">{role.description}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </fieldset>
+
+                              {regRole === 'siswa' && (
+                                <div>
+                                  <label htmlFor="landing-reg-disability" className="mb-2 block text-sm font-extrabold text-blue-900">Preferensi cara belajar</label>
+                                  <select id="landing-reg-disability" value={regDisability} onChange={(event) => setRegDisability(event.target.value)} className={fieldClass}>
+                                    <option value="tunanetra">Tunanetra — suara dan pembaca layar</option>
+                                    <option value="tunarungu">Tunarungu — teks dan subtitle</option>
+                                    <option value="tunawicara">Tunawicara — pilihan komunikasi</option>
+                                    <option value="tidak_ada">Umum / Standar SD</option>
+                                  </select>
+                                  <p className="mt-2 text-xs leading-5 text-blue-600">Pilihan ini dapat diubah lagi nanti. Fitur aksesibilitas dasar tetap tersedia untuk semua siswa.</p>
+                                </div>
+                              )}
+                              <div className="flex justify-end">
+                                <button type="button" onClick={handleRegisterNext} className={`${primaryButton} min-w-44`}>Lanjut ke detail</button>
                               </div>
                             </div>
                           )}
 
-                          {regRole === 'guru' && (
-                            <div className="grid gap-4 sm:grid-cols-2">
-                              <div>
-                                <label htmlFor="landing-reg-school" className="mb-2 block text-sm font-bold text-slate-800">Nama sekolah / SLB</label>
-                                <input id="landing-reg-school" required value={regSlbName} onChange={(event) => setRegSlbName(event.target.value)} placeholder="Nama sekolah atau SLB" className={fieldClass} />
-                              </div>
-                              <div>
-                                <label htmlFor="landing-reg-teacher-class" className="mb-2 block text-sm font-bold text-slate-800">Kelas yang diampu</label>
-                                <select id="landing-reg-teacher-class" required value={regClassLevel} onChange={(event) => setRegClassLevel(event.target.value)} className={fieldClass}>
-                                  {['1 SD', '2 SD', '3 SD', '4 SD', '5 SD', '6 SD'].map((level) => <option key={level} value={level}>{level}</option>)}
-                                </select>
-                              </div>
-                              <div>
-                                <label htmlFor="landing-reg-subject" className="mb-2 block text-sm font-bold text-slate-800">Mata pelajaran utama</label>
-                                <select id="landing-reg-subject" value={regSubject} onChange={(event) => setRegSubject(event.target.value)} className={fieldClass}>
-                                  {['Matematika', 'Bahasa Indonesia', 'IPAS', 'Pendidikan Pancasila', 'Bahasa Inggris', 'Lainnya'].map((subject) => <option key={subject} value={subject}>{subject}</option>)}
-                                </select>
+                          {regStep === 2 && (
+                            <div className="space-y-5">
+                              {regRole === 'siswa' && (
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                  <div>
+                                    <label htmlFor="landing-reg-class" className="mb-2 block text-sm font-extrabold text-blue-900">Kelas SD</label>
+                                    <select id="landing-reg-class" required value={regClassLevel} onChange={(event) => setRegClassLevel(event.target.value)} className={fieldClass}>
+                                      {['1 SD', '2 SD', '3 SD', '4 SD', '5 SD', '6 SD'].map((level) => <option key={level} value={level}>{level}</option>)}
+                                    </select>
+                                  </div>
+                                  <div>
+                                    <label htmlFor="landing-reg-class-code" className="mb-2 block text-sm font-extrabold text-blue-900">Kode kelas dari guru</label>
+                                    <input id="landing-reg-class-code" required value={regClassCode} onChange={(event) => setRegClassCode(event.target.value.toUpperCase())} placeholder="Contoh: X8J2K1" className={fieldClass} />
+                                  </div>
+                                </div>
+                              )}
+
+                              {regRole === 'guru' && (
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                  <div>
+                                    <label htmlFor="landing-reg-school" className="mb-2 block text-sm font-extrabold text-blue-900">Nama sekolah / SLB</label>
+                                    <input id="landing-reg-school" required value={regSlbName} onChange={(event) => setRegSlbName(event.target.value)} placeholder="Nama sekolah atau SLB" className={fieldClass} />
+                                  </div>
+                                  <div>
+                                    <label htmlFor="landing-reg-teacher-class" className="mb-2 block text-sm font-extrabold text-blue-900">Kelas yang diampu</label>
+                                    <select id="landing-reg-teacher-class" required value={regClassLevel} onChange={(event) => setRegClassLevel(event.target.value)} className={fieldClass}>
+                                      {['1 SD', '2 SD', '3 SD', '4 SD', '5 SD', '6 SD'].map((level) => <option key={level} value={level}>{level}</option>)}
+                                    </select>
+                                  </div>
+                                  <div className="sm:col-span-2">
+                                    <label htmlFor="landing-reg-subject" className="mb-2 block text-sm font-extrabold text-blue-900">Mata pelajaran utama</label>
+                                    <select id="landing-reg-subject" value={regSubject} onChange={(event) => setRegSubject(event.target.value)} className={fieldClass}>
+                                      {['Matematika', 'Bahasa Indonesia', 'IPAS', 'Pendidikan Pancasila', 'Bahasa Inggris', 'Lainnya'].map((subject) => <option key={subject} value={subject}>{subject}</option>)}
+                                    </select>
+                                  </div>
+                                </div>
+                              )}
+
+                              {regRole === 'ortu' && (
+                                <div>
+                                  <label htmlFor="landing-reg-child-id" className="mb-2 block text-sm font-extrabold text-blue-900">ID Belajar Siswa anak</label>
+                                  <input id="landing-reg-child-id" required value={regStudentIdInput} onChange={(event) => setRegStudentIdInput(event.target.value)} placeholder="Masukkan ID yang diberikan kepada siswa" className={fieldClass} />
+                                  {checkingChild && <p role="status" className="mt-2 text-xs font-semibold text-blue-700">Sedang memeriksa ID siswa…</p>}
+                                  {verifiedChild && <p role="status" className="mt-2 rounded-lg bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-800">Profil ditemukan: {verifiedChild.full_name} · {verifiedChild.class_level || 'Kelas SD'}</p>}
+                                  {childCheckError && <p role="alert" className="mt-2 text-xs font-semibold text-blue-700">{childCheckError}</p>}
+                                </div>
+                              )}
+
+                              <div className="flex justify-between gap-3">
+                                <button type="button" onClick={() => { setRegStep(1); setRegMessage(null); }} className={secondaryButton}>Kembali</button>
+                                <button type="button" onClick={handleRegisterNext} className={primaryButton}>Lanjut ke data akun</button>
                               </div>
                             </div>
                           )}
 
-                          {regRole === 'ortu' && (
-                            <div>
-                              <label htmlFor="landing-reg-child-id" className="mb-2 block text-sm font-bold text-slate-800">ID Belajar Siswa anak</label>
-                              <input id="landing-reg-child-id" required value={regStudentIdInput} onChange={(event) => setRegStudentIdInput(event.target.value)} placeholder="Masukkan ID yang diberikan kepada siswa" className={fieldClass} />
-                              {checkingChild && <p role="status" className="mt-2 text-xs font-semibold text-blue-700">Sedang memeriksa ID siswa…</p>}
-                              {verifiedChild && <p role="status" className="mt-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800">Profil ditemukan: {verifiedChild.full_name} · {verifiedChild.class_level || 'Kelas SD'}</p>}
-                              {childCheckError && <p role="alert" className="mt-2 text-xs font-semibold text-rose-700">{childCheckError}</p>}
-                            </div>
-                          )}
-
-                          <div className="flex justify-between gap-3">
-                            <button type="button" onClick={() => { setRegStep(1); setRegMessage(null); }} className={secondaryButton}>Kembali</button>
-                            <button type="button" onClick={handleRegisterNext} className={primaryButton}>Lanjut ke data akun</button>
-                          </div>
-                        </div>
-                      )}
-
-                      {regStep === 3 && (
-                        <div className="space-y-5">
-                          <div>
-                            <label htmlFor="landing-reg-name" className="mb-2 block text-sm font-bold text-slate-800">Nama lengkap</label>
-                            <input id="landing-reg-name" autoComplete="name" required value={regFullName} onChange={(event) => setRegFullName(event.target.value)} placeholder="Masukkan nama lengkap" className={fieldClass} />
-                          </div>
-                          <div>
-                            <label htmlFor="landing-reg-email" className="mb-2 block text-sm font-bold text-slate-800">Email</label>
-                            <input id="landing-reg-email" type="email" autoComplete="email" required value={regEmail} onChange={(event) => setRegEmail(event.target.value)} placeholder="nama@email.com" className={fieldClass} />
-                          </div>
-                          <div className="grid gap-4 sm:grid-cols-2">
-                            <div>
-                              <label htmlFor="landing-reg-password" className="mb-2 block text-sm font-bold text-slate-800">Kata sandi</label>
-                              <div className="relative">
-                                <input id="landing-reg-password" type={showRegPassword ? 'text' : 'password'} autoComplete="new-password" required minLength={8} value={regPassword} onChange={(event) => setRegPassword(event.target.value)} placeholder="Minimal 8 karakter" className={`${fieldClass} pr-24`} />
-                                <button type="button" onClick={() => setShowRegPassword((value) => !value)} className="absolute inset-y-0 right-3 my-auto h-9 rounded-md px-2 text-xs font-bold text-blue-700 hover:bg-blue-50">{showRegPassword ? 'Sembunyikan' : 'Tampilkan'}</button>
+                          {regStep === 3 && (
+                            <div className="space-y-5">
+                              <div className="grid gap-4 sm:grid-cols-2">
+                                <div>
+                                  <label htmlFor="landing-reg-name" className="mb-2 block text-sm font-extrabold text-blue-900">Nama lengkap</label>
+                                  <input id="landing-reg-name" autoComplete="name" required value={regFullName} onChange={(event) => setRegFullName(event.target.value)} placeholder="Masukkan nama lengkap" className={fieldClass} />
+                                </div>
+                                <div>
+                                  <label htmlFor="landing-reg-email" className="mb-2 block text-sm font-extrabold text-blue-900">Email</label>
+                                  <input id="landing-reg-email" type="email" autoComplete="email" required value={regEmail} onChange={(event) => setRegEmail(event.target.value)} placeholder="nama@email.com" className={fieldClass} />
+                                </div>
+                              </div>
+                              <div className="grid gap-4 sm:grid-cols-2">
+                                <div>
+                                  <label htmlFor="landing-reg-password" className="mb-2 block text-sm font-extrabold text-blue-900">Kata sandi</label>
+                                  <div className="relative">
+                                    <input id="landing-reg-password" type={showRegPassword ? 'text' : 'password'} autoComplete="new-password" required minLength={8} value={regPassword} onChange={(event) => setRegPassword(event.target.value)} placeholder="Minimal 8 karakter" className={`${fieldClass} pr-24`} />
+                                    <button type="button" onClick={() => setShowRegPassword((value) => !value)} className="absolute inset-y-0 right-2 my-auto h-9 rounded-lg px-2 text-xs font-extrabold text-blue-700 hover:bg-blue-50">{showRegPassword ? 'Sembunyikan' : 'Tampilkan'}</button>
+                                  </div>
+                                </div>
+                                <div>
+                                  <label htmlFor="landing-reg-confirm" className="mb-2 block text-sm font-extrabold text-blue-900">Ulangi kata sandi</label>
+                                  <input id="landing-reg-confirm" type={showRegPassword ? 'text' : 'password'} autoComplete="new-password" required value={regConfirmPassword} onChange={(event) => setRegConfirmPassword(event.target.value)} placeholder="Ulangi kata sandi" className={fieldClass} />
+                                </div>
+                              </div>
+                              <div className="flex justify-between gap-3">
+                                <button type="button" onClick={() => { setRegStep(2); setRegMessage(null); }} className={secondaryButton}>Kembali</button>
+                                <button type="submit" disabled={regLoading} className={`${primaryButton} flex-1`}>{regLoading ? 'Membuat akun…' : 'Daftar akun Bintang AI'}</button>
                               </div>
                             </div>
-                            <div>
-                              <label htmlFor="landing-reg-confirm" className="mb-2 block text-sm font-bold text-slate-800">Ulangi kata sandi</label>
-                              <input id="landing-reg-confirm" type={showRegPassword ? 'text' : 'password'} autoComplete="new-password" required value={regConfirmPassword} onChange={(event) => setRegConfirmPassword(event.target.value)} placeholder="Ulangi kata sandi" className={fieldClass} />
-                            </div>
-                          </div>
-                          <div className="flex justify-between gap-3">
-                            <button type="button" onClick={() => { setRegStep(2); setRegMessage(null); }} className={secondaryButton}>Kembali</button>
-                            <button type="submit" disabled={regLoading} className={`${primaryButton} flex-1`}>{regLoading ? 'Membuat akun…' : 'Daftar akun Bintang AI'}</button>
-                          </div>
-                        </div>
-                      )}
-                    </form>
+                          )}
+                        </form>
+                      </div>
+                    )}
                   </div>
-                )}
+                  <p className="mt-5 text-center text-[11px] font-semibold text-blue-500">Bintang AI · Belajar bersama, tumbuh bersama.</p>
+                </div>
               </section>
             )}
           </motion.main>
@@ -1209,7 +1322,7 @@ const LandingPage = () => {
       <p className="sr-only" role="status" aria-live="polite">{tourActive ? (tourPaused ? 'Jelajah Bintang AI dijeda.' : `Jelajah Bintang AI, slide ${activeSlide + 1} dari 8.`) : ''}</p>
 
       {/* Penanda bab kecil di sisi kanan: tidak mengambil ruang header/footer. */}
-      <nav aria-label="Navigasi bab presentasi" className="absolute right-3 top-1/2 z-30 flex -translate-y-1/2 flex-col items-center gap-2 rounded-full border border-white/70 bg-white/55 px-2 py-3 shadow-sm backdrop-blur-md sm:right-6 sm:gap-2.5 sm:px-2.5">
+      <nav aria-label="Navigasi bab presentasi" className={`absolute right-3 top-1/2 z-30 -translate-y-1/2 flex-col items-center gap-2 rounded-full border border-blue-100 bg-white/90 px-2 py-3 shadow-sm backdrop-blur-md sm:right-6 sm:gap-2.5 sm:px-2.5 ${activeSlide === 7 ? 'hidden' : 'flex'}`}>
         {SLIDE_LABELS.map((label, index) => (
           <button
             key={label}
