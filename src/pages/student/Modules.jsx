@@ -302,6 +302,32 @@ const StudentModules = () => {
 
   const scrollStep = (direction) => {
     if (typeof document === 'undefined') return;
+
+    const stepAmount = direction === 'down' ? 240 : -240;
+
+    // 1. Jika sedang berada di Tab PDF, Utamakan Scroll Kontainer / Frame PDF
+    if (activeTab === 'pdf') {
+      const pdfViewport = document.querySelector('#pdf-scroll-viewport');
+      if (pdfViewport) {
+        try {
+          pdfViewport.scrollBy({ top: stepAmount, behavior: 'smooth' });
+        } catch (e) {
+          pdfViewport.scrollTop += stepAmount;
+        }
+      }
+
+      const pdfIframe = document.querySelector('#pdf-viewer-frame');
+      if (pdfIframe && pdfIframe.contentWindow) {
+        try {
+          pdfIframe.contentWindow.scrollBy({ top: stepAmount, behavior: 'smooth' });
+        } catch (e) {
+          // Fallback if cross-origin iframe
+        }
+      }
+      return;
+    }
+
+    // 2. Jika sedang di Tab Teks Pelajaran, Scroll Kontainer Pembaca Teks
     const candidateSelectors = ['.overflow-y-auto', 'main', 'body', '#root'];
     let scrollTarget = null;
     for (const selector of candidateSelectors) {
@@ -311,8 +337,9 @@ const StudentModules = () => {
         break;
       }
     }
+
     if (!scrollTarget) scrollTarget = document.documentElement || document.body || window;
-    const stepAmount = direction === 'down' ? 160 : -160;
+
     if (scrollTarget && typeof scrollTarget.scrollBy === 'function') {
       try {
         scrollTarget.scrollBy({ top: stepAmount, behavior: 'smooth' });
@@ -339,15 +366,15 @@ const StudentModules = () => {
 
       // 1. Mode Membaca Materi (Reader View: Teks & PDF)
       if (selectedModule) {
-        // A. KETIKA SANGAT DENGAN TAB PDF DOKUMEN (activeTab === 'pdf')
+        // A. KETIKA BERADA DI TAB DOKUMEN PDF (activeTab === 'pdf')
         if (activeTab === 'pdf') {
           if (fingerCount === 1) {
             scrollStep('down');
             if (isMute) showSubtitle('⬇️ 1 Jari: Scroll Kebawah Dokumen PDF', 'info');
             return;
-          } else if (fingerCount === 3) {
+          } else if (fingerCount === 2 || fingerCount === 3) {
             scrollStep('up');
-            if (isMute) showSubtitle('⬆️ 3 Jari: Scroll Keatas Dokumen PDF', 'info');
+            if (isMute) showSubtitle('⬆️ Scroll Keatas Dokumen PDF', 'info');
             return;
           } else if (fingerCount === 6) {
             setActiveTab('pdf');
@@ -764,18 +791,16 @@ const StudentModules = () => {
                         </a>
                       </div>
 
-                      <div className="w-full h-[550px] sm:h-[650px] rounded-2xl overflow-hidden border border-slate-200 shadow-sm bg-slate-100">
-                        <object
-                          data={getSafePdfUrl(selectedModule.pdf_url)}
-                          type="application/pdf"
-                          className="w-full h-full"
-                        >
-                          <iframe
-                            src={getSafePdfUrl(selectedModule.pdf_url)}
-                            className="w-full h-full border-none"
-                            title={`Materi PDF: ${selectedModule.title}`}
-                          />
-                        </object>
+                      <div
+                        id="pdf-scroll-viewport"
+                        className="w-full h-[600px] sm:h-[750px] rounded-2xl overflow-y-auto border-2 border-indigo-200 shadow-md bg-slate-100 relative custom-scrollbar"
+                      >
+                        <iframe
+                          id="pdf-viewer-frame"
+                          src={`${getSafePdfUrl(selectedModule.pdf_url)}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
+                          className="w-full min-h-[1600px] border-none"
+                          title={`Materi PDF: ${selectedModule.title}`}
+                        />
                       </div>
                     </div>
                   )}
