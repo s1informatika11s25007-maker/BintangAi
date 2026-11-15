@@ -250,11 +250,52 @@ const BlindAIAssistant = () => {
         setLiveTranscript(transcriptText);
       }
 
+      const rawText = (transcriptText || "").toLowerCase().trim();
+
+      // 1. FAST NAVIGATION MATCH (< 50ms Direct Routing)
+      if (rawText.includes('masuk') || rawText.includes('login') || rawText.includes('halaman masuk')) {
+        setAiResponse("Membuka halaman masuk...");
+        speak("Membuka halaman masuk akun.", 1.0, true);
+        setTimeout(() => {
+          navigate('/auth/login');
+          setIsProcessing(false);
+          setLiveTranscript("");
+          setAiResponse("");
+        }, 300);
+        return;
+      }
+
+      if (rawText.includes('daftar') || rawText.includes('register') || rawText.includes('buat akun') || rawText.includes('pendaftaran')) {
+        setAiResponse("Membuka pendaftaran...");
+        speak("Membuka halaman pendaftaran akun baru.", 1.0, true);
+        setTimeout(() => {
+          navigate('/auth/register');
+          setIsProcessing(false);
+          setLiveTranscript("");
+          setAiResponse("");
+        }, 300);
+        return;
+      }
+
+      if (rawText.includes('beranda') || rawText.includes('landing') || rawText.includes('home') || rawText.includes('utama')) {
+        setAiResponse("Membuka halaman utama...");
+        speak("Membuka halaman utama SambungJaga.", 1.0, true);
+        setTimeout(() => {
+          navigate('/');
+          setIsProcessing(false);
+          setLiveTranscript("");
+          setAiResponse("");
+        }, 300);
+        return;
+      }
+
+      // 2. SCREEN ELEMENT CLICK MATCH
       const elementClicked = tryClickOnScreenElement(transcriptText);
 
       if (elementClicked) {
-        setAiResponse("Memilih jawaban...");
-        speak("Memilih jawaban...", 1.0, true);
+        const confirmMsg = isQuizPage ? "Memilih jawaban..." : "Membuka pilihan...";
+        setAiResponse(confirmMsg);
+        speak(confirmMsg, 1.0, true);
         setTimeout(() => {
           setIsProcessing(false);
           setLiveTranscript("");
