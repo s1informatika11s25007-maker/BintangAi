@@ -421,7 +421,6 @@ const StudentModules = () => {
         lastProcessedFingerRef.current = -1;
         return;
       }
-      }
 
       // 1. Mode Membaca Materi (Reader View: Teks & PDF)
       if (selectedModule) {
@@ -542,8 +541,11 @@ const StudentModules = () => {
         setSelectedSubject('Semua');
         if (isMute) showSubtitle('🖐️ 5 Jari: Menampilkan Semua Materi', 'info');
       }
-    }
-  });
+    };
+
+    window.addEventListener('gesture-detected', handleGlobalGesture);
+    return () => window.removeEventListener('gesture-detected', handleGlobalGesture);
+  }, [isMute, selectedModule, activeTab, filteredModules, selectedIndex, availableSubjects, selectedSubject, selectModule, showSubtitle, isPlayingAudio, isAudioPaused, pauseReadingModule, resumeReadingModule, nextParagraph, closeModule]);
 
   // CONTINUOUS AUTOMATIC SCROLLING LOOP FOR READER VIEW (1 Jari = Scroll Kebawah, 2 Jari = Scroll Keatas)
   useEffect(() => {
