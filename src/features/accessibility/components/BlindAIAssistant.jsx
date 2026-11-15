@@ -7,7 +7,7 @@ import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   HiMicrophone, HiX, HiOutlineLightningBolt,
-  HiOutlineVolumeUp, HiMinus, HiChevronUp, HiChevronDown
+  HiOutlineVolumeUp, HiMinus, HiChevronUp, HiChevronDown, HiHand
 } from 'react-icons/hi';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 
@@ -15,10 +15,11 @@ const BlindAIAssistant = () => {
   const { isBlind } = useAccessibility();
   const { profile } = useAuthStore();
   const { speak, stopSpeaking, startListening, stopListening } = useVoice();
-  const { isRecording, startRecording, stopRecording, audioBlob, clearAudio } = useAudioRecorder();
+  const { isRecording: isAudioRecording, startRecording, stopRecording, audioBlob, clearAudio } = useAudioRecorder();
   const { smartVoiceAssistant, transcribeAudio } = useAI();
 
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isNativeListening, setIsNativeListening] = useState(false);
   const [liveTranscript, setLiveTranscript] = useState("");
   const [aiResponse, setAiResponse] = useState("");
 
@@ -39,6 +40,8 @@ const BlindAIAssistant = () => {
   }, [location?.pathname]);
 
   const isPlaygroundPage = location.pathname.includes('/student/playground');
+
+  const isRecording = isAudioRecording || isNativeListening;
 
   const navMap = useMemo(() => ({
     'dashboard': '/student/dashboard',
@@ -115,7 +118,6 @@ const BlindAIAssistant = () => {
       }
     }
 
-    // Fuzzy text match across interactive elements
     for (const el of elements) {
       const text = (el.innerText || el.getAttribute('aria-label') || el.getAttribute('title') || '').toLowerCase().trim();
       if (!text || text.length < 1) continue;
@@ -317,7 +319,95 @@ const BlindAIAssistant = () => {
   }, [audioBlob, handleProcessAudio]);
 
   const handleMicClick = useCallback(() => {
-    if (isRecording) {
+    // 🛡️ ON PUBLIC PAGES (Landing, Login, Register): USE 100% PURE BROWSER NATIVE SPEECH RECOGNITION (NO AI MODEL)
+    if (isPublicPage) {
+      if (isNativeListening) {
+        setIsNativeListening(false);
+        return;
+      }
+
+      stopSpeaking();
+      setIsProcessing(false);
+      setAiResponse("");
+      setLiveTranscript("Mendengarkan ucapan...");
+      speak("Silakan bicara sekarang.", 1.2, true);
+
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) {
+        speak("Browser Anda tidak mendukung pengenalan suara.", 1.0, true);
+        return;
+      }
+
+      try {
+        const recognition = new SR();
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.lang = 'id-ID';
+
+        setIsNativeListening(true);
+
+        recognition.onresult = (event) => {
+          let text = "";
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            text += event.results[i][0].transcript;
+          }
+          if (text) {
+            setLiveTranscript(text);
+            const clean = text.toLowerCase().trim();
+
+            if (clean.includes('masuk') || clean.includes('login') || clean.includes('halaman masuk')) {
+              try { recognition.stop(); } catch(e) {}
+              setIsNativeListening(false);
+              setAiResponse("Membuka Halaman Masuk...");
+              speak("Membuka halaman masuk akun.", 1.0, true);
+              setTimeout(() => {
+                navigate('/auth/login');
+                setLiveTranscript("");
+                setAiResponse("");
+              }, 300);
+            } else if (clean.includes('daftar') || clean.includes('register') || clean.includes('buat akun') || clean.includes('pendaftaran')) {
+              try { recognition.stop(); } catch(e) {}
+              setIsNativeListening(false);
+              setAiResponse("Membuka Halaman Pendaftaran...");
+              speak("Membuka halaman pendaftaran akun baru.", 1.0, true);
+              setTimeout(() => {
+                navigate('/auth/register');
+                setLiveTranscript("");
+                setAiResponse("");
+              }, 300);
+            } else if (clean.includes('beranda') || clean.includes('landing') || clean.includes('home') || clean.includes('utama')) {
+              try { recognition.stop(); } catch(e) {}
+              setIsNativeListening(false);
+              setAiResponse("Membuka Halaman Utama...");
+              speak("Membuka halaman utama SambungJaga.", 1.0, true);
+              setTimeout(() => {
+                navigate('/');
+                setLiveTranscript("");
+                setAiResponse("");
+              }, 300);
+            }
+          }
+        };
+
+        recognition.onerror = (err) => {
+          console.error("Public native speech recognition error:", err);
+          setIsNativeListening(false);
+        };
+
+        recognition.onend = () => {
+          setIsNativeListening(false);
+        };
+
+        recognition.start();
+      } catch (err) {
+        console.error("Native recognition start error:", err);
+        setIsNativeListening(false);
+      }
+      return;
+    }
+
+    // ON STUDENT PROTECTED PAGES: Standard AI Assistant Flow
+    if (isAudioRecording) {
       stopRecording();
       stopListening();
     } else if (!isProcessing) {
@@ -334,7 +424,6 @@ const BlindAIAssistant = () => {
             setLiveTranscript(text);
             lastTranscriptRef.current = text;
 
-            // ⚡ REALTIME INSTANT VOICE COMMAND STREAM MATCH (< 50ms Direct Routing)
             const clean = text.toLowerCase().trim();
             if (clean.includes('masuk') || clean.includes('login') || clean.includes('halaman masuk')) {
               stopRecording();
@@ -356,14 +445,15 @@ const BlindAIAssistant = () => {
         });
       }, 400);
     }
-  }, [isRecording, isProcessing, startRecording, stopRecording, startListening, stopListening, speak, stopSpeaking, navigate]);
+  }, [isPublicPage, isNativeListening, isAudioRecording, isProcessing, startRecording, stopRecording, startListening, stopListening, speak, stopSpeaking, navigate]);
 
   // Handle Widget Minimize / Close / Restore
   const handleCloseWidget = () => {
     stopSpeaking();
     if (isRecording) {
-      stopRecording();
+      if (isAudioRecording) stopRecording();
       stopListening();
+      setIsNativeListening(false);
     }
     setIsWidgetClosed(true);
     speak("Asisten Suara ditutup. Tekan tombol aktifkan mikrofon di kanan bawah atau tekan Spasi untuk membuka kembali.", 1.0, true);
@@ -401,30 +491,42 @@ const BlindAIAssistant = () => {
 
   if (!isBlind || isPlaygroundPage) return null;
 
-  // 1. STATE 1: WIDGET CLOSED -> Render neat floating activation button
+  // 1. STATE 1: WIDGET CLOSED -> Render neat floating DRAGGABLE activation button
   if (isWidgetClosed) {
     return (
-      <div className="fixed bottom-6 right-6 z-[600] pointer-events-auto">
+      <motion.div
+        drag
+        dragMomentum={false}
+        dragElastic={0.1}
+        whileDrag={{ scale: 1.08, cursor: 'grabbing' }}
+        className="fixed bottom-6 right-6 z-[600] pointer-events-auto select-none"
+      >
         <motion.button
           type="button"
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           onClick={handleRestoreWidget}
-          className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-full shadow-2xl border-2 border-amber-400/80 font-extrabold text-xs flex items-center gap-3 transition-all active:scale-95"
-          title="Aktifkan Mikrofon Navigasi Suara (Tekan Spasi)"
+          className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-full shadow-2xl border-2 border-amber-400/80 font-extrabold text-xs flex items-center gap-3 transition-all active:scale-95 cursor-grab"
+          title="Aktifkan Mikrofon Navigasi Suara (Bisa Digeser & Tekan Spasi)"
         >
           <div className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse shrink-0" />
           <HiMicrophone className="text-lg text-amber-300" />
           <span>Aktifkan Mikrofon Navigasi</span>
         </motion.button>
-      </div>
+      </motion.div>
     );
   }
 
-  // 2. STATE 2: WIDGET MINIMIZED -> Render compact pill button + control icons
+  // 2. STATE 2: WIDGET MINIMIZED -> Render compact DRAGGABLE pill button + control icons
   if (isWidgetMinimized) {
     return (
-      <div className="fixed bottom-6 right-6 z-[600] flex items-center gap-2 pointer-events-auto">
+      <motion.div
+        drag
+        dragMomentum={false}
+        dragElastic={0.1}
+        whileDrag={{ scale: 1.08, cursor: 'grabbing' }}
+        className="fixed bottom-6 right-6 z-[600] flex items-center gap-2 pointer-events-auto select-none cursor-grab"
+      >
         <motion.button
           type="button"
           initial={{ scale: 0.9, opacity: 0 }}
@@ -456,27 +558,34 @@ const BlindAIAssistant = () => {
         >
           <HiX className="text-base" />
         </button>
-      </div>
+      </motion.div>
     );
   }
 
-  // 3. STATE 3: FULL FLOATING ASSISTANT WIDGET
+  // 3. STATE 3: FULL FLOATING DRAGGABLE ASSISTANT WIDGET
   return (
-    <div className="fixed inset-x-0 bottom-0 z-[500] flex flex-col items-center pointer-events-none pb-6 md:pb-10">
+    <motion.div
+      drag
+      dragMomentum={false}
+      dragElastic={0.1}
+      whileDrag={{ scale: 1.02 }}
+      className="fixed inset-x-0 bottom-0 z-[500] flex flex-col items-center pointer-events-none pb-6 md:pb-10 select-none"
+    >
       <AnimatePresence>
         {(isRecording || isProcessing || aiResponse || true) && (
           <motion.div
             initial={{ opacity: 0, y: 50, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="w-[92%] max-w-xl bg-slate-900/95 backdrop-blur-2xl border border-white/15 p-5 sm:p-6 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.6)] flex flex-col gap-3 pointer-events-auto mb-4 relative"
+            className="w-[92%] max-w-xl bg-slate-900/95 backdrop-blur-2xl border border-white/15 p-5 sm:p-6 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.6)] flex flex-col gap-3 pointer-events-auto mb-4 relative cursor-grab active:cursor-grabbing"
           >
-            {/* Top Control Bar: Title & Minimize / Close Buttons */}
+            {/* Top Control Bar: Drag Handle, Title & Minimize / Close Buttons */}
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <div className="flex items-center gap-2">
+                <HiHand className="text-amber-400 text-sm animate-bounce" title="Geser posisi mikrofon sesuai kemauan" />
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
                 <span className="text-xs font-black text-white uppercase tracking-wider">
-                  🎤 Nay Asisten Navigasi Suara
+                  🎤 Navigasi Suara Bawaan Browser
                 </span>
               </div>
 
@@ -505,6 +614,9 @@ const BlindAIAssistant = () => {
               <div className="bg-white/5 p-3 rounded-2xl border border-white/10 text-center space-y-1">
                 <p className="text-[11px] font-bold text-amber-300">
                   💡 Katakan <strong className="text-white">"Masuk"</strong> untuk ke Halaman Login, atau <strong className="text-white">"Daftar Gratis"</strong> untuk Pendaftaran Akun Baru.
+                </p>
+                <p className="text-[9px] text-slate-400">
+                  (Posisi mikrofon dapat digeser/ditarik ke mana saja sesuai kenyamanan Anda)
                 </p>
               </div>
             )}
@@ -537,7 +649,7 @@ const BlindAIAssistant = () => {
                   className="flex flex-col items-center text-center"
                 >
                   <span className="text-[9px] text-indigo-400 font-bold uppercase tracking-widest mb-0.5">
-                    {isRecording ? "Suara Kamu" : "Transkrip"}
+                    {isRecording ? "Suara Kamu (Bawaan Browser)" : "Transkrip"}
                   </span>
                   <p className="text-white text-base md:text-lg font-medium italic">
                     "{liveTranscript}"
@@ -563,14 +675,14 @@ const BlindAIAssistant = () => {
 
             <div className="text-center mt-1">
               <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${isRecording ? "text-rose-400 animate-pulse" : isProcessing ? "text-amber-400" : "text-slate-400"}`}>
-                {isRecording ? "Mendengarkan..." : isProcessing ? "Berpikir..." : "Siap Mendengarkan"}
+                {isRecording ? "Mendengarkan (Bawaan Browser)..." : isProcessing ? "Berpikir..." : "Siap Mendengarkan"}
               </p>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="relative pointer-events-auto">
+      <div className="relative pointer-events-auto cursor-grab active:cursor-grabbing">
         <motion.button
           type="button"
           whileHover={{ scale: 1.05 }}
@@ -620,7 +732,7 @@ const BlindAIAssistant = () => {
           </motion.div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 
