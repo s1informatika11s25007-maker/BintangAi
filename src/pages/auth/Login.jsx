@@ -129,9 +129,8 @@ const Login = () => {
       speak(msg, 1.0, true);
     }
 
-    // Fetch demo accounts from database with robust preset fallback
+    // Fetch demo accounts silently in the background (strictly is_demo_account = true)
     const fetchDemoAccounts = async () => {
-      setLoadingDemo(true);
       try {
         const { data, error } = await supabase
           .from('profiles')
@@ -204,79 +203,14 @@ const Login = () => {
           Object.keys(accountsMap).forEach((k) => {
             if (!desiredOrder.includes(k)) accountsList.push(accountsMap[k]);
           });
-        }
 
-        // Fallback default demo profiles if DB empty or unavailable
-        if (accountsList.length === 0) {
-          accountsList = [
-            {
-              key: 'guru',
-              label: 'Guru Pembimbing',
-              email: 'guru.demo@bintang.ai',
-              pass: 'demo123456',
-              icon: '👨‍🏫',
-              badgeColor: 'bg-indigo-600 text-white',
-              description: 'Kelola kelas & bimbingan SD',
-              full_name: 'Ibu Rina (Guru SLB/SD)',
-              role: 'guru',
-              disability_type: 'tidak_ada'
-            },
-            {
-              key: 'tunanetra',
-              label: 'Siswa Tunanetra',
-              email: 'tunanetra.demo@bintang.ai',
-              pass: 'demo123456',
-              icon: '🦯',
-              badgeColor: 'bg-purple-600 text-white',
-              description: 'Suara Audio & Kontras Tinggi',
-              full_name: 'Budi Santoso (Kelas 4 SD)',
-              role: 'siswa',
-              disability_type: 'tunanetra'
-            },
-            {
-              key: 'tunarungu',
-              label: 'Siswa Tunarungu',
-              email: 'tunarungu.demo@bintang.ai',
-              pass: 'demo123456',
-              icon: '🤟',
-              badgeColor: 'bg-cyan-600 text-white',
-              description: 'Teks Visual & Subtitle Pintar',
-              full_name: 'Siti Rahma (Kelas 3 SD)',
-              role: 'siswa',
-              disability_type: 'tunarungu'
-            },
-            {
-              key: 'tunawicara',
-              label: 'Siswa Tunawicara',
-              email: 'tunawicara.demo@bintang.ai',
-              pass: 'demo123456',
-              icon: '💬',
-              badgeColor: 'bg-emerald-600 text-white',
-              description: 'Gambar Isyarat & Pilihan Cepat',
-              full_name: 'Doni Pratama (Kelas 5 SD)',
-              role: 'siswa',
-              disability_type: 'tunawicara'
-            },
-            {
-              key: 'ortu',
-              label: 'Orang Tua',
-              email: 'ortu.demo@bintang.ai',
-              pass: 'demo123456',
-              icon: '👪',
-              badgeColor: 'bg-rose-500 text-white',
-              description: 'Dampingi & Lihat Laporan Anak',
-              full_name: 'Pak Herman (Orang Tua)',
-              role: 'ortu',
-              disability_type: 'tidak_ada'
-            }
-          ];
+          if (isMounted && accountsList.length > 0) {
+            setDemoAccounts(accountsList);
+            try { localStorage.setItem('bintangai_demo_accounts_cache', JSON.stringify(accountsList)); } catch(e) {}
+          }
         }
-
-        if (isMounted) setDemoAccounts(accountsList);
       } catch (err) {
-        console.error('Error fetching demo accounts:', err);
-      } finally {
-        if (isMounted) setLoadingDemo(false);
+        console.error('Background fetch demo accounts error:', err);
       }
     };
 
