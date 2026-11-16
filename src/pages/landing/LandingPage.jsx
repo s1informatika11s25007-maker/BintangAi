@@ -289,6 +289,8 @@ const LandingPage = () => {
   const [loginLoading, setLoginLoading] = useState(false);
   const [loadingDemoKey, setLoadingDemoKey] = useState(null);
   const [loginMessage, setLoginMessage] = useState(null);
+  const [redirecting, setRedirecting] = useState(false);
+  const [redirectMessage, setRedirectMessage] = useState('Membuka Ruang Belajar Bintang AI...');
 
   const [regFullName, setRegFullName] = useState('');
   const [regEmail, setRegEmail] = useState('');
@@ -594,11 +596,14 @@ const LandingPage = () => {
       );
       setModeFromProfile(profileData);
       speakText(`Selamat mencoba simulasi ${demoAccount.label}.`);
-      window.setTimeout(() => navigate(getTargetPath(profileData.role)), 500);
+      setRedirectMessage(`Selamat mencoba simulasi ${demoAccount.label}!`);
+      setRedirecting(true);
+      navigate(getTargetPath(profileData.role), { replace: true });
     } catch (error) {
       const message = error?.message || 'Belum berhasil masuk ke akun simulasi.';
       setLoginMessage({ type: 'error', text: message });
       speakText(message);
+      setRedirecting(false);
     } finally {
       setLoginLoading(false);
       setLoadingDemoKey(null);
@@ -620,11 +625,14 @@ const LandingPage = () => {
       await logUserActivity('LOGIN', 'Masuk Aplikasi', `Pengguna ${profileData.full_name} masuk`, profileData);
       setModeFromProfile(profileData);
       speakText(`Selamat datang kembali, ${profileData.full_name}.`);
-      window.setTimeout(() => navigate(getTargetPath(profileData.role)), 500);
+      setRedirectMessage('Masuk berhasil! Membuka beranda...');
+      setRedirecting(true);
+      navigate(getTargetPath(profileData.role), { replace: true });
     } catch (error) {
       const message = error?.message || 'Belum berhasil masuk. Periksa email dan kata sandi.';
       setLoginMessage({ type: 'error', text: message });
       speakText(message);
+      setRedirecting(false);
     } finally {
       setLoginLoading(false);
     }
@@ -1735,6 +1743,23 @@ const LandingPage = () => {
       <p className="sr-only" role="status" aria-live="polite">
         {tourActive ? (tourPaused ? 'Tur Bintang AI dijeda.' : `Tur Bintang AI, halaman ${activeSlide + 1} dari 8.`) : ''}
       </p>
+
+      {/* FULLSCREEN REDIRECT OVERLAY */}
+      <AnimatePresence>
+        {redirecting && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/95 backdrop-blur-md text-slate-900 px-6 text-center"
+          >
+            <BintangAvatar size={110} state="happy" />
+            <p className="mt-5 text-base font-black text-blue-950">{redirectMessage}</p>
+            <p className="mt-1 text-xs font-bold text-sky-600">Mohon tunggu sebentar 🚀</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

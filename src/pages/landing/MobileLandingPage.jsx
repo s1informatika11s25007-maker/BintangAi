@@ -196,6 +196,8 @@ const MobileLandingPage = () => {
   const [loginLoading, setLoginLoading] = useState(false);
   const [loadingDemoKey, setLoadingDemoKey] = useState(null);
   const [loginMessage, setLoginMessage] = useState(null);
+  const [redirecting, setRedirecting] = useState(false);
+  const [redirectMessage, setRedirectMessage] = useState('Membuka Ruang Belajar Bintang AI...');
 
   const [regStep, setRegStep] = useState(1);
   const [regRole, setRegRole] = useState('siswa');
@@ -304,10 +306,14 @@ const MobileLandingPage = () => {
           : account.key === 'tunanetra'
           ? '/student/playground'
           : '/student/dashboard';
-        navigate(destination);
+
+        setRedirectMessage(`Membuka simulasi ${account.label}...`);
+        setRedirecting(true);
+        navigate(destination, { replace: true });
       }
     } catch (err) {
       setLoginMessage({ type: 'error', text: err.message || 'Gagal login ke akun demo.' });
+      setRedirecting(false);
     } finally {
       setLoginLoading(false);
       setLoadingDemoKey(null);
@@ -323,10 +329,13 @@ const MobileLandingPage = () => {
       if (authData?.user) {
         setUser(authData.user);
         await fetchProfile();
-        navigate('/student/dashboard');
+        setRedirectMessage('Masuk berhasil! Membuka beranda...');
+        setRedirecting(true);
+        navigate('/student/dashboard', { replace: true });
       }
     } catch (err) {
       setLoginMessage({ type: 'error', text: err.message || 'Gagal masuk. Periksa email dan password Anda.' });
+      setRedirecting(false);
     } finally {
       setLoginLoading(false);
     }
@@ -1008,6 +1017,23 @@ const MobileLandingPage = () => {
           ↑
         </button>
       )}
+
+      {/* FULLSCREEN REDIRECT OVERLAY */}
+      <AnimatePresence>
+        {redirecting && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/95 backdrop-blur-md text-slate-900 px-6 text-center"
+          >
+            <BintangAvatar size={110} state="happy" />
+            <p className="mt-5 text-base font-black text-blue-950">{redirectMessage}</p>
+            <p className="mt-1 text-xs font-bold text-sky-600">Mohon tunggu sebentar 🚀</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
