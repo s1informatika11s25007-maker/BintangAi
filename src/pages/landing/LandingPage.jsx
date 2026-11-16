@@ -1114,75 +1114,53 @@ const LandingPage = () => {
 
             {/* SLIDE 8 — LOGIN / REGISTER */}
             {activeSlide === 7 && (
-              <section className="relative mx-auto flex h-[100dvh] max-h-[100dvh] bintang-screen-section w-full max-w-[1280px] items-center justify-center overflow-hidden px-4 py-3 sm:px-6 lg:px-8">
-                {/* Floating Back Button at Bottom Right */}
+              <section className="relative mx-auto flex h-[100dvh] max-h-[100dvh] bintang-screen-section w-full max-w-[1380px] items-center justify-between overflow-hidden px-6 lg:px-12">
+                {/* Floating Back Button (Arrow Pointing UP) */}
                 <button
                   type="button"
                   onClick={() => goToSlide(0)}
-                  className="fixed bottom-5 right-5 sm:bottom-7 sm:right-7 z-50 flex items-center gap-2 rounded-full border border-blue-200/80 bg-white/95 px-4 py-2.5 text-xs font-black text-slate-800 shadow-xl backdrop-blur-md transition-all hover:scale-105 hover:border-sky-400 hover:bg-sky-50 hover:text-blue-900 focus:outline-none focus:ring-4 focus:ring-blue-100"
+                  className="fixed bottom-5 right-5 sm:bottom-7 sm:right-7 z-50 flex items-center gap-2 rounded-full border border-blue-200 bg-white/95 px-4 py-2.5 text-xs font-black text-slate-800 shadow-xl backdrop-blur-md transition-all hover:scale-105 hover:border-sky-400 hover:bg-sky-50 hover:text-blue-900 focus:outline-none focus:ring-4 focus:ring-blue-100"
                 >
-                  <span aria-hidden="true" className="text-sm">←</span> Kembali ke Halaman Utama
+                  <span aria-hidden="true" className="text-sm">↑</span> Kembali ke Halaman Utama
                 </button>
 
-                <div className="flex h-full max-h-[calc(100dvh-2.5rem)] w-full items-center justify-center gap-6 lg:gap-8 origin-center scale-[0.9] sm:scale-[0.94] lg:scale-100 transition-transform">
+                <div className="flex h-full max-h-[calc(100dvh-2rem)] w-full items-center justify-between gap-8 lg:gap-16 origin-center scale-[0.9] sm:scale-[0.94] lg:scale-100 transition-transform">
 
-                  {/* LEFT PROFESSIONAL PANEL (DESKTOP) */}
-                  <aside className="hidden lg:flex w-[380px] xl:w-[400px] shrink-0 h-full max-h-[580px] flex-col justify-between overflow-hidden rounded-[28px] bg-slate-900 p-7 text-white shadow-xl border border-slate-800/80 relative">
-                    <div className="relative z-10">
-                      <BrandMark light />
-                      <div className="mt-8 space-y-2">
-                        <p className="text-[11px] font-black uppercase tracking-[0.16em] text-sky-400">Ruang Belajar SD</p>
-                        <h2 className="text-2xl font-black leading-tight text-white">
-                          {authTab === 'login' ? 'Selamat datang kembali!' : 'Buat akun baru'}
-                        </h2>
-                        <p className="text-xs leading-relaxed text-slate-400">
-                          {authTab === 'login'
-                            ? 'Masuk untuk membuka materi, latihan kuis, dan interaksi bersama Kak Bintang.'
-                            : 'Dapatkan aksesibilitas sesuai kebutuhan belajar siswa kelas 1–6 SD.'}
-                        </p>
-                      </div>
+                  {/* LEFT CONTENT (INTEGRATED INTO PAGE, NO SEPARATE DARK CARD) */}
+                  <div className="hidden lg:flex flex-1 flex-col justify-center py-6">
+                    <div className="max-w-lg space-y-3">
+                      <p className="inline-flex rounded-full bg-blue-50 px-3.5 py-1 text-xs font-black uppercase tracking-wider text-blue-800">
+                        {authTab === 'login' ? 'Masuk Akun' : 'Daftar Akun Baru'}
+                      </p>
+                      <h2 className="text-3xl xl:text-4xl font-black leading-tight text-slate-900">
+                        {authTab === 'login' ? 'Selamat datang kembali!' : 'Buat akun Bintang AI'}
+                      </h2>
+                      <p className="text-sm leading-relaxed text-slate-600">
+                        {authTab === 'login'
+                          ? 'Masuk untuk membuka materi, latihan kuis, dan interaksi bersama Kak Bintang.'
+                          : 'Lengkapi data untuk mulai belajar bersama pendampingan guru dan orang tua.'}
+                      </p>
                     </div>
 
-                    <div className="relative z-10 space-y-3 border-t border-slate-800 pt-5">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Dukungan Aksesibilitas</p>
-                      <div className="flex flex-col gap-2 text-xs font-bold text-slate-300">
-                        <div className="flex items-center gap-2.5 rounded-xl bg-slate-800/80 px-3 py-2 border border-slate-700/50">
-                          <span className="text-base">🎧</span> <span>Suara & Pembaca Layar</span>
+                    <div className="mt-8 max-w-lg space-y-3 border-t border-slate-200/80 pt-6">
+                      <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Dukungan Aksesibilitas SD</p>
+                      <div className="flex flex-col gap-2.5 text-xs font-bold text-slate-800">
+                        <div className="flex items-center gap-3 rounded-2xl bg-sky-50/90 px-4 py-3 border border-sky-100 shadow-2xs">
+                          <span className="text-lg">🎧</span> <span>Suara & Pembaca Layar (Tunanetra)</span>
                         </div>
-                        <div className="flex items-center gap-2.5 rounded-xl bg-slate-800/80 px-3 py-2 border border-slate-700/50">
-                          <span className="text-base">💬</span> <span>Subtitle & Teks Visual</span>
+                        <div className="flex items-center gap-3 rounded-2xl bg-blue-50/90 px-4 py-3 border border-blue-100 shadow-2xs">
+                          <span className="text-lg">💬</span> <span>Subtitle & Teks Visual (Tunarungu)</span>
                         </div>
-                        <div className="flex items-center gap-2.5 rounded-xl bg-slate-800/80 px-3 py-2 border border-slate-700/50">
-                          <span className="text-base">🧩</span> <span>Gestur Isyarat & Simbol</span>
+                        <div className="flex items-center gap-3 rounded-2xl bg-indigo-50/90 px-4 py-3 border border-indigo-100 shadow-2xs">
+                          <span className="text-lg">🧩</span> <span>Gestur Isyarat & Simbol (Tunawicara)</span>
                         </div>
                       </div>
                     </div>
-                  </aside>
+                  </div>
 
-                  {/* RIGHT FORM PANEL */}
-                  <div className="w-full max-w-[480px] lg:w-[460px] xl:w-[480px] shrink-0 h-full max-h-[580px] flex flex-col justify-center">
-                    <div className="overflow-hidden rounded-[28px] border border-blue-100/90 bg-white shadow-[0_20px_60px_rgba(30,64,175,0.08)]">
-                      {/* Header minimal tanpa tombol kembali */}
-                      <header className="flex min-h-[52px] items-center justify-center border-b border-blue-100/80 bg-[#F5F8FF] px-6 py-2">
-                        <span className="text-sm font-black tracking-tight text-blue-950">Bintang AI</span>
-                      </header>
-
-                    <div className="px-5 py-7 sm:px-9 sm:py-8">
-                      {/* Judul */}
-                      <div className="mb-6 text-center">
-                        <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-sky-700">
-                          {authTab === 'login' ? 'SELAMAT DATANG KEMBALI' : 'PENDAFTARAN AKUN'}
-                        </p>
-                        <h2 className="mt-2 text-[28px] font-black leading-tight tracking-tight text-blue-950 sm:text-3xl">
-                          {authTab === 'login' ? 'Masuk ke akunmu' : 'Buat akun baru'}
-                        </h2>
-                        <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-500">
-                          {authTab === 'login'
-                            ? 'Masuk untuk melanjutkan kegiatan belajar bersama Bintang AI.'
-                            : 'Lengkapi informasi berikut untuk mulai menggunakan Bintang AI.'}
-                        </p>
-                      </div>
-
+                  {/* RIGHT FORM CONTAINER (CLEAN & INTEGRATED) */}
+                  <div className="w-full max-w-[460px] lg:w-[460px] xl:w-[480px] shrink-0 h-full max-h-[580px] flex flex-col justify-center">
+                    <div className="overflow-hidden rounded-[28px] border border-blue-100 bg-white p-6 sm:p-8 shadow-[0_20px_50px_rgba(30,64,175,0.09)]">
                       {/* Tab masuk dan daftar */}
                       <div className="mb-6 grid w-full grid-cols-2 rounded-xl border border-blue-100 bg-[#F1F6FF] p-1">
                         <button
@@ -1661,8 +1639,7 @@ const LandingPage = () => {
                     </div>
                   </div>
                 </div>
-              </div>
-            </section>
+              </section>
             )}
           </motion.main>
         </AnimatePresence>
