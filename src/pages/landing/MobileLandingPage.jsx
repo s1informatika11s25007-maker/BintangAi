@@ -959,17 +959,38 @@ const MobileLandingPage = () => {
         </AnimatePresence>
       </div>
 
-      {/* Floating Top Arrow Button (NO FOOTER BAR AT ALL) */}
-      <button
-        onClick={() => {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-          goToSlide(0);
-        }}
-        className="fixed bottom-6 right-5 z-50 h-11 w-11 rounded-full border border-blue-200/80 bg-white/95 text-blue-900 shadow-xl backdrop-blur-md flex items-center justify-center text-xl font-bold active:scale-90 transition-transform"
-        aria-label="Kembali ke Slide Utama"
-      >
-        ↑
-      </button>
+      {/* RIGHT SIDE CHAPTER NAV BAR (MATCHING LAPTOP WEBPAGE SIDE BAR) */}
+      {activeSlide !== 0 && activeSlide !== 7 && (
+        <nav aria-label="Navigasi bab presentasi" className="bintang-chapter-nav fixed right-2 top-1/2 z-40 flex -translate-y-1/2 flex-col items-center gap-2 rounded-full border border-blue-100 bg-white/95 px-2 py-3 shadow-md backdrop-blur-md">
+          {SLIDE_LABELS.map((label, index) => (
+            <button
+              key={label}
+              type="button"
+              onClick={() => goToSlide(index)}
+              aria-label={`Buka halaman ${index + 1}: ${label}`}
+              aria-current={activeSlide === index ? 'step' : undefined}
+              title={label}
+              className={`rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-sky-500 ${
+                activeSlide === index ? 'h-6 w-2 bg-blue-700' : 'h-2 w-2 bg-slate-300 hover:bg-sky-400'
+              }`}
+            />
+          ))}
+        </nav>
+      )}
+
+      {/* Floating Top Arrow Button (ONLY ON LOGIN / REGISTER SLIDE 8) */}
+      {activeSlide === 7 && (
+        <button
+          onClick={() => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            goToSlide(0);
+          }}
+          className="fixed bottom-6 right-5 z-50 h-11 w-11 rounded-full border border-blue-200/80 bg-white/95 text-blue-900 shadow-xl backdrop-blur-md flex items-center justify-center text-xl font-bold active:scale-90 transition-transform"
+          aria-label="Kembali ke Slide Utama"
+        >
+          ↑
+        </button>
+      )}
     </div>
   );
 };
