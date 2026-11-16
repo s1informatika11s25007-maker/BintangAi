@@ -1115,20 +1115,25 @@ const LandingPage = () => {
             {/* SLIDE 8 — LOGIN / REGISTER */}
             {activeSlide === 7 && (
               <section className="relative mx-auto flex h-[100dvh] max-h-[100dvh] bintang-screen-section w-full max-w-[1380px] items-center justify-between overflow-hidden px-6 lg:px-12">
-                {/* Floating Back Button (Arrow Pointing UP) */}
+                {/* Floating Back Button (Arrow Pointing UP Only) */}
                 <button
                   type="button"
                   onClick={() => goToSlide(0)}
-                  className="fixed bottom-5 right-5 sm:bottom-7 sm:right-7 z-50 flex items-center gap-2 rounded-full border border-blue-200 bg-white/95 px-4 py-2.5 text-xs font-black text-slate-800 shadow-xl backdrop-blur-md transition-all hover:scale-105 hover:border-sky-400 hover:bg-sky-50 hover:text-blue-900 focus:outline-none focus:ring-4 focus:ring-blue-100"
+                  aria-label="Kembali ke Halaman Utama"
+                  title="Kembali ke Halaman Utama"
+                  className="fixed bottom-5 right-5 sm:bottom-7 sm:right-7 z-50 flex h-12 w-12 items-center justify-center rounded-full border border-blue-200/80 bg-white/95 text-slate-800 shadow-xl backdrop-blur-md transition-all hover:scale-110 hover:border-sky-400 hover:bg-sky-50 hover:text-blue-900 focus:outline-none focus:ring-4 focus:ring-blue-100"
                 >
-                  <span aria-hidden="true" className="text-sm">↑</span> Kembali ke Halaman Utama
+                  <span aria-hidden="true" className="text-xl font-bold">↑</span>
                 </button>
 
                 <div className="flex h-full max-h-[calc(100dvh-2rem)] w-full items-center justify-between gap-8 lg:gap-16 origin-center scale-[0.9] sm:scale-[0.94] lg:scale-100 transition-transform">
 
-                  {/* LEFT CONTENT (INTEGRATED INTO PAGE, NO SEPARATE DARK CARD) */}
-                  <div className="hidden lg:flex flex-1 flex-col justify-center py-6">
-                    <div className="max-w-lg space-y-3">
+                  {/* LEFT CONTENT (INTEGRATED INTO PAGE, WITH BINTANG AVATAR MASCOT FOR SD STUDENTS) */}
+                  <div className="hidden lg:flex flex-1 flex-col justify-center py-4">
+                    <div className="mb-3">
+                      <BintangAvatar size={96} state={authTab === 'login' ? 'happy' : 'idle'} />
+                    </div>
+                    <div className="max-w-lg space-y-2.5">
                       <p className="inline-flex rounded-full bg-blue-50 px-3.5 py-1 text-xs font-black uppercase tracking-wider text-blue-800">
                         {authTab === 'login' ? 'Masuk Akun' : 'Daftar Akun Baru'}
                       </p>
@@ -1142,25 +1147,34 @@ const LandingPage = () => {
                       </p>
                     </div>
 
-                    <div className="mt-8 max-w-lg space-y-3 border-t border-slate-200/80 pt-6">
+                    <div className="mt-6 max-w-lg space-y-2.5 border-t border-slate-200/80 pt-5">
                       <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Dukungan Aksesibilitas SD</p>
-                      <div className="flex flex-col gap-2.5 text-xs font-bold text-slate-800">
-                        <div className="flex items-center gap-3 rounded-2xl bg-sky-50/90 px-4 py-3 border border-sky-100 shadow-2xs">
+                      <div className="flex flex-col gap-2 text-xs font-bold text-slate-800">
+                        <div className="flex items-center gap-3 rounded-2xl bg-sky-50/90 px-3.5 py-2.5 border border-sky-100 shadow-2xs">
                           <span className="text-lg">🎧</span> <span>Suara & Pembaca Layar (Tunanetra)</span>
                         </div>
-                        <div className="flex items-center gap-3 rounded-2xl bg-blue-50/90 px-4 py-3 border border-blue-100 shadow-2xs">
+                        <div className="flex items-center gap-3 rounded-2xl bg-blue-50/90 px-3.5 py-2.5 border border-blue-100 shadow-2xs">
                           <span className="text-lg">💬</span> <span>Subtitle & Teks Visual (Tunarungu)</span>
                         </div>
-                        <div className="flex items-center gap-3 rounded-2xl bg-indigo-50/90 px-4 py-3 border border-indigo-100 shadow-2xs">
+                        <div className="flex items-center gap-3 rounded-2xl bg-indigo-50/90 px-3.5 py-2.5 border border-indigo-100 shadow-2xs">
                           <span className="text-lg">🧩</span> <span>Gestur Isyarat & Simbol (Tunawicara)</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* RIGHT FORM CONTAINER (CLEAN & INTEGRATED) */}
+                  {/* RIGHT FORM CONTAINER (INTEGRATED DIRECTLY INTO PAGE, NO CARD BOX) */}
                   <div className="w-full max-w-[460px] lg:w-[460px] xl:w-[480px] shrink-0 h-full max-h-[580px] flex flex-col justify-center">
-                    <div className="overflow-hidden rounded-[28px] border border-blue-100 bg-white p-6 sm:p-8 shadow-[0_20px_50px_rgba(30,64,175,0.09)]">
+                    <div className="py-2 sm:py-4">
+                      {/* Mobile Mascot Header */}
+                      <div className="flex lg:hidden items-center gap-3 mb-4 p-2.5 rounded-2xl bg-blue-50/90 border border-blue-100">
+                        <BintangAvatar size={48} state={authTab === 'login' ? 'happy' : 'idle'} />
+                        <div>
+                          <p className="text-xs font-black text-blue-900">{authTab === 'login' ? 'Halo, Teman Bintang!' : 'Daftar Akun Baru'}</p>
+                          <p className="text-[11px] text-slate-600">Ruang belajar ceria SD</p>
+                        </div>
+                      </div>
+
                       {/* Tab masuk dan daftar */}
                       <div className="mb-6 grid w-full grid-cols-2 rounded-xl border border-blue-100 bg-[#F1F6FF] p-1">
                         <button
