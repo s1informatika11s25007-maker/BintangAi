@@ -1037,72 +1037,73 @@ const LandingPage = () => {
           >
             {/* SLIDE 1 — HALO DAN PILIH CARA BELAJAR */}
             {activeSlide === 0 && (
-              <section className="mx-auto flex bintang-screen-section min-h-[100dvh] w-full max-w-7xl flex-col px-4 pb-8 pt-5 sm:px-7 lg:px-10">
-                <header className="flex flex-wrap items-center justify-between gap-3">
+              <section className="mx-auto flex bintang-screen-section min-h-[100dvh] h-full max-h-screen w-full max-w-7xl flex-col justify-between px-4 pb-4 pt-4 sm:px-7 lg:px-10 overflow-hidden">
+                <header className="flex flex-wrap items-center justify-between gap-2 shrink-0">
                   <BrandMark />
                   <div className="flex w-full flex-wrap items-center justify-center gap-2 sm:w-auto sm:justify-end">
-                    <button type="button" onClick={() => openAuth('login')} className={`${secondaryButton} min-h-11 flex-1 px-3 py-2 text-sm sm:flex-none sm:px-4`}>Masuk</button>
-                    <button type="button" onClick={() => openAuth('register')} className={`${primaryButton} min-h-11 flex-1 px-3 py-2 text-sm sm:flex-none sm:px-4`}>Daftar</button>
-                    <button type="button" onClick={openDemoSlide} aria-label="Lihat demo akun Bintang AI" className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-blue-200 bg-blue-50 px-3 py-2 text-sm font-extrabold text-blue-800 shadow-sm transition hover:border-blue-400 hover:bg-blue-100 focus:outline-none focus:ring-4 focus:ring-blue-100 sm:flex-none sm:px-4">
+                    <button type="button" onClick={() => openAuth('login')} className={`${secondaryButton} min-h-10 px-3 py-1.5 text-xs sm:flex-none sm:px-4`}>Masuk</button>
+                    <button type="button" onClick={() => openAuth('register')} className={`${primaryButton} min-h-10 px-3 py-1.5 text-xs sm:flex-none sm:px-4`}>Daftar</button>
+                    <button type="button" onClick={openDemoSlide} aria-label="Lihat demo akun Bintang AI" className="inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-2xl border-2 border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-extrabold text-blue-800 shadow-sm transition hover:border-blue-400 hover:bg-blue-100 focus:outline-none focus:ring-4 focus:ring-blue-100 sm:flex-none sm:px-4">
                       <span aria-hidden="true">▶</span> Demo
                     </button>
                   </div>
                 </header>
 
-                <div className="grid flex-1 items-center gap-6 py-6 sm:gap-8 sm:py-8 lg:grid-cols-[0.95fr_1.05fr] lg:gap-12 lg:py-10">
-                  <div className="relative mx-auto w-full max-w-xl text-center lg:mx-0 lg:text-left">
-                    <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-extrabold text-blue-800">
-                      <span aria-hidden="true">✨</span> Untuk teman kelas 1–6 SD
+                <div className="grid flex-1 items-center gap-4 py-2 sm:gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:gap-8 overflow-hidden">
+                  <div className="relative mx-auto w-full max-w-xl text-center lg:mx-0 lg:text-left space-y-2">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3.5 py-1 text-xs font-extrabold text-blue-800">
+                      Untuk teman kelas 1–6 SD
                     </div>
-                    <h1 className="mt-6 text-[2.35rem] font-black leading-[1.08] tracking-tight text-slate-900 sm:text-6xl">
+                    <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black leading-tight tracking-tight text-slate-900">
                       Halo, <span className="text-sky-600">Teman Bintang!</span>
                     </h1>
-                    <p className="mx-auto mt-5 max-w-lg text-lg leading-8 text-slate-600 sm:text-xl lg:mx-0">
+                    <p className="mx-auto max-w-lg text-sm sm:text-base leading-relaxed text-slate-600 lg:mx-0 font-medium">
                       Yuk, belajar, bertanya, dan mencoba hal baru bersama Kak Bintang.
                     </p>
-                    <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
-                      <button type="button" onClick={requestExplore} className={`${primaryButton} sm:min-w-52`}>
+                    <div className="flex flex-wrap justify-center gap-2.5 lg:justify-start pt-1">
+                      <button type="button" onClick={requestExplore} className={`${primaryButton} text-xs py-2.5 px-5 sm:min-w-44`}>
                         Ayo Jelajahi <span aria-hidden="true">🚀</span>
                       </button>
-                      <button type="button" onClick={() => speakText('Halo, Teman Bintang. Yuk belajar dan bertanya bersama Kak Bintang. Pilih cara belajar yang paling nyaman untukmu.')} className={`${secondaryButton} sm:min-w-52`}>
+                      <button type="button" onClick={() => speakText('Halo, Teman Bintang. Yuk belajar dan bertanya bersama Kak Bintang. Pilih cara belajar yang paling nyaman untukmu.')} className={`${secondaryButton} text-xs py-2.5 px-5 sm:min-w-44`}>
                         {isPlayingAudio ? 'Suara diputar…' : 'Dengarkan sapaan 🔊'}
                       </button>
                     </div>
                     {isPlayingAudio && (
-                      <button type="button" onClick={stopAudio} className="mt-3 text-sm font-bold text-sky-700 underline underline-offset-4">Hentikan suara</button>
+                      <button type="button" onClick={stopAudio} className="text-xs font-bold text-sky-700 underline underline-offset-4">Hentikan suara</button>
                     )}
-                    <p role="status" aria-live="polite" className="mt-4 min-h-6 text-sm font-bold text-blue-700">{roleFeedback}</p>
+                    {roleFeedback && <p role="status" aria-live="polite" className="text-xs font-bold text-blue-700">{roleFeedback}</p>}
 
-                    <div className="mt-5 rounded-2xl border border-sky-100 bg-white/90 p-4 shadow-sm lg:max-w-md">
-                      <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Ruang khusus pendamping</p>
-                      <div className="mt-3 grid grid-cols-2 gap-2">
-                        <div className="flex items-center gap-2 rounded-xl bg-sky-50 px-3 py-3">
-                          <span className="text-2xl" aria-hidden="true">👩‍🏫</span>
-                          <span className="text-sm font-extrabold text-slate-800">Guru</span>
+                    <div className="rounded-2xl border border-sky-100 bg-white/90 p-3 shadow-xs lg:max-w-md">
+                      <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">Ruang khusus pendamping</p>
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        <div className="flex items-center gap-2 rounded-xl bg-sky-50 px-3 py-2">
+                          <span className="text-xl" aria-hidden="true">👨‍🏫</span>
+                          <span className="text-xs font-extrabold text-slate-800">Guru</span>
                         </div>
-                        <div className="flex items-center gap-2 rounded-xl bg-blue-50 px-3 py-3">
-                          <span className="text-2xl" aria-hidden="true">👨‍👩‍👧</span>
-                          <span className="text-sm font-extrabold text-slate-800">Orang tua / wali</span>
+                        <div className="flex items-center gap-2 rounded-xl bg-blue-50 px-3 py-2">
+                          <span className="text-xl" aria-hidden="true">👪</span>
+                          <span className="text-xs font-extrabold text-slate-800">Orang tua / wali</span>
                         </div>
                       </div>
-                      <p className="mt-2 text-xs leading-5 text-slate-500">Guru dan orang tua memiliki pilihan peran tersendiri saat membuat akun.</p>
                     </div>
                   </div>
 
                   <div className="relative mx-auto w-full max-w-2xl">
-                    <div className="absolute -right-2 -top-7 z-10 sm:-right-4" aria-hidden="true"><BintangMascot size={76} label={null} /></div>
-                    <div className="rounded-[34px] border border-white bg-white/90 p-4 shadow-[0_22px_70px_rgba(37,99,235,0.12)] sm:p-6">
-                      <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                    <div className="absolute -right-2 -top-6 z-10 sm:-right-3" aria-hidden="true"><BintangMascot size={64} label={null} /></div>
+                    <div className="rounded-3xl border border-white bg-white/90 p-3.5 sm:p-5 shadow-lg">
+                      <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
                         <div>
-                          <p className="text-sm font-black uppercase tracking-[0.12em] text-sky-600">Mulai dari sini</p>
-                          <h2 className="mt-1 text-2xl font-black text-slate-900 sm:text-3xl">Pilih cara belajarmu</h2>
+                          <p className="text-xs font-black uppercase tracking-[0.12em] text-sky-600">Mulai dari sini</p>
+                          <h2 className="text-lg sm:text-xl font-black text-slate-900">Pilih cara belajarmu</h2>
                         </div>
-                        <span className="w-fit rounded-full bg-blue-100 px-3 py-1.5 text-xs font-extrabold text-blue-800">Bisa diubah nanti</span>
+                        <span className="w-fit rounded-full bg-blue-100 px-3 py-1 text-[10px] font-extrabold text-blue-800">Bisa diubah nanti</span>
                       </div>
-                      <div className="grid grid-cols-1 gap-3">
+                      <div className="grid grid-cols-1 gap-2.5">
                         {LEARNING_MODES.map((item) => renderModeCard(item, true))}
                       </div>
-                      <p className="mt-4 text-sm leading-6 text-slate-500">Pilih cara belajar yang paling nyaman. Pilihan Umum memakai tampilan standar tanpa penyesuaian khusus. Kamu bisa mengubah pilihan ini nanti bersama guru atau orang tua.</p>
+                      <p className="mt-2 text-[11px] leading-relaxed text-slate-500 font-medium">
+                        Catatan: Setiap anak dapat memakai pengaturan dasar seperti ukuran teks, suara, dan kontras.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -1233,43 +1234,42 @@ const LandingPage = () => {
 
             {/* SLIDE 6 — DEMO */}
             {activeSlide === 5 && (
-              <section className="mx-auto flex bintang-screen-section min-h-[100dvh] w-full max-w-7xl flex-col gap-8 px-4 py-10 sm:px-7 lg:px-10">
-                <SlideHeading
-                  eyebrow="Yuk, coba!"
-                  title="Pilih pengalaman yang ingin kamu lihat."
-                  description="Tekan tombol untuk membuka akun simulasi. Kamu bisa melihat Bintang AI dari sisi siswa, guru, atau orang tua."
-                />
-                {loginMessage && (
-                  <div role="alert" className="mx-auto w-full max-w-3xl rounded-2xl border-2 border-blue-100 bg-blue-50 px-5 py-4 text-sm font-bold text-blue-800">{loginMessage.text}</div>
-                )}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <span className="rounded-full bg-sky-100 px-4 py-2 text-sm font-black text-sky-800">🧒 A. Akun Siswa</span>
-                    <span className="h-px flex-1 bg-sky-100" />
+              <section className="mx-auto flex bintang-screen-section h-[100dvh] max-h-[100dvh] w-full max-w-7xl flex-col justify-center overflow-hidden px-4 py-2 sm:px-7 lg:px-10">
+                <div className="flex flex-col justify-center gap-3 sm:gap-4 origin-center transform scale-[0.72] sm:scale-[0.82] md:scale-[0.88] lg:scale-[0.94] xl:scale-100 transition-transform">
+                  <SlideHeading
+                    title="Pilih pengalaman yang ingin kamu lihat."
+                    description="Tekan tombol untuk membuka akun simulasi. Kamu bisa melihat Bintang AI dari sisi siswa, guru, atau orang tua."
+                  />
+                  {loginMessage && (
+                    <div role="alert" className="mx-auto w-full max-w-3xl rounded-2xl border-2 border-blue-100 bg-blue-50 px-5 py-3 text-sm font-bold text-blue-800">{loginMessage.text}</div>
+                  )}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <span className="rounded-full bg-sky-100 px-4 py-1.5 text-sm font-black text-sky-800">🧒 A. Akun Siswa</span>
+                      <span className="h-px flex-1 bg-sky-100" />
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-3">{demoStudents.map(renderDemoCard)}</div>
                   </div>
-                  <div className="grid gap-4 md:grid-cols-3">{demoStudents.map(renderDemoCard)}</div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3"><span className="rounded-full bg-blue-50 px-4 py-1.5 text-sm font-black text-blue-800">👩‍🏫 B. Akun Guru</span><span className="h-px flex-1 bg-blue-50" /></div>
+                      {renderDemoCard(demoTeacher)}
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3"><span className="rounded-full bg-blue-100 px-4 py-1.5 text-sm font-black text-blue-800">👨‍👧 C. Akun Orang Tua</span><span className="h-px flex-1 bg-blue-100" /></div>
+                      {renderDemoCard(demoParent)}
+                    </div>
+                  </div>
+                  <p className="mx-auto max-w-3xl rounded-2xl bg-slate-100 px-5 py-3 text-center text-xs leading-5 text-slate-600">
+                    Catatan untuk pendamping: tombol simulasi menggunakan akun demo yang telah dikonfigurasi pada aplikasi dan tetap melalui proses autentikasi.
+                  </p>
                 </div>
-                <div className="grid gap-5 md:grid-cols-2">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3"><span className="rounded-full bg-blue-50 px-4 py-2 text-sm font-black text-blue-800">👩‍🏫 B. Akun Guru</span><span className="h-px flex-1 bg-blue-50" /></div>
-                    {renderDemoCard(demoTeacher)}
-                  </div>
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3"><span className="rounded-full bg-blue-100 px-4 py-2 text-sm font-black text-blue-800">👨‍👧 C. Akun Orang Tua</span><span className="h-px flex-1 bg-blue-100" /></div>
-                    {renderDemoCard(demoParent)}
-                  </div>
-                </div>
-                <p className="mx-auto max-w-3xl rounded-2xl bg-slate-100 px-5 py-4 text-xs leading-6 text-slate-600">
-                  Catatan untuk pendamping: tombol simulasi menggunakan akun demo yang telah dikonfigurasi pada aplikasi dan tetap melalui proses autentikasi.
-                </p>
               </section>
             )}
 
             {/* SLIDE 7 — AJAKAN MULAI */}
             {activeSlide === 6 && (
               <section className="relative mx-auto flex bintang-screen-section min-h-[100dvh] w-full max-w-6xl flex-col items-center justify-center overflow-hidden px-5 py-16 text-center">
-                <span className="absolute left-[10%] top-[18%] rotate-[-12deg] text-5xl" aria-hidden="true">✨</span>
-                <span className="absolute right-[10%] top-[22%] rotate-12 text-5xl" aria-hidden="true">🌈</span>
                 <BintangMascot size={116} label="Maskot Bintang tersenyum" className="bintang-mascot-hero" />
                 <p className="mt-9 rounded-full bg-sky-100 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-sky-800">Bintang AI · Ruang Belajar SD</p>
                 <h2 className="mt-6 max-w-4xl text-4xl font-black leading-tight tracking-tight text-slate-900 sm:text-6xl">Setiap anak punya kesempatan untuk bersinar!</h2>

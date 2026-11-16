@@ -18,7 +18,6 @@ const Icon = ({ name, className = 'h-6 w-6' }) => {
 
   const paths = {
     book: <><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5z" /><path d="M4 5.5v16M8 7h8M8 11h8" /></>,
-    sparkle: <><path d="m12 2 1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z" /><path d="m19 16 .8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z" /></>,
     volume: <><path d="M4 10v4h3l5 4V6l-5 4z" /><path d="M16 9a5 5 0 0 1 0 6M18.5 6.5a9 9 0 0 1 0 11" /></>,
     mic: <><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v4m-4 0h8" /></>,
     hand: <><path d="M8 12V5a1.5 1.5 0 0 1 3 0v6-8a1.5 1.5 0 0 1 3 0v8-6a1.5 1.5 0 0 1 3 0v8-4a1.5 1.5 0 0 1 3 0v7a6 6 0 0 1-6 6h-2a6 6 0 0 1-5-2.7L4 15a1.7 1.7 0 0 1 2.7-2.1L8 14" /></>,
@@ -31,7 +30,7 @@ const Icon = ({ name, className = 'h-6 w-6' }) => {
     heart: <><path d="M20.8 8.8c0 5.2-8.8 10.2-8.8 10.2S3.2 14 3.2 8.8A4.8 4.8 0 0 1 12 6.2a4.8 4.8 0 0 1 8.8 2.6Z" /></>,
   };
 
-  return <svg {...common}>{paths[name] || paths.sparkle}</svg>;
+  return <svg {...common}>{paths[name] || paths.book}</svg>;
 };
 
 const featureItems = [

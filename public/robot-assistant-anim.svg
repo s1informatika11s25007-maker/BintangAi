@@ -173,5 +173,5 @@
 
   <!-- Bottom Message Bar -->
   <rect x="180" y="405" width="540" height="38" rx="12" fill="#090d16" stroke="#1e293b" stroke-width="1"/>
-  <text x="450" y="429" font-family="system-ui, sans-serif" font-size="11" fill="#e2e8f0" text-anchor="middle">✨ <tspan font-weight="800" fill="#38bdf8">BINTANGAI — PEMBELAJARAN INKLUSIF</tspan>: Asisten Pembelajaran Inklusif lebih tenang, terorganisir, dan terpercaya.</text>
+  <text x="450" y="429" font-family="system-ui, sans-serif" font-size="11" fill="#e2e8f0" text-anchor="middle"><tspan font-weight="800" fill="#38bdf8">BINTANGAI — PEMBELAJARAN INKLUSIF</tspan>: Asisten Pembelajaran Inklusif lebih tenang, terorganisir, dan terpercaya.</text>
 </svg>

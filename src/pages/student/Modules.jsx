@@ -17,7 +17,7 @@ import {
   HiExternalLink, HiChevronDown, HiChevronUp,
   HiVolumeUp, HiPause, HiPlay, HiRefresh,
   HiChevronDoubleRight, HiChevronDoubleLeft, HiArrowLeft,
-  HiSparkles, HiClock, HiZoomIn, HiZoomOut
+  HiClock, HiZoomIn, HiZoomOut
 } from 'react-icons/hi';
 
 const StudentModules = () => {
@@ -870,7 +870,7 @@ const StudentModules = () => {
                       {/* Tap Emoji Feedback Cards (Helper for Tunawicara / Mute Students) */}
                       <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-2 mt-6">
                         <p className="text-xs font-bold text-slate-600 flex items-center gap-1.5">
-                          <HiSparkles className="text-amber-500 text-sm" />
+                          <HiLightBulb className="text-amber-500 text-sm" />
                           <span>Bagaimana pemahamanmu tentang materi ini?</span>
                         </p>
                         <div className="flex flex-wrap gap-2 pt-1">

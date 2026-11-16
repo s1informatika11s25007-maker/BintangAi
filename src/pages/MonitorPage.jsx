@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabaseClient';
 import {
   HiLockClosed, HiShieldCheck, HiSearch, HiRefresh,
   HiClock, HiUserGroup, HiLightningBolt, HiFilter, HiX,
-  HiCheckCircle, HiTrash, HiChevronLeft, HiChevronRight, HiSparkles
+  HiCheckCircle, HiTrash, HiChevronLeft, HiChevronRight
 } from 'react-icons/hi';
 
 const MonitorPage = () => {
