@@ -16,13 +16,13 @@ import MobileLandingPage from './MobileLandingPage';
  * pengenalan tetap dipertahankan.
  */
 
-const DEMO_ACCOUNTS = [
+const DEMO_METADATA = [
   {
     key: 'tunanetra',
     group: 'siswa',
     label: 'Siswa Tunanetra',
-    email: 'demo.tunanetra@gmail.com',
-    pass: 'demo123456',
+    email: import.meta.env.VITE_DEMO_TUNANETRA_EMAIL || 'demo.tunanetra@gmail.com',
+    pass: import.meta.env.VITE_DEMO_PASSWORD || 'demo123456',
     description: 'Budi Santoso · Kelas 4 SD',
     support: 'Panduan suara, pembaca layar, dan deskripsi gambar',
     icon: '🎧',
@@ -32,8 +32,8 @@ const DEMO_ACCOUNTS = [
     key: 'tunarungu',
     group: 'siswa',
     label: 'Siswa Tunarungu',
-    email: 'demo.tunarungu@gmail.com',
-    pass: 'demo123456',
+    email: import.meta.env.VITE_DEMO_TUNARUNGU_EMAIL || 'demo.tunarungu@gmail.com',
+    pass: import.meta.env.VITE_DEMO_PASSWORD || 'demo123456',
     description: 'Siti Rahma · Kelas 3 SD',
     support: 'Teks yang jelas, subtitle, dan petunjuk visual',
     icon: '💬',
@@ -43,8 +43,8 @@ const DEMO_ACCOUNTS = [
     key: 'tunawicara',
     group: 'siswa',
     label: 'Siswa Tunawicara',
-    email: 'demo.tunawicara@gmail.com',
-    pass: 'demo123456',
+    email: import.meta.env.VITE_DEMO_TUNAWICARA_EMAIL || 'demo.tunawicara@gmail.com',
+    pass: import.meta.env.VITE_DEMO_PASSWORD || 'demo123456',
     description: 'Doni Pratama · Kelas 5 SD',
     support: 'Komunikasi dengan tulisan, gambar, dan simbol',
     icon: '🧩',
@@ -54,8 +54,8 @@ const DEMO_ACCOUNTS = [
     key: 'guru',
     group: 'guru',
     label: 'Guru Pembimbing',
-    email: 'demo.guru@gmail.com',
-    pass: 'demo123456',
+    email: import.meta.env.VITE_DEMO_GURU_EMAIL || 'demo.guru@gmail.com',
+    pass: import.meta.env.VITE_DEMO_PASSWORD || 'demo123456',
     description: 'Ibu Rina · Guru SLB/SD',
     support: 'Kelola kelas dan materi belajar',
     icon: '👩‍🏫',
@@ -65,8 +65,8 @@ const DEMO_ACCOUNTS = [
     key: 'ortu',
     group: 'ortu',
     label: 'Orang Tua / Wali',
-    email: 'demo.ortu@gmail.com',
-    pass: 'demo123456',
+    email: import.meta.env.VITE_DEMO_ORTU_EMAIL || 'demo.ortu@gmail.com',
+    pass: import.meta.env.VITE_DEMO_PASSWORD || 'demo123456',
     description: 'Pak Herman · Orang tua',
     support: 'Dampingi dan lihat laporan anak',
     icon: '👨‍👧',
@@ -269,7 +269,56 @@ const LandingPage = () => {
     ? mode
     : (['standar', 'tidak_ada', 'umum'].includes(mode) ? 'tidak_ada' : '');
 
-  const [activeSlide, setActiveSlide] = useState(0);
+  const [demoAccounts, setDemoAccounts] = useState(DEMO_METADATA);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadProfilesFromDB = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, full_name, role, disability_type, class_level, email')
+          .limit(25);
+
+        if (error || !data || !isMounted) return;
+
+        const updated = DEMO_METADATA.map((meta) => {
+          let matched = null;
+          if (meta.group === 'siswa') {
+            matched = data.find((p) => p.role === 'siswa' && p.disability_type === meta.key) ||
+                      data.find((p) => p.email?.toLowerCase() === meta.email?.toLowerCase());
+          } else {
+            matched = data.find((p) => p.role === meta.key) ||
+                      data.find((p) => p.email?.toLowerCase() === meta.email?.toLowerCase());
+          }
+
+          if (matched && matched.full_name) {
+            const roleSuffix = matched.role === 'guru'
+              ? ' · Guru SLB/SD'
+              : matched.role === 'ortu'
+              ? ' · Orang tua'
+              : matched.class_level
+              ? ` · ${matched.class_level}`
+              : '';
+
+            return {
+              ...meta,
+              email: matched.email || meta.email,
+              description: `${matched.full_name}${roleSuffix}`,
+            };
+          }
+          return meta;
+        });
+
+        setDemoAccounts(updated);
+      } catch (err) {
+        console.error('Error fetching demo profiles from DB:', err);
+      }
+    };
+
+    loadProfilesFromDB();
+    return () => { isMounted = false; };
+  }, []);
   const [slideDirection, setSlideDirection] = useState(1);
   const slideContentRef = useRef(null);
   const touchStartRef = useRef(null);
@@ -832,9 +881,9 @@ const LandingPage = () => {
     );
   };
 
-  const demoStudents = DEMO_ACCOUNTS.filter((account) => account.group === 'siswa');
-  const demoTeacher = DEMO_ACCOUNTS.find((account) => account.group === 'guru');
-  const demoParent = DEMO_ACCOUNTS.find((account) => account.group === 'ortu');
+  const demoStudents = demoAccounts.filter((account) => account.group === 'siswa');
+  const demoTeacher = demoAccounts.find((account) => account.group === 'guru');
+  const demoParent = demoAccounts.find((account) => account.group === 'ortu');
 
   const requestExplore = () => setShowTourGuide(true);
 
