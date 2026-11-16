@@ -624,14 +624,14 @@ const MobileLandingPage = () => {
                 )}
 
                 <div className="space-y-2 pt-1">
-                  {DEMO_ACCOUNTS.map((acc) => {
+                  {demoAccounts.map((acc) => {
                     const isThisLoading = loadingDemoKey === acc.key;
                     return (
                       <div key={acc.key} className={`p-3 rounded-2xl border border-white/80 bg-gradient-to-br ${acc.color} shadow-xs flex items-center justify-between gap-2`}>
                         <div className="flex items-center gap-2.5 min-w-0">
                           <span className="text-2xl shrink-0 p-1.5 rounded-xl bg-white shadow-xs">{acc.icon}</span>
                           <div className="min-w-0">
-                            <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${acc.badgeBg}`}>{acc.label}</span>
+                            <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${acc.badgeBg || acc.badgeColor || 'bg-blue-600 text-white'}`}>{acc.label}</span>
                             <h3 className="text-xs font-black text-slate-900 truncate">{acc.description}</h3>
                           </div>
                         </div>
