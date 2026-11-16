@@ -318,7 +318,7 @@ const MobileLandingPage = () => {
   const exitMotion = typeof currentMotion.exit === 'function' ? currentMotion.exit(slideDirection) : currentMotion.exit;
 
   return (
-    <div className="relative min-h-[100dvh] h-[100dvh] w-full bg-gradient-to-b from-sky-50/80 via-white to-blue-50/80 text-slate-900 flex flex-col justify-between overflow-hidden font-sans select-none">
+    <div className="relative min-h-screen w-full bg-gradient-to-b from-sky-50/80 via-white to-blue-50/80 text-slate-900 flex flex-col justify-between font-sans overflow-x-hidden pb-24">
 
       {/* STICKY TOP HEADER */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-blue-100/80 px-4 py-2.5 flex items-center justify-between shrink-0 shadow-2xs">
@@ -345,24 +345,17 @@ const MobileLandingPage = () => {
         </div>
       </header>
 
-      {/* MAIN SLIDE ANIMATION AREA (100% MATCHING LAPTOP SLIDE ANIMATION & CONTENT) */}
-      <div className="relative flex-1 w-full overflow-hidden" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+      {/* MAIN SLIDE ANIMATION AREA (MOBILE OPTIMIZED SMOOTH TRANSITION & UNLOCKED SCROLL) */}
+      <div className="relative flex-1 w-full min-h-0" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
         <AnimatePresence mode="wait" custom={slideDirection}>
           <motion.main
             key={activeSlide}
             custom={slideDirection}
-            initial={initialMotion}
-            animate={currentMotion.animate}
-            exit={exitMotion}
-            transition={currentMotion.transition}
-            style={{
-              ...currentMotion.style,
-              WebkitOverflowScrolling: 'touch',
-              touchAction: 'pan-y',
-              willChange: 'transform, opacity',
-              backfaceVisibility: 'hidden',
-            }}
-            className="absolute inset-0 flex flex-col justify-between overflow-y-auto px-4 py-3 sm:px-6"
+            initial={{ opacity: 0, x: slideDirection > 0 ? 35 : -35 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: slideDirection > 0 ? -35 : 35 }}
+            transition={{ duration: 0.28, ease: 'easeOut' }}
+            className="w-full flex-1 flex flex-col justify-between px-4 py-4 sm:px-6 overflow-y-visible"
           >
             {/* SLIDE 0 — SAMBUTAN */}
             {activeSlide === 0 && (
@@ -826,7 +819,10 @@ const MobileLandingPage = () => {
 
       {/* Floating Top Arrow Button (NO FOOTER BAR AT ALL) */}
       <button
-        onClick={() => goToSlide(0)}
+        onClick={() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          goToSlide(0);
+        }}
         className="fixed bottom-6 right-5 z-50 h-11 w-11 rounded-full border border-blue-200/80 bg-white/95 text-blue-900 shadow-xl backdrop-blur-md flex items-center justify-center text-xl font-bold active:scale-90 transition-transform"
         aria-label="Kembali ke Slide Utama"
       >
