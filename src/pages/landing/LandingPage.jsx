@@ -319,6 +319,7 @@ const LandingPage = () => {
     loadProfilesFromDB();
     return () => { isMounted = false; };
   }, []);
+  const [activeSlide, setActiveSlide] = useState(0);
   const [slideDirection, setSlideDirection] = useState(1);
   const slideContentRef = useRef(null);
   const touchStartRef = useRef(null);

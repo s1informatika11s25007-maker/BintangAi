@@ -235,6 +235,7 @@ const MobileLandingPage = () => {
     loadProfilesFromDB();
     return () => { isMounted = false; };
   }, []);
+  const [activeSlide, setActiveSlide] = useState(0);
   const [slideDirection, setSlideDirection] = useState(1);
   const touchStartRef = useRef({ x: 0, y: 0 });
 
