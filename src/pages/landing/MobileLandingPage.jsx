@@ -685,8 +685,13 @@ const MobileLandingPage = () => {
             {activeSlide === 7 && (
               <div className="flex flex-col justify-between min-h-full space-y-4 py-2">
                 <div className="space-y-3">
+                  {/* BintangAvatar Icon Logo */}
+                  <div className="text-center pt-1 pb-1">
+                    <BintangAvatar size={64} state={authTab === 'login' ? 'happy' : 'idle'} className="mx-auto" />
+                  </div>
+
                   {/* Header / Title */}
-                  <div className="space-y-1 text-left">
+                  <div className="space-y-1 text-center sm:text-left">
                     <span className="inline-block px-3 py-0.5 rounded-full bg-blue-50 border border-blue-100 text-[11px] font-black uppercase text-blue-800 tracking-wider">
                       {authTab === 'login' ? 'Masuk Akun' : 'Daftar Akun Baru'}
                     </span>
