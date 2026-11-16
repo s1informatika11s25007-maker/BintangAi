@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const BintangAvatar = ({ state = 'idle', size = 'md' }) => {
+const BintangAvatar = ({ state = 'idle', size = 'md', className = '' }) => {
   // states: idle, thinking, happy, speaking
 
   const sizes = {
@@ -12,8 +12,12 @@ const BintangAvatar = ({ state = 'idle', size = 'md' }) => {
     xl: 'w-56 h-56'
   };
 
+  const isNumeric = typeof size === 'number';
+  const sizeStyle = isNumeric ? { width: `${size}px`, height: `${size}px` } : undefined;
+  const sizeClass = !isNumeric ? (sizes[size] || sizes.md) : '';
+
   return (
-    <div className={`relative ${sizes[size] || sizes.md} flex items-center justify-center shrink-0`}>
+    <div className={`relative ${sizeClass} flex items-center justify-center shrink-0 ${className}`} style={sizeStyle}>
       {/* Radiant Blue Glow Aura */}
       <motion.div
         animate={{
@@ -21,7 +25,7 @@ const BintangAvatar = ({ state = 'idle', size = 'md' }) => {
           opacity: state === 'thinking' ? [0.4, 0.7, 0.4] : [0.25, 0.45, 0.25],
         }}
         transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
-        className="absolute inset-0 bg-sky-400/50 rounded-full blur-2xl"
+        className="absolute inset-0 bg-sky-400/50 rounded-full blur-2xl pointer-events-none"
       />
 
       {/* Floating Animated Character Body */}

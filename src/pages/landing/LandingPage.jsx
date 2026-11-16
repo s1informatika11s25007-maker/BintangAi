@@ -6,6 +6,7 @@ import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { login } from '@/features/auth/api/sessionApi';
 import { supabase } from '@/lib/supabaseClient';
 import { logUserActivity } from '@/utils/logger';
+import BintangAvatar from '@/features/ai-tutor/components/BintangAvatar';
 
 /*
  * Bintang AI — Landing Page untuk siswa kelas 1–6 SD.
@@ -274,45 +275,15 @@ function SlideHeading({ eyebrow, title, description }) {
   );
 }
 
-function BintangMascot({ size = 48, className = '', label = 'Maskot Bintang' }) {
-  return (
-    <span
-      className={`bintang-mascot inline-flex shrink-0 items-center justify-center ${className}`}
-      style={{ width: size, height: size }}
-      aria-hidden={label ? undefined : 'true'}
-      role={label ? 'img' : undefined}
-      aria-label={label || undefined}
-    >
-      <svg viewBox="0 0 120 120" width="100%" height="100%" focusable="false">
-        <path
-          d="M60 7.5 75 40.5 111 44 84 68.5 92 105 60 86 28 105 36 68.5 9 44 45 40.5Z"
-          fill="#60A5FA"
-          stroke="#1D4ED8"
-          strokeWidth="4.5"
-          strokeLinejoin="round"
-        />
-        <path d="M26 43 Q34 22 55 20" fill="none" stroke="#DBEAFE" strokeWidth="5" strokeLinecap="round" opacity=".9" />
-        <g className="bintang-eye bintang-eye-left">
-          <ellipse cx="46" cy="55" rx="6.6" ry="9.2" fill="#102A56" />
-          <circle cx="48" cy="51.5" r="2.4" fill="#FFFFFF" />
-        </g>
-        <g className="bintang-eye bintang-eye-right">
-          <ellipse cx="74" cy="55" rx="6.6" ry="9.2" fill="#102A56" />
-          <circle cx="76" cy="51.5" r="2.4" fill="#FFFFFF" />
-        </g>
-        <ellipse cx="31.5" cy="68" rx="6.5" ry="3.7" fill="#BFDBFE" opacity=".95" />
-        <ellipse cx="88.5" cy="68" rx="6.5" ry="3.7" fill="#BFDBFE" opacity=".95" />
-        <path d="M47 72 Q60 84 73 72" fill="none" stroke="#102A56" strokeWidth="4.2" strokeLinecap="round" />
-      </svg>
-    </span>
-  );
+function BintangMascot({ size = 48, className = '', state = 'idle' }) {
+  return <BintangAvatar size={size} state={state} className={className} />;
 }
 
 function BrandMark({ light = false }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="grid h-12 w-12 place-items-center rounded-2xl border-2 border-blue-100 bg-white shadow-[0_5px_0_#bfdbfe]" aria-hidden="true">
-        <BintangMascot size={45} label={null} />
+      <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border-2 border-blue-100 bg-white shadow-[0_5px_0_#bfdbfe] overflow-hidden p-0.5" aria-hidden="true">
+        <BintangAvatar size={38} state="idle" />
       </span>
       <span>
         <span className={`block text-lg font-black leading-tight ${light ? 'text-white' : 'text-blue-950'}`}>Bintang AI</span>
