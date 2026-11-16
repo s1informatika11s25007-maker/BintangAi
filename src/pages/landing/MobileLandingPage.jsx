@@ -681,78 +681,116 @@ const MobileLandingPage = () => {
               </div>
             )}
 
-            {/* SLIDE 7 — MASUK DAN DAFTAR (FORM INTEGRATED IN 1 SCREEN) */}
+            {/* SLIDE 7 — MASUK DAN DAFTAR (100% PARITY WITH DESKTOP WEBSITE & INTEGRATED IN PAGE) */}
             {activeSlide === 7 && (
-              <div className="flex flex-col justify-center h-full space-y-3 py-2">
-                {/* Form Header */}
-                <div className="flex items-center gap-3">
-                  <BintangAvatar size={42} state={authTab === 'login' ? 'happy' : 'idle'} />
-                  <div>
-                    <h2 className="text-sm font-black text-slate-900">{authTab === 'login' ? 'Selamat datang kembali!' : 'Buat akun Bintang AI'}</h2>
-                    <p className="text-[11px] text-slate-500">Ruang belajar mandiri SD</p>
+              <div className="flex flex-col justify-between min-h-full space-y-4 py-2">
+                <div className="space-y-3">
+                  {/* Header / Title */}
+                  <div className="space-y-1 text-left">
+                    <span className="inline-block px-3 py-0.5 rounded-full bg-blue-50 border border-blue-100 text-[11px] font-black uppercase text-blue-800 tracking-wider">
+                      {authTab === 'login' ? 'Masuk Akun' : 'Daftar Akun Baru'}
+                    </span>
+                    <h2 className="text-xl font-black text-slate-900">
+                      {authTab === 'login' ? 'Selamat datang kembali!' : 'Buat akun Bintang AI'}
+                    </h2>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      {authTab === 'login'
+                        ? 'Masuk untuk membuka materi, latihan kuis, dan interaksi bersama Kak Bintang.'
+                        : 'Lengkapi informasi berikut untuk mulai menggunakan Bintang AI.'}
+                    </p>
                   </div>
-                </div>
 
-                {/* Tab Switcher */}
-                <div className="grid grid-cols-2 p-1 rounded-xl bg-[#F1F6FF] border border-blue-100 text-center">
-                  <button
-                    onClick={() => { setAuthTab('login'); setLoginMessage(null); }}
-                    className={`py-2 text-xs font-extrabold rounded-lg transition-colors ${authTab === 'login' ? 'bg-white text-blue-800 shadow-sm' : 'text-slate-500'}`}
-                  >
-                    Masuk
-                  </button>
-                  <button
-                    onClick={() => { setAuthTab('register'); setRegStep(1); setRegMessage(null); }}
-                    className={`py-2 text-xs font-extrabold rounded-lg transition-colors ${authTab === 'register' ? 'bg-white text-blue-800 shadow-sm' : 'text-slate-500'}`}
-                  >
-                    Daftar
-                  </button>
-                </div>
-
-                {/* LOGIN FORM */}
-                {authTab === 'login' && (
-                  <form onSubmit={handleLoginSubmit} className="space-y-3 pt-1">
-                    {loginMessage && (
-                      <div className={`p-2.5 rounded-xl text-xs font-semibold border ${loginMessage.type === 'error' ? 'bg-rose-50 border-rose-200 text-rose-800' : 'bg-blue-50 border-blue-200 text-blue-800'}`}>
-                        {loginMessage.text}
+                  {/* Dukungan Aksesibilitas SD */}
+                  <div className="space-y-2 border-t border-blue-100/80 pt-2.5">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Dukungan Aksesibilitas SD</p>
+                    <div className="flex flex-col gap-1.5 text-xs font-bold text-slate-800">
+                      <div className="flex items-center gap-2.5 rounded-xl bg-sky-50/90 px-3 py-2 border border-sky-100">
+                        <span className="text-base">🎧</span> <span>Suara & Pembaca Layar (Tunanetra)</span>
                       </div>
-                    )}
-                    <div>
-                      <label className="block text-xs font-bold text-blue-950 mb-1">Alamat email</label>
-                      <input
-                        type="email"
-                        required
-                        value={loginEmail}
-                        onChange={(e) => setLoginEmail(e.target.value)}
-                        placeholder="nama@email.com"
-                        className={inputClass}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-blue-950 mb-1">Kata sandi</label>
-                      <div className="relative">
-                        <input
-                          type={showLoginPassword ? 'text' : 'password'}
-                          required
-                          value={loginPassword}
-                          onChange={(e) => setLoginPassword(e.target.value)}
-                          placeholder="Masukkan kata sandi"
-                          className={`${inputClass} pr-20`}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowLoginPassword(!showLoginPassword)}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-[11px] font-bold text-blue-700 hover:bg-blue-50 rounded-lg"
-                        >
-                          {showLoginPassword ? 'Sembunyikan' : 'Tampilkan'}
-                        </button>
+                      <div className="flex items-center gap-2.5 rounded-xl bg-blue-50/90 px-3 py-2 border border-blue-100">
+                        <span className="text-base">💬</span> <span>Subtitle & Teks Visual (Tunarungu)</span>
+                      </div>
+                      <div className="flex items-center gap-2.5 rounded-xl bg-indigo-50/90 px-3 py-2 border border-indigo-100">
+                        <span className="text-base">🧩</span> <span>Gestur Isyarat & Simbol (Tunawicara)</span>
                       </div>
                     </div>
-                    <button type="submit" disabled={loginLoading} className={`${primaryButton} w-full mt-2`}>
-                      {loginLoading ? 'Sedang memeriksa...' : 'Masuk dan mulai belajar 🚀'}
+                  </div>
+
+                  {/* Tab Switcher */}
+                  <div className="grid grid-cols-2 p-1 rounded-xl bg-[#F1F6FF] border border-blue-100 text-center mt-2">
+                    <button
+                      type="button"
+                      onClick={() => { setAuthTab('login'); setLoginMessage(null); }}
+                      className={`py-2 text-xs font-extrabold rounded-lg transition-colors ${authTab === 'login' ? 'bg-white text-blue-800 shadow-sm' : 'text-slate-500'}`}
+                    >
+                      Masuk
                     </button>
-                  </form>
-                )}
+                    <button
+                      type="button"
+                      onClick={() => { setAuthTab('register'); setRegStep(1); setRegMessage(null); }}
+                      className={`py-2 text-xs font-extrabold rounded-lg transition-colors ${authTab === 'register' ? 'bg-white text-blue-800 shadow-sm' : 'text-slate-500'}`}
+                    >
+                      Daftar
+                    </button>
+                  </div>
+
+                  {/* LOGIN FORM */}
+                  {authTab === 'login' && (
+                    <form onSubmit={handleLoginSubmit} className="space-y-3 pt-1">
+                      {loginMessage && (
+                        <div className={`p-2.5 rounded-xl text-xs font-semibold border ${loginMessage.type === 'error' ? 'bg-rose-50 border-rose-200 text-rose-800' : 'bg-blue-50 border-blue-200 text-blue-800'}`}>
+                          {loginMessage.text}
+                        </div>
+                      )}
+                      <div>
+                        <label className="block text-xs font-bold text-blue-950 mb-1">Alamat email</label>
+                        <input
+                          type="email"
+                          required
+                          value={loginEmail}
+                          onChange={(e) => setLoginEmail(e.target.value)}
+                          placeholder="nama@email.com"
+                          className={inputClass}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-blue-950 mb-1">Kata sandi</label>
+                        <div className="relative">
+                          <input
+                            type={showLoginPassword ? 'text' : 'password'}
+                            required
+                            value={loginPassword}
+                            onChange={(e) => setLoginPassword(e.target.value)}
+                            placeholder="Masukkan kata sandi"
+                            className={`${inputClass} pr-20`}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowLoginPassword(!showLoginPassword)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-[11px] font-bold text-blue-700 hover:bg-blue-50 rounded-lg"
+                          >
+                            {showLoginPassword ? 'Sembunyikan' : 'Tampilkan'}
+                          </button>
+                        </div>
+                      </div>
+                      <button type="submit" disabled={loginLoading} className={`${primaryButton} w-full mt-2`}>
+                        {loginLoading ? 'Sedang memeriksa...' : 'Masuk dan mulai belajar 🚀'}
+                      </button>
+
+                      <div className="pt-2 text-center">
+                        <p className="text-xs text-slate-500">
+                          Belum memiliki akun?{' '}
+                          <button
+                            type="button"
+                            onClick={() => { setAuthTab('register'); setRegStep(1); setRegMessage(null); }}
+                            className="font-extrabold text-blue-800 underline decoration-blue-200 hover:text-sky-700"
+                          >
+                            Daftar sekarang
+                          </button>
+                        </p>
+                      </div>
+                    </form>
+                  )}
 
                 {/* REGISTER FORM */}
                 {authTab === 'register' && (
@@ -906,7 +944,11 @@ const MobileLandingPage = () => {
                     </form>
                   </div>
                 )}
+                <p className="pt-3 text-center text-[11px] font-medium leading-5 text-slate-400">
+                  Bintang AI · Belajar bersama, tumbuh bersama.
+                </p>
               </div>
+            </div>
             )}
           </motion.main>
         </AnimatePresence>
