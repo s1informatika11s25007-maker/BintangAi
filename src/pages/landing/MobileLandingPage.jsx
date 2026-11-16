@@ -293,6 +293,8 @@ const MobileLandingPage = () => {
     setLoadingDemoKey(account.key);
     setLoginLoading(true);
     setLoginMessage(null);
+    setRedirectMessage(`Membuka simulasi ${account.label}...`);
+    setRedirecting(true);
     try {
       const authData = await login(account.email, account.pass);
       if (authData?.user) {
@@ -307,8 +309,6 @@ const MobileLandingPage = () => {
           ? '/student/playground'
           : '/student/dashboard';
 
-        setRedirectMessage(`Membuka simulasi ${account.label}...`);
-        setRedirecting(true);
         navigate(destination, { replace: true });
       }
     } catch (err) {
@@ -322,16 +322,27 @@ const MobileLandingPage = () => {
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
+    if (!loginEmail.trim() || !loginPassword) {
+      setLoginMessage({ type: 'error', text: 'Masukkan alamat email dan kata sandi.' });
+      return;
+    }
     setLoginLoading(true);
     setLoginMessage(null);
+    setRedirectMessage('Sedang memproses masuk ke Bintang AI...');
+    setRedirecting(true);
     try {
-      const authData = await login(loginEmail, loginPassword);
+      const authData = await login(loginEmail.trim(), loginPassword);
       if (authData?.user) {
         setUser(authData.user);
-        await fetchProfile();
-        setRedirectMessage('Masuk berhasil! Membuka beranda...');
-        setRedirecting(true);
-        navigate('/student/dashboard', { replace: true });
+        const profileData = await fetchProfile();
+        const role = profileData?.role || 'siswa';
+        const destination = role === 'guru'
+          ? '/teacher/dashboard'
+          : role === 'ortu'
+          ? '/parent/dashboard'
+          : '/student/dashboard';
+
+        navigate(destination, { replace: true });
       }
     } catch (err) {
       setLoginMessage({ type: 'error', text: err.message || 'Gagal masuk. Periksa email dan password Anda.' });
@@ -1018,19 +1029,22 @@ const MobileLandingPage = () => {
         </button>
       )}
 
-      {/* FULLSCREEN REDIRECT OVERLAY */}
+      {/* FULLSCREEN REDIRECT & LOADING OVERLAY */}
       <AnimatePresence>
         {redirecting && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/95 backdrop-blur-md text-slate-900 px-6 text-center"
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/95 backdrop-blur-md text-slate-900 px-6 text-center select-none"
           >
-            <BintangAvatar size={110} state="happy" />
-            <p className="mt-5 text-base font-black text-blue-950">{redirectMessage}</p>
-            <p className="mt-1 text-xs font-bold text-sky-600">Mohon tunggu sebentar 🚀</p>
+            <div className="relative flex items-center justify-center mb-6">
+              <div className="absolute h-32 w-32 rounded-full border-4 border-sky-100 border-t-blue-600 animate-spin" />
+              <BintangAvatar size={96} state="happy" />
+            </div>
+            <h3 className="text-xl font-black text-blue-950">{redirectMessage}</h3>
+            <p className="mt-2 text-xs font-bold text-sky-600 animate-pulse">Memuat halaman... Mohon tunggu sebentar 🚀</p>
           </motion.div>
         )}
       </AnimatePresence>

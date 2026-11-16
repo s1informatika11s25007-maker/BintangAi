@@ -582,6 +582,8 @@ const LandingPage = () => {
     setLoadingDemoKey(demoAccount.key);
     setLoginLoading(true);
     setLoginMessage(null);
+    setRedirectMessage(`Membuka simulasi ${demoAccount.label}...`);
+    setRedirecting(true);
     stopAudio();
     try {
       const data = await login(demoAccount.email, demoAccount.pass);
@@ -596,8 +598,6 @@ const LandingPage = () => {
       );
       setModeFromProfile(profileData);
       speakText(`Selamat mencoba simulasi ${demoAccount.label}.`);
-      setRedirectMessage(`Selamat mencoba simulasi ${demoAccount.label}!`);
-      setRedirecting(true);
       navigate(getTargetPath(profileData.role), { replace: true });
     } catch (error) {
       const message = error?.message || 'Belum berhasil masuk ke akun simulasi.';
@@ -612,12 +612,20 @@ const LandingPage = () => {
 
   const handleLoginSubmit = async (event) => {
     event.preventDefault();
+    if (!loginEmail.trim()) {
+      setLoginMessage({ type: 'error', text: 'Masukkan alamat email terlebih dahulu.' });
+      return;
+    }
+    if (!loginPassword) {
+      setLoginMessage({ type: 'error', text: 'Masukkan kata sandi terlebih dahulu.' });
+      return;
+    }
     setLoginLoading(true);
     setLoginMessage(null);
+    setRedirectMessage('Sedang memproses masuk ke Bintang AI...');
+    setRedirecting(true);
     stopAudio();
     try {
-      if (!loginEmail.trim()) throw new Error('Masukkan alamat email terlebih dahulu.');
-      if (!loginPassword) throw new Error('Masukkan kata sandi terlebih dahulu.');
       const data = await login(loginEmail.trim(), loginPassword);
       setUser(data.user);
       const profileData = await fetchProfile(data.user.id);
@@ -625,8 +633,6 @@ const LandingPage = () => {
       await logUserActivity('LOGIN', 'Masuk Aplikasi', `Pengguna ${profileData.full_name} masuk`, profileData);
       setModeFromProfile(profileData);
       speakText(`Selamat datang kembali, ${profileData.full_name}.`);
-      setRedirectMessage('Masuk berhasil! Membuka beranda...');
-      setRedirecting(true);
       navigate(getTargetPath(profileData.role), { replace: true });
     } catch (error) {
       const message = error?.message || 'Belum berhasil masuk. Periksa email dan kata sandi.';
@@ -1744,19 +1750,22 @@ const LandingPage = () => {
         {tourActive ? (tourPaused ? 'Tur Bintang AI dijeda.' : `Tur Bintang AI, halaman ${activeSlide + 1} dari 8.`) : ''}
       </p>
 
-      {/* FULLSCREEN REDIRECT OVERLAY */}
+      {/* FULLSCREEN REDIRECT & LOADING OVERLAY */}
       <AnimatePresence>
         {redirecting && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/95 backdrop-blur-md text-slate-900 px-6 text-center"
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/95 backdrop-blur-md text-slate-900 px-6 text-center select-none"
           >
-            <BintangAvatar size={110} state="happy" />
-            <p className="mt-5 text-base font-black text-blue-950">{redirectMessage}</p>
-            <p className="mt-1 text-xs font-bold text-sky-600">Mohon tunggu sebentar 🚀</p>
+            <div className="relative flex items-center justify-center mb-6">
+              <div className="absolute h-32 w-32 rounded-full border-4 border-sky-100 border-t-blue-600 animate-spin" />
+              <BintangAvatar size={96} state="happy" />
+            </div>
+            <h3 className="text-xl font-black text-blue-950">{redirectMessage}</h3>
+            <p className="mt-2 text-xs font-bold text-sky-600 animate-pulse">Memuat halaman... Mohon tunggu sebentar 🚀</p>
           </motion.div>
         )}
       </AnimatePresence>
