@@ -20,6 +20,7 @@ const MonitorPage = () => {
   const [roleFilter, setRoleFilter] = useState('all');
   const [userFilter, setUserFilter] = useState('all');
   const [actionFilter, setActionFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('today');
 
   // Confirmation Modal State for Clear All Logs
   const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -47,7 +48,7 @@ const MonitorPage = () => {
     sessionStorage.removeItem('bintang_monitor_unlocked');
   };
 
-  // 🎯 SERVER-SIDE PAGINATION USING SUPABASE .range(from, to)
+  // 🎯 SERVER-SIDE PAGINATION & DATE FILTERING USING SUPABASE
   const fetchLogs = async (page = currentPage) => {
     setLoading(true);
     try {
@@ -61,6 +62,22 @@ const MonitorPage = () => {
       if (roleFilter !== 'all') query = query.eq('user_role', roleFilter);
       if (userFilter !== 'all') query = query.eq('user_name', userFilter);
       if (actionFilter !== 'all') query = query.eq('action_type', actionFilter);
+
+      if (dateFilter === 'today') {
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        query = query.gte('created_at', todayStart.toISOString());
+      } else if (dateFilter === '7days') {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        sevenDaysAgo.setHours(0, 0, 0, 0);
+        query = query.gte('created_at', sevenDaysAgo.toISOString());
+      } else if (dateFilter === '30days') {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        thirtyDaysAgo.setHours(0, 0, 0, 0);
+        query = query.gte('created_at', thirtyDaysAgo.toISOString());
+      }
 
       const { data, count, error } = await query
         .order('created_at', { ascending: false })
@@ -100,7 +117,7 @@ const MonitorPage = () => {
     }
   };
 
-  // 🎯 REAL-TIME LISTENER ONLY (3-Second Auto-Polling Removed - Saves up to 80% Database I/O)
+  // 🎯 REAL-TIME LISTENER WITH DATE FILTER SUPPORT
   useEffect(() => {
     if (!isAuthenticated) return;
 
@@ -112,6 +129,11 @@ const MonitorPage = () => {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'user_activity_logs' },
         (payload) => {
+          if (dateFilter === 'today') {
+            const logDate = new Date(payload.new.created_at);
+            const today = new Date();
+            if (logDate.toDateString() !== today.toDateString()) return;
+          }
           setLogs(prev => [payload.new, ...prev.slice(0, itemsPerPage - 1)]);
           setTotalCount(c => c + 1);
         }
@@ -121,7 +143,7 @@ const MonitorPage = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [isAuthenticated, currentPage, roleFilter, userFilter, actionFilter]);
+  }, [isAuthenticated, currentPage, roleFilter, userFilter, actionFilter, dateFilter]);
 
   // Extract unique user names dynamically for filter dropdown
   const uniqueUserNames = useMemo(() => {
@@ -132,8 +154,9 @@ const MonitorPage = () => {
     return Array.from(set).sort();
   }, [logs]);
 
-  // Filter logs by search, role, user name, and action type
+  // Filter logs by search, role, user name, action type, and date filter
   const filteredLogs = useMemo(() => {
+    const today = new Date();
     return logs.filter(log => {
       const matchesSearch =
         (log.user_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -144,14 +167,30 @@ const MonitorPage = () => {
       const matchesUser = userFilter === 'all' || log.user_name === userFilter;
       const matchesAction = actionFilter === 'all' || log.action_type === actionFilter;
 
-      return matchesSearch && matchesRole && matchesUser && matchesAction;
+      let matchesDate = true;
+      if (log.created_at) {
+        const logDate = new Date(log.created_at);
+        if (dateFilter === 'today') {
+          matchesDate = logDate.toDateString() === today.toDateString();
+        } else if (dateFilter === '7days') {
+          const past = new Date();
+          past.setDate(past.getDate() - 7);
+          matchesDate = logDate >= past;
+        } else if (dateFilter === '30days') {
+          const past = new Date();
+          past.setDate(past.getDate() - 30);
+          matchesDate = logDate >= past;
+        }
+      }
+
+      return matchesSearch && matchesRole && matchesUser && matchesAction && matchesDate;
     });
-  }, [logs, searchQuery, roleFilter, userFilter, actionFilter]);
+  }, [logs, searchQuery, roleFilter, userFilter, actionFilter, dateFilter]);
 
   // Reset page number on filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, roleFilter, userFilter, actionFilter]);
+  }, [searchQuery, roleFilter, userFilter, actionFilter, dateFilter]);
 
   // Calculate Server-Side Pagination
   const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
@@ -311,6 +350,21 @@ const MonitorPage = () => {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full md:w-auto">
+            {/* Date Filter Dropdown (Khusus Hari Ini) */}
+            <div className="flex items-center gap-1.5 bg-indigo-50/90 border-2 border-indigo-200 px-3.5 py-2.5 rounded-2xl">
+              <HiClock className="text-indigo-600 text-base shrink-0" />
+              <select
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="bg-transparent text-xs font-black text-indigo-950 outline-none cursor-pointer"
+              >
+                <option value="today">📅 Khusus Hari Ini</option>
+                <option value="7days">🗓️ 7 Hari Terakhir</option>
+                <option value="30days">🗓️ 30 Hari Terakhir</option>
+                <option value="all">🌐 Semua Waktu</option>
+              </select>
+            </div>
+
             {/* User Name Filter Dropdown */}
             <select
               value={userFilter}
@@ -348,6 +402,24 @@ const MonitorPage = () => {
             </select>
           </div>
         </div>
+
+        {/* PROMINENT BANNER FOR TODAY'S LOGS */}
+        {dateFilter === 'today' && (
+          <div className="bg-gradient-to-r from-indigo-50 via-sky-50 to-blue-50 border-2 border-indigo-200/80 p-4 sm:p-5 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-bold text-indigo-950 shadow-sm">
+            <div className="flex items-center gap-3">
+              <span className="relative flex h-3.5 w-3.5 shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500"></span>
+              </span>
+              <span className="leading-relaxed">
+                📅 Menampilkan Log Aktivitas <strong>Khusus Hari Ini</strong> ({new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })})
+              </span>
+            </div>
+            <span className="bg-indigo-600 text-white text-[11px] font-black px-4 py-1.5 rounded-full uppercase tracking-wider shrink-0 shadow-sm">
+              {filteredLogs.length} Catatan Log Hari Ini
+            </span>
+          </div>
+        )}
 
         {/* TOP PAGINATION & LOG SUMMARY BAR (PLACED DIRECTLY ABOVE TABLE FOR FAST NAV) */}
         {filteredLogs.length > 0 && (
