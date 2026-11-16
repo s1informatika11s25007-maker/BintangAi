@@ -1114,79 +1114,58 @@ const LandingPage = () => {
 
             {/* SLIDE 8 — LOGIN / REGISTER */}
             {activeSlide === 7 && (
-              <section className="relative mx-auto flex h-[100dvh] max-h-[100dvh] bintang-screen-section w-full max-w-[1440px] items-center justify-center overflow-hidden px-4 py-3 sm:px-6 lg:px-8">
-                <div className="flex h-full max-h-[calc(100dvh-2rem)] w-full items-center justify-center lg:justify-between gap-6 lg:gap-8 origin-center scale-[0.88] sm:scale-[0.93] lg:scale-100 transition-transform">
+              <section className="relative mx-auto flex h-[100dvh] max-h-[100dvh] bintang-screen-section w-full max-w-[1280px] items-center justify-center overflow-hidden px-4 py-3 sm:px-6 lg:px-8">
+                {/* Floating Back Button at Bottom Right */}
+                <button
+                  type="button"
+                  onClick={() => goToSlide(0)}
+                  className="fixed bottom-5 right-5 sm:bottom-7 sm:right-7 z-50 flex items-center gap-2 rounded-full border border-blue-200/80 bg-white/95 px-4 py-2.5 text-xs font-black text-slate-800 shadow-xl backdrop-blur-md transition-all hover:scale-105 hover:border-sky-400 hover:bg-sky-50 hover:text-blue-900 focus:outline-none focus:ring-4 focus:ring-blue-100"
+                >
+                  <span aria-hidden="true" className="text-sm">←</span> Kembali ke Halaman Utama
+                </button>
 
-                  {/* LEFT HERO PANEL (DESKTOP) */}
-                  <aside className="hidden lg:flex flex-1 h-full max-h-[640px] flex-col justify-between overflow-hidden rounded-[32px] bg-gradient-to-br from-blue-800 via-blue-700 to-indigo-900 p-8 text-white shadow-2xl relative">
-                    <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full border-[30px] border-white/10" />
-                    <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 -left-20 h-72 w-72 rounded-full border-[34px] border-white/10" />
+                <div className="flex h-full max-h-[calc(100dvh-2.5rem)] w-full items-center justify-center gap-6 lg:gap-8 origin-center scale-[0.9] sm:scale-[0.94] lg:scale-100 transition-transform">
 
+                  {/* LEFT PROFESSIONAL PANEL (DESKTOP) */}
+                  <aside className="hidden lg:flex w-[380px] xl:w-[400px] shrink-0 h-full max-h-[580px] flex-col justify-between overflow-hidden rounded-[28px] bg-slate-900 p-7 text-white shadow-xl border border-slate-800/80 relative">
                     <div className="relative z-10">
-                      <button
-                        type="button"
-                        onClick={() => goToSlide(0)}
-                        className="mb-6 inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-white/20 focus:outline-none focus:ring-4 focus:ring-white/20"
-                      >
-                        ← Kembali ke beranda
-                      </button>
                       <BrandMark light />
-                      <p className="mt-8 text-xs font-black uppercase tracking-wider text-sky-200">
-                        {authTab === 'login' ? 'Selamat Datang Kembali!' : 'Pendaftaran Akun Baru'}
-                      </p>
-                      <h2 className="mt-2 text-3xl font-black leading-tight xl:text-4xl">
-                        {authTab === 'login'
-                          ? 'Siap melanjutkan belajar hari ini?'
-                          : 'Mulai petualangan belajarmu di Bintang AI.'}
-                      </h2>
-                      <p className="mt-3 text-sm leading-relaxed text-sky-100 max-w-md">
-                        {authTab === 'login'
-                          ? 'Masuk untuk membuka modul, menjawab kuis, dan bertanya langsung kepada Kak Bintang.'
-                          : 'Dapatkan aksesibilitas penuh untuk Tunanetra, Tunarungu, dan Tunawicara kelas 1–6 SD.'}
-                      </p>
+                      <div className="mt-8 space-y-2">
+                        <p className="text-[11px] font-black uppercase tracking-[0.16em] text-sky-400">Ruang Belajar SD</p>
+                        <h2 className="text-2xl font-black leading-tight text-white">
+                          {authTab === 'login' ? 'Selamat datang kembali!' : 'Buat akun baru'}
+                        </h2>
+                        <p className="text-xs leading-relaxed text-slate-400">
+                          {authTab === 'login'
+                            ? 'Masuk untuk membuka materi, latihan kuis, dan interaksi bersama Kak Bintang.'
+                            : 'Dapatkan aksesibilitas sesuai kebutuhan belajar siswa kelas 1–6 SD.'}
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="relative z-10 mt-6 rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs font-black uppercase tracking-wider text-sky-100">Fitur Aksesibilitas SD</p>
-                        <BintangAvatar size={34} state="idle" />
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 text-[11px] font-extrabold text-white">
-                        <span className="rounded-lg bg-white/15 px-2 py-1.5 text-center">🎧 Suara Lisan</span>
-                        <span className="rounded-lg bg-white/15 px-2 py-1.5 text-center">💬 Subtitle Visual</span>
-                        <span className="rounded-lg bg-white/15 px-2 py-1.5 text-center">🧩 Gestur Isyarat</span>
+                    <div className="relative z-10 space-y-3 border-t border-slate-800 pt-5">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Dukungan Aksesibilitas</p>
+                      <div className="flex flex-col gap-2 text-xs font-bold text-slate-300">
+                        <div className="flex items-center gap-2.5 rounded-xl bg-slate-800/80 px-3 py-2 border border-slate-700/50">
+                          <span className="text-base">🎧</span> <span>Suara & Pembaca Layar</span>
+                        </div>
+                        <div className="flex items-center gap-2.5 rounded-xl bg-slate-800/80 px-3 py-2 border border-slate-700/50">
+                          <span className="text-base">💬</span> <span>Subtitle & Teks Visual</span>
+                        </div>
+                        <div className="flex items-center gap-2.5 rounded-xl bg-slate-800/80 px-3 py-2 border border-slate-700/50">
+                          <span className="text-base">🧩</span> <span>Gestur Isyarat & Simbol</span>
+                        </div>
                       </div>
                     </div>
                   </aside>
 
                   {/* RIGHT FORM PANEL */}
-                  <div className="w-full max-w-[500px] lg:w-[480px] xl:w-[510px] shrink-0 h-full max-h-[640px] flex flex-col justify-center">
-                    <div className="overflow-hidden rounded-[28px] border border-blue-100/90 bg-white shadow-[0_22px_65px_rgba(30,64,175,0.11)]">
-                      {/* Header minimal dengan tombol panah kembali */}
-                      <header className="relative flex min-h-[58px] items-center justify-center border-b border-blue-100 bg-[#F5F8FF] px-14 py-2">
-                        <button
-                          type="button"
-                          onClick={() => goToSlide(0)}
-                          aria-label="Kembali ke halaman pertama"
-                          title="Kembali ke halaman pertama"
-                          className="group absolute left-3.5 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-xl border border-blue-200 bg-white text-blue-800 shadow-sm transition duration-200 hover:-translate-x-0.5 hover:border-sky-400 hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-sky-100"
-                        >
-                          <svg
-                            aria-hidden="true"
-                          viewBox="0 0 24 24"
-                          className="h-5 w-5 transition-transform duration-200 group-hover:-translate-x-0.5"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M19 12H5" />
-                          <path d="m12 19-7-7 7-7" />
-                        </svg>
-                      </button>
-                      <span className="text-base font-black tracking-tight text-blue-950">Bintang AI</span>
-                    </header>
+                  <div className="w-full max-w-[480px] lg:w-[460px] xl:w-[480px] shrink-0 h-full max-h-[580px] flex flex-col justify-center">
+                    <div className="overflow-hidden rounded-[28px] border border-blue-100/90 bg-white shadow-[0_20px_60px_rgba(30,64,175,0.08)]">
+                      {/* Header minimal tanpa tombol kembali */}
+                      <header className="flex min-h-[52px] items-center justify-center border-b border-blue-100/80 bg-[#F5F8FF] px-6 py-2">
+                        <span className="text-sm font-black tracking-tight text-blue-950">Bintang AI</span>
+                      </header>
 
                     <div className="px-5 py-7 sm:px-9 sm:py-8">
                       {/* Judul */}
