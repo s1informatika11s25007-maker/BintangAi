@@ -366,7 +366,7 @@ const MobileLandingPage = () => {
           >
             {/* SLIDE 0 — SAMBUTAN */}
             {activeSlide === 0 && (
-              <div className="flex flex-col justify-between h-full space-y-4 py-2">
+              <div className="flex flex-col justify-between min-h-full space-y-4 py-2">
                 <div className="text-center space-y-3 pt-2">
                   <span className="inline-block px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-xs font-extrabold text-blue-800">
                     Untuk teman kelas 1–6 SD
@@ -402,7 +402,7 @@ const MobileLandingPage = () => {
 
             {/* SLIDE 1 — MASALAH DAN SOLUSI */}
             {activeSlide === 1 && (
-              <div className="flex flex-col justify-center h-full space-y-4 py-2">
+              <div className="flex flex-col justify-center min-h-full space-y-4 py-2">
                 <div className="text-center space-y-1.5">
                   <span className="inline-block px-3 py-0.5 rounded-full bg-blue-50 border border-blue-100 text-[11px] font-black text-blue-800 uppercase tracking-wider">
                     Masalah dan solusi
@@ -435,7 +435,7 @@ const MobileLandingPage = () => {
 
             {/* SLIDE 2 — CARA BELAJAR */}
             {activeSlide === 2 && (
-              <div className="flex flex-col justify-center h-full space-y-3 py-2">
+              <div className="flex flex-col justify-center min-h-full space-y-3 py-2">
                 <div className="text-center space-y-1">
                   <span className="inline-block px-3 py-0.5 rounded-full bg-blue-50 border border-blue-100 text-[11px] font-black text-blue-800 uppercase tracking-wider">
                     Pilih yang nyaman
@@ -460,7 +460,7 @@ const MobileLandingPage = () => {
 
             {/* SLIDE 3 — FITUR UTAMA */}
             {activeSlide === 3 && (
-              <div className="flex flex-col justify-center h-full space-y-3 py-2">
+              <div className="flex flex-col justify-center min-h-full space-y-3 py-2">
                 <div className="text-center space-y-1">
                   <span className="inline-block px-3 py-0.5 rounded-full bg-blue-50 border border-blue-100 text-[11px] font-black text-blue-800 uppercase tracking-wider">
                     Yang bisa kamu lakukan
@@ -493,7 +493,7 @@ const MobileLandingPage = () => {
 
             {/* SLIDE 4 — ALUR PENGGUNA */}
             {activeSlide === 4 && (
-              <div className="flex flex-col justify-center h-full space-y-3 py-2">
+              <div className="flex flex-col justify-center min-h-full space-y-3 py-2">
                 <div className="text-center space-y-1">
                   <span className="inline-block px-3 py-0.5 rounded-full bg-blue-50 border border-blue-100 text-[11px] font-black text-blue-800 uppercase tracking-wider">
                     Kita belajar bersama
@@ -535,7 +535,7 @@ const MobileLandingPage = () => {
 
             {/* SLIDE 5 — COBA SIMULASI */}
             {activeSlide === 5 && (
-              <div className="flex flex-col justify-center h-full space-y-3 py-1">
+              <div className="flex flex-col justify-center min-h-full space-y-3 py-1">
                 <div className="text-center space-y-1">
                   <span className="inline-block px-3 py-0.5 rounded-full bg-blue-50 border border-blue-100 text-[11px] font-black text-blue-800 uppercase tracking-wider">
                     Yuk, coba!
@@ -548,7 +548,7 @@ const MobileLandingPage = () => {
                   <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-200 text-xs font-bold text-blue-800">{loginMessage.text}</div>
                 )}
 
-                <div className="space-y-2 overflow-y-auto max-h-[340px] pr-1">
+                <div className="space-y-2 pt-1">
                   {DEMO_ACCOUNTS.map((acc) => (
                     <div key={acc.key} className={`p-3 rounded-2xl border border-white/80 bg-gradient-to-br ${acc.color} shadow-xs flex items-center justify-between gap-2`}>
                       <div className="flex items-center gap-2.5 min-w-0">
@@ -573,7 +573,7 @@ const MobileLandingPage = () => {
 
             {/* SLIDE 6 — MULAI BELAJAR */}
             {activeSlide === 6 && (
-              <div className="flex flex-col justify-center items-center h-full text-center space-y-4 py-2">
+              <div className="flex flex-col justify-center items-center min-h-full text-center space-y-4 py-2">
                 <BintangAvatar size={130} state="happy" className="mx-auto" />
                 <div className="space-y-2">
                   <span className="inline-block px-3.5 py-1 rounded-full bg-sky-100 border border-sky-200 text-xs font-black uppercase tracking-wider text-sky-800">
