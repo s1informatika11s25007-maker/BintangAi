@@ -7,6 +7,7 @@ import { login } from '@/features/auth/api/sessionApi';
 import { supabase } from '@/lib/supabaseClient';
 import { logUserActivity } from '@/utils/logger';
 import BintangAvatar from '@/features/ai-tutor/components/BintangAvatar';
+import MobileLandingPage from './MobileLandingPage';
 
 /*
  * Bintang AI — Landing Page untuk siswa kelas 1–6 SD.
@@ -307,6 +308,23 @@ const LandingPage = () => {
   const [regMessage, setRegMessage] = useState(null);
 
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+
+  const [isMobileView, setIsMobileView] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth < 768 || window.matchMedia('(pointer: coarse)').matches;
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileView(window.innerWidth < 768 || window.matchMedia('(pointer: coarse)').matches);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  if (isMobileView) {
+    return <MobileLandingPage />;
+  }
 
   const speakText = useCallback((text) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
