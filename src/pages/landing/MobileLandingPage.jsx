@@ -293,8 +293,7 @@ const MobileLandingPage = () => {
     setLoadingDemoKey(account.key);
     setLoginLoading(true);
     setLoginMessage(null);
-    setRedirectMessage(`Membuka simulasi ${account.label}...`);
-    setRedirecting(true);
+    useAuthStore.getState().setAuthRedirecting(true, `Membuka simulasi ${account.label}...`);
     try {
       const authData = await login(account.email, account.pass);
       if (authData?.user) {
@@ -313,7 +312,7 @@ const MobileLandingPage = () => {
       }
     } catch (err) {
       setLoginMessage({ type: 'error', text: err.message || 'Gagal login ke akun demo.' });
-      setRedirecting(false);
+      useAuthStore.getState().setAuthRedirecting(false);
     } finally {
       setLoginLoading(false);
       setLoadingDemoKey(null);
@@ -328,8 +327,7 @@ const MobileLandingPage = () => {
     }
     setLoginLoading(true);
     setLoginMessage(null);
-    setRedirectMessage('Sedang memproses masuk ke Bintang AI...');
-    setRedirecting(true);
+    useAuthStore.getState().setAuthRedirecting(true, 'Sedang memproses masuk ke Bintang AI...');
     try {
       const authData = await login(loginEmail.trim(), loginPassword);
       if (authData?.user) {
@@ -346,7 +344,7 @@ const MobileLandingPage = () => {
       }
     } catch (err) {
       setLoginMessage({ type: 'error', text: err.message || 'Gagal masuk. Periksa email dan password Anda.' });
-      setRedirecting(false);
+      useAuthStore.getState().setAuthRedirecting(false);
     } finally {
       setLoginLoading(false);
     }

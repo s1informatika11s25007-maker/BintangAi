@@ -11,6 +11,14 @@ export const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, profile, loading } = useAuthStore();
   const location = useLocation();
 
+  React.useEffect(() => {
+    // Dismiss global auth transition overlay once destination route is mounted and painted
+    const timer = setTimeout(() => {
+      useAuthStore.getState().setAuthRedirecting(false);
+    }, 180);
+    return () => clearTimeout(timer);
+  }, [location.pathname]);
+
   if (loading) {
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center bg-slate-50 font-sans">

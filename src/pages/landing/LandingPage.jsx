@@ -582,8 +582,7 @@ const LandingPage = () => {
     setLoadingDemoKey(demoAccount.key);
     setLoginLoading(true);
     setLoginMessage(null);
-    setRedirectMessage(`Membuka simulasi ${demoAccount.label}...`);
-    setRedirecting(true);
+    useAuthStore.getState().setAuthRedirecting(true, `Membuka simulasi ${demoAccount.label}...`);
     stopAudio();
     try {
       const data = await login(demoAccount.email, demoAccount.pass);
@@ -603,7 +602,7 @@ const LandingPage = () => {
       const message = error?.message || 'Belum berhasil masuk ke akun simulasi.';
       setLoginMessage({ type: 'error', text: message });
       speakText(message);
-      setRedirecting(false);
+      useAuthStore.getState().setAuthRedirecting(false);
     } finally {
       setLoginLoading(false);
       setLoadingDemoKey(null);
@@ -622,8 +621,7 @@ const LandingPage = () => {
     }
     setLoginLoading(true);
     setLoginMessage(null);
-    setRedirectMessage('Sedang memproses masuk ke Bintang AI...');
-    setRedirecting(true);
+    useAuthStore.getState().setAuthRedirecting(true, 'Sedang memproses masuk ke Bintang AI...');
     stopAudio();
     try {
       const data = await login(loginEmail.trim(), loginPassword);
@@ -638,7 +636,7 @@ const LandingPage = () => {
       const message = error?.message || 'Belum berhasil masuk. Periksa email dan kata sandi.';
       setLoginMessage({ type: 'error', text: message });
       speakText(message);
-      setRedirecting(false);
+      useAuthStore.getState().setAuthRedirecting(false);
     } finally {
       setLoginLoading(false);
     }

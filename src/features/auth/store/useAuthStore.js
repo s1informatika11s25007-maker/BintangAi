@@ -10,10 +10,14 @@ export const useAuthStore = create(
       profile: null,
       loading: true,
       isLoggingOut: false,
+      authRedirecting: false,
+      authRedirectMessage: 'Membuka Ruang Belajar Bintang AI...',
       subscription: null,
 
       setUser: (user) => set({ user }),
       setProfile: (profile) => set({ profile }),
+      setAuthRedirecting: (status, message = 'Membuka Ruang Belajar Bintang AI...') =>
+        set({ authRedirecting: status, authRedirectMessage: message }),
 
       // Mendengarkan perubahan profil secara Realtime
       subscribeToProfile: (userId) => {

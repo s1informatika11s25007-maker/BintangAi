@@ -1,5 +1,7 @@
-import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { useLocation, Navigate, BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import BintangAvatar from './features/ai-tutor/components/BintangAvatar';
 import { InactivityLogout } from './features/auth';
 import { useAuthStore } from './features/auth/store/useAuthStore';
 import Subtitles from './features/accessibility/components/Subtitles';
@@ -44,7 +46,7 @@ function AppContent() {
   const location = useLocation();
   const { pingSupabase, pingAI } = useAI();
   const { showToast } = useNotification();
-  const { initializeAuth, isLoggingOut } = useAuthStore();
+  const { initializeAuth, isLoggingOut, authRedirecting, authRedirectMessage } = useAuthStore();
 
   // Initialize and verify authentication on app boot
   useEffect(() => {
@@ -139,6 +141,27 @@ function AppContent() {
       <BlindAIAssistant />
       <GlobalGestureCamera />
       <StudentBroadcastReceiverOverlay />
+
+      {/* GLOBAL FULLSCREEN REDIRECT & LOADING OVERLAY */}
+      <AnimatePresence>
+        {authRedirecting && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-white/98 backdrop-blur-xl text-slate-900 px-6 text-center select-none font-sans"
+          >
+            <div className="relative flex items-center justify-center mb-6">
+              <div className="absolute h-32 w-32 rounded-full border-4 border-sky-100 border-t-blue-600 animate-spin" />
+              <BintangAvatar size={96} state="happy" />
+            </div>
+            <h3 className="text-xl font-black text-blue-950">{authRedirectMessage || 'Membuka Ruang Belajar Bintang AI...'}</h3>
+            <p className="mt-2 text-xs font-bold text-sky-600 animate-pulse">Memuat halaman... Mohon tunggu sebentar 🚀</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <AppLayout>
         <Routes>
           {/* Public Landing Page Route */}
