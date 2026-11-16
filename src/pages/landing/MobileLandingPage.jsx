@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import BintangAvatar from '@/features/ai-tutor/components/BintangAvatar';
@@ -110,15 +110,63 @@ const LEARNING_MODES = [
   },
 ];
 
-const SLIDE_LABELS = [
-  'Sambutan',
-  'Mengapa Bintang AI',
-  'Cara belajar',
-  'Fitur utama',
-  'Alur pengguna',
-  'Coba simulasi',
-  'Mulai belajar',
-  'Masuk dan daftar',
+const SLIDE_MOTIONS = [
+  {
+    initial: { opacity: 0, clipPath: 'polygon(50% 0%, 50% 0%, 50% 100%, 50% 100%)', scale: 1.04 },
+    animate: { opacity: 1, clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)', scale: 1 },
+    exit: { opacity: 0, clipPath: 'polygon(50% 0%, 50% 0%, 50% 100%, 50% 100%)', scale: 0.97 },
+    transition: { duration: 0.82, ease: [0.76, 0, 0.24, 1] },
+    style: { transformPerspective: 1600, transformOrigin: 'center center' },
+  },
+  {
+    initial: (direction) => ({ opacity: 0, rotateY: direction > 0 ? 34 : -34, x: direction > 0 ? 100 : -100, scale: 0.94 }),
+    animate: { opacity: 1, rotateY: 0, x: 0, scale: 1 },
+    exit: (direction) => ({ opacity: 0, rotateY: direction > 0 ? -30 : 30, x: direction > 0 ? -80 : 80, scale: 0.96 }),
+    transition: { duration: 0.74, ease: [0.2, 0.8, 0.2, 1] },
+    style: { transformPerspective: 1500, transformOrigin: 'center center' },
+  },
+  {
+    initial: { opacity: 0, clipPath: 'circle(0% at 50% 48%)', scale: 0.96 },
+    animate: { opacity: 1, clipPath: 'circle(145% at 50% 48%)', scale: 1 },
+    exit: { opacity: 0, clipPath: 'circle(0% at 50% 48%)', scale: 1.03 },
+    transition: { duration: 0.88, ease: [0.16, 1, 0.3, 1] },
+    style: { transformPerspective: 1400, transformOrigin: 'center center' },
+  },
+  {
+    initial: { opacity: 0, scaleX: 0.08, rotateY: 24, x: -40 },
+    animate: { opacity: 1, scaleX: 1, rotateY: 0, x: 0 },
+    exit: { opacity: 0, scaleX: 0.08, rotateY: -24, x: 40 },
+    transition: { duration: 0.78, ease: [0.65, 0, 0.35, 1] },
+    style: { transformPerspective: 1700, transformOrigin: 'left center' },
+  },
+  {
+    initial: { opacity: 0, y: 110, rotateZ: 6, scale: 0.86, filter: 'blur(10px)' },
+    animate: { opacity: 1, y: 0, rotateZ: 0, scale: 1, filter: 'blur(0px)' },
+    exit: { opacity: 0, y: -90, rotateZ: -5, scale: 0.91, filter: 'blur(8px)' },
+    transition: { duration: 0.76, ease: [0.22, 1, 0.36, 1] },
+    style: { transformPerspective: 1400, transformOrigin: 'center center' },
+  },
+  {
+    initial: { opacity: 0, clipPath: 'inset(48% 0% 48% 0% round 28px)', scale: 1.04 },
+    animate: { opacity: 1, clipPath: 'inset(0% 0% 0% 0% round 0px)', scale: 1 },
+    exit: { opacity: 0, clipPath: 'inset(48% 0% 48% 0% round 28px)', scale: 0.98 },
+    transition: { duration: 0.8, ease: [0.7, 0, 0.2, 1] },
+    style: { transformPerspective: 1400, transformOrigin: 'center center' },
+  },
+  {
+    initial: { opacity: 0, scale: 0.68, y: 55, filter: 'blur(18px)' },
+    animate: { opacity: 1, scale: 1, y: 0, filter: 'blur(0px)' },
+    exit: { opacity: 0, scale: 1.22, y: -24, filter: 'blur(16px)' },
+    transition: { duration: 0.9, ease: [0.16, 1, 0.3, 1] },
+    style: { transformPerspective: 1300, transformOrigin: 'center center' },
+  },
+  {
+    initial: (direction) => ({ opacity: 0, x: direction > 0 ? 26 : -26, y: 10, scale: 0.99 }),
+    animate: { opacity: 1, x: 0, y: 0, scale: 1 },
+    exit: (direction) => ({ opacity: 0, x: direction > 0 ? -20 : 20, y: -6, scale: 0.99 }),
+    transition: { duration: 0.42, ease: [0.2, 0.8, 0.2, 1] },
+    style: {},
+  },
 ];
 
 const MobileLandingPage = () => {
@@ -176,7 +224,7 @@ const MobileLandingPage = () => {
     const touch = e.changedTouches[0];
     const dx = touch.clientX - touchStartRef.current.x;
     const dy = touch.clientY - touchStartRef.current.y;
-    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 45) {
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
       if (dx < 0 && activeSlide < 7) {
         goToSlide(activeSlide + 1);
       } else if (dx > 0 && activeSlide > 0) {
@@ -265,29 +313,15 @@ const MobileLandingPage = () => {
     }
   };
 
-  const slideVariants = {
-    enter: (direction) => ({
-      x: direction > 0 ? '100%' : '-100%',
-      opacity: 0,
-      scale: 0.96,
-    }),
-    center: {
-      x: 0,
-      opacity: 1,
-      scale: 1,
-    },
-    exit: (direction) => ({
-      x: direction > 0 ? '-100%' : '100%',
-      opacity: 0,
-      scale: 0.96,
-    }),
-  };
+  const currentMotion = SLIDE_MOTIONS[activeSlide];
+  const initialMotion = typeof currentMotion.initial === 'function' ? currentMotion.initial(slideDirection) : currentMotion.initial;
+  const exitMotion = typeof currentMotion.exit === 'function' ? currentMotion.exit(slideDirection) : currentMotion.exit;
 
   return (
     <div className="relative min-h-[100dvh] h-[100dvh] w-full bg-gradient-to-b from-sky-50/80 via-white to-blue-50/80 text-slate-900 flex flex-col justify-between overflow-hidden font-sans select-none">
 
       {/* STICKY TOP HEADER */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-blue-100/80 px-4 py-2.5 flex items-center justify-between shrink-0 shadow-2xs">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-blue-100/80 px-4 py-2.5 flex items-center justify-between shrink-0 shadow-2xs">
         <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => goToSlide(0)}>
           <div className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-xl border-2 border-blue-100 bg-white p-0.5 shadow-sm">
             <BintangAvatar size={34} state="idle" />
@@ -311,17 +345,23 @@ const MobileLandingPage = () => {
         </div>
       </header>
 
-      {/* SLIDE CONTENT AREA WITH 100% PARITY & MATCHING SLIDE ANIMATIONS */}
+      {/* MAIN SLIDE ANIMATION AREA (100% MATCHING LAPTOP SLIDE ANIMATION & CONTENT) */}
       <div className="relative flex-1 w-full overflow-hidden" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
         <AnimatePresence mode="wait" custom={slideDirection}>
           <motion.main
             key={activeSlide}
             custom={slideDirection}
-            variants={slideVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ duration: 0.35, ease: [0.25, 1, 0.5, 1] }}
+            initial={initialMotion}
+            animate={currentMotion.animate}
+            exit={exitMotion}
+            transition={currentMotion.transition}
+            style={{
+              ...currentMotion.style,
+              WebkitOverflowScrolling: 'touch',
+              touchAction: 'pan-y',
+              willChange: 'transform, opacity',
+              backfaceVisibility: 'hidden',
+            }}
             className="absolute inset-0 flex flex-col justify-between overflow-y-auto px-4 py-3 sm:px-6"
           >
             {/* SLIDE 0 — SAMBUTAN */}
@@ -784,45 +824,14 @@ const MobileLandingPage = () => {
         </AnimatePresence>
       </div>
 
-      {/* BOTTOM SLIDE NAVIGATION BAR (SLIDE-PER-SLIDE CONTROLS & CHAPTER DOTS) */}
-      <footer className="sticky bottom-0 z-40 bg-white/95 backdrop-blur-md border-t border-blue-100 px-4 py-2.5 flex items-center justify-between shrink-0 shadow-lg">
-        <button
-          onClick={() => goToSlide(activeSlide - 1)}
-          disabled={activeSlide === 0}
-          className="px-3 py-1.5 rounded-xl border border-blue-200 bg-white text-xs font-extrabold text-blue-800 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 active:scale-95 transition-transform"
-        >
-          ← Sebelum
-        </button>
-
-        {/* Chapter Dots Indicator */}
-        <div className="flex items-center gap-1.5">
-          {SLIDE_LABELS.map((label, idx) => (
-            <button
-              key={label}
-              onClick={() => goToSlide(idx)}
-              aria-label={label}
-              className={`h-2 rounded-full transition-all ${idx === activeSlide ? 'w-5 bg-blue-700' : 'w-2 bg-blue-200'}`}
-            />
-          ))}
-        </div>
-
-        <button
-          onClick={() => goToSlide(activeSlide + 1)}
-          disabled={activeSlide === 7}
-          className="px-3 py-1.5 rounded-xl bg-blue-700 text-xs font-extrabold text-white disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 active:scale-95 transition-transform shadow-xs"
-        >
-          Sesudah →
-        </button>
-
-        {/* Floating Top Arrow (↑) */}
-        <button
-          onClick={() => goToSlide(0)}
-          className="fixed bottom-14 right-4 z-50 h-10 w-10 rounded-full border border-blue-200 bg-white text-blue-900 shadow-xl backdrop-blur-md flex items-center justify-center text-lg font-bold active:scale-90 transition-transform"
-          aria-label="Kembali ke Slide Utama"
-        >
-          ↑
-        </button>
-      </footer>
+      {/* Floating Top Arrow Button (NO FOOTER BAR AT ALL) */}
+      <button
+        onClick={() => goToSlide(0)}
+        className="fixed bottom-6 right-5 z-50 h-11 w-11 rounded-full border border-blue-200/80 bg-white/95 text-blue-900 shadow-xl backdrop-blur-md flex items-center justify-center text-xl font-bold active:scale-90 transition-transform"
+        aria-label="Kembali ke Slide Utama"
+      >
+        ↑
+      </button>
     </div>
   );
 };
