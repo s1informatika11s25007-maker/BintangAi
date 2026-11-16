@@ -55,12 +55,6 @@ const AppLayout = ({ children }) => {
 
   const currentNav = navItems[role] || [];
 
-  const pageVariants = {
-    initial: { opacity: 0, x: 20 },
-    animate: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: -20 },
-  };
-
   const isFullScreenPage = ['/student/tanya-ai', '/student/playground'].includes(location.pathname);
 
   return (
@@ -93,19 +87,9 @@ const AppLayout = ({ children }) => {
         {role === 'guru' && <TeacherVoiceBroadcastWidget />}
 
         <main className={`flex-1 w-full relative ${isFullScreenPage ? 'pb-0' : 'pb-28 lg:pb-0'}`}>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={location.pathname}
-              variants={pageVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-              className="min-h-full"
-            >
-              {children}
-            </motion.div>
-          </AnimatePresence>
+          <div className="min-h-full">
+            {children}
+          </div>
         </main>
       </div>
 

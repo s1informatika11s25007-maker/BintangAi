@@ -8,10 +8,11 @@ import StudentSidebar from '@/components/layout/StudentSidebar';
 import ParentSidebar from '@/components/layout/ParentSidebar';
 import { useSubtitle } from '@/features/accessibility/components/Subtitles';
 import { useAccessibility } from '@/features/accessibility/hooks/useAccessibility';
+import { useAccessibilityStore } from '@/features/accessibility/store/accessibilityStore';
 import VoiceSettingsPanel from '@/features/accessibility/components/VoiceSettingsPanel';
 import {
   HiUser, HiCog, HiFingerPrint, HiShieldCheck,
-  HiLogout, HiClipboardCopy, HiCheckCircle, HiVolumeUp, HiAcademicCap
+  HiLogout, HiClipboardCopy, HiCheckCircle, HiVolumeUp, HiAcademicCap, HiAdjustments, HiEye
 } from 'react-icons/hi';
 
 const Profile = () => {
@@ -19,6 +20,14 @@ const Profile = () => {
   const navigate = useNavigate();
   const { showSubtitle } = useSubtitle();
   const { isBlind, isDeaf } = useAccessibility();
+
+  const {
+    setFontSize,
+    setHighContrast,
+    setAutoMode,
+    setManualMode,
+    reapplyMode
+  } = useAccessibilityStore();
 
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState(
@@ -29,11 +38,23 @@ const Profile = () => {
   const [message, setMessage] = useState(null);
 
   const [accSettings, setAccSettings] = useState(() => {
+    const storeState = useAccessibilityStore.getState();
     try {
       const saved = localStorage.getItem('accessibility_settings');
-      return saved ? JSON.parse(saved) : { autoMode: true, voiceSpeed: 1.0, subtitleSize: 'medium', highContrast: false, fontSize: 100 };
+      const parsed = saved ? JSON.parse(saved) : {};
+      return {
+        autoMode: storeState.autoMode ?? parsed.autoMode ?? true,
+        highContrast: storeState.highContrast ?? parsed.highContrast ?? false,
+        fontSize: storeState.fontSize ?? parsed.fontSize ?? 100,
+        voiceSpeed: parsed.voiceSpeed ?? 1.0,
+      };
     } catch {
-      return { autoMode: true, voiceSpeed: 1.0, subtitleSize: 'medium', highContrast: false, fontSize: 100 };
+      return {
+        autoMode: storeState.autoMode ?? true,
+        highContrast: storeState.highContrast ?? false,
+        fontSize: storeState.fontSize ?? 100,
+        voiceSpeed: 1.0,
+      };
     }
   });
 
@@ -114,11 +135,77 @@ const Profile = () => {
 
   useEffect(() => {
     document.documentElement.style.fontSize = `${accSettings.fontSize}%`;
-  }, [accSettings.fontSize]);
+    if (accSettings.highContrast) {
+      document.documentElement.classList.add('high-contrast-mode');
+      document.documentElement.setAttribute('data-contrast', 'high');
+    } else {
+      document.documentElement.classList.remove('high-contrast-mode');
+      document.documentElement.setAttribute('data-contrast', 'normal');
+    }
+  }, [accSettings.fontSize, accSettings.highContrast]);
 
-  const saveAccSettings = (newSettings) => {
+  const saveAccSettings = async (newSettings) => {
     setAccSettings(newSettings);
-    localStorage.setItem('accessibility_settings', JSON.stringify(newSettings));
+    try {
+      localStorage.setItem('accessibility_settings', JSON.stringify(newSettings));
+    } catch (e) {}
+
+    if (newSettings.fontSize !== undefined) setFontSize(newSettings.fontSize);
+    if (newSettings.highContrast !== undefined) setHighContrast(newSettings.highContrast);
+    if (newSettings.autoMode !== undefined) setAutoMode(newSettings.autoMode);
+
+    reapplyMode();
+
+    if (profile?.id) {
+      try {
+        const updatedSettings = {
+          ...(profile.settings || {}),
+          ui: {
+            theme: newSettings.highContrast ? 'dark' : 'light',
+            contrast: newSettings.highContrast ? 'high' : 'normal',
+            font_size: `${newSettings.fontSize}%`,
+            auto_mode: newSettings.autoMode
+          }
+        };
+        await supabase.from('profiles').update({ settings: updatedSettings }).eq('id', profile.id);
+        setProfile({ ...profile, settings: updatedSettings });
+      } catch (e) {
+        console.error('Error updating accessibility settings in DB:', e);
+      }
+    }
+  };
+
+  const handleUpdateDisabilityMode = async (newMode) => {
+    if (!profile?.id) return;
+    setSaving(true);
+    setMessage(null);
+    try {
+      const cleanMode = newMode === 'tidak_ada' ? 'tidak_ada' : newMode;
+      const disabilitiesList = cleanMode === 'tidak_ada' ? [] : [cleanMode];
+
+      const { error } = await supabase.from('profiles').update({
+        disability_type: cleanMode,
+        disabilities: disabilitiesList,
+        updated_at: new Date().toISOString()
+      }).eq('id', profile.id);
+
+      if (error) throw error;
+
+      const updatedProfile = {
+        ...profile,
+        disability_type: cleanMode,
+        disabilities: disabilitiesList
+      };
+
+      setProfile(updatedProfile);
+      setManualMode(cleanMode);
+      setMessage({ type: 'success', text: 'Mode disabilitas / kebutuhan belajar berhasil diubah!' });
+    } catch (err) {
+      console.error('Error updating disability mode:', err);
+      setMessage({ type: 'error', text: 'Gagal memperbarui mode disabilitas: ' + err.message });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleLogout = async () => {
@@ -161,19 +248,34 @@ const Profile = () => {
   };
 
   const handleChangePassword = async () => {
-    if (newPassword.length < 6) {
-      setMessage({ type: 'error', text: 'Password minimal 6 karakter' });
+    if (!newPassword || newPassword.length < 6) {
+      setMessage({ type: 'error', text: 'Kata sandi (password) baru minimal 6 karakter' });
       return;
     }
     setSaving(true);
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    if (!error) {
-      setMessage({ type: 'success', text: 'Password berhasil diubah!' });
+    setMessage(null);
+    try {
+      const { error: authError } = await supabase.auth.updateUser({ password: newPassword });
+      if (authError) throw authError;
+
+      if (profile?.id) {
+        const { error: dbError } = await supabase.from('profiles').update({
+          student_password_hash: newPassword,
+          updated_at: new Date().toISOString()
+        }).eq('id', profile.id);
+
+        if (dbError) console.warn('Warning: Could not update student_password_hash in DB profile:', dbError);
+        setProfile({ ...profile, student_password_hash: newPassword });
+      }
+
+      setMessage({ type: 'success', text: 'Kata sandi (password) baru berhasil diperbarui!' });
       setNewPassword('');
-    } else {
-      setMessage({ type: 'error', text: error.message });
+    } catch (err) {
+      console.error('Gagal memperbarui password:', err);
+      setMessage({ type: 'error', text: err.message || 'Gagal memperbarui kata sandi. Silakan coba lagi.' });
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const copyId = (text) => {
@@ -205,11 +307,6 @@ const Profile = () => {
   };
 
   const currentTabs = tabs[profile?.role] || tabs.siswa;
-
-  const containerVariants = {
-    hidden: { opacity: 0, x: 20 },
-    visible: { opacity: 1, x: 0, transition: { duration: 0.4 } }
-  };
 
   const classOptions = ["1 SD", "2 SD", "3 SD", "4 SD", "5 SD", "6 SD"];
 
@@ -267,15 +364,10 @@ const Profile = () => {
 
           {/* Tab Content */}
           <div className="lg:col-span-9">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-                exit={{ opacity: 0, x: -20 }}
-                className="bg-white p-6 md:p-10 rounded-[2.5rem] shadow-sm border border-slate-100"
-              >
+            <div
+              key={activeTab}
+              className="bg-white p-6 md:p-10 rounded-[2.5rem] shadow-sm border border-slate-100"
+            >
                 {activeTab === 'pengaturan_suara' && (
                   <VoiceSettingsPanel />
                 )}
@@ -356,12 +448,14 @@ const Profile = () => {
 
                 {activeTab === 'pengaturan_akses' && (
                   <div className="space-y-8 max-w-xl">
+                    {/* Auto-Mode Toggle */}
                     <div className="flex items-center justify-between p-6 bg-slate-50 rounded-2xl border border-slate-100">
                       <div>
                         <p className="font-bold text-slate-800">Auto-Mode Aksesibilitas</p>
-                        <p className="text-xs text-slate-500">Aktifkan fitur bantuan suara secara otomatis</p>
+                        <p className="text-xs text-slate-500">Aktifkan fitur bantuan suara secara otomatis saat membuka halaman</p>
                       </div>
                       <button
+                        type="button"
                         onClick={() => saveAccSettings({...accSettings, autoMode: !accSettings.autoMode})}
                         className={`w-12 h-6 rounded-full relative transition-colors ${accSettings.autoMode ? 'bg-indigo-600' : 'bg-slate-300'}`}
                       >
@@ -369,17 +463,38 @@ const Profile = () => {
                       </button>
                     </div>
 
-                    <div className="space-y-4">
+                    {/* High Contrast Mode Toggle */}
+                    <div className="flex items-center justify-between p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                      <div>
+                        <p className="font-bold text-slate-800">Mode Kontras Tinggi (High Contrast)</p>
+                        <p className="text-xs text-slate-500">Tampilan dengan kontras tinggi untuk memperjelas batas elemen</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => saveAccSettings({...accSettings, highContrast: !accSettings.highContrast})}
+                        className={`w-12 h-6 rounded-full relative transition-colors ${accSettings.highContrast ? 'bg-indigo-600' : 'bg-slate-300'}`}
+                      >
+                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${accSettings.highContrast ? 'left-7' : 'left-1'}`} />
+                      </button>
+                    </div>
+
+                    {/* Text Size Slider */}
+                    <div className="space-y-4 p-6 bg-slate-50 rounded-2xl border border-slate-100">
                       <div className="flex justify-between items-center">
                         <label className="text-xs font-bold text-slate-700 uppercase">Ukuran Teks Platform</label>
-                        <span className="font-black text-indigo-600">{accSettings.fontSize}%</span>
+                        <span className="font-black text-indigo-600 px-3 py-1 bg-indigo-50 rounded-lg text-xs">{accSettings.fontSize}%</span>
                       </div>
                       <input
                         type="range" min="80" max="150" step="10"
                         value={accSettings.fontSize}
                         onChange={e => saveAccSettings({...accSettings, fontSize: parseInt(e.target.value)})}
-                        className="w-full accent-indigo-600"
+                        className="w-full accent-indigo-600 cursor-pointer h-2 bg-slate-200 rounded-lg"
                       />
+                      <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                        <span>Kecil (80%)</span>
+                        <span>Normal (100%)</span>
+                        <span>Sangat Besar (150%)</span>
+                      </div>
                     </div>
 
                     <div className="pt-6 border-t border-slate-100">
@@ -573,8 +688,7 @@ const Profile = () => {
                     </div>
                   </div>
                 )}
-              </motion.div>
-            </AnimatePresence>
+            </div>
           </div>
         </div>
       </main>
