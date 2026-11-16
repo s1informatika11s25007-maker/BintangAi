@@ -779,7 +779,7 @@ const MobileLandingPage = () => {
                         </div>
                       </div>
                       <button type="submit" disabled={loginLoading} className={`${primaryButton} w-full mt-2`}>
-                        {loginLoading ? 'Sedang memeriksa...' : 'Masuk dan mulai belajar 🚀'}
+                        {loginLoading ? 'Sedang memeriksa akun...' : 'Masuk dan mulai belajar'}
                       </button>
 
                       <div className="pt-2 text-center">
