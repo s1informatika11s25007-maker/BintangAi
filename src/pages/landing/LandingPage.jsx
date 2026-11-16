@@ -281,14 +281,14 @@ function BintangMascot({ size = 48, className = '', state = 'idle' }) {
 
 function BrandMark({ light = false }) {
   return (
-    <div className="flex items-center gap-3">
-      <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border-2 border-blue-100 bg-white shadow-[0_5px_0_#bfdbfe] overflow-hidden p-0.5" aria-hidden="true">
-        <BintangAvatar size={38} state="idle" />
+    <div className="flex items-center gap-3.5">
+      <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl border-2 border-blue-100 bg-white shadow-[0_6px_0_#bfdbfe] overflow-hidden p-1 transition-transform hover:scale-105" aria-hidden="true">
+        <BintangAvatar size={54} state="idle" />
       </span>
-      <span>
-        <span className={`block text-lg font-black leading-tight ${light ? 'text-white' : 'text-blue-950'}`}>Bintang AI</span>
-        <span className={`block text-xs font-semibold ${light ? 'text-blue-100' : 'text-blue-600'}`}>Teman Belajar Kita</span>
-      </span>
+      <div>
+        <span className={`block text-xl sm:text-2xl font-black leading-tight tracking-tight ${light ? 'text-white' : 'text-blue-950'}`}>Bintang AI</span>
+        <span className={`block text-xs sm:text-sm font-bold tracking-wide ${light ? 'text-blue-100' : 'text-blue-600'}`}>Teman Belajar Kita</span>
+      </div>
     </div>
   );
 }
@@ -1060,7 +1060,7 @@ const LandingPage = () => {
                   </div>
 
                   <div className="relative mx-auto w-full max-w-2xl">
-                    <div className="absolute -right-2 -top-6 z-10 sm:-right-3" aria-hidden="true"><BintangMascot size={64} label={null} /></div>
+                    <div className="absolute -right-3 -top-8 z-10 sm:-right-4" aria-hidden="true"><BintangMascot size={96} label={null} /></div>
                     <div className="rounded-3xl border border-white bg-white/90 p-3.5 sm:p-5 shadow-lg">
                       <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
                         <div>
@@ -1241,7 +1241,7 @@ const LandingPage = () => {
             {/* SLIDE 7 — AJAKAN MULAI */}
             {activeSlide === 6 && (
               <section className="relative mx-auto flex bintang-screen-section min-h-[100dvh] w-full max-w-6xl flex-col items-center justify-center overflow-hidden px-5 py-16 text-center">
-                <BintangMascot size={116} label="Maskot Bintang tersenyum" className="bintang-mascot-hero" />
+                <BintangMascot size={150} label="Maskot Bintang tersenyum" className="bintang-mascot-hero" />
                 <p className="mt-9 rounded-full bg-sky-100 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-sky-800">Bintang AI · Ruang Belajar SD</p>
                 <h2 className="mt-6 max-w-4xl text-4xl font-black leading-tight tracking-tight text-slate-900 sm:text-6xl">Setiap anak punya kesempatan untuk bersinar!</h2>
                 <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">Ayo mulai petualangan belajar. Kamu bisa membuat akun atau masuk ke akun yang sudah ada.</p>
@@ -1503,7 +1503,7 @@ const LandingPage = () => {
               initial={{ opacity: 0, y: 20, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 12, scale: 0.98 }}
               transition={{ duration: prefersReducedMotion ? 0.01 : 0.25 }}
             >
-              <span className="grid h-16 w-16 place-items-center rounded-2xl border border-blue-100 bg-blue-50" aria-hidden="true"><BintangMascot size={58} label={null} /></span>
+              <span className="grid h-20 w-20 place-items-center rounded-2xl border border-blue-100 bg-blue-50 overflow-hidden" aria-hidden="true"><BintangMascot size={72} label={null} /></span>
               <p className="mt-5 text-xs font-black uppercase tracking-[0.16em] text-sky-700">Tur pengenalan</p>
               <h2 id="bintang-tour-title" className="mt-2 text-3xl font-black text-slate-900">Jelajahi Bintang AI</h2>
               <p className="mt-3 text-base leading-7 text-slate-600">Halaman akan berpindah sendiri agar kamu bisa melihat fitur-fitur Bintang AI. Kamu tetap bisa menjeda atau memilih halaman sendiri.</p>
