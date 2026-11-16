@@ -210,6 +210,12 @@ const MobileLandingPage = () => {
     setActiveSlide(safeIndex);
   }, [activeSlide]);
 
+  const handleSelectRoleInitial = (modeId) => {
+    setManualMode(modeId);
+    const destination = modeId === 'tunanetra' ? '/student/playground' : '/student/dashboard';
+    navigate(destination);
+  };
+
   const openAuth = (tab) => {
     setAuthTab(tab);
     setLoginMessage(null);
@@ -438,6 +444,46 @@ const MobileLandingPage = () => {
                     <div className="flex items-center justify-center gap-1.5 rounded-xl bg-sky-50 py-2"><span>👨‍🏫</span> <span>Guru</span></div>
                     <div className="flex items-center justify-center gap-1.5 rounded-xl bg-blue-50 py-2"><span>👪</span> <span>Orang tua</span></div>
                   </div>
+                </div>
+
+                {/* PILIH CARA BELAJARMU CARD (100% MATCHING DESKTOP WEBPAGE SLIDE 1) */}
+                <div className="rounded-3xl border border-blue-100 bg-white/95 p-4 shadow-lg space-y-3 mt-2">
+                  <div className="flex items-center justify-between border-b border-blue-50 pb-2.5">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-sky-600">Mulai dari sini</p>
+                      <h2 className="text-base font-black text-slate-900">Pilih cara belajarmu</h2>
+                    </div>
+                    <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-extrabold text-blue-800">
+                      Bisa diubah nanti
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    {LEARNING_MODES.map((modeItem) => (
+                      <button
+                        key={modeItem.id}
+                        type="button"
+                        onClick={() => handleSelectRoleInitial(modeItem.id)}
+                        className="w-full flex items-center gap-3 p-3 rounded-2xl border-2 border-blue-100/80 bg-[#F3F8FF] hover:border-sky-500 hover:bg-sky-50 text-left transition-all active:scale-98 shadow-2xs"
+                      >
+                        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white text-2xl shadow-2xs">
+                          {modeItem.icon}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <span className="block text-[10px] font-black uppercase tracking-wider text-slate-500">{modeItem.note}</span>
+                          <span className="block text-sm font-black text-slate-900">{modeItem.title}</span>
+                          <span className="block text-[11px] leading-tight text-slate-600 line-clamp-2">{modeItem.description}</span>
+                        </div>
+                        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white text-xs font-black text-sky-700 shadow-2xs">
+                          →
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <p className="text-[10px] font-medium leading-relaxed text-slate-500 text-center pt-1">
+                    Catatan: Setiap anak dapat memakai pengaturan dasar seperti ukuran teks, suara, dan kontras.
+                  </p>
                 </div>
               </div>
             )}
