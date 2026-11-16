@@ -287,6 +287,7 @@ const LandingPage = () => {
   const [loginPassword, setLoginPassword] = useState('');
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
+  const [loadingDemoKey, setLoadingDemoKey] = useState(null);
   const [loginMessage, setLoginMessage] = useState(null);
 
   const [regFullName, setRegFullName] = useState('');
@@ -576,6 +577,7 @@ const LandingPage = () => {
 
   const handleDemoLogin = async (demoAccount) => {
     if (!demoAccount) return;
+    setLoadingDemoKey(demoAccount.key);
     setLoginLoading(true);
     setLoginMessage(null);
     stopAudio();
@@ -599,6 +601,7 @@ const LandingPage = () => {
       speakText(message);
     } finally {
       setLoginLoading(false);
+      setLoadingDemoKey(null);
     }
   };
 
@@ -798,21 +801,24 @@ const LandingPage = () => {
     );
   };
 
-  const renderDemoCard = (account) => (
-    <article key={account.key} className={`flex h-full flex-col rounded-[26px] border border-white/80 bg-gradient-to-br ${account.color} p-5 shadow-[0_8px_24px_rgba(15,23,42,0.07)]`}>
-      <div className="flex items-start gap-4">
-        <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-white text-3xl shadow-sm" aria-hidden="true">{account.icon}</span>
-        <div className="min-w-0">
-          <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-600">{account.label}</p>
-          <h3 className="mt-1 text-lg font-black leading-snug text-slate-900">{account.description}</h3>
+  const renderDemoCard = (account) => {
+    const isThisLoading = loadingDemoKey === account.key;
+    return (
+      <article key={account.key} className={`flex h-full flex-col rounded-[26px] border border-white/80 bg-gradient-to-br ${account.color} p-5 shadow-[0_8px_24px_rgba(15,23,42,0.07)]`}>
+        <div className="flex items-start gap-4">
+          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-white text-3xl shadow-sm" aria-hidden="true">{account.icon}</span>
+          <div className="min-w-0">
+            <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-600">{account.label}</p>
+            <h3 className="mt-1 text-lg font-black leading-snug text-slate-900">{account.description}</h3>
+          </div>
         </div>
-      </div>
-      <p className="mt-4 text-sm leading-6 text-slate-700">{account.support}</p>
-      <button type="button" disabled={loginLoading} onClick={() => handleDemoLogin(account)} className={`${primaryButton} mt-5 w-full text-sm`}>
-        {loginLoading ? 'Sedang membuka…' : 'Coba akun ini'} <span aria-hidden="true">→</span>
-      </button>
-    </article>
-  );
+        <p className="mt-4 text-sm leading-6 text-slate-700">{account.support}</p>
+        <button type="button" disabled={loginLoading} onClick={() => handleDemoLogin(account)} className={`${primaryButton} mt-5 w-full text-sm`}>
+          {isThisLoading ? 'Sedang membuka…' : 'Coba akun ini'} <span aria-hidden="true">→</span>
+        </button>
+      </article>
+    );
+  };
 
   const demoStudents = DEMO_ACCOUNTS.filter((account) => account.group === 'siswa');
   const demoTeacher = DEMO_ACCOUNTS.find((account) => account.group === 'guru');
