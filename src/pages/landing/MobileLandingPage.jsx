@@ -110,6 +110,17 @@ const LEARNING_MODES = [
   },
 ];
 
+const SLIDE_LABELS = [
+  'Sambutan',
+  'Mengapa Bintang AI',
+  'Cara belajar',
+  'Fitur utama',
+  'Alur pengguna',
+  'Coba simulasi',
+  'Mulai belajar',
+  'Masuk dan daftar',
+];
+
 const SLIDE_MOTIONS = [
   {
     initial: { opacity: 0, clipPath: 'polygon(50% 0%, 50% 0%, 50% 100%, 50% 100%)', scale: 1.04 },
@@ -235,7 +246,7 @@ const MobileLandingPage = () => {
 
     if (scroller && ((movingDown && !atBottom) || (!movingDown && !atTop))) return;
 
-    event.preventDefault();
+    if (event.cancelable) event.preventDefault();
     wheelLockRef.current = true;
     goToSlide(activeSlide + (movingDown ? 1 : -1));
     window.setTimeout(() => { wheelLockRef.current = false; }, 700);
