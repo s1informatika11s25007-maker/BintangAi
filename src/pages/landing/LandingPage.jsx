@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useAccessibilityStore } from '@/features/accessibility/store/accessibilityStore';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
-import { login } from '@/features/auth/api/sessionApi';
+import { login, fetchDemoAccounts, demoLogin } from '@/features/auth/api/sessionApi';
 import { supabase } from '@/lib/supabaseClient';
 import { logUserActivity } from '@/utils/logger';
 import BintangAvatar from '@/features/ai-tutor/components/BintangAvatar';
@@ -11,68 +11,8 @@ import MobileLandingPage from './MobileLandingPage';
 
 /*
  * Bintang AI — Landing Page untuk siswa kelas 1–6 SD.
- * Versi lengkap dengan desain login/register yang lebih bersih dan elegan.
- * Alur autentikasi, akun simulasi, integrasi store, aksesibilitas, dan tur
- * pengenalan tetap dipertahankan.
+ * Akun simulasi demo terintegrasi langsung dengan database secara dinamis.
  */
-
-const DEMO_METADATA = [
-  {
-    key: 'tunanetra',
-    group: 'siswa',
-    label: 'Siswa Tunanetra',
-    email: import.meta.env.VITE_DEMO_TUNANETRA_EMAIL || 'demo.tunanetra@gmail.com',
-    pass: import.meta.env.VITE_DEMO_PASSWORD || 'demo123456',
-    description: 'Budi Santoso · Kelas 4 SD',
-    support: 'Panduan suara, pembaca layar, dan deskripsi gambar',
-    icon: '🎧',
-    color: 'from-blue-50 to-sky-50',
-  },
-  {
-    key: 'tunarungu',
-    group: 'siswa',
-    label: 'Siswa Tunarungu',
-    email: import.meta.env.VITE_DEMO_TUNARUNGU_EMAIL || 'demo.tunarungu@gmail.com',
-    pass: import.meta.env.VITE_DEMO_PASSWORD || 'demo123456',
-    description: 'Siti Rahma · Kelas 3 SD',
-    support: 'Teks yang jelas, subtitle, dan petunjuk visual',
-    icon: '💬',
-    color: 'from-sky-50 to-blue-50',
-  },
-  {
-    key: 'tunawicara',
-    group: 'siswa',
-    label: 'Siswa Tunawicara',
-    email: import.meta.env.VITE_DEMO_TUNAWICARA_EMAIL || 'demo.tunawicara@gmail.com',
-    pass: import.meta.env.VITE_DEMO_PASSWORD || 'demo123456',
-    description: 'Doni Pratama · Kelas 5 SD',
-    support: 'Komunikasi dengan tulisan, gambar, dan simbol',
-    icon: '🧩',
-    color: 'from-blue-50 to-sky-50',
-  },
-  {
-    key: 'guru',
-    group: 'guru',
-    label: 'Guru Pembimbing',
-    email: import.meta.env.VITE_DEMO_GURU_EMAIL || 'demo.guru@gmail.com',
-    pass: import.meta.env.VITE_DEMO_PASSWORD || 'demo123456',
-    description: 'Ibu Rina · Guru SLB/SD',
-    support: 'Kelola kelas dan materi belajar',
-    icon: '👩‍🏫',
-    color: 'from-blue-100 to-sky-50',
-  },
-  {
-    key: 'ortu',
-    group: 'ortu',
-    label: 'Orang Tua / Wali',
-    email: import.meta.env.VITE_DEMO_ORTU_EMAIL || 'demo.ortu@gmail.com',
-    pass: import.meta.env.VITE_DEMO_PASSWORD || 'demo123456',
-    description: 'Pak Herman · Orang tua',
-    support: 'Dampingi dan lihat laporan anak',
-    icon: '👨‍👧',
-    color: 'from-sky-50 to-blue-100',
-  },
-];
 
 const LEARNING_MODES = [
   {
@@ -269,54 +209,22 @@ const LandingPage = () => {
     ? mode
     : (['standar', 'tidak_ada', 'umum'].includes(mode) ? 'tidak_ada' : '');
 
-  const [demoAccounts, setDemoAccounts] = useState(DEMO_METADATA);
+  const [demoAccounts, setDemoAccounts] = useState([]);
 
   useEffect(() => {
     let isMounted = true;
-    const loadProfilesFromDB = async () => {
+    const loadDemoAccountsFromDB = async () => {
       try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id, full_name, role, disability_type, class_level, email')
-          .limit(25);
-
-        if (error || !data || !isMounted) return;
-
-        const updated = DEMO_METADATA.map((meta) => {
-          let matched = null;
-          if (meta.group === 'siswa') {
-            matched = data.find((p) => p.role === 'siswa' && p.disability_type === meta.key) ||
-                      data.find((p) => p.email?.toLowerCase() === meta.email?.toLowerCase());
-          } else {
-            matched = data.find((p) => p.role === meta.key) ||
-                      data.find((p) => p.email?.toLowerCase() === meta.email?.toLowerCase());
-          }
-
-          if (matched && matched.full_name) {
-            const roleSuffix = matched.role === 'guru'
-              ? ' · Guru SLB/SD'
-              : matched.role === 'ortu'
-              ? ' · Orang tua'
-              : matched.class_level
-              ? ` · ${matched.class_level}`
-              : '';
-
-            return {
-              ...meta,
-              email: matched.email || meta.email,
-              description: `${matched.full_name}${roleSuffix}`,
-            };
-          }
-          return meta;
-        });
-
-        setDemoAccounts(updated);
+        const accounts = await fetchDemoAccounts();
+        if (isMounted && accounts && accounts.length > 0) {
+          setDemoAccounts(accounts);
+        }
       } catch (err) {
         console.error('Error fetching demo profiles from DB:', err);
       }
     };
 
-    loadProfilesFromDB();
+    loadDemoAccountsFromDB();
     return () => { isMounted = false; };
   }, []);
   const [activeSlide, setActiveSlide] = useState(0);
@@ -635,9 +543,9 @@ const LandingPage = () => {
     useAuthStore.getState().setAuthRedirecting(true, `Membuka simulasi ${demoAccount.label}...`);
     stopAudio();
     try {
-      const data = await login(demoAccount.email, demoAccount.pass);
+      const data = await demoLogin(demoAccount);
       setUser(data.user);
-      const profileData = await fetchProfile(data.user.id);
+      const profileData = await fetchProfile(data.user.id, true);
       if (!profileData) throw new Error('Profil akun simulasi belum tersedia di database.');
       await logUserActivity(
         'LOGIN',
@@ -646,6 +554,9 @@ const LandingPage = () => {
         profileData,
       );
       setModeFromProfile(profileData);
+      if (profileData.role === 'siswa' && profileData.disability_type) {
+        setManualMode(profileData.disability_type);
+      }
       speakText(`Selamat mencoba simulasi ${demoAccount.label}.`);
       navigate(getTargetPath(profileData.role), { replace: true });
     } catch (error) {

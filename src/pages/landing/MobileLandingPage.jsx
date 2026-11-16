@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import BintangAvatar from '@/features/ai-tutor/components/BintangAvatar';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { useAccessibilityStore } from '@/features/accessibility/store/accessibilityStore';
-import { login } from '@/features/auth/api/sessionApi';
+import { login, fetchDemoAccounts, demoLogin } from '@/features/auth/api/sessionApi';
 import { supabase } from '@/lib/supabaseClient';
 
 const primaryButton =
@@ -15,69 +15,6 @@ const secondaryButton =
 
 const inputClass =
   'w-full rounded-xl border border-blue-100 bg-[#F8FBFF] px-4 py-3 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:border-sky-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100';
-
-const DEMO_METADATA = [
-  {
-    key: 'tunanetra',
-    group: 'siswa',
-    label: 'Siswa Tunanetra',
-    email: import.meta.env.VITE_DEMO_TUNANETRA_EMAIL || 'demo.tunanetra@gmail.com',
-    pass: import.meta.env.VITE_DEMO_PASSWORD || 'demo123456',
-    description: 'Budi Santoso · Kelas 4 SD',
-    support: 'Panduan suara, pembaca layar, dan deskripsi gambar',
-    icon: '🎧',
-    color: 'from-blue-50 to-sky-50',
-    badgeBg: 'bg-blue-600 text-white',
-  },
-  {
-    key: 'tunarungu',
-    group: 'siswa',
-    label: 'Siswa Tunarungu',
-    email: import.meta.env.VITE_DEMO_TUNARUNGU_EMAIL || 'demo.tunarungu@gmail.com',
-    pass: import.meta.env.VITE_DEMO_PASSWORD || 'demo123456',
-    description: 'Siti Rahma · Kelas 3 SD',
-    support: 'Teks yang jelas, subtitle, dan petunjuk visual',
-    icon: '💬',
-    color: 'from-sky-50 to-blue-50',
-    badgeBg: 'bg-sky-600 text-white',
-  },
-  {
-    key: 'tunawicara',
-    group: 'siswa',
-    label: 'Siswa Tunawicara',
-    email: import.meta.env.VITE_DEMO_TUNAWICARA_EMAIL || 'demo.tunawicara@gmail.com',
-    pass: import.meta.env.VITE_DEMO_PASSWORD || 'demo123456',
-    description: 'Doni Pratama · Kelas 5 SD',
-    support: 'Komunikasi dengan tulisan, gambar, dan simbol',
-    icon: '🧩',
-    color: 'from-blue-50 to-sky-50',
-    badgeBg: 'bg-emerald-600 text-white',
-  },
-  {
-    key: 'guru',
-    group: 'guru',
-    label: 'Guru Pembimbing',
-    email: import.meta.env.VITE_DEMO_GURU_EMAIL || 'demo.guru@gmail.com',
-    pass: import.meta.env.VITE_DEMO_PASSWORD || 'demo123456',
-    description: 'Ibu Rina · Guru SLB/SD',
-    support: 'Kelola kelas dan materi belajar',
-    icon: '👩‍🏫',
-    color: 'from-blue-100 to-sky-50',
-    badgeBg: 'bg-purple-600 text-white',
-  },
-  {
-    key: 'ortu',
-    group: 'ortu',
-    label: 'Orang Tua / Wali',
-    email: import.meta.env.VITE_DEMO_ORTU_EMAIL || 'demo.ortu@gmail.com',
-    pass: import.meta.env.VITE_DEMO_PASSWORD || 'demo123456',
-    description: 'Pak Herman · Orang tua',
-    support: 'Dampingi dan lihat laporan anak',
-    icon: '👨‍👧',
-    color: 'from-sky-50 to-blue-100',
-    badgeBg: 'bg-amber-600 text-white',
-  },
-];
 
 const LEARNING_MODES = [
   {
@@ -185,54 +122,22 @@ const MobileLandingPage = () => {
   const { setUser, fetchProfile } = useAuthStore();
   const { setManualMode } = useAccessibilityStore();
 
-  const [demoAccounts, setDemoAccounts] = useState(DEMO_METADATA);
+  const [demoAccounts, setDemoAccounts] = useState([]);
 
   React.useEffect(() => {
     let isMounted = true;
-    const loadProfilesFromDB = async () => {
+    const loadDemoAccountsFromDB = async () => {
       try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id, full_name, role, disability_type, class_level, email')
-          .limit(25);
-
-        if (error || !data || !isMounted) return;
-
-        const updated = DEMO_METADATA.map((meta) => {
-          let matched = null;
-          if (meta.group === 'siswa') {
-            matched = data.find((p) => p.role === 'siswa' && p.disability_type === meta.key) ||
-                      data.find((p) => p.email?.toLowerCase() === meta.email?.toLowerCase());
-          } else {
-            matched = data.find((p) => p.role === meta.key) ||
-                      data.find((p) => p.email?.toLowerCase() === meta.email?.toLowerCase());
-          }
-
-          if (matched && matched.full_name) {
-            const roleSuffix = matched.role === 'guru'
-              ? ' · Guru SLB/SD'
-              : matched.role === 'ortu'
-              ? ' · Orang tua'
-              : matched.class_level
-              ? ` · ${matched.class_level}`
-              : '';
-
-            return {
-              ...meta,
-              email: matched.email || meta.email,
-              description: `${matched.full_name}${roleSuffix}`,
-            };
-          }
-          return meta;
-        });
-
-        setDemoAccounts(updated);
+        const accounts = await fetchDemoAccounts();
+        if (isMounted && accounts && accounts.length > 0) {
+          setDemoAccounts(accounts);
+        }
       } catch (err) {
         console.error('Error fetching demo profiles from DB:', err);
       }
     };
 
-    loadProfilesFromDB();
+    loadDemoAccountsFromDB();
     return () => { isMounted = false; };
   }, []);
   const [activeSlide, setActiveSlide] = useState(0);
@@ -345,17 +250,17 @@ const MobileLandingPage = () => {
     setLoginMessage(null);
     useAuthStore.getState().setAuthRedirecting(true, `Membuka simulasi ${account.label}...`);
     try {
-      const authData = await login(account.email, account.pass);
+      const authData = await demoLogin(account);
       if (authData?.user) {
         setUser(authData.user);
-        await fetchProfile();
-        if (account.group === 'siswa') setManualMode(account.key);
+        const profileData = await fetchProfile(authData.user.id, true);
+        if (account.group === 'siswa' && profileData?.disability_type) {
+          setManualMode(profileData.disability_type);
+        }
         const destination = account.group === 'guru'
           ? '/teacher/dashboard'
           : account.group === 'ortu'
           ? '/parent/dashboard'
-          : account.key === 'tunanetra'
-          ? '/student/playground'
           : '/student/dashboard';
 
         navigate(destination, { replace: true });

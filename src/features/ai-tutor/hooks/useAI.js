@@ -162,7 +162,8 @@ export const useAI = () => {
       }
 
       // Try 2: Direct Groq API Call Fallback (Kak Bintang Never Sleeps)
-      const directApiKey = import.meta.env.VITE_GROQ_TOKEN || import.meta.env.Groq_Token;
+      const rawApiKey = import.meta.env.VITE_GROQ_TOKEN || import.meta.env.Groq_Token || '';
+      const directApiKey = rawApiKey ? (rawApiKey.startsWith('gsk_') ? rawApiKey : `gsk_${rawApiKey}`) : '';
       const systemPrompt = `Kamu adalah Kak Bintang, sahabat dan tutor pintar anak-anak SD kelas ${kelas}. Nama siswa yang sedang mengobrol denganmu adalah ${nama}.
 ATURAN UTAMA:
 1. SELALU panggil dan sebut nama siswa (${nama}) secara hangat dan akrab di setiap jawabanmu (contoh: "Halo ${nama}!", "Wah, pertanyaan bagus dari ${nama}!").
@@ -542,7 +543,8 @@ ATURAN UTAMA:
         .order('submitted_at', { ascending: false })
         .limit(20);
 
-      const groqToken = import.meta.env.VITE_GROQ_TOKEN || import.meta.env.Groq_Token;
+      const rawGroqToken = import.meta.env.VITE_GROQ_TOKEN || import.meta.env.Groq_Token || '';
+      const groqToken = rawGroqToken ? (rawGroqToken.startsWith('gsk_') ? rawGroqToken : `gsk_${rawGroqToken}`) : '';
       let summaryText = `Ringkasan Laporan Perkembangan Belajar – ${studentName}:\n\n- Kemajuan Belajar: Siswa aktif berpartisipasi dan menyelesaikan tugas pembelajaran.\n- Evaluasi: Rata-rata nilai kuis dan partisipasi kelas stabil.\n- Rekomendasi: Pertahankan semangat belajar dan tingkatkan latihan mandiri secara berkala.`;
 
       if (groqToken) {

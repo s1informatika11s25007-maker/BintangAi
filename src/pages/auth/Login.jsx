@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { login } from '@/features/auth/api/sessionApi';
+import { login, fetchDemoAccounts, demoLogin } from '@/features/auth/api/sessionApi';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { useAccessibilityStore } from '@/features/accessibility/store/accessibilityStore';
@@ -23,69 +23,6 @@ import {
   HiHeart
 } from 'react-icons/hi';
 
-const ALL_DEMO_ACCOUNTS = [
-  {
-    key: 'guru',
-    label: 'Guru Pembimbing',
-    email: 'demo.guru@gmail.com',
-    pass: 'demo123456',
-    icon: '👨‍🏫',
-    badgeColor: 'bg-indigo-600 text-white',
-    description: 'Kelola kelas & bimbingan SD',
-    full_name: 'Ibu Rina (Guru SLB/SD)',
-    role: 'guru',
-    disability_type: 'tidak_ada'
-  },
-  {
-    key: 'tunanetra',
-    label: 'Siswa Tunanetra',
-    email: 'demo.tunanetra@gmail.com',
-    pass: 'demo123456',
-    icon: '🦯',
-    badgeColor: 'bg-purple-600 text-white',
-    description: 'Suara Audio & Kontras Tinggi',
-    full_name: 'Budi Santoso (Kelas 4 SD)',
-    role: 'siswa',
-    disability_type: 'tunanetra'
-  },
-  {
-    key: 'tunarungu',
-    label: 'Siswa Tunarungu',
-    email: 'demo.tunarungu@gmail.com',
-    pass: 'demo123456',
-    icon: '🤟',
-    badgeColor: 'bg-cyan-600 text-white',
-    description: 'Teks Visual & Subtitle Pintar',
-    full_name: 'Siti Rahma (Kelas 3 SD)',
-    role: 'siswa',
-    disability_type: 'tunarungu'
-  },
-  {
-    key: 'tunawicara',
-    label: 'Siswa Tunawicara',
-    email: 'demo.tunawicara@gmail.com',
-    pass: 'demo123456',
-    icon: '💬',
-    badgeColor: 'bg-emerald-600 text-white',
-    description: 'Gambar Isyarat & Pilihan Cepat',
-    full_name: 'Doni Pratama (Kelas 5 SD)',
-    role: 'siswa',
-    disability_type: 'tunawicara'
-  },
-  {
-    key: 'ortu',
-    label: 'Orang Tua / Wali',
-    email: 'demo.ortu@gmail.com',
-    pass: 'demo123456',
-    icon: '👪',
-    badgeColor: 'bg-rose-500 text-white',
-    description: 'Dampingi & Lihat Laporan Anak',
-    full_name: 'Pak Herman (Orang Tua)',
-    role: 'ortu',
-    disability_type: 'tidak_ada'
-  }
-];
-
 const Login = () => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
@@ -93,6 +30,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState(null);
   const [selectedDemoKey, setSelectedDemoKey] = useState(null);
+  const [demoAccounts, setDemoAccounts] = useState([]);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -101,6 +39,11 @@ const Login = () => {
   const { speak, stopSpeaking } = useVoice();
 
   useEffect(() => {
+    let isMounted = true;
+    fetchDemoAccounts().then((accounts) => {
+      if (isMounted && accounts) setDemoAccounts(accounts);
+    }).catch((err) => console.error("Error loading demo accounts:", err));
+
     const query = new URLSearchParams(location.search);
     const reason = query.get('reason');
 
@@ -113,6 +56,7 @@ const Login = () => {
       setMessage({ type: 'error', text: msg });
       speak(msg, 1.0, true);
     }
+    return () => { isMounted = false; };
   }, [location.search, speak]);
 
   const fillAndLoginDemo = async (acc) => {
@@ -126,10 +70,10 @@ const Login = () => {
 
     setLoading(true);
     try {
-      const data = await login(acc.email, acc.pass);
+      const data = await demoLogin(acc);
       setUser(data.user);
 
-      const profileData = await fetchProfile(data.user.id);
+      const profileData = await fetchProfile(data.user.id, true);
       if (profileData) {
         await logUserActivity('LOGIN', 'Masuk Demo Role', `Mencoba Demo ${acc.label}`, profileData);
         setModeFromProfile(profileData);
@@ -296,7 +240,7 @@ const Login = () => {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {ALL_DEMO_ACCOUNTS.map((acc) => {
+                {demoAccounts.map((acc) => {
                   const isSelected = selectedDemoKey === acc.key;
                   return (
                     <button
@@ -312,7 +256,7 @@ const Login = () => {
                     >
                       <div className="flex items-start justify-between gap-2">
                         <span className="text-2xl">{acc.icon}</span>
-                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${acc.badgeColor}`}>
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${acc.badgeColor || 'bg-blue-600 text-white'}`}>
                           {acc.label}
                         </span>
                       </div>
