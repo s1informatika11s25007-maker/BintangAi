@@ -354,32 +354,7 @@ const MobileLandingPage = () => {
   const exitMotion = typeof currentMotion.exit === 'function' ? currentMotion.exit(slideDirection) : currentMotion.exit;
 
   return (
-    <div className="relative min-h-[100dvh] h-[100dvh] w-full bg-gradient-to-b from-sky-50/80 via-white to-blue-50/80 text-slate-900 flex flex-col justify-between overflow-hidden font-sans select-none">
-
-      {/* STICKY TOP HEADER */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-blue-100/80 px-4 py-2.5 flex items-center justify-between shrink-0 shadow-2xs">
-        <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => goToSlide(0)}>
-          <div className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-xl border-2 border-blue-100 bg-white p-0.5 shadow-sm">
-            <BintangAvatar size={34} state="idle" />
-          </div>
-          <div>
-            <span className="text-base font-black text-blue-950 tracking-tight">Bintang<span className="text-blue-700">AI</span></span>
-            <span className="block text-[10px] font-bold text-blue-600">Teman Belajar Kita</span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          <button onClick={() => openAuth('login')} className="px-3 py-1.5 rounded-xl border border-blue-200 bg-white text-xs font-bold text-blue-800 hover:bg-blue-50">
-            Masuk
-          </button>
-          <button onClick={() => openAuth('register')} className="px-3 py-1.5 rounded-xl bg-blue-700 text-xs font-extrabold text-white shadow-sm hover:bg-blue-800">
-            Daftar
-          </button>
-          <button onClick={() => goToSlide(5)} className="px-2.5 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-xs font-bold text-blue-800">
-            ▶ Demo
-          </button>
-        </div>
-      </header>
+    <div className="relative min-h-screen w-full bg-gradient-to-b from-sky-50/80 via-white to-blue-50/80 text-slate-900 flex flex-col justify-between font-sans overflow-x-hidden">
 
       {/* MAIN SLIDE ANIMATION AREA (100% MATCHING LAPTOP SLIDE ANIMATION & SCROLL ADVANCE) */}
       <div
@@ -409,7 +384,32 @@ const MobileLandingPage = () => {
             {/* SLIDE 0 — SAMBUTAN */}
             {activeSlide === 0 && (
               <div className="flex flex-col justify-between min-h-full space-y-4 py-2">
-                <div className="text-center space-y-3 pt-2">
+                {/* Header Integrasi Menyatu pada Slide 0 */}
+                <header className="flex items-center justify-between gap-2 pb-1 border-b border-blue-100/60">
+                  <div className="flex items-center gap-2 cursor-pointer" onClick={() => goToSlide(0)}>
+                    <div className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-xl border-2 border-blue-100 bg-white p-0.5 shadow-xs">
+                      <BintangAvatar size={34} state="idle" />
+                    </div>
+                    <div>
+                      <span className="text-base font-black text-blue-950 tracking-tight">Bintang<span className="text-blue-700">AI</span></span>
+                      <span className="block text-[10px] font-bold text-blue-600">Teman Belajar Kita</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <button onClick={() => openAuth('login')} className="px-2.5 py-1.5 rounded-xl border border-blue-200 bg-white text-xs font-bold text-blue-800 hover:bg-blue-50">
+                      Masuk
+                    </button>
+                    <button onClick={() => openAuth('register')} className="px-3 py-1.5 rounded-xl bg-blue-700 text-xs font-extrabold text-white shadow-xs hover:bg-blue-800">
+                      Daftar
+                    </button>
+                    <button onClick={() => goToSlide(5)} className="px-2.5 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-xs font-bold text-blue-800">
+                      ▶ Demo
+                    </button>
+                  </div>
+                </header>
+
+                <div className="text-center space-y-3 pt-1">
                   <span className="inline-block px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-xs font-extrabold text-blue-800">
                     Untuk teman kelas 1–6 SD
                   </span>
